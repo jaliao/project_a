@@ -56,7 +56,7 @@ function GoogleIcon({ className }: { className?: string }) {
 function AuthForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') ?? '/'
+  const callbackUrl = searchParams.get('callbackUrl') ?? '/dashboard'
   const [isPending, startTransition] = useTransition()
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
