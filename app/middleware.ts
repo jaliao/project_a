@@ -23,6 +23,7 @@ const PUBLIC_PATHS = [
   '/reset-password',
   '/change-password',
   '/api/auth',
+  '/invite',   // 邀請連結公開存取，未登入由登入頁保留 callbackUrl
 ]
 
 function isPublic(pathname: string): boolean {

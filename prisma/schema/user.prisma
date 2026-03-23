@@ -55,6 +55,13 @@ model User {
   accounts Account[]
   sessions Session[]
 
+  // 課程訂購關聯
+  courseOrders CourseOrder[]
+
+  // 課程邀請關聯
+  courseInvites     CourseInvite[]
+  inviteEnrollments InviteEnrollment[]
+
   @@map("users")
 }
 

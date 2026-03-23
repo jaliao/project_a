@@ -1,0 +1,49 @@
+/**
+ * ----------------------------------------------
+ * Prisma Schema - 課程邀請模型
+ * 2026-03-23
+ * prisma/schema/course-invite.prisma
+ * ----------------------------------------------
+ */
+
+// ==========================================
+// 課程邀請主體
+// ==========================================
+model CourseInvite {
+  id    Int    @id @default(autoincrement())
+  token String @unique // 12-char hex，邀請連結識別碼
+
+  title    String // 課程名稱（教師自訂）
+  maxCount Int // 預計人數
+
+  // 關聯 CourseOrder（選填）
+  courseOrderId Int?
+  courseOrder   CourseOrder? @relation(fields: [courseOrderId], references: [id])
+
+  // 建立者
+  createdById String @db.Uuid
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  enrollments InviteEnrollment[]
+
+  @@map("course_invites")
+}
+
+// ==========================================
+// 學員報名記錄
+// ==========================================
+model InviteEnrollment {
+  id       Int    @id @default(autoincrement())
+  inviteId Int
+  userId   String @db.Uuid
+
+  invite CourseInvite @relation(fields: [inviteId], references: [id])
+  user   User         @relation(fields: [userId], references: [id])
+
+  joinedAt DateTime @default(now())
+
+  @@unique([inviteId, userId])
+  @@map("invite_enrollments")
+}

@@ -1,0 +1,74 @@
+/**
+ * ----------------------------------------------
+ * Prisma Schema - 課程訂購模型
+ * 2026-03-23
+ * prisma/schema/course-order.prisma
+ * ----------------------------------------------
+ */
+
+// ==========================================
+// 教材版本枚舉
+// ==========================================
+enum MaterialVersion {
+  traditional // 繁體版
+  simplified // 簡體版
+  both // 繁體＋簡體
+}
+
+// ==========================================
+// 購買性質枚舉
+// ==========================================
+enum PurchaseType {
+  selfOnly // 種子教師自用
+  selfAndProxy // 自用＋代購
+  proxyOnly // 只幫學員代購
+}
+
+// ==========================================
+// 取貨方式枚舉
+// ==========================================
+enum DeliveryMethod {
+  sevenEleven // 7-11 取貨
+  familyMart // 全家取貨
+  delivery // 郵寄/宅配
+}
+
+// ==========================================
+// 課程訂購模型
+// ==========================================
+model CourseOrder {
+  id Int @id @default(autoincrement())
+
+  // 購買人基本資料
+  buyerNameZh String // 購買人中文姓名
+  buyerNameEn String // 購買人英文姓名
+  teacherName String // 購買人的教師姓名
+  churchOrg   String // 所屬教會/單位
+  email       String
+  phone       String
+
+  // 教材與購買選項
+  materialVersion MaterialVersion
+  purchaseType    PurchaseType
+  studentNames    String? // 幫學員代購（含代購時必填）
+
+  // 數量
+  quantity     Int // 1–8；選「其他」時為 0
+  quantityNote String? // 自填數量說明
+
+  // 其他
+  courseDate     String // 預計開課日期（可填「無」）
+  taxId          String? // 統一編號（選填）
+  deliveryMethod DeliveryMethod
+
+  // 提交者（選填關聯）
+  submittedById String? @db.Uuid
+  submittedBy   User?   @relation(fields: [submittedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  // 課程邀請關聯
+  courseInvites CourseInvite[]
+
+  @@map("course_orders")
+}

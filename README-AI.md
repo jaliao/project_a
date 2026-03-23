@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.2（2026-03-23）
+> 自動產生，版本 0.1.4（2026-03-23）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -47,9 +47,16 @@ components/
 ├── ui/              # shadcn/ui 基礎元件
 ├── layout/
 │   └── topbar.tsx   # 頂部工具列（新增課程/個人資料/訊息）
-└── dashboard/
-    ├── stats-card.tsx      # 統計卡片
-    └── recent-members.tsx  # 近期加入會員列表
+├── dashboard/
+│   ├── stats-card.tsx      # 統計卡片
+│   └── recent-members.tsx  # 近期加入會員列表
+├── course-order/
+│   ├── course-order-dialog.tsx  # 訂購 Dialog 殼
+│   └── course-order-form.tsx    # 訂購表單（RadioGroup + 條件欄位）
+└── course-invite/
+    ├── create-invite-dialog.tsx # 建立邀請 Dialog
+    ├── create-invite-form.tsx   # 建立邀請表單 + 複製連結 View
+    └── invite-copy-button.tsx   # 複製邀請連結按鈕（Client）
 
 lib/
 ├── auth.ts          # NextAuth 設定（JWT + Google + Credentials）
@@ -60,9 +67,10 @@ lib/
 
 prisma/
 ├── schema/
-│   ├── base.prisma     # generator + datasource
-│   ├── user.prisma     # User, Account, Session, WhitelistedEmail
-│   └── project.prisma  # (保留，目前無業務模型)
+│   ├── base.prisma          # generator + datasource
+│   ├── user.prisma          # User, Account, Session, WhitelistedEmail
+│   ├── course-order.prisma  # CourseOrder + enums
+│   └── course-invite.prisma # CourseInvite + InviteEnrollment
 └── seed.ts
 
 config/
@@ -92,6 +100,47 @@ createdAt / updatedAt / lastLoginAt
 ```
 email     String（唯一）
 isActive  Boolean（控制登入許可）
+```
+
+### CourseInvite
+```
+id            Int（主鍵）
+token         String（唯一，12-char hex）
+title         String（課程名稱）
+maxCount      Int（預計人數）
+courseOrderId Int?（選填關聯 CourseOrder）
+createdById   String（建立者 UUID）
+createdAt     DateTime
+```
+
+### InviteEnrollment
+```
+id        Int（主鍵）
+inviteId  Int（關聯 CourseInvite）
+userId    String（學員 UUID）
+joinedAt  DateTime
+@@unique([inviteId, userId])
+```
+
+### CourseOrder
+```
+id              Int（主鍵，autoincrement）
+buyerNameZh     String（購買人中文姓名）
+buyerNameEn     String（購買人英文姓名）
+teacherName     String（教師姓名）
+churchOrg       String（所屬教會/單位）
+email           String
+phone           String
+materialVersion MaterialVersion（traditional | simplified | both）
+purchaseType    PurchaseType（selfOnly | selfAndProxy | proxyOnly）
+studentNames    String?（代購學員姓名，代購時必填）
+quantity        Int（1–8；選「其他」時為 0）
+quantityNote    String?（自填數量說明）
+courseDate      String（預計開課日期，可為「無」）
+taxId           String?（統一編號，選填）
+deliveryMethod  DeliveryMethod（sevenEleven | familyMart | delivery）
+submittedById   String?（提交者 UUID，選填關聯 User）
+createdAt       DateTime
 ```
 
 ---
@@ -128,8 +177,10 @@ isActive  Boolean（控制登入許可）
 - `cr-spec-260323-001` — 基礎架構建立
 - `cr-spec-260323-004` — 會員系統模組（認證、白名單、個人資料）
 - `cr-spec-260323-005` — 登入後首頁（Dashboard）+ Topbar
+- `cr-spec-260323-006` — 課程訂購表單（CourseOrder Dialog + DB 模型）
+- `cr-spec-260323-007` — 開課邀請系統（邀請碼/連結、學員加入、進度追蹤）
 
 ### 進行中 / 待規劃
-- 課程管理模組（Topbar「新增課程」預留入口）
+- 訂單管理後台（列表、狀態管理）
 - 訊息通知系統（Topbar「訊息」預留入口）
 - 會員管理後台（CRUD、搜尋、分頁）
