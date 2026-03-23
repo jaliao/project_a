@@ -1,6 +1,6 @@
 # /*
 #  * ----------------------------------------------
-#  * Makefile for BC-ERP Project
+#  * Makefile for project_a（啟動靈人系統）
 #  * 2026-01-15
 #  * ----------------------------------------------
 #  */
@@ -11,7 +11,7 @@ ifneq ("$(wildcard .env)","")
     export $(shell sed 's/=.*//' .env)
 endif
 
-PROJECT_NAME=bc-erp
+PROJECT_NAME=project_a
 DOCKERHUB_USER=jaliao
 WEB_IMAGE=$(DOCKERHUB_USER)/$(PROJECT_NAME)-web
 DB_IMAGE=$(DOCKERHUB_USER)/$(PROJECT_NAME)-db
@@ -50,7 +50,7 @@ PROD_COMPOSE=$(DOCKER_COMPOSE) -f docker-compose.prod.yml
 help: ## 📖 顯示所有可用命令
 	@echo ""
 	@echo "╔════════════════════════════════════════════════════════════════╗"
-	@echo "║                  BC-ERP Makefile 命令列表                      ║"
+	@echo "║            啟動靈人系統 (project_a) Makefile 命令列表          ║"
 	@echo "╠════════════════════════════════════════════════════════════════╣"
 	@echo "║                                                                ║"
 	@echo "║  🚀 快速開始                                                   ║"
@@ -302,10 +302,10 @@ prisma-inspect: ## 🔬 檢查目前資料庫結構
 	@echo "🔬 檢查資料庫結構..."
 	@echo ""
 	@echo "📋 所有資料表："
-	@$(DEV_COMPOSE) exec db psql -U postgres -d bc-erp-db -c "\dt"
+	@$(DEV_COMPOSE) exec db psql -U postgres -d project_a_db -c "\dt"
 	@echo ""
 	@echo "👤 users 表結構："
-	@$(DEV_COMPOSE) exec db psql -U postgres -d bc-erp-db -c "\d users"
+	@$(DEV_COMPOSE) exec db psql -U postgres -d project_a_db -c "\d users"
 
 # ==================================================
 # 🐘 資料庫管理
@@ -314,13 +314,13 @@ prisma-inspect: ## 🔬 檢查目前資料庫結構
 db-shell: ## 🐘 進入資料庫命令列
 	@echo "🐘 進入 PostgreSQL 命令列..."
 	@echo "💡 提示：輸入 \q 離開"
-	@$(DEV_COMPOSE) exec db psql -U postgres -d bc-erp-db
+	@$(DEV_COMPOSE) exec db psql -U postgres -d project_a_db
 
 db-backup: ## 💾 備份資料庫
 	@echo "💾 備份資料庫..."
 	@mkdir -p ./backups
 	@BACKUP_FILE=./backups/backup_$(shell date +%Y%m%d_%H%M%S).sql; \
-	$(DEV_COMPOSE) exec -T db pg_dump -U postgres bc-erp-db > $$BACKUP_FILE; \
+	$(DEV_COMPOSE) exec -T db pg_dump -U postgres project_a_db > $$BACKUP_FILE; \
 	echo "✅ 備份完成：$$BACKUP_FILE"
 
 db-restore: ## 📥 還原資料庫
@@ -329,7 +329,7 @@ db-restore: ## 📥 還原資料庫
 	@ls -1 ./backups/*.sql 2>/dev/null || echo "   （無備份檔案）"
 	@read -p "請輸入備份檔案路徑: " file; \
 	if [ -f "$$file" ]; then \
-		cat $$file | $(DEV_COMPOSE) exec -T db psql -U postgres bc-erp-db; \
+		cat $$file | $(DEV_COMPOSE) exec -T db psql -U postgres project_a_db; \
 		echo "✅ 還原完成"; \
 	else \
 		echo "❌ 檔案不存在"; \
@@ -419,8 +419,8 @@ format: ## ✨ 格式化程式碼
 tunnel-vps3: ## 開啟 VPS3 Postgres SSH Tunnel（localhost:15432）
 	@/home/psyduck/devops-toolkit/remote-admin/tunnel/pg-tunnel-vps3.sh
 
-tunnel-deploy: ## 開啟 VPS3 Deploy BCERP Docker
-	@/home/psyduck/devops-toolkit/remote-admin/tunnel/bcerp-tunnel-deploy.sh
+tunnel-deploy: ## 開啟 VPS3 Deploy Docker
+	@/home/psyduck/devops-toolkit/remote-admin/tunnel/bcerp-tunnel-deploy.sh # TODO: 確認 VPS 實際路徑後更新
 
 prisma-vps3-status: ## 檢查 VPS3 Migration 狀態（建議先跑）
 	@echo "Prisma migrate status (VPS3)..."

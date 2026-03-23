@@ -16,7 +16,7 @@ RUN apt-get update && \
 RUN echo "shared_preload_libraries = 'pg_cron'" >> /usr/share/postgresql/postgresql.conf.sample
 
 # 拷貝 SQL 初始化腳本
-COPY ./database/01_init.sql /docker-entrypoint-initdb.d/01_init.sql
+# COPY ./database/01_init.sql /docker-entrypoint-initdb.d/01_init.sql
 
 # 預設 cron database（可在 docker-compose 指定）
 ENV POSTGRES_DB=bc-erp-db

@@ -1,0 +1,14 @@
+# .dockerignore
+
+# 忽略所有環境變數檔案
+.env
+.env.*
+
+# 其他不需要的檔案
+node_modules
+.git
+.next
+README.md
+README*.md
+Dockerfile
+docker-compose.yml

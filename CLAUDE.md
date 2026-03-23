@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-BC-ERP is a Next.js 16 enterprise resource planning system with time tracking, project management, and user authentication. The codebase uses Traditional Chinese (繁體中文) for comments and documentation.
+project_a（啟動靈人系統）is a Next.js 16 enterprise resource planning system with time tracking, project management, and user authentication. The codebase uses Traditional Chinese (繁體中文) for comments and documentation.
 
 **Tech Stack:**
 - Next.js 16.1.1 (App Router) + React 19 + TypeScript 5

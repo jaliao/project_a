@@ -15,7 +15,3 @@ services:
       - "3000:3000"      
     env_file:
       - .env
-
-  db:
-    ports:
-        - "5432:5432"
