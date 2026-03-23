@@ -420,7 +420,7 @@ tunnel-vps3: ## 開啟 VPS3 Postgres SSH Tunnel（localhost:15432）
 	@/home/psyduck/devops-toolkit/remote-admin/tunnel/pg-tunnel-vps3.sh
 
 tunnel-deploy: ## 開啟 VPS3 Deploy Docker
-	@/home/psyduck/devops-toolkit/remote-admin/tunnel/bcerp-tunnel-deploy.sh # TODO: 確認 VPS 實際路徑後更新
+	@/home/psyduck/devops-toolkit/remote-admin/tunnel/project-a-tunnel-deploy.sh 
 
 prisma-vps3-status: ## 檢查 VPS3 Migration 狀態（建議先跑）
 	@echo "Prisma migrate status (VPS3)..."
@@ -429,15 +429,15 @@ prisma-vps3-status: ## 檢查 VPS3 Migration 狀態（建議先跑）
 prisma-vps3-deploy: ## 部署 migrations 到 VPS3（正式/遠端 DB 用）
 	@echo "Prisma migrate deploy (VPS3)..."
 	@$(PRISMA_VPS3_DB) npx prisma migrate deploy
+	
 
 prisma-dev-status: ## 檢查 Dev Migration 狀態（建議先跑）
 	@echo "Prisma migrate status (DEV)... $(PRISMA_DEV_DB)"
-
-	@$(PRISMA_DEV_DB) npx prisma migrate status
+	@$(DEV_COMPOSE) exec web npx prisma migrate status
 
 prisma-dev-deploy: ## 部署 migrations 到 VPS3（正式/遠端 DB 用）
-	@echo "Prisma migrate deploy (DEV)..."
-	@$(PRISMA_DEV_DB) npx prisma migrate deploy
+	@echo "Prisma migrate deploy (DEV)..."	
+	@$(DEV_COMPOSE) exec web npx prisma migrate deploy
 
 prisma-vps3-seed: ## 部署 migrations 到 VPS3（正式/遠端 DB 用）
 	@echo "初始化 VPS3 種子資料..."

@@ -1,0 +1,16 @@
+/**
+ * ----------------------------------------------
+ * Prisma Schema - 基礎設定
+ * 2026-03-23
+ * prisma/schema/base.prisma
+ * ----------------------------------------------
+ */
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma_client"
+}
+
+datasource db {
+  provider = "postgresql"
+}

@@ -1,0 +1,161 @@
+/**
+ * ----------------------------------------------
+ * Prisma Schema - 使用者與認證模型
+ * 2026-03-23
+ * prisma/schema/user.prisma
+ * ----------------------------------------------
+ */
+
+// ==========================================
+// 使用者角色枚舉
+// ==========================================
+enum UserRole {
+  user
+  admin
+  superadmin
+}
+
+// ==========================================
+// 主要使用者模型
+// ==========================================
+model User {
+  id            String    @id @default(uuid()) @db.Uuid
+  email         String    @unique // 登入帳號，唯一且不可變
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  role          UserRole  @default(user)
+
+  // 啟動靈人身分識別
+  spiritId String? @unique // 格式：PA + YY + XXXX
+
+  // 密碼管理
+  passwordHash   String? // Google-only 用戶為 null
+  isTempPassword Boolean @default(false) // 臨時密碼強制變更標記
+
+  // 通訊 Email（獨立於登入帳號）
+  commEmail      String?
+  isCommVerified Boolean @default(false)
+
+  // 個人資料
+  realName        String?
+  phone           String?
+  isPhoneVerified Boolean @default(false)
+  address         String?
+
+  // 第三方帳號（保留欄位）
+  lineId String? @unique
+
+  // 時間戳記
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lastLoginAt DateTime?
+
+  // NextAuth 關聯
+  accounts Account[]
+  sessions Session[]
+
+  @@map("users")
+}
+
+// ==========================================
+// NextAuth - OAuth 帳號關聯表
+// ==========================================
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+// ==========================================
+// NextAuth - Session 表（資料庫 session 策略）
+// ==========================================
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String   @db.Uuid
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// ==========================================
+// NextAuth - 驗證 Token 表（Email provider 用）
+// ==========================================
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ==========================================
+// Spirit ID 計數器（原子遞增，跨年重置）
+// ==========================================
+model SpiritIdCounter {
+  year Int
+  seq  Int @default(0)
+
+  @@id([year])
+  @@map("spirit_id_counters")
+}
+
+// ==========================================
+// 密碼重設 Token（TTL 1 小時，一次性使用）
+// ==========================================
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  email     String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@map("password_reset_tokens")
+}
+
+// ==========================================
+// 通訊 Email 驗證 Token（TTL 24 小時）
+// ==========================================
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  email     String // 欲驗證的通訊 Email
+  userId    String    @db.Uuid
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@map("email_verification_tokens")
+}
+
+// ==========================================
+// Email 白名單（原有機制，保留相容性）
+// ==========================================
+model WhitelistedEmail {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("whitelisted_emails")
+}
