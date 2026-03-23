@@ -30,6 +30,7 @@ export async function updateProfile(
 
   const parsed = updateProfileSchema.safeParse({
     realName: formData.get('realName'),
+    nickname: formData.get('nickname'),
     phone: formData.get('phone'),
     address: formData.get('address'),
   })
@@ -42,6 +43,7 @@ export async function updateProfile(
     where: { id: session.user.id },
     data: {
       realName: parsed.data.realName,
+      nickname: parsed.data.nickname || null,
       phone: parsed.data.phone || null,
       address: parsed.data.address || null,
     },

@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.4（2026-03-23）
+> 自動產生，版本 0.1.5（2026-03-23）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -49,14 +49,17 @@ components/
 │   └── topbar.tsx   # 頂部工具列（新增課程/個人資料/訊息）
 ├── dashboard/
 │   ├── stats-card.tsx      # 統計卡片
-│   └── recent-members.tsx  # 近期加入會員列表
+│   ├── recent-members.tsx  # 近期加入會員列表
+│   └── profile-banner.tsx  # 資料完整度提醒 / 歡迎訊息（Server Component）
 ├── course-order/
 │   ├── course-order-dialog.tsx  # 訂購 Dialog 殼
 │   └── course-order-form.tsx    # 訂購表單（RadioGroup + 條件欄位）
-└── course-invite/
-    ├── create-invite-dialog.tsx # 建立邀請 Dialog
-    ├── create-invite-form.tsx   # 建立邀請表單 + 複製連結 View
-    └── invite-copy-button.tsx   # 複製邀請連結按鈕（Client）
+├── course-invite/
+│   ├── create-invite-dialog.tsx # 建立邀請 Dialog
+│   ├── create-invite-form.tsx   # 建立邀請表單 + 複製連結 View
+│   └── invite-copy-button.tsx   # 複製邀請連結按鈕（Client）
+└── profile/
+    └── sign-out-section.tsx     # 登出按鈕區塊（Client）
 
 lib/
 ├── auth.ts          # NextAuth 設定（JWT + Google + Credentials）
@@ -93,6 +96,9 @@ passwordHash  String?（Google-only 為 null）
 isTempPassword Boolean（臨時密碼強制變更旗標）
 commEmail     String?（通訊 Email）
 realName      String?
+nickname      String?（自訂暱稱，最多 20 字）
+phone         String?
+address       String?
 createdAt / updatedAt / lastLoginAt
 ```
 
@@ -179,6 +185,7 @@ createdAt       DateTime
 - `cr-spec-260323-005` — 登入後首頁（Dashboard）+ Topbar
 - `cr-spec-260323-006` — 課程訂購表單（CourseOrder Dialog + DB 模型）
 - `cr-spec-260323-007` — 開課邀請系統（邀請碼/連結、學員加入、進度追蹤）
+- `cr-spec-260323-008` — 會員資料完整度提醒、暱稱欄位、Profile 登出按鈕
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）

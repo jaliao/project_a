@@ -39,6 +39,7 @@ model User {
 
   // 個人資料
   realName        String?
+  nickname        String? // 自訂暱稱（最多 20 字）
   phone           String?
   isPhoneVerified Boolean @default(false)
   address         String?

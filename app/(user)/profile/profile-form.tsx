@@ -19,6 +19,7 @@ import { updateProfileSchema, commEmailSchema } from '@/lib/schemas/profile'
 type ProfileFormProps = {
   user: {
     realName: string
+    nickname: string
     phone: string
     address: string
     commEmail: string
@@ -35,7 +36,7 @@ export default function ProfileForm({ user, linkedProviders }: ProfileFormProps)
 
   const profileForm = useForm<ProfileData>({
     resolver: zodResolver(updateProfileSchema),
-    defaultValues: { realName: user.realName, phone: user.phone, address: user.address },
+    defaultValues: { realName: user.realName, nickname: user.nickname, phone: user.phone, address: user.address },
   })
 
   const commEmailForm = useForm<CommEmailData>({
@@ -47,6 +48,7 @@ export default function ProfileForm({ user, linkedProviders }: ProfileFormProps)
     startTransition(async () => {
       const fd = new FormData()
       fd.set('realName', data.realName)
+      fd.set('nickname', data.nickname ?? '')
       fd.set('phone', data.phone ?? '')
       fd.set('address', data.address ?? '')
       const result = await updateProfile(fd)
@@ -94,6 +96,18 @@ export default function ProfileForm({ user, linkedProviders }: ProfileFormProps)
             />
             {profileForm.formState.errors.realName && (
               <p className="text-sm text-red-500 mt-1">{profileForm.formState.errors.realName.message}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">暱稱</label>
+            <input
+              {...profileForm.register('nickname')}
+              className="w-full rounded-md border px-3 py-2"
+              placeholder="最多 20 個字（選填）"
+              disabled={isPending}
+            />
+            {profileForm.formState.errors.nickname && (
+              <p className="text-sm text-red-500 mt-1">{profileForm.formState.errors.nickname.message}</p>
             )}
           </div>
           <div>

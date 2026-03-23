@@ -10,6 +10,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import ProfileForm from './profile-form'
+import { SignOutSection } from '@/components/profile/sign-out-section'
 
 export default async function ProfilePage() {
   const session = await auth()
@@ -44,13 +45,16 @@ export default async function ProfilePage() {
       <ProfileForm
         user={{
           realName: user.realName ?? '',
+          nickname: user.nickname ?? '',
           phone: user.phone ?? '',
           address: user.address ?? '',
-          commEmail: user.commEmail ?? '',
+          commEmail: user.commEmail ?? user.email,
           isCommVerified: user.isCommVerified,
         }}
         linkedProviders={linkedProviders}
       />
+
+      <SignOutSection />
     </div>
   )
 }

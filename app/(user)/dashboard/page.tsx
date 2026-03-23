@@ -12,21 +12,25 @@ import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { IconUsers, IconUserPlus, IconSparkles } from '@tabler/icons-react'
 import { prisma } from '@/lib/prisma'
+import { auth } from '@/lib/auth'
 import { getMyOrders } from '@/app/actions/course-invite'
 import { StatsCard } from '@/components/dashboard/stats-card'
 import { RecentMembers } from '@/components/dashboard/recent-members'
 import { DashboardActions } from '@/components/dashboard/dashboard-actions'
+import { ProfileBanner } from '@/components/dashboard/profile-banner'
 
 export const metadata: Metadata = {
   title: '首頁 — 啟動靈人系統',
 }
 
 export default async function DashboardPage() {
+  const session = await auth()
+
   // 統計資料查詢
   const now = new Date()
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
-  const [totalMembers, newThisMonth, withSpiritId, recentMembers, orders] =
+  const [totalMembers, newThisMonth, withSpiritId, recentMembers, orders, currentUser] =
     await Promise.all([
       prisma.user.count(),
       prisma.user.count({ where: { createdAt: { gte: firstDayOfMonth } } }),
@@ -37,10 +41,27 @@ export default async function DashboardPage() {
         select: { id: true, name: true, email: true, createdAt: true },
       }),
       getMyOrders(),
+      session?.user?.id
+        ? prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { realName: true, name: true, email: true, commEmail: true, phone: true },
+          })
+        : null,
     ])
+
+  const effectiveCommEmail = currentUser?.commEmail ?? currentUser?.email
+  const isProfileComplete = !!(
+    currentUser?.realName &&
+    effectiveCommEmail &&
+    currentUser?.phone
+  )
+  const displayName = currentUser?.realName || currentUser?.name || null
 
   return (
     <div className="space-y-6">
+      {/* 資料完整度 Banner / 歡迎訊息 */}
+      <ProfileBanner isComplete={isProfileComplete} displayName={displayName} />
+
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">首頁</h1>
         <Suspense>
