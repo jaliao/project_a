@@ -10,7 +10,8 @@ export const dynamic = 'force-dynamic'
 
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
-import { IconUsers, IconUserPlus, IconSparkles } from '@tabler/icons-react'
+import Link from 'next/link'
+import { IconUsers, IconUserPlus, IconSparkles, IconBook } from '@tabler/icons-react'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { getMyOrders } from '@/app/actions/course-invite'
@@ -86,6 +87,17 @@ export default async function DashboardPage() {
           value={withSpiritId}
           title="已核發 Spirit ID"
         />
+      </div>
+
+      {/* 快速連結 */}
+      <div className="flex flex-wrap gap-3">
+        <Link
+          href="/learning"
+          className="inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-muted transition-colors"
+        >
+          <IconBook className="h-4 w-4" />
+          學習紀錄
+        </Link>
       </div>
 
       {/* 近期活動 */}

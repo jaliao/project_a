@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * Server Actions - 課程邀請
- * 2026-03-23
+ * 2026-03-23 (Updated: 2026-03-23)
  * app/actions/course-invite.ts
  * ----------------------------------------------
  */
@@ -12,12 +12,31 @@ import { randomBytes } from 'crypto'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { createInviteSchema } from '@/lib/schemas/course-invite'
+import { COURSE_CATALOG, type CourseLevel } from '@/config/course-catalog'
 
 type ActionResponse<T = undefined> = {
   success: boolean
   message?: string
   data?: T
   errors?: Record<string, string[]>
+}
+
+// ── 計算使用者學習進度等級 ────────────────────
+export async function getUserLearningLevel(userId: string): Promise<number> {
+  const enrollments = await prisma.inviteEnrollment.findMany({
+    where: { userId },
+    include: { invite: { select: { courseLevel: true } } },
+  })
+
+  if (enrollments.length === 0) return 0
+
+  // 取得最高完成等級數字
+  const levelNums = enrollments.map((e) => {
+    const entry = COURSE_CATALOG[e.invite.courseLevel as CourseLevel]
+    return entry?.levelNum ?? 0
+  })
+
+  return Math.max(...levelNums)
 }
 
 // ── 建立開課邀請 ──────────────────────────────
@@ -32,13 +51,26 @@ export async function createInvite(
     return { success: false, errors: parsed.error.flatten().fieldErrors }
   }
 
-  const { title, maxCount, courseOrderId } = parsed.data
+  const { courseLevel, maxCount, courseOrderId } = parsed.data
+  const courseLevelKey = courseLevel as CourseLevel
+  const courseEntry = COURSE_CATALOG[courseLevelKey]
+
+  // 驗證教師先修：learningLevel >= courseLevel.levelNum
+  const learningLevel = await getUserLearningLevel(session.user.id)
+  if (learningLevel < courseEntry.levelNum) {
+    return {
+      success: false,
+      message: `需先完成${courseEntry.label}才能開設此課程`,
+    }
+  }
+
   const token = randomBytes(6).toString('hex') // 12-char hex
 
   const invite = await prisma.courseInvite.create({
     data: {
       token,
-      title,
+      title: courseEntry.label,
+      courseLevel: courseLevelKey,
       maxCount,
       courseOrderId: courseOrderId ?? null,
       createdById: session.user.id,
@@ -61,6 +93,21 @@ export async function joinInvite(
 
   const invite = await prisma.courseInvite.findUnique({ where: { token } })
   if (!invite) return { success: false, message: '邀請連結無效或已失效' }
+
+  // 驗證學員先修
+  const courseEntry = COURSE_CATALOG[invite.courseLevel as CourseLevel]
+  if (courseEntry?.prerequisiteLevel !== null && courseEntry?.prerequisiteLevel !== undefined) {
+    const learningLevel = await getUserLearningLevel(session.user.id)
+    if (learningLevel < courseEntry.prerequisiteLevel) {
+      const prereqLabel = Object.values(COURSE_CATALOG).find(
+        (c) => c.levelNum === courseEntry.prerequisiteLevel
+      )?.label ?? `啟動靈人 ${courseEntry.prerequisiteLevel}`
+      return {
+        success: false,
+        message: `需先完成${prereqLabel}才能加入此課程`,
+      }
+    }
+  }
 
   // upsert：已加入則忽略
   await prisma.inviteEnrollment.upsert({
@@ -107,4 +154,43 @@ export async function getMyOrders() {
     orderBy: { createdAt: 'desc' },
     select: { id: true, buyerNameZh: true, courseDate: true },
   })
+}
+
+// ── 查詢當前使用者的學習與授課紀錄 ────────────
+export async function getMyLearningRecords() {
+  const session = await auth()
+  if (!session?.user?.id) return { enrollments: [], invites: [], learningLevel: 0 }
+
+  const [enrollments, invites, learningLevel] = await Promise.all([
+    // 已完成學習（學員）
+    prisma.inviteEnrollment.findMany({
+      where: { userId: session.user.id },
+      orderBy: { joinedAt: 'desc' },
+      include: {
+        invite: {
+          select: {
+            id: true,
+            title: true,
+            courseLevel: true,
+            createdBy: { select: { realName: true, name: true } },
+          },
+        },
+      },
+    }),
+    // 已完成授課（教師）
+    prisma.courseInvite.findMany({
+      where: { createdById: session.user.id },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        courseLevel: true,
+        createdAt: true,
+        _count: { select: { enrollments: true } },
+      },
+    }),
+    getUserLearningLevel(session.user.id),
+  ])
+
+  return { enrollments, invites, learningLevel }
 }

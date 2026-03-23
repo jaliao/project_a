@@ -7,9 +7,12 @@
  */
 
 import { z } from 'zod'
+import { COURSE_LEVEL_VALUES } from '@/config/course-catalog'
 
 export const createInviteSchema = z.object({
-  title: z.string().min(1, '課程名稱為必填'),
+  courseLevel: z.enum(COURSE_LEVEL_VALUES as [string, ...string[]], {
+    error: '請選擇課程',
+  }),
   maxCount: z
     .string()
     .min(1, '預計人數為必填')

@@ -7,14 +7,25 @@
  */
 
 // ==========================================
+// 課程等級枚舉
+// ==========================================
+enum CourseLevel {
+  level1 // 啟動靈人 1
+  level2 // 啟動靈人 2
+  level3 // 啟動靈人 3（未開放）
+  level4 // 啟動靈人 4（未開放）
+}
+
+// ==========================================
 // 課程邀請主體
 // ==========================================
 model CourseInvite {
   id    Int    @id @default(autoincrement())
   token String @unique // 12-char hex，邀請連結識別碼
 
-  title    String // 課程名稱（教師自訂）
-  maxCount Int // 預計人數
+  title       String // 課程名稱（由 courseLevel label 自動填入）
+  courseLevel CourseLevel @default(level1) // 課程等級
+  maxCount    Int // 預計人數
 
   // 關聯 CourseOrder（選填）
   courseOrderId Int?

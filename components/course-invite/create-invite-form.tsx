@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * CreateInviteForm - 建立邀請表單
- * 2026-03-23
+ * 2026-03-23 (Updated: 2026-03-23)
  * components/course-invite/create-invite-form.tsx
  * ----------------------------------------------
  */
@@ -15,6 +15,7 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { IconCopy, IconCheck } from '@tabler/icons-react'
 import { createInvite } from '@/app/actions/course-invite'
+import { getActiveCourses } from '@/config/course-catalog'
 import {
   Form,
   FormControl,
@@ -33,9 +34,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
+const activeCourses = getActiveCourses()
+
 // 前端表單 schema（輸入為字串）
 const formSchema = z.object({
-  title: z.string().min(1, '課程名稱為必填'),
+  courseLevel: z.string().min(1, '請選擇課程'),
   maxCount: z.string().min(1, '預計人數為必填'),
   courseOrderId: z.string().optional(),
 })
@@ -60,7 +63,7 @@ export function CreateInviteForm({ orders, onSuccess }: CreateInviteFormProps) {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { title: '', maxCount: '', courseOrderId: '' },
+    defaultValues: { courseLevel: '', maxCount: '', courseOrderId: '' },
   })
 
   const onSubmit = (values: FormValues) => {
@@ -106,10 +109,24 @@ export function CreateInviteForm({ orders, onSuccess }: CreateInviteFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField control={form.control} name="title" render={({ field }) => (
+        {/* 課程選擇 */}
+        <FormField control={form.control} name="courseLevel" render={({ field }) => (
           <FormItem>
-            <FormLabel>課程名稱 *</FormLabel>
-            <FormControl><Input placeholder="例：2026 年春季靈人課程" {...field} /></FormControl>
+            <FormLabel>課程 *</FormLabel>
+            <Select onValueChange={field.onChange} value={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="請選擇課程" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {activeCourses.map((c) => (
+                  <SelectItem key={c.level} value={c.level}>
+                    {c.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <FormMessage />
           </FormItem>
         )} />
