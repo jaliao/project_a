@@ -1,0 +1,38 @@
+# 依賴庫與構建產物 (最佔 Token)
+node_modules/
+.next/
+dist/
+out/
+build/
+
+# 資料庫生成檔案 (Prisma 生成的 Client 極大且難讀)
+prisma/generated/
+/generated/
+
+# 靜態資源 (圖示、圖片、字體對 AI 寫代碼無幫助)
+public/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.woff
+*.woff2
+
+# 版本控制與系統檔案
+.git/
+.svn/
+.DS_Store
+Thumbs.db
+
+# 紀錄與快取
+*.log
+.npm/
+.eslintcache
+.turbo/
+
+# 環境變數 (安全性考量)
+.env
+.env.*
+!.env.example

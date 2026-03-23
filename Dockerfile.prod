@@ -1,0 +1,76 @@
+# ----------------------------------------------
+# Dockerfile.prod
+# ----------------------------------------------
+
+# 1) Base Image
+FROM node:22-alpine AS base
+WORKDIR /app
+
+# Prisma on Alpine 常見需要的 runtime 依賴
+RUN apk add --no-cache \
+    libc6-compat \
+    openssl \
+    ca-certificates
+
+# ========================================================
+# 2) 依賴安裝階段
+# ========================================================
+FROM base AS deps
+COPY package.json package-lock.json ./
+# npm ci 預設會安裝 devDependencies（builder 需要 prisma CLI）
+RUN npm ci
+
+# ========================================================
+# 3) 建置階段 (Builder)
+# ========================================================
+FROM base AS builder
+WORKDIR /app
+
+# 注意：Next build / prisma generate 通常都需要 devDependencies
+ENV NODE_ENV=production
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Prisma 7 + prisma.config.ts + schema 多檔：generate 不需要真的連 DB
+# 但 schema/datasource.url 會讀 env("DATABASE_URL")，所以給一個 build-time 值即可
+ARG DATABASE_URL="postgresql://build:build@localhost:5432/build_db"
+ENV DATABASE_URL=$DATABASE_URL
+
+# 產生 Prisma Client（會讀取 prisma.config.ts 內的 schema: 'prisma/schema'）
+RUN npx prisma generate
+
+# Next.js build（standalone）
+RUN npm run build
+
+# ========================================================
+# 4) 執行階段 (Runner)
+# ========================================================
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+
+# 建立系統使用者
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser  --system --uid 1001 nextjs
+
+# 時區（可選）
+RUN apk add --no-cache tzdata && \
+    cp /usr/share/zoneinfo/Asia/Taipei /etc/localtime
+
+# 靜態資源
+COPY --from=builder /app/public ./public
+
+# Next standalone output
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# 保守補齊 Prisma engine（避免 standalone 漏帶 .prisma）
+# COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+
+USER nextjs
+EXPOSE 3000
+CMD ["node", "server.js"]

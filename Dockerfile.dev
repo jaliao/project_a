@@ -1,0 +1,36 @@
+# /*
+#  * ----------------------------------------------
+#  * Dockerfile.dev（開發用）
+#  * ----------------------------------------------
+#  */
+
+# 使用 glibc 的 Node 基礎映像，避免 SWC 錯誤
+# FROM node:23-alpine
+# FROM node:23-slim
+# FROM node:22-slim 
+FROM node:slim
+
+RUN apt-get update -y \
+    && apt-get install -y openssl
+
+# 設定工作目錄
+WORKDIR /app
+# WORKDIR /usr/src/app
+
+# 複製 package 檔案
+# COPY package*.json ./
+COPY package.json package-lock.json ./
+
+# 升級 npm 到 11.7.0
+RUN npm install -g npm@11.8.0
+# RUN npm ci
+
+# 👇 加入這行，確保容器建置時就有正確的 node_modulesRUN npm install
+# RUN npm install
+
+# COPY . .
+
+# 啟動開發模式
+CMD ["npm", "run", "dev"]
+
+# CMD ["sh", "-c", "npm run db:deploy && npm run dev"]

@@ -1,0 +1,16 @@
+# /*
+#  * ----------------------------------------------
+#  * docker-compose.prod.yml（正式用） 20250328
+#  * ----------------------------------------------
+#  */
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    ports:
+      - "3000:3000"
+    #environment: #- NODE_ENV=production
+    env_file:
+      - .env # 加入這一行，載入本機 .env

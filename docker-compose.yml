@@ -1,0 +1,33 @@
+# /*
+#  * ----------------------------------------------
+#  * docker-compose.yml（共用設定）
+#  * 2026-01-12
+#  * ----------------------------------------------
+#  */
+
+services:
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev # 預設用開發用，會被 override 覆蓋
+    user: "${UID}:${GID}"
+
+    depends_on:
+      - db
+
+  db:
+    build:
+      context: .
+      dockerfile: Dockerfile.pgcron
+    restart: always
+    
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
