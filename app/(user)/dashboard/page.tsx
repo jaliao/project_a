@@ -19,6 +19,8 @@ import { StatsCard } from '@/components/dashboard/stats-card'
 import { RecentMembers } from '@/components/dashboard/recent-members'
 import { DashboardActions } from '@/components/dashboard/dashboard-actions'
 import { ProfileBanner } from '@/components/dashboard/profile-banner'
+import { CourseSessionDialog } from '@/components/course-session/course-session-dialog'
+import { EnrolledStudentsList } from '@/components/course-session/enrolled-students-list'
 
 export const metadata: Metadata = {
   title: '首頁 — 啟動靈人系統',
@@ -98,6 +100,20 @@ export default async function DashboardPage() {
           <IconBook className="h-4 w-4" />
           學習紀錄
         </Link>
+      </div>
+
+      {/* 新增開課 */}
+      <div className="rounded-lg border p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold">開課管理</h2>
+          <CourseSessionDialog />
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground mb-3">已接受邀請的學員</p>
+          <Suspense fallback={<p className="text-sm text-muted-foreground">載入中…</p>}>
+            <EnrolledStudentsList />
+          </Suspense>
+        </div>
       </div>
 
       {/* 近期活動 */}

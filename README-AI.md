@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.6（2026-03-23）
+> 自動產生，版本 0.1.7（2026-03-23）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -58,6 +58,10 @@ components/
 │   ├── create-invite-dialog.tsx # 建立邀請 Dialog
 │   ├── create-invite-form.tsx   # 建立邀請表單 + 複製連結 View
 │   └── invite-copy-button.tsx   # 複製邀請連結按鈕（Client）
+├── course-session/
+│   ├── course-session-dialog.tsx  # 新增開課 Dialog（合併訂購 + 邀請）
+│   ├── course-session-form.tsx    # 合併表單（DatePicker、課程 Select、DEV 預填）
+│   └── enrolled-students-list.tsx # 已接受邀請學員清單（Server Component）
 ├── profile/
 │   └── sign-out-section.tsx     # 登出按鈕區塊（Client）
 └── learning/
@@ -118,6 +122,7 @@ token         String（唯一，12-char hex）
 title         String（課程名稱，由 courseLevel label 自動填入）
 courseLevel   CourseLevel（level1|level2|level3|level4，預設 level1）
 maxCount      Int（預計人數）
+expiredAt     DateTime?（邀請截止日期，選填）
 courseOrderId Int?（選填關聯 CourseOrder）
 createdById   String（建立者 UUID）
 createdAt     DateTime
@@ -191,6 +196,7 @@ createdAt       DateTime
 - `cr-spec-260323-007` — 開課邀請系統（邀請碼/連結、學員加入、進度追蹤）
 - `cr-spec-260323-008` — 會員資料完整度提醒、暱稱欄位、Profile 登出按鈕
 - `cr-spec-260323-009` — 課程目錄（啟動靈人 1～4）、先修驗證、學習紀錄頁面
+- `cr-spec-260323-010` — 新增開課（合併訂購 + 邀請表單、DatePicker、學員清單、expiredAt）
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）

@@ -27,6 +27,8 @@ model CourseInvite {
   courseLevel CourseLevel @default(level1) // 課程等級
   maxCount    Int // 預計人數
 
+  expiredAt DateTime? // 邀請截止日期（選填）
+
   // 關聯 CourseOrder（選填）
   courseOrderId Int?
   courseOrder   CourseOrder? @relation(fields: [courseOrderId], references: [id])
