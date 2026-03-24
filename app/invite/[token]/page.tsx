@@ -4,7 +4,7 @@
  * 2026-03-23
  * app/invite/[token]/page.tsx
  *
- * 已登入：執行加入邏輯後 redirect /dashboard?enrolled=1
+ * 已登入：執行加入邏輯後 redirect /course/{inviteId}
  * 未登入：middleware 已攔截導向 /login?callbackUrl=/invite/[token]
  * 無效 token：顯示錯誤訊息
  * ----------------------------------------------
@@ -43,5 +43,5 @@ export default async function InvitePage({ params }: Props) {
     )
   }
 
-  redirect('/dashboard?enrolled=1')
+  redirect(`/course/${result.data!.inviteId}`)
 }

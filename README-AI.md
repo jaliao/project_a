@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.13（2026-03-24）
+> 自動產生，版本 0.1.14（2026-03-24）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -136,14 +136,17 @@ createdById   String（建立者 UUID）
 createdAt     DateTime
 cancelledAt   DateTime?（有值代表已取消）
 cancelReason  String?（取消原因文字）
+completedAt   DateTime?（有值代表已結業）
 ```
 
 ### InviteEnrollment
 ```
-id        Int（主鍵）
-inviteId  Int（關聯 CourseInvite）
-userId    String（學員 UUID）
-joinedAt  DateTime
+id             Int（主鍵）
+inviteId       Int（關聯 CourseInvite）
+userId         String（學員 UUID）
+status         EnrollmentStatus（pending | approved，預設 pending）
+materialChoice MaterialChoice（none | traditional | simplified，預設 none）
+joinedAt       DateTime
 @@unique([inviteId, userId])
 ```
 
@@ -213,6 +216,7 @@ createdAt       DateTime
 - `cr-spec-260324-008` — 學員測試帳號（seed.ts 新增 4 位學員，student1~4@test.com，密碼 Student@1234）
 - `cr-spec-260324-009` — Dashboard 開課預覽（已新增開課卡片列表）+ 開課查詢頁（`/course-sessions`）+ 共用 CourseSessionCard
 - `cr-spec-260324-011` — 課程詳情頁（`/course/[id]`）：授課老師、已接受學員名單、取消課程（Dialog + 原因下拉）、結業申請（佔位）；CourseSessionCard 支援點擊導航
+- `cr-spec-260324-012` — 課程詳情頁進階設計：基本資訊區塊、角色差異化（講師/學員）、申請審核流程（pending→approved）、書籍選購（無須/繁體/簡體）、複製邀請連結、結業操作；InviteEnrollment 加 status + materialChoice
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）

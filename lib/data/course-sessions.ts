@@ -63,8 +63,21 @@ export async function getMyCourseSessionCount(userId: string): Promise<number> {
   return prisma.courseInvite.count({ where: { createdById: userId } })
 }
 
+type EnrollmentRecord = {
+  id: number
+  joinedAt: Date
+  status: string
+  materialChoice: string
+  user: {
+    id: string
+    name: string | null
+    email: string | null
+  }
+}
+
 export type CourseSessionDetail = {
   id: number
+  token: string
   title: string
   courseLevel: string
   maxCount: number
@@ -72,26 +85,20 @@ export type CourseSessionDetail = {
   createdAt: Date
   cancelledAt: Date | null
   cancelReason: string | null
+  completedAt: Date | null
   createdBy: {
     id: string
     name: string | null
     email: string | null
     realName: string | null
   }
-  enrollments: {
-    id: number
-    joinedAt: Date
-    user: {
-      id: string
-      name: string | null
-      email: string | null
-    }
-  }[]
+  approvedEnrollments: EnrollmentRecord[]
+  pendingEnrollments: EnrollmentRecord[]
   courseDate: string | null
 }
 
 /**
- * 取得單一開課記錄詳情，含授課老師與學員名單
+ * 取得單一開課記錄詳情，含授課老師與學員名單（分 approved / pending）
  */
 export async function getCourseSessionById(
   id: number
@@ -110,8 +117,12 @@ export async function getCourseSessionById(
 
   if (!invite) return null
 
+  const approvedEnrollments = invite.enrollments.filter((e) => e.status === 'approved')
+  const pendingEnrollments = invite.enrollments.filter((e) => e.status === 'pending')
+
   return {
     id: invite.id,
+    token: invite.token,
     title: invite.title,
     courseLevel: invite.courseLevel,
     maxCount: invite.maxCount,
@@ -119,8 +130,10 @@ export async function getCourseSessionById(
     createdAt: invite.createdAt,
     cancelledAt: invite.cancelledAt,
     cancelReason: invite.cancelReason,
+    completedAt: invite.completedAt,
     createdBy: invite.createdBy,
-    enrollments: invite.enrollments,
+    approvedEnrollments,
+    pendingEnrollments,
     courseDate: invite.courseOrder?.courseDate ?? null,
   }
 }

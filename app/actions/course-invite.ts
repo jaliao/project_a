@@ -84,10 +84,10 @@ export async function createInvite(
   }
 }
 
-// ── 學員透過 token 加入邀請 ────────────────────
+// ── 學員透過 token 加入邀請（建立 pending 申請）────────────────────
 export async function joinInvite(
   token: string
-): Promise<ActionResponse<{ inviteTitle: string }>> {
+): Promise<ActionResponse<{ inviteTitle: string; inviteId: number }>> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
 
@@ -109,18 +109,18 @@ export async function joinInvite(
     }
   }
 
-  // upsert：已加入則忽略
+  // upsert：已有申請記錄則忽略（不覆蓋 status）
   await prisma.inviteEnrollment.upsert({
     where: {
       inviteId_userId: { inviteId: invite.id, userId: session.user.id },
     },
-    create: { inviteId: invite.id, userId: session.user.id },
+    create: { inviteId: invite.id, userId: session.user.id, status: 'pending' },
     update: {},
   })
 
   return {
     success: true,
-    data: { inviteTitle: invite.title },
+    data: { inviteTitle: invite.title, inviteId: invite.id },
   }
 }
 
@@ -225,4 +225,83 @@ export async function getMyLearningRecords() {
   ])
 
   return { enrollments, invites, learningLevel }
+}
+
+// ── 學員申請參加課程（含書籍選擇）────────────────────
+export async function applyToCourse(
+  inviteId: number,
+  materialChoice: 'none' | 'traditional' | 'simplified'
+): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  const invite = await prisma.courseInvite.findUnique({ where: { id: inviteId } })
+  if (!invite) return { success: false, message: '找不到課程' }
+  if (invite.cancelledAt) return { success: false, message: '此課程已取消' }
+  if (invite.completedAt) return { success: false, message: '此課程已結業' }
+  if (invite.expiredAt && invite.expiredAt < new Date()) {
+    return { success: false, message: '報名截止日期已過' }
+  }
+
+  const existing = await prisma.inviteEnrollment.findUnique({
+    where: { inviteId_userId: { inviteId, userId: session.user.id } },
+  })
+  if (existing) return { success: false, message: '已有申請記錄' }
+
+  await prisma.inviteEnrollment.create({
+    data: { inviteId, userId: session.user.id, status: 'pending', materialChoice },
+  })
+
+  const { revalidatePath } = await import('next/cache')
+  revalidatePath(`/course/${inviteId}`)
+
+  return { success: true, message: '申請已送出，等待講師審核' }
+}
+
+// ── 講師同意學員申請 ──────────────────────────
+export async function approveEnrollment(enrollmentId: number): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  const enrollment = await prisma.inviteEnrollment.findUnique({
+    where: { id: enrollmentId },
+    include: { invite: { select: { id: true, createdById: true } } },
+  })
+  if (!enrollment) return { success: false, message: '找不到申請記錄' }
+  if (enrollment.invite.createdById !== session.user.id) {
+    return { success: false, message: '無權限執行此操作' }
+  }
+
+  await prisma.inviteEnrollment.update({
+    where: { id: enrollmentId },
+    data: { status: 'approved' },
+  })
+
+  const { revalidatePath } = await import('next/cache')
+  revalidatePath(`/course/${enrollment.invite.id}`)
+
+  return { success: true, message: '已同意申請' }
+}
+
+// ── 講師結業課程 ──────────────────────────────
+export async function graduateCourse(inviteId: number): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  const invite = await prisma.courseInvite.findUnique({ where: { id: inviteId } })
+  if (!invite) return { success: false, message: '找不到課程' }
+  if (invite.createdById !== session.user.id) {
+    return { success: false, message: '無權限執行此操作' }
+  }
+  if (invite.completedAt) return { success: false, message: '課程已結業' }
+
+  await prisma.courseInvite.update({
+    where: { id: inviteId },
+    data: { completedAt: new Date() },
+  })
+
+  const { revalidatePath } = await import('next/cache')
+  revalidatePath(`/course/${inviteId}`)
+
+  return { success: true, message: '課程已結業' }
 }
