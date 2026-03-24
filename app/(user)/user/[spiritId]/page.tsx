@@ -2,8 +2,8 @@
  * ----------------------------------------------
  * 學員專屬頁面
  * 2026-03-24
- * app/(user)/user/[id]/page.tsx
- * [id] 為 Spirit ID 小寫（例：pa260001）
+ * app/(user)/user/[spiritId]/page.tsx
+ * [spiritId] 為 Spirit ID 小寫（例：pa260001）
  * ----------------------------------------------
  */
 
@@ -32,11 +32,11 @@ const LEARNING_LEVEL_LABEL: Record<number, string> = {
 }
 
 type Props = {
-  params: Promise<{ id: string }>
+  params: Promise<{ spiritId: string }>
 }
 
 export default async function UserProfilePage({ params }: Props) {
-  const { id } = await params
+  const { spiritId: id } = await params
   const session = await auth()
 
   // 查詢使用者基本資料（以 spiritId 查詢，URL 為小寫，DB 存大寫）
@@ -158,10 +158,10 @@ export default async function UserProfilePage({ params }: Props) {
               <CourseSessionDialog />
             </Suspense>
             <Link
-              href="/course-sessions"
+              href={`/user/${id}/courses`}
               className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
             >
-              開課查詢
+              我的開課
             </Link>
           </div>
         </div>

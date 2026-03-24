@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.15（2026-03-24）
+> 自動產生，版本 0.1.16（2026-03-24）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -37,9 +37,10 @@ app/
 ├── (user)/          # 已登入路由群組（共用 Topbar layout）
 │   ├── layout.tsx   # Topbar 包裝層
 │   ├── dashboard/       # redirect → /user/{id}（舊書籤相容）
-│   ├── admin/           # 管理後台：統計卡片 + 已新增開課預覽 + 三功能單元
-│   ├── user/[id]/       # 學員專屬頁面：基本資料（姓名、身分標籤、已完成課程）
-│   ├── course-sessions/ # 開課查詢頁（全部開課記錄，含已結束）
+│   ├── admin/           # 管理後台：統計卡片 + 已新增開課預覽 + 近期活動
+│   ├── user/[id]/       # 學員專屬頁面：基本資料（姓名、身分標籤、已完成課程）+ 本人功能單元
+│   ├── user/[id]/courses/ # 我的開課列表（本人專屬，Spirit ID 小寫路由）
+│   ├── course-sessions/ # 開課查詢頁（保留，將逐步以 /user/[id]/courses 取代）
 │   ├── course/[id]/     # 課程詳情頁（授課老師、學員名單、取消課程、結業申請）
 │   ├── learning/        # 學習紀錄頁面
 │   └── profile/         # 個人資料維護
@@ -226,6 +227,7 @@ createdAt       DateTime
 - `cr-spec-260324-011` — 課程詳情頁（`/course/[id]`）：授課老師、已接受學員名單、取消課程（Dialog + 原因下拉）、結業申請（佔位）；CourseSessionCard 支援點擊導航
 - `cr-spec-260324-012` — 課程詳情頁進階設計：基本資訊區塊、角色差異化（講師/學員）、申請審核流程（pending→approved）、書籍選購（無須/繁體/簡體）、複製邀請連結、結業操作；InviteEnrollment 加 status + materialChoice
 - `cr-spec-260324-013` — 學員專屬頁面 `/user/{id}`（基本資料單元：姓名、身分標籤、已完成課程）；`/dashboard` 搬移至 `/admin`；登入後預設導向改為 `/user/{id}`
+- `cr-spec-260324-014` — 學員頁面完善：Spirit ID URL 小寫（`/user/pa260001`）、ProfileBanner/授課/管理者單元移至本人頁面、新增 `/user/{spiritId}/courses` 我的開課頁面、`User.learningLevel` 欄位
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）
