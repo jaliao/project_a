@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.14（2026-03-24）
+> 自動產生，版本 0.1.15（2026-03-24）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -36,9 +36,12 @@ app/
 ├── (auth)/          # 公開路由：login, register, forgot/reset-password
 ├── (user)/          # 已登入路由群組（共用 Topbar layout）
 │   ├── layout.tsx   # Topbar 包裝層
-│   ├── dashboard/       # 首頁：統計卡片 + 已新增開課預覽 + 三功能單元（學習/授課/管理者）
+│   ├── dashboard/       # redirect → /user/{id}（舊書籤相容）
+│   ├── admin/           # 管理後台：統計卡片 + 已新增開課預覽 + 三功能單元
+│   ├── user/[id]/       # 學員專屬頁面：基本資料（姓名、身分標籤、已完成課程）
 │   ├── course-sessions/ # 開課查詢頁（全部開課記錄，含已結束）
 │   ├── course/[id]/     # 課程詳情頁（授課老師、學員名單、取消課程、結業申請）
+│   ├── learning/        # 學習紀錄頁面
 │   └── profile/         # 個人資料維護
 ├── change-password/ # 臨時密碼強制變更
 ├── api/auth/        # NextAuth handlers
@@ -107,6 +110,7 @@ email         String（唯一，登入帳號）
 name          String?
 role          UserRole (user | admin | superadmin)
 spiritId      String?（唯一，格式 PA+YY+XXXX）
+learningLevel Int（預設 0；1～4 對應已完成的啟動靈人課程等級）
 passwordHash  String?（Google-only 為 null）
 isTempPassword Boolean（臨時密碼強制變更旗標）
 commEmail     String?（通訊 Email）
@@ -180,11 +184,15 @@ createdAt       DateTime
 2. **Email 白名單** — Google OAuth callback 驗證 `WhitelistedEmail.isActive`
 3. **臨時密碼攔截** — `isTempPassword=true` 強制導向 `/change-password`
 4. **JWT** — 儲存 `id`, `role`, `spiritId`, `isTempPassword`（30 天）
-5. **登入後預設導向** — `/dashboard`
+5. **登入後預設導向** — `/user/{currentUserId}`（學員專屬頁面）
 
 ### Spirit ID 核發
 - 格式：`PA` + 年份後兩碼 + 4 位流水號（例 `PA261001`）
 - 首次 Google 登入自動觸發核發
+
+### 學員身分標籤（learningLevel）
+- `learningLevel` 0：無標籤
+- `learningLevel` 1～4：對應「啟動靈人 N 學員」Badge
 
 ---
 
@@ -217,6 +225,7 @@ createdAt       DateTime
 - `cr-spec-260324-009` — Dashboard 開課預覽（已新增開課卡片列表）+ 開課查詢頁（`/course-sessions`）+ 共用 CourseSessionCard
 - `cr-spec-260324-011` — 課程詳情頁（`/course/[id]`）：授課老師、已接受學員名單、取消課程（Dialog + 原因下拉）、結業申請（佔位）；CourseSessionCard 支援點擊導航
 - `cr-spec-260324-012` — 課程詳情頁進階設計：基本資訊區塊、角色差異化（講師/學員）、申請審核流程（pending→approved）、書籍選購（無須/繁體/簡體）、複製邀請連結、結業操作；InviteEnrollment 加 status + materialChoice
+- `cr-spec-260324-013` — 學員專屬頁面 `/user/{id}`（基本資料單元：姓名、身分標籤、已完成課程）；`/dashboard` 搬移至 `/admin`；登入後預設導向改為 `/user/{id}`
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）
