@@ -156,6 +156,38 @@ export async function getMyOrders() {
   })
 }
 
+// ── 取消課程 ──────────────────────────────────
+export async function cancelCourseSession(
+  id: number,
+  cancelReason: string
+): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  if (!cancelReason.trim()) {
+    return { success: false, message: '請填寫取消原因' }
+  }
+
+  const invite = await prisma.courseInvite.findUnique({ where: { id } })
+  if (!invite) return { success: false, message: '找不到課程' }
+  if (invite.createdById !== session.user.id) {
+    return { success: false, message: '無權限取消此課程' }
+  }
+  if (invite.cancelledAt) {
+    return { success: false, message: '課程已取消' }
+  }
+
+  await prisma.courseInvite.update({
+    where: { id },
+    data: { cancelledAt: new Date(), cancelReason: cancelReason.trim() },
+  })
+
+  const { revalidatePath } = await import('next/cache')
+  revalidatePath(`/course/${id}`)
+
+  return { success: true, message: '課程已取消' }
+}
+
 // ── 查詢當前使用者的學習與授課紀錄 ────────────
 export async function getMyLearningRecords() {
   const session = await auth()

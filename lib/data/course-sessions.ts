@@ -62,3 +62,65 @@ export async function getMyCourseSessions(
 export async function getMyCourseSessionCount(userId: string): Promise<number> {
   return prisma.courseInvite.count({ where: { createdById: userId } })
 }
+
+export type CourseSessionDetail = {
+  id: number
+  title: string
+  courseLevel: string
+  maxCount: number
+  expiredAt: Date | null
+  createdAt: Date
+  cancelledAt: Date | null
+  cancelReason: string | null
+  createdBy: {
+    id: string
+    name: string | null
+    email: string | null
+    realName: string | null
+  }
+  enrollments: {
+    id: number
+    joinedAt: Date
+    user: {
+      id: string
+      name: string | null
+      email: string | null
+    }
+  }[]
+  courseDate: string | null
+}
+
+/**
+ * 取得單一開課記錄詳情，含授課老師與學員名單
+ */
+export async function getCourseSessionById(
+  id: number
+): Promise<CourseSessionDetail | null> {
+  const invite = await prisma.courseInvite.findUnique({
+    where: { id },
+    include: {
+      createdBy: { select: { id: true, name: true, email: true, realName: true } },
+      enrollments: {
+        include: { user: { select: { id: true, name: true, email: true } } },
+        orderBy: { joinedAt: 'asc' },
+      },
+      courseOrder: { select: { courseDate: true } },
+    },
+  })
+
+  if (!invite) return null
+
+  return {
+    id: invite.id,
+    title: invite.title,
+    courseLevel: invite.courseLevel,
+    maxCount: invite.maxCount,
+    expiredAt: invite.expiredAt,
+    createdAt: invite.createdAt,
+    cancelledAt: invite.cancelledAt,
+    cancelReason: invite.cancelReason,
+    createdBy: invite.createdBy,
+    enrollments: invite.enrollments,
+    courseDate: invite.courseOrder?.courseDate ?? null,
+  }
+}

@@ -39,6 +39,10 @@ model CourseInvite {
 
   createdAt DateTime @default(now())
 
+  // 取消課程
+  cancelledAt  DateTime? // 取消時間（有值即代表已取消）
+  cancelReason String? // 取消原因文字
+
   enrollments InviteEnrollment[]
 
   @@map("course_invites")

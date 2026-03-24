@@ -105,6 +105,7 @@ export default async function DashboardPage() {
                 enrolledCount={item.enrolledCount}
                 expiredAt={item.expiredAt}
                 variant="compact"
+                href={`/course/${item.id}`}
               />
             ))}
           </div>

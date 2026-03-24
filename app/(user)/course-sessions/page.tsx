@@ -60,6 +60,7 @@ export default async function CourseSessionsPage() {
               enrolledCount={item.enrolledCount}
               expiredAt={item.expiredAt}
               variant="full"
+              href={`/course/${item.id}`}
             />
           ))}
         </div>

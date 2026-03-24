@@ -6,6 +6,7 @@
  * ----------------------------------------------
  */
 
+import Link from 'next/link'
 import { IconCalendar, IconUsers, IconClock } from '@tabler/icons-react'
 import { COURSE_CATALOG, type CourseLevel } from '@/config/course-catalog'
 import { cn } from '@/lib/utils'
@@ -18,6 +19,7 @@ type CourseSessionCardProps = {
   enrolledCount: number
   expiredAt: Date | null
   variant?: 'compact' | 'full'
+  href?: string
 }
 
 // 課程等級對應的標籤顏色
@@ -43,16 +45,18 @@ export function CourseSessionCard({
   enrolledCount,
   expiredAt,
   variant = 'compact',
+  href,
 }: CourseSessionCardProps) {
   const catalogEntry = COURSE_CATALOG[courseLevel as CourseLevel]
   const levelLabel = catalogEntry?.label ?? courseLevel
   const levelColor = LEVEL_COLORS[courseLevel] ?? 'bg-gray-100 text-gray-700'
 
-  return (
+  const card = (
     <div
       className={cn(
         'rounded-lg border bg-card p-4 space-y-3',
-        variant === 'full' && 'p-5'
+        variant === 'full' && 'p-5',
+        href && 'cursor-pointer transition-shadow hover:shadow-md'
       )}
     >
       {/* 標題與等級 */}
@@ -98,4 +102,14 @@ export function CourseSessionCard({
       </div>
     </div>
   )
+
+  if (href) {
+    return (
+      <Link href={href} className="block">
+        {card}
+      </Link>
+    )
+  }
+
+  return card
 }

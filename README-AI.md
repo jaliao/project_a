@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.12（2026-03-24）
+> 自動產生，版本 0.1.13（2026-03-24）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -38,6 +38,7 @@ app/
 │   ├── layout.tsx   # Topbar 包裝層
 │   ├── dashboard/       # 首頁：統計卡片 + 已新增開課預覽 + 三功能單元（學習/授課/管理者）
 │   ├── course-sessions/ # 開課查詢頁（全部開課記錄，含已結束）
+│   ├── course/[id]/     # 課程詳情頁（授課老師、學員名單、取消課程、結業申請）
 │   └── profile/         # 個人資料維護
 ├── change-password/ # 臨時密碼強制變更
 ├── api/auth/        # NextAuth handlers
@@ -62,7 +63,8 @@ components/
 ├── course-session/
 │   ├── course-session-dialog.tsx  # 新增開課 Dialog（合併訂購 + 邀請）
 │   ├── course-session-form.tsx    # 合併表單（DatePicker、課程 Select、DEV 預填）
-│   ├── course-session-card.tsx    # 開課卡片共用元件（compact / full variant）
+│   ├── course-session-card.tsx    # 開課卡片共用元件（compact / full variant，支援 href 連結）
+│   ├── cancel-course-dialog.tsx   # 取消課程確認 Dialog（下拉選單 + 自填 textarea）
 │   └── enrolled-students-list.tsx # 已接受邀請學員清單（Server Component）
 ├── profile/
 │   └── sign-out-section.tsx     # 登出按鈕區塊（Client）
@@ -77,7 +79,7 @@ lib/
 ├── data/
 │   ├── user.ts              # 使用者資料查詢
 │   ├── password-reset.ts    # 密碼重設查詢
-│   └── course-sessions.ts   # 開課記錄查詢（getMyCourseSessions, getMyCourseSessionCount）
+│   └── course-sessions.ts   # 開課記錄查詢（getMyCourseSessions, getMyCourseSessionCount, getCourseSessionById）
 └── utils.ts         # cn() 等工具函數
 
 prisma/
@@ -132,6 +134,8 @@ expiredAt     DateTime?（邀請截止日期，選填）
 courseOrderId Int?（選填關聯 CourseOrder）
 createdById   String（建立者 UUID）
 createdAt     DateTime
+cancelledAt   DateTime?（有值代表已取消）
+cancelReason  String?（取消原因文字）
 ```
 
 ### InviteEnrollment
@@ -208,6 +212,7 @@ createdAt       DateTime
 - `cr-spec-260324-006` — 學習單元依角色隱藏（admin/superadmin 不顯示學習單元）
 - `cr-spec-260324-008` — 學員測試帳號（seed.ts 新增 4 位學員，student1~4@test.com，密碼 Student@1234）
 - `cr-spec-260324-009` — Dashboard 開課預覽（已新增開課卡片列表）+ 開課查詢頁（`/course-sessions`）+ 共用 CourseSessionCard
+- `cr-spec-260324-011` — 課程詳情頁（`/course/[id]`）：授課老師、已接受學員名單、取消課程（Dialog + 原因下拉）、結業申請（佔位）；CourseSessionCard 支援點擊導航
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）
