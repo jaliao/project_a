@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.7（2026-03-23）
+> 自動產生，版本 0.1.8（2026-03-24）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -197,6 +197,7 @@ createdAt       DateTime
 - `cr-spec-260323-008` — 會員資料完整度提醒、暱稱欄位、Profile 登出按鈕
 - `cr-spec-260323-009` — 課程目錄（啟動靈人 1～4）、先修驗證、學習紀錄頁面
 - `cr-spec-260323-010` — 新增開課（合併訂購 + 邀請表單、DatePicker、學員清單、expiredAt）
+- `cr-spec-260324-001` — 系統管理員初始化（prisma/seed.ts，justin@blockcode.com.tw，superadmin）
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）

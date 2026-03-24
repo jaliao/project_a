@@ -429,15 +429,6 @@ prisma-vps3-status: ## 檢查 VPS3 Migration 狀態（建議先跑）
 prisma-vps3-deploy: ## 部署 migrations 到 VPS3（正式/遠端 DB 用）
 	@echo "Prisma migrate deploy (VPS3)..."
 	@$(PRISMA_VPS3_DB) npx prisma migrate deploy
-	
-
-prisma-dev-status: ## 檢查 Dev Migration 狀態（建議先跑）
-	@echo "Prisma migrate status (DEV)... $(PRISMA_DEV_DB)"
-	@$(DEV_COMPOSE) exec web npx prisma migrate status
-
-prisma-dev-deploy: ## 部署 migrations 到 VPS3（正式/遠端 DB 用）
-	@echo "Prisma migrate deploy (DEV)..."	
-	@$(DEV_COMPOSE) exec web npx prisma migrate deploy
 
 prisma-vps3-seed: ## 部署 migrations 到 VPS3（正式/遠端 DB 用）
 	@echo "初始化 VPS3 種子資料..."
@@ -453,3 +444,21 @@ prisma-vps3-studio: ## 連 VPS3 開 Prisma Studio（需先開 tunnel）
 	@$(PRISMA_VPS3_DB) npx prisma studio
 
 
+
+prisma-dev-status: ## 檢查 Dev Migration 狀態（建議先跑）
+	@echo "Prisma migrate status (DEV)... $(PRISMA_DEV_DB)"
+	@$(DEV_COMPOSE) exec web npx prisma migrate status
+
+prisma-dev-deploy: ## 部署 migrations 到 VPS3（正式/遠端 DB 用）
+	@echo "Prisma migrate deploy (DEV)..."	
+	@$(DEV_COMPOSE) exec web npx prisma migrate deploy
+
+
+prisma-dev-seed: ## 部署 migrations 到 VPS3（正式/遠端 DB 用）
+	@echo "初始化 DEV 種子資料..."
+	@if [ -f prisma/seed.ts ]; then \
+		$(DEV_COMPOSE) exec web npx tsx prisma/seed.ts; \
+		echo "✅ 種子資料已建立"; \
+	else \
+		echo "❌ 找不到 prisma/seed.ts"; \
+	fi
