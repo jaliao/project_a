@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * Dashboard 首頁
- * 2026-03-23 (Updated: 2026-03-23)
+ * 2026-03-23 (Updated: 2026-03-24, 2026-03-24)
  * app/(user)/dashboard/page.tsx
  * ----------------------------------------------
  */
@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { IconUsers, IconUserPlus, IconSparkles, IconBook } from '@tabler/icons-react'
+import { IconUsers, IconUserPlus, IconSparkles, IconBook, IconSchool, IconChalkboard, IconShieldCheck } from '@tabler/icons-react'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { getMyOrders } from '@/app/actions/course-invite'
@@ -46,9 +46,9 @@ export default async function DashboardPage() {
       getMyOrders(),
       session?.user?.id
         ? prisma.user.findUnique({
-            where: { id: session.user.id },
-            select: { realName: true, name: true, email: true, commEmail: true, phone: true },
-          })
+          where: { id: session.user.id },
+          select: { realName: true, name: true, email: true, commEmail: true, phone: true },
+        })
         : null,
     ])
 
@@ -72,48 +72,75 @@ export default async function DashboardPage() {
         </Suspense>
       </div>
 
-      {/* 統計卡片 */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatsCard
-          icon={<IconUsers className="h-6 w-6" />}
-          value={totalMembers}
-          title="會員總數"
-        />
-        <StatsCard
-          icon={<IconUserPlus className="h-6 w-6" />}
-          value={newThisMonth}
-          title="本月新增會員"
-        />
-        <StatsCard
-          icon={<IconSparkles className="h-6 w-6" />}
-          value={withSpiritId}
-          title="已核發 Spirit ID"
-        />
+
+
+      {/* 功能單元 */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {/* 學習單元（僅 user 角色可見） */}
+        {session?.user?.role !== 'admin' && session?.user?.role !== 'superadmin' && <div className="rounded-lg border p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <IconSchool className="h-5 w-5 text-primary" />
+            <h2 className="text-base font-semibold">學習</h2>
+          </div>
+          <div className="flex flex-col gap-2">
+            <button
+              disabled
+              className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium opacity-50 cursor-not-allowed"
+            >
+              加入學習
+            </button>
+            <Link
+              href="/learning"
+              className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
+            >
+              <IconBook className="h-4 w-4" />
+              學習紀錄
+            </Link>
+          </div>
+        </div>}
+
+        {/* 授課單元 */}
+        <div className="rounded-lg border p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <IconChalkboard className="h-5 w-5 text-primary" />
+            <h2 className="text-base font-semibold">授課</h2>
+          </div>
+          <div className="flex flex-col gap-2">
+            <CourseSessionDialog />
+            <button
+              disabled
+              className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium opacity-50 cursor-not-allowed"
+            >
+              開課查詢
+            </button>
+          </div>
+        </div>
+
+        {/* 管理者單元（僅 admin / superadmin 可見） */}
+        {(session?.user?.role === 'admin' || session?.user?.role === 'superadmin') && (
+          <div className="rounded-lg border p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <IconShieldCheck className="h-5 w-5 text-primary" />
+              <h2 className="text-base font-semibold">管理者</h2>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Link
+                href="/admin"
+                className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
+              >
+                管理後台
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* 快速連結 */}
-      <div className="flex flex-wrap gap-3">
-        <Link
-          href="/learning"
-          className="inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-muted transition-colors"
-        >
-          <IconBook className="h-4 w-4" />
-          學習紀錄
-        </Link>
-      </div>
-
-      {/* 新增開課 */}
-      <div className="rounded-lg border p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold">開課管理</h2>
-          <CourseSessionDialog />
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground mb-3">已接受邀請的學員</p>
-          <Suspense fallback={<p className="text-sm text-muted-foreground">載入中…</p>}>
-            <EnrolledStudentsList />
-          </Suspense>
-        </div>
+      {/* 已接受邀請的學員 */}
+      <div className="rounded-lg border p-5 space-y-3">
+        <h2 className="text-base font-semibold">已接受邀請的學員</h2>
+        <Suspense fallback={<p className="text-sm text-muted-foreground">載入中…</p>}>
+          <EnrolledStudentsList />
+        </Suspense>
       </div>
 
       {/* 近期活動 */}

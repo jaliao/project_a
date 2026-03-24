@@ -47,12 +47,15 @@ export async function createCourseSession(
   const courseLevelKey = d.courseLevel as CourseLevel
   const courseEntry = COURSE_CATALOG[courseLevelKey]
 
-  // 驗證教師先修資格
-  const learningLevel = await getUserLearningLevel(session.user.id)
-  if (learningLevel < courseEntry.levelNum) {
-    return {
-      success: false,
-      message: `開授${courseEntry.label}須先完成該課程學習`,
+  // 驗證教師先修資格（管理者略過）
+  const isAdmin = session.user.role === 'admin' || session.user.role === 'superadmin'
+  if (!isAdmin) {
+    const learningLevel = await getUserLearningLevel(session.user.id)
+    if (learningLevel < courseEntry.levelNum) {
+      return {
+        success: false,
+        message: `開授${courseEntry.label}須先完成該課程學習`,
+      }
     }
   }
 

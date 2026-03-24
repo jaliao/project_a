@@ -16,23 +16,27 @@
 - **THEN** learningLevel 為 0
 
 ### Requirement: 建立邀請需通過先修驗證（教師）
-`createInvite` SHALL 驗證教師的 learningLevel 大於或等於所選課程的 level 數字。不符合時拒絕建立並回傳錯誤訊息。
+`createInvite`（及 `createCourseSession`）SHALL 驗證教師的 learningLevel 大於或等於所選課程的 level 數字。`admin` 與 `superadmin` 角色豁免此驗證，可直接建立任何課程邀請。不符合時拒絕建立並回傳錯誤訊息。
 
 #### Scenario: 教師嘗試建立 level1 邀請但 learningLevel 為 0
-- **WHEN** learningLevel 為 0 的使用者嘗試建立 啟動靈人 1 邀請
+- **WHEN** role 為 `user`、learningLevel 為 0 的使用者嘗試建立 啟動靈人 1 邀請
 - **THEN** 系統拒絕，回傳「需先完成啟動靈人 1 才能開設此課程」
 
 #### Scenario: 教師已完成 level1 可建立 level1 邀請
-- **WHEN** learningLevel 為 1 的使用者嘗試建立 啟動靈人 1 邀請
+- **WHEN** role 為 `user`、learningLevel 為 1 的使用者嘗試建立 啟動靈人 1 邀請
 - **THEN** 系統允許，邀請建立成功
 
 #### Scenario: 教師嘗試建立 level2 邀請但只完成 level1
-- **WHEN** learningLevel 為 1 的使用者嘗試建立 啟動靈人 2 邀請
+- **WHEN** role 為 `user`、learningLevel 為 1 的使用者嘗試建立 啟動靈人 2 邀請
 - **THEN** 系統拒絕，回傳「需先完成啟動靈人 2 才能開設此課程」
 
 #### Scenario: 教師已完成 level2 可建立 level2 邀請
-- **WHEN** learningLevel 為 2 的使用者嘗試建立 啟動靈人 2 邀請
+- **WHEN** role 為 `user`、learningLevel 為 2 的使用者嘗試建立 啟動靈人 2 邀請
 - **THEN** 系統允許，邀請建立成功
+
+#### Scenario: 管理者不需先修即可建立任何課程邀請
+- **WHEN** role 為 `admin` 或 `superadmin` 的使用者嘗試建立任意 level 邀請
+- **THEN** 系統允許，略過先修驗證，邀請建立成功
 
 ### Requirement: 加入邀請需通過先修驗證（學員）
 `joinInvite` SHALL 驗證學員的 learningLevel 大於或等於邀請課程的 prerequisiteLevel。不符合時拒絕加入並回傳錯誤訊息。

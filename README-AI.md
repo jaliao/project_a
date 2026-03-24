@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.8（2026-03-24）
+> 自動產生，版本 0.1.10（2026-03-24）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -36,7 +36,7 @@ app/
 ├── (auth)/          # 公開路由：login, register, forgot/reset-password
 ├── (user)/          # 已登入路由群組（共用 Topbar layout）
 │   ├── layout.tsx   # Topbar 包裝層
-│   ├── dashboard/   # 首頁：統計卡片 + 近期活動
+│   ├── dashboard/   # 首頁：統計卡片 + 三功能單元（學習/授課/管理者）+ 近期活動
 │   └── profile/     # 個人資料維護
 ├── change-password/ # 臨時密碼強制變更
 ├── api/auth/        # NextAuth handlers
@@ -198,6 +198,8 @@ createdAt       DateTime
 - `cr-spec-260323-009` — 課程目錄（啟動靈人 1～4）、先修驗證、學習紀錄頁面
 - `cr-spec-260323-010` — 新增開課（合併訂購 + 邀請表單、DatePicker、學員清單、expiredAt）
 - `cr-spec-260324-001` — 系統管理員初始化（prisma/seed.ts，justin@blockcode.com.tw，superadmin）
+- `cr-spec-260324-005` — Dashboard 功能單元重組（學習/授課/管理者三區塊，角色判斷）
+- `cr-spec-260324-006` — 學習單元依角色隱藏（admin/superadmin 不顯示學習單元）
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）
