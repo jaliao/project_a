@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.10（2026-03-24）
+> 自動產生，版本 0.1.11（2026-03-24）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -200,6 +200,7 @@ createdAt       DateTime
 - `cr-spec-260324-001` — 系統管理員初始化（prisma/seed.ts，justin@blockcode.com.tw，superadmin）
 - `cr-spec-260324-005` — Dashboard 功能單元重組（學習/授課/管理者三區塊，角色判斷）
 - `cr-spec-260324-006` — 學習單元依角色隱藏（admin/superadmin 不顯示學習單元）
+- `cr-spec-260324-008` — 學員測試帳號（seed.ts 新增 4 位學員，student1~4@test.com，密碼 Student@1234）
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）
