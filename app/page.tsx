@@ -13,8 +13,9 @@ import { auth } from '@/lib/auth'
 // 已登入使用者導向個人學員頁面
 export default async function RootPage() {
   const session = await auth()
-  if (session?.user?.id) {
-    redirect(`/user/${session.user.id}`)
+  if (session?.user) {
+    // spiritId 尚未核發時（新帳號）導向 profile 補全資料
+    redirect(session.user.spiritId ? `/user/${session.user.spiritId.toLowerCase()}` : '/profile')
   }
   redirect('/login')
 }

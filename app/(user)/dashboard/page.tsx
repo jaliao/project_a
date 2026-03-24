@@ -11,8 +11,8 @@ import { auth } from '@/lib/auth'
 
 export default async function DashboardPage() {
   const session = await auth()
-  if (session?.user?.id) {
-    redirect(`/user/${session.user.id}`)
+  if (session?.user) {
+    redirect(session.user.spiritId ? `/user/${session.user.spiritId.toLowerCase()}` : '/profile')
   }
   redirect('/login')
 }

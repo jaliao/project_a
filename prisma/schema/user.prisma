@@ -44,6 +44,9 @@ model User {
   isPhoneVerified Boolean @default(false)
   address         String?
 
+  // 學習等級（0=未完成任何課程；1~4=已完成啟動靈人對應等級）
+  learningLevel Int @default(0)
+
   // 第三方帳號（保留欄位）
   lineId String? @unique
 

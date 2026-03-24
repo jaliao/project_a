@@ -3,15 +3,25 @@
  * 學員專屬頁面
  * 2026-03-24
  * app/(user)/user/[id]/page.tsx
+ * [id] 為 Spirit ID 小寫（例：pa260001）
  * ----------------------------------------------
  */
 
+import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { IconUser, IconBook } from '@tabler/icons-react'
+import Link from 'next/link'
+import { IconUser, IconBook, IconChalkboard, IconShieldCheck } from '@tabler/icons-react'
 import { prisma } from '@/lib/prisma'
+import { auth } from '@/lib/auth'
 import { Badge } from '@/components/ui/badge'
+import { ProfileBanner } from '@/components/dashboard/profile-banner'
+import { CourseSessionDialog } from '@/components/course-session/course-session-dialog'
 import { COURSE_CATALOG, type CourseLevel } from '@/config/course-catalog'
+
+export const metadata: Metadata = {
+  title: '學員資料 — 啟動靈人系統',
+}
 
 // learningLevel → 身分標籤
 const LEARNING_LEVEL_LABEL: Record<number, string> = {
@@ -25,26 +35,20 @@ type Props = {
   params: Promise<{ id: string }>
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params
-  const user = await prisma.user.findUnique({
-    where: { id },
-    select: { realName: true, name: true },
-  })
-  const displayName = user?.realName || user?.name || '學員'
-  return { title: `${displayName} — 啟動靈人系統` }
-}
-
 export default async function UserProfilePage({ params }: Props) {
   const { id } = await params
+  const session = await auth()
 
-  // 查詢使用者基本資料
+  // 查詢使用者基本資料（以 spiritId 查詢，URL 為小寫，DB 存大寫）
   const user = await prisma.user.findUnique({
-    where: { id },
+    where: { spiritId: id.toUpperCase() },
     select: {
       id: true,
       realName: true,
       name: true,
+      email: true,
+      commEmail: true,
+      phone: true,
       learningLevel: true,
       spiritId: true,
     },
@@ -54,7 +58,7 @@ export default async function UserProfilePage({ params }: Props) {
 
   // 查詢已完成課程（InviteEnrollment）
   const enrollments = await prisma.inviteEnrollment.findMany({
-    where: { userId: id },
+    where: { userId: user.id },
     include: {
       invite: {
         select: { courseLevel: true, title: true },
@@ -66,8 +70,21 @@ export default async function UserProfilePage({ params }: Props) {
   const displayName = user.realName || user.name || '（未設定姓名）'
   const levelLabel = user.learningLevel ? LEARNING_LEVEL_LABEL[user.learningLevel] : null
 
+  // 判斷是否為本人頁面
+  const isOwnPage = session?.user?.spiritId?.toLowerCase() === id
+
+  // 本人頁面才需要的資料
+  const effectiveCommEmail = user.commEmail ?? user.email
+  const isProfileComplete = !!(user.realName && effectiveCommEmail && user.phone)
+  const isAdmin = session?.user?.role === 'admin' || session?.user?.role === 'superadmin'
+
   return (
     <div className="space-y-6">
+      {/* 資料完整度提醒（僅本人可見） */}
+      {isOwnPage && (
+        <ProfileBanner isComplete={isProfileComplete} displayName={displayName} />
+      )}
+
       <h1 className="text-2xl font-semibold">學員資料</h1>
 
       {/* 基本資料單元 */}
@@ -128,6 +145,45 @@ export default async function UserProfilePage({ params }: Props) {
           </ul>
         )}
       </div>
+
+      {/* 授課單元（僅本人可見） */}
+      {isOwnPage && (
+        <div className="rounded-lg border p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <IconChalkboard className="h-5 w-5 text-primary" />
+            <h2 className="text-base font-semibold">授課</h2>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Suspense>
+              <CourseSessionDialog />
+            </Suspense>
+            <Link
+              href="/course-sessions"
+              className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
+            >
+              開課查詢
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* 管理者單元（本人且為 admin/superadmin 才顯示） */}
+      {isOwnPage && isAdmin && (
+        <div className="rounded-lg border p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <IconShieldCheck className="h-5 w-5 text-primary" />
+            <h2 className="text-base font-semibold">管理者</h2>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Link
+              href="/admin"
+              className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
+            >
+              管理後台
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

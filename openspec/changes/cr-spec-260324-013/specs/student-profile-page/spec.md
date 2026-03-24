@@ -1,22 +1,22 @@
 ## ADDED Requirements
 
 ### Requirement: 學員專屬頁面路由
-系統 SHALL 提供 `/user/{id}` 路由，顯示指定學員的個人資料頁面。所有已登入使用者皆可存取任意學員頁面。
+系統 SHALL 提供 `/user/{spiritId}` 路由，顯示指定學員的個人資料頁面。所有已登入使用者皆可存取任意學員頁面。路由參數使用 Spirit ID（例：`PA260001`），不使用 UUID。
 
 #### Scenario: 已登入使用者查閱他人頁面
-- **WHEN** 已登入使用者存取 `/user/{otherId}`
+- **WHEN** 已登入使用者存取 `/user/{otherSpiritId}`
 - **THEN** 系統顯示對應學員的基本資料頁面
 
 #### Scenario: 使用者查閱自己的頁面
-- **WHEN** 已登入使用者存取 `/user/{selfId}`
+- **WHEN** 已登入使用者存取 `/user/{selfSpiritId}`
 - **THEN** 系統顯示自己的基本資料頁面，內容與他人檢視相同
 
 #### Scenario: 未登入使用者存取
-- **WHEN** 未登入使用者存取 `/user/{id}`
-- **THEN** 系統重定向至 `/login?callbackUrl=/user/{id}`
+- **WHEN** 未登入使用者存取 `/user/{spiritId}`
+- **THEN** 系統重定向至 `/login?callbackUrl=/user/{spiritId}`
 
-#### Scenario: 不存在的使用者 ID
-- **WHEN** 已登入使用者存取不存在的使用者 ID
+#### Scenario: 不存在的 Spirit ID
+- **WHEN** 已登入使用者存取不存在的 Spirit ID
 - **THEN** 系統顯示 404 頁面
 
 ### Requirement: 基本資料單元 — 姓名
