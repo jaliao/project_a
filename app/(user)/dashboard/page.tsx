@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * Dashboard 首頁
- * 2026-03-23 (Updated: 2026-03-24, 2026-03-24)
+ * 2026-03-23 (Updated: 2026-03-24, 2026-03-24, 2026-03-24)
  * app/(user)/dashboard/page.tsx
  * ----------------------------------------------
  */
@@ -21,6 +21,8 @@ import { DashboardActions } from '@/components/dashboard/dashboard-actions'
 import { ProfileBanner } from '@/components/dashboard/profile-banner'
 import { CourseSessionDialog } from '@/components/course-session/course-session-dialog'
 import { EnrolledStudentsList } from '@/components/course-session/enrolled-students-list'
+import { CourseSessionCard } from '@/components/course-session/course-session-card'
+import { getMyCourseSessions, getMyCourseSessionCount } from '@/lib/data/course-sessions'
 
 export const metadata: Metadata = {
   title: '首頁 — 啟動靈人系統',
@@ -33,7 +35,9 @@ export default async function DashboardPage() {
   const now = new Date()
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
-  const [totalMembers, newThisMonth, withSpiritId, recentMembers, orders, currentUser] =
+  const PREVIEW_LIMIT = 5
+
+  const [totalMembers, newThisMonth, withSpiritId, recentMembers, orders, currentUser, previewSessions, totalSessionCount] =
     await Promise.all([
       prisma.user.count(),
       prisma.user.count({ where: { createdAt: { gte: firstDayOfMonth } } }),
@@ -50,6 +54,8 @@ export default async function DashboardPage() {
           select: { realName: true, name: true, email: true, commEmail: true, phone: true },
         })
         : null,
+      session?.user?.id ? getMyCourseSessions(session.user.id, PREVIEW_LIMIT) : [],
+      session?.user?.id ? getMyCourseSessionCount(session.user.id) : 0,
     ])
 
   const effectiveCommEmail = currentUser?.commEmail ?? currentUser?.email
@@ -73,6 +79,37 @@ export default async function DashboardPage() {
       </div>
 
 
+
+      {/* 已新增的開課 */}
+      {previewSessions.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold">已新增的開課</h2>
+            {totalSessionCount > PREVIEW_LIMIT && (
+              <Link
+                href="/course-sessions"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                查看全部
+              </Link>
+            )}
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {previewSessions.map((item) => (
+              <CourseSessionCard
+                key={item.id}
+                title={item.title}
+                courseLevel={item.courseLevel}
+                courseDate={item.courseDate}
+                maxCount={item.maxCount}
+                enrolledCount={item.enrolledCount}
+                expiredAt={item.expiredAt}
+                variant="compact"
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 功能單元 */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -107,12 +144,12 @@ export default async function DashboardPage() {
           </div>
           <div className="flex flex-col gap-2">
             <CourseSessionDialog />
-            <button
-              disabled
-              className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium opacity-50 cursor-not-allowed"
+            <Link
+              href="/course-sessions"
+              className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
             >
               開課查詢
-            </button>
+            </Link>
           </div>
         </div>
 

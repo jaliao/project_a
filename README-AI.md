@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.11（2026-03-24）
+> 自動產生，版本 0.1.12（2026-03-24）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -36,8 +36,9 @@ app/
 ├── (auth)/          # 公開路由：login, register, forgot/reset-password
 ├── (user)/          # 已登入路由群組（共用 Topbar layout）
 │   ├── layout.tsx   # Topbar 包裝層
-│   ├── dashboard/   # 首頁：統計卡片 + 三功能單元（學習/授課/管理者）+ 近期活動
-│   └── profile/     # 個人資料維護
+│   ├── dashboard/       # 首頁：統計卡片 + 已新增開課預覽 + 三功能單元（學習/授課/管理者）
+│   ├── course-sessions/ # 開課查詢頁（全部開課記錄，含已結束）
+│   └── profile/         # 個人資料維護
 ├── change-password/ # 臨時密碼強制變更
 ├── api/auth/        # NextAuth handlers
 ├── middleware.ts    # 未登入攔截 + 臨時密碼強制導向
@@ -61,6 +62,7 @@ components/
 ├── course-session/
 │   ├── course-session-dialog.tsx  # 新增開課 Dialog（合併訂購 + 邀請）
 │   ├── course-session-form.tsx    # 合併表單（DatePicker、課程 Select、DEV 預填）
+│   ├── course-session-card.tsx    # 開課卡片共用元件（compact / full variant）
 │   └── enrolled-students-list.tsx # 已接受邀請學員清單（Server Component）
 ├── profile/
 │   └── sign-out-section.tsx     # 登出按鈕區塊（Client）
@@ -72,6 +74,10 @@ lib/
 ├── prisma.ts        # Prisma client singleton
 ├── spirit-id.ts     # Spirit ID 產生器
 ├── schemas/         # Zod 驗證 schema
+├── data/
+│   ├── user.ts              # 使用者資料查詢
+│   ├── password-reset.ts    # 密碼重設查詢
+│   └── course-sessions.ts   # 開課記錄查詢（getMyCourseSessions, getMyCourseSessionCount）
 └── utils.ts         # cn() 等工具函數
 
 prisma/
@@ -201,6 +207,7 @@ createdAt       DateTime
 - `cr-spec-260324-005` — Dashboard 功能單元重組（學習/授課/管理者三區塊，角色判斷）
 - `cr-spec-260324-006` — 學習單元依角色隱藏（admin/superadmin 不顯示學習單元）
 - `cr-spec-260324-008` — 學員測試帳號（seed.ts 新增 4 位學員，student1~4@test.com，密碼 Student@1234）
+- `cr-spec-260324-009` — Dashboard 開課預覽（已新增開課卡片列表）+ 開課查詢頁（`/course-sessions`）+ 共用 CourseSessionCard
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）
