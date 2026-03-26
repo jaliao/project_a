@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
- * CourseSessionDialog - 新增開課 Dialog
- * 2026-03-23
+ * CourseSessionDialog - 新增授課 Dialog
+ * 2026-03-23 (Updated: 2026-03-26)
  * components/course-session/course-session-dialog.tsx
  * ----------------------------------------------
  */
@@ -20,7 +20,11 @@ import { Button } from '@/components/ui/button'
 import { CourseSessionForm } from './course-session-form'
 import { IconPlus } from '@tabler/icons-react'
 
-export function CourseSessionDialog() {
+interface CourseSessionDialogProps {
+  instructorName?: string
+}
+
+export function CourseSessionDialog({ instructorName = '' }: CourseSessionDialogProps) {
   const [open, setOpen] = useState(false)
 
   const handleSuccess = (_token: string) => {
@@ -32,14 +36,14 @@ export function CourseSessionDialog() {
       <DialogTrigger asChild>
         <Button>
           <IconPlus className="mr-2 h-4 w-4" />
-          新增開課
+          新增授課
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>新增開課</DialogTitle>
+          <DialogTitle>新增授課</DialogTitle>
         </DialogHeader>
-        <CourseSessionForm onSuccess={handleSuccess} />
+        <CourseSessionForm instructorName={instructorName} onSuccess={handleSuccess} />
       </DialogContent>
     </Dialog>
   )

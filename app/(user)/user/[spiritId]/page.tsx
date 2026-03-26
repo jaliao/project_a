@@ -19,7 +19,7 @@ import { ProfileBanner } from '@/components/dashboard/profile-banner'
 import { CourseSessionDialog } from '@/components/course-session/course-session-dialog'
 import { CourseSessionCard } from '@/components/course-session/course-session-card'
 import { CourseCardGrid } from '@/components/course-session/course-card-grid'
-import { getMyEnrollments } from '@/lib/data/course-sessions'
+import { getMyEnrollments, getMyCourseSessions } from '@/lib/data/course-sessions'
 
 export const metadata: Metadata = {
   title: '學員資料 — 啟動靈人系統',
@@ -61,6 +61,11 @@ export default async function UserProfilePage({ params }: Props) {
   // 查詢學員所有課程（過濾已取消）
   const allEnrollments = await getMyEnrollments(user.id)
   const enrollments = allEnrollments.filter((e) => !e.cancelledAt)
+
+  // 判斷是否為本人頁面（提前計算，供授課查詢使用）
+  const isOwnPageEarly = session?.user?.spiritId?.toLowerCase() === id
+  // 查詢本人授課（最多 4 筆，用於判斷是否顯示「更多」卡片）
+  const myCourseSessions = isOwnPageEarly ? await getMyCourseSessions(user.id, 4) : []
 
   const displayName = user.realName || user.name || '（未設定姓名）'
   const levelLabel = user.learningLevel ? LEARNING_LEVEL_LABEL[user.learningLevel] : null
@@ -154,17 +159,42 @@ export default async function UserProfilePage({ params }: Props) {
             <IconChalkboard className="h-5 w-5 text-primary" />
             <h2 className="text-base font-semibold">授課</h2>
           </div>
-          <div className="flex flex-col gap-2">
-            <Suspense>
-              <CourseSessionDialog />
-            </Suspense>
-            <Link
-              href={`/user/${id}/courses`}
-              className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
-            >
-              我的開課
-            </Link>
-          </div>
+
+          {/* 最近授課預覽 */}
+          {myCourseSessions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">尚無授課紀錄</p>
+          ) : (
+            <CourseCardGrid>
+              {myCourseSessions.slice(0, 3).map((item) => (
+                <CourseSessionCard
+                  key={item.id}
+                  title={item.title}
+                  courseLevel={item.courseLevel}
+                  courseDate={item.courseDate}
+                  maxCount={item.maxCount}
+                  enrolledCount={item.enrolledCount}
+                  expiredAt={item.expiredAt}
+                  startedAt={item.startedAt}
+                  cancelledAt={item.cancelledAt}
+                  completedAt={item.completedAt}
+                  variant="compact"
+                  href={`/course/${item.id}`}
+                />
+              ))}
+              {myCourseSessions.length > 3 && (
+                <Link href={`/user/${id}/courses`} className="block">
+                  <div className="rounded-lg border bg-card p-4 h-full flex items-center justify-center text-sm font-medium text-muted-foreground hover:bg-muted transition-colors cursor-pointer">
+                    更多授課資訊
+                  </div>
+                </Link>
+              )}
+            </CourseCardGrid>
+          )}
+
+          {/* 操作按鈕 */}
+          <Suspense>
+            <CourseSessionDialog instructorName={displayName} />
+          </Suspense>
         </div>
       )}
 

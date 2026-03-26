@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
- * Server Actions - 新增開課（合併訂購與邀請）
- * 2026-03-23
+ * Server Actions - 新增授課
+ * 2026-03-23 (Updated: 2026-03-26)
  * app/actions/course-session.ts
  * ----------------------------------------------
  */
@@ -15,7 +15,6 @@ import { courseSessionSchema } from '@/lib/schemas/course-session'
 import { COURSE_CATALOG, type CourseLevel } from '@/config/course-catalog'
 import { getUserLearningLevel } from '@/app/actions/course-invite'
 import { createNotification } from '@/app/actions/notification'
-import type { MaterialVersion, PurchaseType, DeliveryMethod } from '@prisma/client'
 
 type ActionResponse = {
   success: boolean
@@ -24,7 +23,7 @@ type ActionResponse = {
   errors?: Record<string, string[]>
 }
 
-// 格式化日期為 YYYY/MM/DD 字串（CourseOrder.courseDate 為 String 欄位）
+// 格式化日期為 YYYY/MM/DD 字串
 function formatDateString(date: Date): string {
   const y = date.getFullYear()
   const m = String(date.getMonth() + 1).padStart(2, '0')
@@ -32,7 +31,7 @@ function formatDateString(date: Date): string {
   return `${y}/${m}/${d}`
 }
 
-// ── 建立開課（CourseOrder + CourseInvite atomic transaction）──
+// ── 建立授課（僅建立 CourseInvite）──
 export async function createCourseSession(
   formData: Record<string, unknown>
 ): Promise<ActionResponse> {
@@ -60,63 +59,35 @@ export async function createCourseSession(
     }
   }
 
-  // 計算實際數量
-  const quantity =
-    d.quantityOption === 'other' ? 0 : parseInt(d.quantityOption, 10)
-
   const token = randomBytes(6).toString('hex')
 
-  // 使用 callback 風格 transaction，讓 courseOrderId 可在同一 transaction 中連結
-  const invite = await prisma.$transaction(async (tx) => {
-    const order = await tx.courseOrder.create({
-      data: {
-        buyerNameZh: d.buyerNameZh,
-        buyerNameEn: d.buyerNameEn,
-        teacherName: d.teacherName,
-        churchOrg: d.churchOrg,
-        email: d.email,
-        phone: d.phone,
-        materialVersion: d.materialVersion as MaterialVersion,
-        purchaseType: d.purchaseType as PurchaseType,
-        studentNames: d.studentNames || null,
-        quantity,
-        quantityNote: d.quantityOption === 'other' ? (d.quantityNote ?? null) : null,
-        courseDate: formatDateString(d.courseDate),
-        taxId: d.taxId || null,
-        deliveryMethod: d.deliveryMethod as DeliveryMethod,
-        submittedById: session.user.id,
-      },
-    })
-
-    const newInvite = await tx.courseInvite.create({
-      data: {
-        token,
-        title: courseEntry.label,
-        courseLevel: courseLevelKey,
-        maxCount: parseInt(d.maxCount, 10),
-        expiredAt: d.expiredAt,
-        courseOrderId: order.id,
-        createdById: session.user.id,
-      },
-    })
-
-    return newInvite
+  const invite = await prisma.courseInvite.create({
+    data: {
+      token,
+      title: d.title,
+      courseLevel: courseLevelKey,
+      maxCount: parseInt(d.maxCount, 10),
+      expiredAt: d.expiredAt,
+      courseDate: formatDateString(d.courseDate),
+      notes: d.notes || null,
+      createdById: session.user.id,
+    },
   })
 
   // 寫入 Inbox 通知（fire-and-forget，失敗不影響主操作）
   try {
     await createNotification(
       session.user.id,
-      '開課完成',
-      `${courseEntry.label} 開課單已建立，預計開課日期：${formatDateString(d.courseDate)}`
+      '授課已建立',
+      `${d.title} 已建立，預計開課日期：${formatDateString(d.courseDate)}`
     )
   } catch (e) {
-    console.error('開課通知寫入失敗', e)
+    console.error('授課通知寫入失敗', e)
   }
 
   return {
     success: true,
-    message: '開課單已建立！',
+    message: '授課已建立！',
     data: { inviteId: invite.id, token: invite.token },
   }
 }

@@ -46,6 +46,7 @@ export async function getMyCourseSessions(
       cancelledAt: true,
       completedAt: true,
       _count: { select: { enrollments: true } },
+      courseDate: true,
       courseOrder: { select: { courseDate: true } },
     },
   })
@@ -57,7 +58,8 @@ export async function getMyCourseSessions(
     maxCount: invite.maxCount,
     enrolledCount: invite._count.enrollments,
     expiredAt: invite.expiredAt,
-    courseDate: invite.courseOrder?.courseDate ?? null,
+    // 優先取 invite.courseDate（新流程），fallback 至 courseOrder.courseDate（舊流程）
+    courseDate: invite.courseDate ?? invite.courseOrder?.courseDate ?? null,
     createdAt: invite.createdAt,
     startedAt: invite.startedAt,
     cancelledAt: invite.cancelledAt,
@@ -150,6 +152,7 @@ export type CourseSessionDetail = {
   maxCount: number
   expiredAt: Date | null
   createdAt: Date
+  startedAt: Date | null
   cancelledAt: Date | null
   cancelReason: string | null
   completedAt: Date | null
@@ -172,7 +175,19 @@ export async function getCourseSessionById(
 ): Promise<CourseSessionDetail | null> {
   const invite = await prisma.courseInvite.findUnique({
     where: { id },
-    include: {
+    select: {
+      id: true,
+      token: true,
+      title: true,
+      courseLevel: true,
+      maxCount: true,
+      expiredAt: true,
+      createdAt: true,
+      startedAt: true,
+      cancelledAt: true,
+      cancelReason: true,
+      completedAt: true,
+      courseDate: true,
       createdBy: { select: { id: true, name: true, email: true, realName: true } },
       enrollments: {
         include: { user: { select: { id: true, name: true, email: true } } },
@@ -195,12 +210,13 @@ export async function getCourseSessionById(
     maxCount: invite.maxCount,
     expiredAt: invite.expiredAt,
     createdAt: invite.createdAt,
+    startedAt: invite.startedAt,
     cancelledAt: invite.cancelledAt,
     cancelReason: invite.cancelReason,
     completedAt: invite.completedAt,
     createdBy: invite.createdBy,
     approvedEnrollments,
     pendingEnrollments,
-    courseDate: invite.courseOrder?.courseDate ?? null,
+    courseDate: invite.courseDate ?? invite.courseOrder?.courseDate ?? null,
   }
 }
