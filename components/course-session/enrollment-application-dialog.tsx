@@ -34,9 +34,12 @@ type Props = {
   inviteId: number
   open: boolean
   onOpenChange: (open: boolean) => void
+  courseTitle: string
+  courseDate?: string | null
+  instructorName: string
 }
 
-export function EnrollmentApplicationDialog({ inviteId, open, onOpenChange }: Props) {
+export function EnrollmentApplicationDialog({ inviteId, open, onOpenChange, courseTitle, courseDate, instructorName }: Props) {
   const router = useRouter()
   const [selected, setSelected] = useState<MaterialChoice | ''>('')
   const [loading, setLoading] = useState(false)
@@ -69,6 +72,15 @@ export function EnrollmentApplicationDialog({ inviteId, open, onOpenChange }: Pr
         <DialogHeader>
           <DialogTitle>選擇書籍</DialogTitle>
         </DialogHeader>
+
+        {/* 課程資訊確認區塊 */}
+        <div className="rounded-lg bg-muted/50 border p-3 space-y-1 text-sm">
+          <p className="font-medium">{courseTitle}</p>
+          <p className="text-muted-foreground">講師：{instructorName}</p>
+          {courseDate && (
+            <p className="text-muted-foreground">預計開課：{courseDate}</p>
+          )}
+        </div>
 
         <div className="space-y-3 py-2">
           {MATERIAL_OPTIONS.map((opt) => (

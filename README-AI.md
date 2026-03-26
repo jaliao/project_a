@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.18（2026-03-26）
+> 自動產生，版本 0.1.19（2026-03-26）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -246,6 +246,7 @@ createdAt       DateTime
 - `cr-spec-260324-014` — 學員頁面完善：Spirit ID URL 小寫（`/user/pa260001`）、ProfileBanner/授課/管理者單元移至本人頁面、新增 `/user/{spiritId}/courses` 我的開課頁面、`User.learningLevel` 欄位
 - `cr-spec-260324-007` — 訊息通知系統：Notification DB model、右側 Drawer（Sheet）、未讀 Badge、標記已讀、`/notifications` 歷史頁面（分頁）
 - `cr-spec-260326-007` — Toast + Inbox 通知整合：`createNotification` 工具函數、開課完成 / 取消課程 / 學員審核通過 / 課程結業 四個操作自動寫入 Inbox
+- `cr-spec-260326-008` — 學員申請流程完善：`EnrollmentApplicationDialog` 新增課程資訊確認區塊（課程名稱、講師、開課日期）；`applyToCourse` 成功後通知講師有新申請
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）

@@ -231,6 +231,9 @@ export default async function CourseDetailPage({
           isCancelled={isCancelled}
           isCompleted={isCompleted}
           myEnrollment={myEnrollment ?? null}
+          courseTitle={courseSession.title}
+          courseDate={courseSession.courseDate ?? null}
+          instructorName={teacherName}
         />
       )}
 

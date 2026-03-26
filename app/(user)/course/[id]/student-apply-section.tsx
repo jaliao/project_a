@@ -24,6 +24,9 @@ type Props = {
   isCancelled: boolean
   isCompleted: boolean
   myEnrollment: MyEnrollment
+  courseTitle: string
+  courseDate?: string | null
+  instructorName: string
 }
 
 export function StudentApplySection({
@@ -32,6 +35,9 @@ export function StudentApplySection({
   isCancelled,
   isCompleted,
   myEnrollment,
+  courseTitle,
+  courseDate,
+  instructorName,
 }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false)
 
@@ -72,6 +78,9 @@ export function StudentApplySection({
         inviteId={inviteId}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
+        courseTitle={courseTitle}
+        courseDate={courseDate}
+        instructorName={instructorName}
       />
     </>
   )

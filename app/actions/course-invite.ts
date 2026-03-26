@@ -266,6 +266,19 @@ export async function applyToCourse(
   const { revalidatePath } = await import('next/cache')
   revalidatePath(`/course/${inviteId}`)
 
+  // 通知講師有新申請（fire-and-forget）
+  const applicantName =
+    (session.user.name && session.user.name.trim()) || session.user.email || '學員'
+  try {
+    await createNotification(
+      invite.createdById,
+      '新申請通知',
+      `${applicantName} 申請加入「${invite.title}」，請前往課程詳情審核。`
+    )
+  } catch (e) {
+    console.error('新申請通知寫入失敗', e)
+  }
+
   return { success: true, message: '申請已送出，等待講師審核' }
 }
 
