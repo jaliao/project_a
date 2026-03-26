@@ -34,7 +34,7 @@ DOCKER_COMPOSE=docker compose -p $(PROJECT_NAME) -f docker-compose.yml
 DEV_COMPOSE=$(DOCKER_COMPOSE) -f docker-compose.dev.yml
 PROD_COMPOSE=$(DOCKER_COMPOSE) -f docker-compose.prod.yml
 
-.PHONY: help dev dev-clean dev-stop dev-logs dev-restart
+.PHONY: help dev dev-clean dev-stop dev-logs dev-restart next-clean
 .PHONY: prisma-generate prisma-push prisma-migrate prisma-migrate-deploy prisma-reset prisma-studio prisma-validate prisma-format prisma-seed
 .PHONY: prisma-docker-generate prisma-docker-push prisma-docker-migrate prisma-docker-restart prisma-docker-studio
 .PHONY: schema-update schema-quick prisma-status prisma-diff prisma-inspect
@@ -151,6 +151,11 @@ dev-clean: ## 🧹 清理並重新啟動開發環境
 	@echo "🗑️  清理完成"
 	@echo "🐳 重新啟動..."
 	@$(MAKE) dev
+
+next-clean: ## 🗑️  清除 Next.js/.next 快取（修復 Turbopack ChunkLoadError）
+	@echo "🗑️  清除 .next 快取..."
+	@rm -rf .next
+	@echo "✅ 完成，請執行 npm run dev 重新啟動"
 
 dev-stop: ## ⏹️  停止開發環境
 	@echo "⏹️  停止容器..."
