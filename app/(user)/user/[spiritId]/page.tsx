@@ -138,7 +138,7 @@ export default async function UserProfilePage({ params }: Props) {
           {pendingCourses.length === 0 ? (
             <p className="text-sm text-muted-foreground">目前沒有申請中的課程</p>
           ) : (
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {pendingCourses.map((e) => (
                 <CourseSessionCard
                   key={e.enrollmentId}
@@ -148,6 +148,9 @@ export default async function UserProfilePage({ params }: Props) {
                   maxCount={e.maxCount}
                   enrolledCount={e.enrolledCount}
                   expiredAt={e.expiredAt}
+                  startedAt={e.startedAt}
+                  cancelledAt={e.cancelledAt}
+                  completedAt={e.completedAt}
                   variant="compact"
                   href={`/course/${e.inviteId}`}
                 />
@@ -162,7 +165,7 @@ export default async function UserProfilePage({ params }: Props) {
           {activeCourses.length === 0 ? (
             <p className="text-sm text-muted-foreground">目前沒有進行中的課程</p>
           ) : (
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {activeCourses.map((e) => (
                 <CourseSessionCard
                   key={e.enrollmentId}
@@ -172,6 +175,9 @@ export default async function UserProfilePage({ params }: Props) {
                   maxCount={e.maxCount}
                   enrolledCount={e.enrolledCount}
                   expiredAt={e.expiredAt}
+                  startedAt={e.startedAt}
+                  cancelledAt={e.cancelledAt}
+                  completedAt={e.completedAt}
                   variant="compact"
                   href={`/course/${e.inviteId}`}
                 />
@@ -186,7 +192,7 @@ export default async function UserProfilePage({ params }: Props) {
           {completedCourses.length === 0 ? (
             <p className="text-sm text-muted-foreground">尚無結業課程</p>
           ) : (
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {completedCourses.map((e) => (
                 <CourseSessionCard
                   key={e.enrollmentId}
@@ -196,6 +202,9 @@ export default async function UserProfilePage({ params }: Props) {
                   maxCount={e.maxCount}
                   enrolledCount={e.enrolledCount}
                   expiredAt={e.expiredAt}
+                  startedAt={e.startedAt}
+                  cancelledAt={e.cancelledAt}
+                  completedAt={e.completedAt}
                   variant="compact"
                   href={`/course/${e.inviteId}`}
                 />

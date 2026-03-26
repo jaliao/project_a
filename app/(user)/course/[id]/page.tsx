@@ -243,6 +243,7 @@ export default async function CourseDetailPage({
           inviteId={courseSession.id}
           isCancelled={isCancelled}
           isCompleted={isCompleted}
+          isStarted={!!courseSession.startedAt}
         />
       )}
     </div>

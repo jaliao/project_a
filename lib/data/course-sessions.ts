@@ -17,6 +17,9 @@ export type CourseSessionItem = {
   expiredAt: Date | null
   courseDate: string | null
   createdAt: Date
+  startedAt: Date | null
+  cancelledAt: Date | null
+  completedAt: Date | null
 }
 
 /**
@@ -39,6 +42,9 @@ export async function getMyCourseSessions(
       maxCount: true,
       expiredAt: true,
       createdAt: true,
+      startedAt: true,
+      cancelledAt: true,
+      completedAt: true,
       _count: { select: { enrollments: true } },
       courseOrder: { select: { courseDate: true } },
     },
@@ -53,6 +59,9 @@ export async function getMyCourseSessions(
     expiredAt: invite.expiredAt,
     courseDate: invite.courseOrder?.courseDate ?? null,
     createdAt: invite.createdAt,
+    startedAt: invite.startedAt,
+    cancelledAt: invite.cancelledAt,
+    completedAt: invite.completedAt,
   }))
 }
 
@@ -66,6 +75,7 @@ export type MyEnrollmentItem = {
   enrolledCount: number
   courseDate: string | null
   expiredAt: Date | null
+  startedAt: Date | null
   completedAt: Date | null
   cancelledAt: Date | null
 }
@@ -87,6 +97,7 @@ export async function getMyEnrollments(userId: string): Promise<MyEnrollmentItem
           courseLevel: true,
           maxCount: true,
           expiredAt: true,
+          startedAt: true,
           completedAt: true,
           cancelledAt: true,
           _count: { select: { enrollments: true } },
@@ -106,6 +117,7 @@ export async function getMyEnrollments(userId: string): Promise<MyEnrollmentItem
     enrolledCount: e.invite._count.enrollments,
     courseDate: e.invite.courseOrder?.courseDate ?? null,
     expiredAt: e.invite.expiredAt,
+    startedAt: e.invite.startedAt,
     completedAt: e.invite.completedAt,
     cancelledAt: e.invite.cancelledAt,
   }))

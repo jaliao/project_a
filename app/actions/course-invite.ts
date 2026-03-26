@@ -282,6 +282,31 @@ export async function applyToCourse(
   return { success: true, message: '申請已送出，等待講師審核' }
 }
 
+// ── 講師開始上課（招生中 → 進行中）──────────────────
+export async function startCourseSession(inviteId: number): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  const invite = await prisma.courseInvite.findUnique({ where: { id: inviteId } })
+  if (!invite) return { success: false, message: '找不到課程' }
+  if (invite.createdById !== session.user.id) {
+    return { success: false, message: '無權限執行此操作' }
+  }
+  if (invite.cancelledAt) return { success: false, message: '課程已取消' }
+  if (invite.completedAt) return { success: false, message: '課程已結業' }
+  if (invite.startedAt) return { success: false, message: '課程已在進行中' }
+
+  await prisma.courseInvite.update({
+    where: { id: inviteId },
+    data: { startedAt: new Date() },
+  })
+
+  const { revalidatePath } = await import('next/cache')
+  revalidatePath(`/course/${inviteId}`)
+
+  return { success: true, message: '課程已開始' }
+}
+
 // ── 講師同意學員申請 ──────────────────────────
 export async function approveEnrollment(enrollmentId: number): Promise<ActionResponse> {
   const session = await auth()

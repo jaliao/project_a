@@ -60,6 +60,9 @@ model CourseInvite {
   cancelledAt  DateTime? // 取消時間（有值即代表已取消）
   cancelReason String? // 取消原因文字
 
+  // 課程進行中
+  startedAt DateTime? // 開始授課時間（有值即代表進行中）
+
   // 結業
   completedAt DateTime? // 結業時間（有值即代表已結業）
 

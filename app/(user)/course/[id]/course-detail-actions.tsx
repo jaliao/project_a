@@ -20,21 +20,34 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { CancelCourseDialog } from '@/components/course-session/cancel-course-dialog'
-import { graduateCourse } from '@/app/actions/course-invite'
+import { graduateCourse, startCourseSession } from '@/app/actions/course-invite'
 
 type Props = {
   inviteId: number
   isCancelled: boolean
   isCompleted: boolean
+  isStarted: boolean
 }
 
-export function CourseDetailActions({ inviteId, isCancelled, isCompleted }: Props) {
+export function CourseDetailActions({ inviteId, isCancelled, isCompleted, isStarted }: Props) {
   const router = useRouter()
   const [cancelOpen, setCancelOpen] = useState(false)
   const [graduateOpen, setGraduateOpen] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const canAct = !isCancelled && !isCompleted
+
+  async function handleStart() {
+    setLoading(true)
+    const result = await startCourseSession(inviteId)
+    setLoading(false)
+    if (result.success) {
+      toast.success('課程已開始')
+      router.refresh()
+    } else {
+      toast.error(result.message ?? '操作失敗，請稍後再試')
+    }
+  }
 
   async function handleGraduate() {
     setLoading(true)
@@ -53,6 +66,13 @@ export function CourseDetailActions({ inviteId, isCancelled, isCompleted }: Prop
 
   return (
     <div className="flex items-center gap-3 pt-2">
+      {/* 開始上課按鈕（招生中才顯示） */}
+      {!isStarted && (
+        <Button onClick={handleStart} disabled={loading}>
+          {loading ? '處理中...' : '開始上課'}
+        </Button>
+      )}
+
       {/* 結業按鈕 */}
       <Button variant="outline" onClick={() => setGraduateOpen(true)}>
         結業

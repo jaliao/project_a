@@ -11,6 +11,34 @@ import { IconCalendar, IconUsers, IconClock } from '@tabler/icons-react'
 import { COURSE_CATALOG, type CourseLevel } from '@/config/course-catalog'
 import { cn } from '@/lib/utils'
 
+type CourseStatus = 'recruiting' | 'active' | 'completed' | 'cancelled'
+
+const STATUS_LABELS: Record<CourseStatus, string> = {
+  recruiting: '招生中',
+  active: '進行中',
+  completed: '已結業',
+  cancelled: '已取消',
+}
+
+const STATUS_COLORS: Record<CourseStatus, string> = {
+  recruiting: 'bg-blue-100 text-blue-700',
+  active: 'bg-green-100 text-green-700',
+  completed: 'bg-gray-100 text-gray-600',
+  cancelled: 'bg-red-100 text-red-700',
+}
+
+function getCourseStatus(item: {
+  cancelledAt?: Date | null
+  completedAt?: Date | null
+  startedAt?: Date | null
+}): CourseStatus | null {
+  if (item.cancelledAt === undefined && item.completedAt === undefined && item.startedAt === undefined) return null
+  if (item.cancelledAt) return 'cancelled'
+  if (item.completedAt) return 'completed'
+  if (item.startedAt) return 'active'
+  return 'recruiting'
+}
+
 type CourseSessionCardProps = {
   title: string
   courseLevel: string
@@ -20,6 +48,9 @@ type CourseSessionCardProps = {
   expiredAt: Date | null
   variant?: 'compact' | 'full'
   href?: string
+  startedAt?: Date | null
+  cancelledAt?: Date | null
+  completedAt?: Date | null
 }
 
 // 課程等級對應的標籤顏色
@@ -46,10 +77,16 @@ export function CourseSessionCard({
   expiredAt,
   variant = 'compact',
   href,
+  startedAt,
+  cancelledAt,
+  completedAt,
 }: CourseSessionCardProps) {
   const catalogEntry = COURSE_CATALOG[courseLevel as CourseLevel]
   const levelLabel = catalogEntry?.label ?? courseLevel
   const levelColor = LEVEL_COLORS[courseLevel] ?? 'bg-gray-100 text-gray-700'
+
+  const status = getCourseStatus({ cancelledAt, completedAt, startedAt })
+  const progressRatio = maxCount > 0 ? Math.min(enrolledCount / maxCount, 1) : 0
 
   const card = (
     <div
@@ -59,29 +96,42 @@ export function CourseSessionCard({
         href && 'cursor-pointer transition-shadow hover:shadow-md'
       )}
     >
-      {/* 標題與等級 */}
+      {/* 標題、等級、狀態 */}
       <div className="flex items-start justify-between gap-2">
         <p className={cn('font-semibold text-sm', variant === 'full' && 'text-base')}>
           {title}
         </p>
-        <span
-          className={cn(
-            'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
-            levelColor
+        <div className="flex shrink-0 items-center gap-1.5">
+          {status && (
+            <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', STATUS_COLORS[status])}>
+              {STATUS_LABELS[status]}
+            </span>
           )}
-        >
-          {levelLabel}
-        </span>
+          <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', levelColor)}>
+            {levelLabel}
+          </span>
+        </div>
       </div>
 
       {/* 資訊列 */}
       <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
-        {/* 人數 */}
+        {/* 人數 + 進度 bar */}
         <div className="flex items-center gap-1.5">
           <IconUsers className="h-3.5 w-3.5 shrink-0" />
           <span>
             已報名 {enrolledCount} / 預計 {maxCount} 人
           </span>
+        </div>
+        <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+          <div
+            className={cn(
+              'h-full rounded-full transition-all',
+              status === 'completed' ? 'bg-gray-400' :
+              status === 'cancelled' ? 'bg-red-400' :
+              status === 'active' ? 'bg-green-500' : 'bg-primary'
+            )}
+            style={{ width: `${progressRatio * 100}%` }}
+          />
         </div>
 
         {/* 開課日期 */}
