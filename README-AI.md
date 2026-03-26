@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.21（2026-03-26）
+> 自動產生，版本 0.1.23（2026-03-26）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -53,7 +53,7 @@ app/
 components/
 ├── ui/              # shadcn/ui 基礎元件
 ├── layout/
-│   └── topbar.tsx   # 頂部工具列（新增課程/個人資料/訊息通知 Drawer）
+│   └── topbar.tsx   # 頂部工具列（sticky；個人資料/訊息通知 Drawer）
 ├── notification/
 │   └── notification-drawer.tsx  # 右側通知 Drawer（Sheet，lazy load，標記已讀）
 ├── dashboard/
@@ -71,6 +71,7 @@ components/
 │   ├── course-session-dialog.tsx  # 新增開課 Dialog（合併訂購 + 邀請）
 │   ├── course-session-form.tsx    # 合併表單（DatePicker、課程 Select、DEV 預填）
 │   ├── course-session-card.tsx    # 開課卡片共用元件（compact / full variant，支援 href 連結）
+│   ├── course-card-grid.tsx       # 課程卡片響應式網格容器（1→2→3→4 欄 RWD）
 │   ├── cancel-course-dialog.tsx   # 取消課程確認 Dialog（下拉選單 + 自填 textarea）
 │   └── enrolled-students-list.tsx # 已接受邀請學員清單（Server Component）
 ├── profile/
@@ -249,6 +250,8 @@ createdAt       DateTime
 - `cr-spec-260326-008` — 學員申請流程完善：`EnrollmentApplicationDialog` 新增課程資訊確認區塊（課程名稱、講師、開課日期）；`applyToCourse` 成功後通知講師有新申請
 - `cr-spec-260326-010` — 學員課程三狀態列表：學員頁面課程區塊改為申請中 / 已開課 / 已結業三分組，以 `CourseSessionCard` 呈現；新增 `getMyEnrollments` data layer 查詢
 - `cr-spec-260326-011` — 課程狀態與開課功能：新增 `startedAt` 欄位（migration）、`startCourseSession` action、課程詳情頁「開始上課」按鈕；`CourseSessionCard` 新增狀態 Badge（招生中/進行中/已結業/已取消）與進度 bar；學員課程列表 RWD 網格
+- `cr-spec-260326-009` — 效能優化：開發環境改用 Turbopack（降低 HMR OOM 風險）、heap 上限 4096→6144 MB、`markNotificationRead` 改精確 revalidatePath 避免全站重渲染
+- `cr-spec-260326-012` — UI 改善批次：新增 `CourseCardGrid` 共用 RWD 網格元件（1→2→3→4 欄）；首頁課程區塊改為單一平鋪列表（移除三分組）；我的開課頁補傳狀態欄位；Topbar 改為 sticky + 移除新增課程按鈕
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）

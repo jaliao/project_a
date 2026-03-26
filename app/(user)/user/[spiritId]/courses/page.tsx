@@ -16,6 +16,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getMyCourseSessions } from '@/lib/data/course-sessions'
 import { CourseSessionCard } from '@/components/course-session/course-session-card'
+import { CourseCardGrid } from '@/components/course-session/course-card-grid'
 
 export const metadata: Metadata = {
   title: '我的開課 — 啟動靈人系統',
@@ -67,7 +68,7 @@ export default async function UserCoursesPage({ params }: Props) {
           尚無開課記錄
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <CourseCardGrid>
           {sessions.map((item) => (
             <CourseSessionCard
               key={item.id}
@@ -77,11 +78,14 @@ export default async function UserCoursesPage({ params }: Props) {
               maxCount={item.maxCount}
               enrolledCount={item.enrolledCount}
               expiredAt={item.expiredAt}
+              startedAt={item.startedAt}
+              cancelledAt={item.cancelledAt}
+              completedAt={item.completedAt}
               variant="compact"
               href={`/course/${item.id}`}
             />
           ))}
-        </div>
+        </CourseCardGrid>
       )}
     </div>
   )

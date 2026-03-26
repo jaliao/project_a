@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge'
 import { ProfileBanner } from '@/components/dashboard/profile-banner'
 import { CourseSessionDialog } from '@/components/course-session/course-session-dialog'
 import { CourseSessionCard } from '@/components/course-session/course-session-card'
+import { CourseCardGrid } from '@/components/course-session/course-card-grid'
 import { getMyEnrollments } from '@/lib/data/course-sessions'
 
 export const metadata: Metadata = {
@@ -57,19 +58,9 @@ export default async function UserProfilePage({ params }: Props) {
 
   if (!user) notFound()
 
-  // 查詢學員所有課程（含狀態，供三分組顯示）
-  const enrollments = await getMyEnrollments(user.id)
-
-  // 三分組（過濾掉已取消課程）
-  const pendingCourses = enrollments.filter(
-    (e) => e.status === 'pending' && !e.cancelledAt
-  )
-  const activeCourses = enrollments.filter(
-    (e) => e.status === 'approved' && !e.completedAt && !e.cancelledAt
-  )
-  const completedCourses = enrollments.filter(
-    (e) => e.status === 'approved' && !!e.completedAt
-  )
+  // 查詢學員所有課程（過濾已取消）
+  const allEnrollments = await getMyEnrollments(user.id)
+  const enrollments = allEnrollments.filter((e) => !e.cancelledAt)
 
   const displayName = user.realName || user.name || '（未設定姓名）'
   const levelLabel = user.learningLevel ? LEARNING_LEVEL_LABEL[user.learningLevel] : null
@@ -126,92 +117,34 @@ export default async function UserProfilePage({ params }: Props) {
       </div>
 
       {/* 課程列表 */}
-      <div className="rounded-lg border p-5 space-y-6">
+      <div className="rounded-lg border p-5 space-y-4">
         <div className="flex items-center gap-2">
           <IconBook className="h-5 w-5 text-primary" />
           <h2 className="text-base font-semibold">課程</h2>
         </div>
 
-        {/* 申請中 */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium text-muted-foreground">申請中</h3>
-          {pendingCourses.length === 0 ? (
-            <p className="text-sm text-muted-foreground">目前沒有申請中的課程</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {pendingCourses.map((e) => (
-                <CourseSessionCard
-                  key={e.enrollmentId}
-                  title={e.title}
-                  courseLevel={e.courseLevel}
-                  courseDate={e.courseDate}
-                  maxCount={e.maxCount}
-                  enrolledCount={e.enrolledCount}
-                  expiredAt={e.expiredAt}
-                  startedAt={e.startedAt}
-                  cancelledAt={e.cancelledAt}
-                  completedAt={e.completedAt}
-                  variant="compact"
-                  href={`/course/${e.inviteId}`}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* 已開課 */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium text-muted-foreground">已開課</h3>
-          {activeCourses.length === 0 ? (
-            <p className="text-sm text-muted-foreground">目前沒有進行中的課程</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {activeCourses.map((e) => (
-                <CourseSessionCard
-                  key={e.enrollmentId}
-                  title={e.title}
-                  courseLevel={e.courseLevel}
-                  courseDate={e.courseDate}
-                  maxCount={e.maxCount}
-                  enrolledCount={e.enrolledCount}
-                  expiredAt={e.expiredAt}
-                  startedAt={e.startedAt}
-                  cancelledAt={e.cancelledAt}
-                  completedAt={e.completedAt}
-                  variant="compact"
-                  href={`/course/${e.inviteId}`}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* 已結業 */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium text-muted-foreground">已結業</h3>
-          {completedCourses.length === 0 ? (
-            <p className="text-sm text-muted-foreground">尚無結業課程</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {completedCourses.map((e) => (
-                <CourseSessionCard
-                  key={e.enrollmentId}
-                  title={e.title}
-                  courseLevel={e.courseLevel}
-                  courseDate={e.courseDate}
-                  maxCount={e.maxCount}
-                  enrolledCount={e.enrolledCount}
-                  expiredAt={e.expiredAt}
-                  startedAt={e.startedAt}
-                  cancelledAt={e.cancelledAt}
-                  completedAt={e.completedAt}
-                  variant="compact"
-                  href={`/course/${e.inviteId}`}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {enrollments.length === 0 ? (
+          <p className="text-sm text-muted-foreground">尚無課程紀錄</p>
+        ) : (
+          <CourseCardGrid>
+            {enrollments.map((e) => (
+              <CourseSessionCard
+                key={e.enrollmentId}
+                title={e.title}
+                courseLevel={e.courseLevel}
+                courseDate={e.courseDate}
+                maxCount={e.maxCount}
+                enrolledCount={e.enrolledCount}
+                expiredAt={e.expiredAt}
+                startedAt={e.startedAt}
+                cancelledAt={e.cancelledAt}
+                completedAt={e.completedAt}
+                variant="compact"
+                href={`/course/${e.inviteId}`}
+              />
+            ))}
+          </CourseCardGrid>
+        )}
       </div>
 
       {/* 授課單元（僅本人可見） */}
