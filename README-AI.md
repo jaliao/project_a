@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.19（2026-03-26）
+> 自動產生，版本 0.1.20（2026-03-26）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -247,6 +247,7 @@ createdAt       DateTime
 - `cr-spec-260324-007` — 訊息通知系統：Notification DB model、右側 Drawer（Sheet）、未讀 Badge、標記已讀、`/notifications` 歷史頁面（分頁）
 - `cr-spec-260326-007` — Toast + Inbox 通知整合：`createNotification` 工具函數、開課完成 / 取消課程 / 學員審核通過 / 課程結業 四個操作自動寫入 Inbox
 - `cr-spec-260326-008` — 學員申請流程完善：`EnrollmentApplicationDialog` 新增課程資訊確認區塊（課程名稱、講師、開課日期）；`applyToCourse` 成功後通知講師有新申請
+- `cr-spec-260326-010` — 學員課程三狀態列表：學員頁面課程區塊改為申請中 / 已開課 / 已結業三分組，以 `CourseSessionCard` 呈現；新增 `getMyEnrollments` data layer 查詢
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）

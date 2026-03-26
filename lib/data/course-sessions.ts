@@ -56,6 +56,61 @@ export async function getMyCourseSessions(
   }))
 }
 
+export type MyEnrollmentItem = {
+  enrollmentId: number
+  status: 'pending' | 'approved'
+  inviteId: number
+  title: string
+  courseLevel: string
+  maxCount: number
+  enrolledCount: number
+  courseDate: string | null
+  expiredAt: Date | null
+  completedAt: Date | null
+  cancelledAt: Date | null
+}
+
+/**
+ * 取得指定學員的所有 enrollments，含課程狀態欄位（供學員頁面三分組顯示）
+ */
+export async function getMyEnrollments(userId: string): Promise<MyEnrollmentItem[]> {
+  const enrollments = await prisma.inviteEnrollment.findMany({
+    where: { userId },
+    orderBy: { joinedAt: 'desc' },
+    select: {
+      id: true,
+      status: true,
+      invite: {
+        select: {
+          id: true,
+          title: true,
+          courseLevel: true,
+          maxCount: true,
+          expiredAt: true,
+          completedAt: true,
+          cancelledAt: true,
+          _count: { select: { enrollments: true } },
+          courseOrder: { select: { courseDate: true } },
+        },
+      },
+    },
+  })
+
+  return enrollments.map((e) => ({
+    enrollmentId: e.id,
+    status: e.status as 'pending' | 'approved',
+    inviteId: e.invite.id,
+    title: e.invite.title,
+    courseLevel: e.invite.courseLevel,
+    maxCount: e.invite.maxCount,
+    enrolledCount: e.invite._count.enrollments,
+    courseDate: e.invite.courseOrder?.courseDate ?? null,
+    expiredAt: e.invite.expiredAt,
+    completedAt: e.invite.completedAt,
+    cancelledAt: e.invite.cancelledAt,
+  }))
+}
+
 /**
  * 取得指定使用者開課記錄總數
  */
