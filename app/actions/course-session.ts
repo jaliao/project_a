@@ -8,7 +8,6 @@
 
 'use server'
 
-import { randomBytes } from 'crypto'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { courseSessionSchema } from '@/lib/schemas/course-session'
@@ -19,7 +18,7 @@ import { createNotification } from '@/app/actions/notification'
 type ActionResponse = {
   success: boolean
   message?: string
-  data?: { inviteId: number; token: string }
+  data?: { inviteId: number }
   errors?: Record<string, string[]>
 }
 
@@ -59,11 +58,8 @@ export async function createCourseSession(
     }
   }
 
-  const token = randomBytes(6).toString('hex')
-
   const invite = await prisma.courseInvite.create({
     data: {
-      token,
       title: d.title,
       courseLevel: courseLevelKey,
       maxCount: parseInt(d.maxCount, 10),
@@ -88,6 +84,6 @@ export async function createCourseSession(
   return {
     success: true,
     message: '授課已建立！',
-    data: { inviteId: invite.id, token: invite.token },
+    data: { inviteId: invite.id },
   }
 }

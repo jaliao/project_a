@@ -8,7 +8,6 @@
 
 'use server'
 
-import { randomBytes } from 'crypto'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { createInviteSchema } from '@/lib/schemas/course-invite'
@@ -43,7 +42,7 @@ export async function getUserLearningLevel(userId: string): Promise<number> {
 // ── 建立開課邀請 ──────────────────────────────
 export async function createInvite(
   formData: Record<string, string>
-): Promise<ActionResponse<{ id: number; token: string }>> {
+): Promise<ActionResponse<{ id: number }>> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
 
@@ -65,11 +64,8 @@ export async function createInvite(
     }
   }
 
-  const token = randomBytes(6).toString('hex') // 12-char hex
-
   const invite = await prisma.courseInvite.create({
     data: {
-      token,
       title: courseEntry.label,
       courseLevel: courseLevelKey,
       maxCount,
@@ -81,47 +77,7 @@ export async function createInvite(
   return {
     success: true,
     message: '邀請已建立',
-    data: { id: invite.id, token: invite.token },
-  }
-}
-
-// ── 學員透過 token 加入邀請（建立 pending 申請）────────────────────
-export async function joinInvite(
-  token: string
-): Promise<ActionResponse<{ inviteTitle: string; inviteId: number }>> {
-  const session = await auth()
-  if (!session?.user?.id) return { success: false, message: '請先登入' }
-
-  const invite = await prisma.courseInvite.findUnique({ where: { token } })
-  if (!invite) return { success: false, message: '邀請連結無效或已失效' }
-
-  // 驗證學員先修
-  const courseEntry = COURSE_CATALOG[invite.courseLevel as CourseLevel]
-  if (courseEntry?.prerequisiteLevel !== null && courseEntry?.prerequisiteLevel !== undefined) {
-    const learningLevel = await getUserLearningLevel(session.user.id)
-    if (learningLevel < courseEntry.prerequisiteLevel) {
-      const prereqLabel = Object.values(COURSE_CATALOG).find(
-        (c) => c.levelNum === courseEntry.prerequisiteLevel
-      )?.label ?? `啟動靈人 ${courseEntry.prerequisiteLevel}`
-      return {
-        success: false,
-        message: `需先完成${prereqLabel}才能加入此課程`,
-      }
-    }
-  }
-
-  // upsert：已有申請記錄則忽略（不覆蓋 status）
-  await prisma.inviteEnrollment.upsert({
-    where: {
-      inviteId_userId: { inviteId: invite.id, userId: session.user.id },
-    },
-    create: { inviteId: invite.id, userId: session.user.id, status: 'pending' },
-    update: {},
-  })
-
-  return {
-    success: true,
-    data: { inviteTitle: invite.title, inviteId: invite.id },
+    data: { id: invite.id },
   }
 }
 

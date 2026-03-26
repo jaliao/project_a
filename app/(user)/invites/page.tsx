@@ -51,7 +51,7 @@ export default async function InvitesPage() {
                     })}
                   </p>
                 </div>
-                <InviteCopyButton token={invite.token} />
+                <InviteCopyButton courseId={invite.id} />
               </div>
 
               {/* 學員列表 */}

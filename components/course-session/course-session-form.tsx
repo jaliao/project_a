@@ -34,7 +34,7 @@ const isDev = process.env.NODE_ENV === 'development'
 
 interface CourseSessionFormProps {
   instructorName?: string
-  onSuccess: (token: string) => void
+  onSuccess: (inviteId: number) => void
 }
 
 export function CourseSessionForm({ instructorName = '', onSuccess }: CourseSessionFormProps) {
@@ -84,7 +84,7 @@ export function CourseSessionForm({ instructorName = '', onSuccess }: CourseSess
         toast.success(result.message ?? '授課已建立！')
         titleDirtyRef.current = false
         form.reset()
-        onSuccess(result.data.token)
+        onSuccess(result.data.inviteId)
       } else {
         toast.error(result.message ?? '建立失敗，請稍後再試')
       }

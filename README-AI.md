@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.24（2026-03-26）
+> 自動產生，版本 0.1.25（2026-03-26）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -147,7 +147,6 @@ createdAt DateTime
 ### CourseInvite
 ```
 id            Int（主鍵）
-token         String（唯一，12-char hex）
 title         String（課程名稱，由 courseLevel label 自動填入）
 courseLevel   CourseLevel（level1|level2|level3|level4，預設 level1）
 maxCount      Int（預計人數）
@@ -253,6 +252,7 @@ createdAt       DateTime
 - `cr-spec-260326-009` — 效能優化（Turbopack）：開發環境改用 Turbopack（降低 HMR OOM 風險）、heap 上限 4096→6144 MB、`markNotificationRead` 改精確 revalidatePath 避免全站重渲染
 - `cr-spec-260326-012` — UI 改善批次：新增 `CourseCardGrid` 共用 RWD 網格元件（1→2→3→4 欄）；首頁課程區塊改為單一平鋪列表（移除三分組）；我的開課頁補傳狀態欄位；Topbar 改為 sticky + 移除新增課程按鈕
 - `cr-spec-260326-013` — 首頁授課單元改善：授課單元顯示最近 3 筆授課卡片 + 超過 3 筆顯示「更多授課資訊」卡片；CourseInvite 新增 courseDate/notes 欄位；新增授課表單簡化（移除教材訂購欄位，新增可編輯課程名稱與備註）
+- `cr-refactor-260326-001` — 移除 token-based 邀請連結（`/invite/[token]`）；改由分享 `/course/{id}` 直接連結，學員至課程頁面申請；移除 `CourseInvite.token` DB 欄位、`joinInvite()` action、公開路由；複製按鈕改為複製課程 URL
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）

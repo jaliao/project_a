@@ -13,14 +13,14 @@ import { IconLink } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 
 type Props = {
-  token: string
+  courseId: number
 }
 
-export function CopyInviteLinkButton({ token }: Props) {
+export function CopyInviteLinkButton({ courseId }: Props) {
   const [copied, setCopied] = useState(false)
 
   async function handleCopy() {
-    const url = `${window.location.origin}/invite/${token}`
+    const url = `${window.location.origin}/course/${courseId}`
     await navigator.clipboard.writeText(url)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -29,7 +29,7 @@ export function CopyInviteLinkButton({ token }: Props) {
   return (
     <Button variant="outline" onClick={handleCopy} className="w-fit gap-2">
       <IconLink className="h-4 w-4" />
-      {copied ? '已複製！' : '複製邀請連結'}
+      {copied ? '已複製！' : '複製課程連結'}
     </Button>
   )
 }

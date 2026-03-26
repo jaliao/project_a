@@ -58,7 +58,7 @@ interface CreateInviteFormProps {
 
 export function CreateInviteForm({ orders, onSuccess }: CreateInviteFormProps) {
   const [isPending, startTransition] = useTransition()
-  const [inviteLink, setInviteLink] = useState<string | null>(null)
+  const [courseLink, setCourseLink] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
   const form = useForm<FormValues>({
@@ -70,8 +70,8 @@ export function CreateInviteForm({ orders, onSuccess }: CreateInviteFormProps) {
     startTransition(async () => {
       const result = await createInvite(values as Record<string, string>)
       if (result.success && result.data) {
-        const link = `${window.location.origin}/invite/${result.data.token}`
-        setInviteLink(link)
+        const link = `${window.location.origin}/course/${result.data.id}`
+        setCourseLink(link)
       } else {
         toast.error(result.message ?? '建立失敗，請稍後再試')
       }
@@ -79,21 +79,21 @@ export function CreateInviteForm({ orders, onSuccess }: CreateInviteFormProps) {
   }
 
   const handleCopy = () => {
-    if (!inviteLink) return
-    navigator.clipboard.writeText(inviteLink).then(() => {
+    if (!courseLink) return
+    navigator.clipboard.writeText(courseLink).then(() => {
       setCopied(true)
-      toast.success('已複製邀請連結！')
+      toast.success('已複製課程連結！')
       setTimeout(() => setCopied(false), 2000)
     })
   }
 
-  // 建立成功後顯示連結複製 View
-  if (inviteLink) {
+  // 建立成功後顯示課程連結複製 View
+  if (courseLink) {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">邀請建立成功！分享以下連結給學員：</p>
+        <p className="text-sm text-muted-foreground">邀請建立成功！分享以下連結給學員申請：</p>
         <div className="flex items-center gap-2 rounded-md border bg-muted px-3 py-2">
-          <span className="flex-1 truncate text-sm font-mono">{inviteLink}</span>
+          <span className="flex-1 truncate text-sm font-mono">{courseLink}</span>
           <Button size="sm" variant="ghost" onClick={handleCopy} className="shrink-0">
             {copied ? <IconCheck className="h-4 w-4 text-green-600" /> : <IconCopy className="h-4 w-4" />}
             {copied ? '已複製！' : '複製連結'}

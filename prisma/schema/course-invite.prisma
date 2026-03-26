@@ -37,8 +37,7 @@ enum MaterialChoice {
 // 課程邀請主體
 // ==========================================
 model CourseInvite {
-  id    Int    @id @default(autoincrement())
-  token String @unique // 12-char hex，邀請連結識別碼
+  id Int @id @default(autoincrement())
 
   title       String // 課程名稱（可自訂，預設為「{講師} 的 {課程}」）
   courseLevel CourseLevel @default(level1) // 課程等級

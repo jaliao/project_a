@@ -146,7 +146,6 @@ type EnrollmentRecord = {
 
 export type CourseSessionDetail = {
   id: number
-  token: string
   title: string
   courseLevel: string
   maxCount: number
@@ -177,7 +176,6 @@ export async function getCourseSessionById(
     where: { id },
     select: {
       id: true,
-      token: true,
       title: true,
       courseLevel: true,
       maxCount: true,
@@ -204,7 +202,6 @@ export async function getCourseSessionById(
 
   return {
     id: invite.id,
-    token: invite.token,
     title: invite.title,
     courseLevel: invite.courseLevel,
     maxCount: invite.maxCount,

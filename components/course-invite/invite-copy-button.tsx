@@ -14,17 +14,17 @@ import { IconCopy, IconCheck } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 
 interface InviteCopyButtonProps {
-  token: string
+  courseId: number
 }
 
-export function InviteCopyButton({ token }: InviteCopyButtonProps) {
+export function InviteCopyButton({ courseId }: InviteCopyButtonProps) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = () => {
-    const link = `${window.location.origin}/invite/${token}`
+    const link = `${window.location.origin}/course/${courseId}`
     navigator.clipboard.writeText(link).then(() => {
       setCopied(true)
-      toast.success('已複製邀請連結！')
+      toast.success('已複製課程連結！')
       setTimeout(() => setCopied(false), 2000)
     })
   }

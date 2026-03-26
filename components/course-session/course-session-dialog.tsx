@@ -27,7 +27,7 @@ interface CourseSessionDialogProps {
 export function CourseSessionDialog({ instructorName = '' }: CourseSessionDialogProps) {
   const [open, setOpen] = useState(false)
 
-  const handleSuccess = (_token: string) => {
+  const handleSuccess = (_inviteId: number) => {
     setOpen(false)
   }
 

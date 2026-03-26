@@ -176,9 +176,9 @@ export default async function CourseDetailPage({
         </div>
       </div>
 
-      {/* 講師：複製邀請連結 */}
+      {/* 講師：複製課程連結 */}
       {isInstructor && (
-        <CopyInviteLinkButton token={courseSession.token} />
+        <CopyInviteLinkButton courseId={courseSession.id} />
       )}
 
       {/* 講師：待審申請 */}
