@@ -53,6 +53,18 @@ export async function markAllNotificationsRead(): Promise<ActionResponse> {
   return { success: true }
 }
 
+/** 內部工具：寫入 Inbox 通知（供其他 Server Actions 呼叫，fire-and-forget） */
+export async function createNotification(
+  userId: string,
+  title: string,
+  body: string
+): Promise<void> {
+  await prisma.notification.create({
+    data: { userId, title, body },
+  })
+  revalidatePath('/', 'layout')
+}
+
 /** 取得最新通知（供 Drawer 使用） */
 export async function fetchNotifications(limit = 20) {
   const session = await auth()

@@ -14,6 +14,7 @@ import { auth } from '@/lib/auth'
 import { courseSessionSchema } from '@/lib/schemas/course-session'
 import { COURSE_CATALOG, type CourseLevel } from '@/config/course-catalog'
 import { getUserLearningLevel } from '@/app/actions/course-invite'
+import { createNotification } from '@/app/actions/notification'
 import type { MaterialVersion, PurchaseType, DeliveryMethod } from '@prisma/client'
 
 type ActionResponse = {
@@ -101,6 +102,17 @@ export async function createCourseSession(
 
     return newInvite
   })
+
+  // 寫入 Inbox 通知（fire-and-forget，失敗不影響主操作）
+  try {
+    await createNotification(
+      session.user.id,
+      '開課完成',
+      `${courseEntry.label} 開課單已建立，預計開課日期：${formatDateString(d.courseDate)}`
+    )
+  } catch (e) {
+    console.error('開課通知寫入失敗', e)
+  }
 
   return {
     success: true,

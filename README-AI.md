@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.17（2026-03-24）
+> 自動產生，版本 0.1.18（2026-03-26）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -218,6 +218,7 @@ createdAt       DateTime
 - **元件預設**：Server Component，僅互動部分加 `"use client"`
 - **資料查詢**：`lib/data/`（多處複用）或 Server Action 直接 Prisma（單一用途）
 - **表單**：Zod schema → React Hook Form → Server Action → ActionResponse → Sonner toast
+- **通知整合**：關鍵操作（開課完成、取消課程、學員核准、課程結業）成功後以 fire-and-forget 呼叫 `createNotification`，同步寫入 Inbox；toast 呈現不變
 - **版本**：`config/version.json` 為唯一來源（patch +1 per `/opsx:apply`）
 - **Prisma import**：`@prisma/client`（tsconfig paths 已設定）
 
@@ -244,6 +245,7 @@ createdAt       DateTime
 - `cr-spec-260324-013` — 學員專屬頁面 `/user/{id}`（基本資料單元：姓名、身分標籤、已完成課程）；`/dashboard` 搬移至 `/admin`；登入後預設導向改為 `/user/{id}`
 - `cr-spec-260324-014` — 學員頁面完善：Spirit ID URL 小寫（`/user/pa260001`）、ProfileBanner/授課/管理者單元移至本人頁面、新增 `/user/{spiritId}/courses` 我的開課頁面、`User.learningLevel` 欄位
 - `cr-spec-260324-007` — 訊息通知系統：Notification DB model、右側 Drawer（Sheet）、未讀 Badge、標記已讀、`/notifications` 歷史頁面（分頁）
+- `cr-spec-260326-007` — Toast + Inbox 通知整合：`createNotification` 工具函數、開課完成 / 取消課程 / 學員審核通過 / 課程結業 四個操作自動寫入 Inbox
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）

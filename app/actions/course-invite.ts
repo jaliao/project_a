@@ -13,6 +13,7 @@ import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { createInviteSchema } from '@/lib/schemas/course-invite'
 import { COURSE_CATALOG, type CourseLevel } from '@/config/course-catalog'
+import { createNotification } from '@/app/actions/notification'
 
 type ActionResponse<T = undefined> = {
   success: boolean
@@ -185,6 +186,16 @@ export async function cancelCourseSession(
   const { revalidatePath } = await import('next/cache')
   revalidatePath(`/course/${id}`)
 
+  try {
+    await createNotification(
+      session.user.id,
+      '課程已取消',
+      `${invite.title} 課程已取消。取消原因：${cancelReason.trim()}`
+    )
+  } catch (e) {
+    console.error('取消課程通知寫入失敗', e)
+  }
+
   return { success: true, message: '課程已取消' }
 }
 
@@ -265,7 +276,7 @@ export async function approveEnrollment(enrollmentId: number): Promise<ActionRes
 
   const enrollment = await prisma.inviteEnrollment.findUnique({
     where: { id: enrollmentId },
-    include: { invite: { select: { id: true, createdById: true } } },
+    include: { invite: { select: { id: true, title: true, createdById: true } } },
   })
   if (!enrollment) return { success: false, message: '找不到申請記錄' }
   if (enrollment.invite.createdById !== session.user.id) {
@@ -279,6 +290,16 @@ export async function approveEnrollment(enrollmentId: number): Promise<ActionRes
 
   const { revalidatePath } = await import('next/cache')
   revalidatePath(`/course/${enrollment.invite.id}`)
+
+  try {
+    await createNotification(
+      enrollment.userId,
+      '報名審核通過',
+      `您在 ${enrollment.invite.title} 的報名申請已通過審核，歡迎參加課程！`
+    )
+  } catch (e) {
+    console.error('審核通過通知寫入失敗', e)
+  }
 
   return { success: true, message: '已同意申請' }
 }
@@ -295,6 +316,10 @@ export async function graduateCourse(inviteId: number): Promise<ActionResponse> 
   }
   if (invite.completedAt) return { success: false, message: '課程已結業' }
 
+  const graduatedCount = await prisma.inviteEnrollment.count({
+    where: { inviteId, status: 'approved' },
+  })
+
   await prisma.courseInvite.update({
     where: { id: inviteId },
     data: { completedAt: new Date() },
@@ -302,6 +327,16 @@ export async function graduateCourse(inviteId: number): Promise<ActionResponse> 
 
   const { revalidatePath } = await import('next/cache')
   revalidatePath(`/course/${inviteId}`)
+
+  try {
+    await createNotification(
+      session.user.id,
+      '課程結業完成',
+      `${invite.title} 課程已結業，共 ${graduatedCount} 位學員完成課程。`
+    )
+  } catch (e) {
+    console.error('結業通知寫入失敗', e)
+  }
 
   return { success: true, message: '課程已結業' }
 }
