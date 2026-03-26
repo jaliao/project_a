@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.16（2026-03-24）
+> 自動產生，版本 0.1.17（2026-03-24）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -35,12 +35,13 @@
 app/
 ├── (auth)/          # 公開路由：login, register, forgot/reset-password
 ├── (user)/          # 已登入路由群組（共用 Topbar layout）
-│   ├── layout.tsx   # Topbar 包裝層
+│   ├── layout.tsx   # Topbar 包裝層（含未讀通知數 server fetch）
 │   ├── dashboard/       # redirect → /user/{id}（舊書籤相容）
 │   ├── admin/           # 管理後台：統計卡片 + 已新增開課預覽 + 近期活動
 │   ├── user/[id]/       # 學員專屬頁面：基本資料（姓名、身分標籤、已完成課程）+ 本人功能單元
 │   ├── user/[id]/courses/ # 我的開課列表（本人專屬，Spirit ID 小寫路由）
 │   ├── course-sessions/ # 開課查詢頁（保留，將逐步以 /user/[id]/courses 取代）
+│   ├── notifications/   # 通知歷史頁面（分頁，每頁 20 則）
 │   ├── course/[id]/     # 課程詳情頁（授課老師、學員名單、取消課程、結業申請）
 │   ├── learning/        # 學習紀錄頁面
 │   └── profile/         # 個人資料維護
@@ -52,7 +53,9 @@ app/
 components/
 ├── ui/              # shadcn/ui 基礎元件
 ├── layout/
-│   └── topbar.tsx   # 頂部工具列（新增課程/個人資料/訊息）
+│   └── topbar.tsx   # 頂部工具列（新增課程/個人資料/訊息通知 Drawer）
+├── notification/
+│   └── notification-drawer.tsx  # 右側通知 Drawer（Sheet，lazy load，標記已讀）
 ├── dashboard/
 │   ├── stats-card.tsx      # 統計卡片
 │   ├── recent-members.tsx  # 近期加入會員列表
@@ -83,13 +86,14 @@ lib/
 ├── data/
 │   ├── user.ts              # 使用者資料查詢
 │   ├── password-reset.ts    # 密碼重設查詢
-│   └── course-sessions.ts   # 開課記錄查詢（getMyCourseSessions, getMyCourseSessionCount, getCourseSessionById）
+│   ├── course-sessions.ts   # 開課記錄查詢（getMyCourseSessions, getMyCourseSessionCount, getCourseSessionById）
+│   └── notification.ts      # 通知查詢（getNotifications, getUnreadNotificationCount, getNotificationsPaginated）
 └── utils.ts         # cn() 等工具函數
 
 prisma/
 ├── schema/
 │   ├── base.prisma          # generator + datasource
-│   ├── user.prisma          # User, Account, Session, WhitelistedEmail
+│   ├── user.prisma          # User, Account, Session, WhitelistedEmail, Notification
 │   ├── course-order.prisma  # CourseOrder + enums
 │   └── course-invite.prisma # CourseInvite + InviteEnrollment
 └── seed.ts
@@ -126,6 +130,17 @@ createdAt / updatedAt / lastLoginAt
 ```
 email     String（唯一）
 isActive  Boolean（控制登入許可）
+```
+
+### Notification
+```
+id        Int（主鍵，autoincrement）
+userId    String（關聯 User UUID）
+title     String
+body      String（Text）
+isRead    Boolean（預設 false）
+readAt    DateTime?（標記已讀時間）
+createdAt DateTime
 ```
 
 ### CourseInvite
@@ -228,8 +243,8 @@ createdAt       DateTime
 - `cr-spec-260324-012` — 課程詳情頁進階設計：基本資訊區塊、角色差異化（講師/學員）、申請審核流程（pending→approved）、書籍選購（無須/繁體/簡體）、複製邀請連結、結業操作；InviteEnrollment 加 status + materialChoice
 - `cr-spec-260324-013` — 學員專屬頁面 `/user/{id}`（基本資料單元：姓名、身分標籤、已完成課程）；`/dashboard` 搬移至 `/admin`；登入後預設導向改為 `/user/{id}`
 - `cr-spec-260324-014` — 學員頁面完善：Spirit ID URL 小寫（`/user/pa260001`）、ProfileBanner/授課/管理者單元移至本人頁面、新增 `/user/{spiritId}/courses` 我的開課頁面、`User.learningLevel` 欄位
+- `cr-spec-260324-007` — 訊息通知系統：Notification DB model、右側 Drawer（Sheet）、未讀 Badge、標記已讀、`/notifications` 歷史頁面（分頁）
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）
-- 訊息通知系統（Topbar「訊息」預留入口）
 - 會員管理後台（CRUD、搜尋、分頁）

@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * Topbar - 頂部工具列
- * 2026-03-23
+ * 2026-03-23 (Updated: 2026-03-24)
  * components/layout/topbar.tsx
  * ----------------------------------------------
  */
@@ -13,10 +13,16 @@ import { useRouter } from 'next/navigation'
 import { IconSchool, IconUser, IconBell } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { CourseOrderDialog } from '@/components/course-order/course-order-dialog'
+import { NotificationDrawer } from '@/components/notification/notification-drawer'
 
-export function Topbar() {
+interface TopbarProps {
+  unreadCount?: number
+}
+
+export function Topbar({ unreadCount = 0 }: TopbarProps) {
   const router = useRouter()
   const [isOrderOpen, setIsOrderOpen] = useState(false)
+  const [isNotifOpen, setIsNotifOpen] = useState(false)
 
   return (
     <header className="flex h-16 items-center border-b px-4 gap-4">
@@ -47,15 +53,27 @@ export function Topbar() {
           <IconUser className="h-5 w-5" />
         </Button>
 
-        {/* 訊息（預留，無 Badge） */}
+        {/* 訊息通知 */}
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => console.log('訊息 - 預留')}
-          title="訊息"
+          onClick={() => setIsNotifOpen(true)}
+          title="訊息通知"
+          className="relative"
         >
           <IconBell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white leading-none">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
         </Button>
+
+        <NotificationDrawer
+          open={isNotifOpen}
+          onOpenChange={setIsNotifOpen}
+          initialUnreadCount={unreadCount}
+        />
       </div>
     </header>
   )
