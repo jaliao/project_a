@@ -13,7 +13,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { IconCopy, IconCheck } from '@tabler/icons-react'
+import { IconShare, IconCheck } from '@tabler/icons-react'
 import { createInvite } from '@/app/actions/course-invite'
 import { getActiveCourses } from '@/config/course-catalog'
 import {
@@ -78,13 +78,21 @@ export function CreateInviteForm({ orders, onSuccess }: CreateInviteFormProps) {
     })
   }
 
-  const handleCopy = () => {
+  const handleShare = async () => {
     if (!courseLink) return
-    navigator.clipboard.writeText(courseLink).then(() => {
-      setCopied(true)
-      toast.success('已複製課程連結！')
-      setTimeout(() => setCopied(false), 2000)
-    })
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: '課程連結', url: courseLink })
+      } catch {
+        // 使用者取消分享
+      }
+    } else {
+      navigator.clipboard.writeText(courseLink).then(() => {
+        setCopied(true)
+        toast.success('已複製課程連結！')
+        setTimeout(() => setCopied(false), 2000)
+      })
+    }
   }
 
   // 建立成功後顯示課程連結複製 View
@@ -94,9 +102,9 @@ export function CreateInviteForm({ orders, onSuccess }: CreateInviteFormProps) {
         <p className="text-sm text-muted-foreground">邀請建立成功！分享以下連結給學員申請：</p>
         <div className="flex items-center gap-2 rounded-md border bg-muted px-3 py-2">
           <span className="flex-1 truncate text-sm font-mono">{courseLink}</span>
-          <Button size="sm" variant="ghost" onClick={handleCopy} className="shrink-0">
-            {copied ? <IconCheck className="h-4 w-4 text-green-600" /> : <IconCopy className="h-4 w-4" />}
-            {copied ? '已複製！' : '複製連結'}
+          <Button size="sm" variant="ghost" onClick={handleShare} className="shrink-0">
+            {copied ? <IconCheck className="h-4 w-4 text-green-600" /> : <IconShare className="h-4 w-4" />}
+            {copied ? '已複製！' : '分享'}
           </Button>
         </div>
         <Button className="w-full" variant="outline" onClick={onSuccess}>

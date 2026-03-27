@@ -187,7 +187,7 @@ prisma-push: ## 📤 同步資料庫結構（快速開發）
 
 prisma-migrate: ## 📝 建立 Migration（保留歷史）
 	@echo "📝 建立 Migration (名稱: $(SCHEMA_NAME))..."
-	@$(PRISMA_DEV_DB) npx prisma migrate dev   --name $(SCHEMA_NAME) && \
+	@$(DEV_COMPOSE) exec web npx prisma migrate dev   --name $(SCHEMA_NAME) && \
 	echo "✅ Migration 建立完成" || \
 	echo "❌ Migration 建立失敗"
 

@@ -137,6 +137,7 @@ type EnrollmentRecord = {
   joinedAt: Date
   status: string
   materialChoice: string
+  graduatedAt: Date | null
   user: {
     id: string
     name: string | null
@@ -188,7 +189,14 @@ export async function getCourseSessionById(
       courseDate: true,
       createdBy: { select: { id: true, name: true, email: true, realName: true } },
       enrollments: {
-        include: { user: { select: { id: true, name: true, email: true } } },
+        select: {
+          id: true,
+          joinedAt: true,
+          status: true,
+          materialChoice: true,
+          graduatedAt: true,
+          user: { select: { id: true, name: true, email: true } },
+        },
         orderBy: { joinedAt: 'asc' },
       },
       courseOrder: { select: { courseDate: true } },
@@ -216,4 +224,48 @@ export async function getCourseSessionById(
     pendingEnrollments,
     courseDate: invite.courseDate ?? invite.courseOrder?.courseDate ?? null,
   }
+}
+
+export type CompletionCertificate = {
+  courseLevel: string
+  title: string
+  teacherName: string
+  graduatedAt: Date
+}
+
+/**
+ * 取得指定使用者的結業證明，每個 courseLevel 只保留最新一筆
+ */
+export async function getMyCompletionCertificates(
+  userId: string
+): Promise<CompletionCertificate[]> {
+  const rows = await prisma.inviteEnrollment.findMany({
+    where: { userId, graduatedAt: { not: null } },
+    select: {
+      graduatedAt: true,
+      invite: {
+        select: {
+          title: true,
+          courseLevel: true,
+          createdBy: { select: { realName: true, name: true } },
+        },
+      },
+    },
+    orderBy: { graduatedAt: 'desc' },
+  })
+
+  // 以 courseLevel 去重，取最新一筆
+  const seen = new Set<string>()
+  const result: CompletionCertificate[] = []
+  for (const row of rows) {
+    if (seen.has(row.invite.courseLevel)) continue
+    seen.add(row.invite.courseLevel)
+    result.push({
+      courseLevel: row.invite.courseLevel,
+      title: row.invite.title,
+      teacherName: row.invite.createdBy.realName ?? row.invite.createdBy.name ?? '—',
+      graduatedAt: row.graduatedAt!,
+    })
+  }
+  return result
 }

@@ -16,4 +16,4 @@ services:
     env_file:
       - .env
     environment:
-      - NODE_OPTIONS=--max-old-space-size=4096
+      - NODE_OPTIONS=--max-old-space-size=6144

@@ -11,7 +11,7 @@ import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { IconUser, IconBook, IconChalkboard, IconShieldCheck } from '@tabler/icons-react'
+import { IconUser, IconBook, IconChalkboard, IconShieldCheck, IconAward, IconHistory } from '@tabler/icons-react'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { Badge } from '@/components/ui/badge'
@@ -19,7 +19,8 @@ import { ProfileBanner } from '@/components/dashboard/profile-banner'
 import { CourseSessionDialog } from '@/components/course-session/course-session-dialog'
 import { CourseSessionCard } from '@/components/course-session/course-session-card'
 import { CourseCardGrid } from '@/components/course-session/course-card-grid'
-import { getMyEnrollments, getMyCourseSessions } from '@/lib/data/course-sessions'
+import { CompletionCertificateCard } from '@/components/course-invite/completion-certificate-card'
+import { getMyEnrollments, getMyCourseSessions, getMyCompletionCertificates } from '@/lib/data/course-sessions'
 
 export const metadata: Metadata = {
   title: '學員資料 — 啟動靈人系統',
@@ -66,6 +67,8 @@ export default async function UserProfilePage({ params }: Props) {
   const isOwnPageEarly = session?.user?.spiritId?.toLowerCase() === id
   // 查詢本人授課（最多 4 筆，用於判斷是否顯示「更多」卡片）
   const myCourseSessions = isOwnPageEarly ? await getMyCourseSessions(user.id, 4) : []
+  // 查詢結業證明（所有人可見）
+  const certificates = await getMyCompletionCertificates(user.id)
 
   const displayName = user.realName || user.name || '（未設定姓名）'
   const levelLabel = user.learningLevel ? LEARNING_LEVEL_LABEL[user.learningLevel] : null
@@ -151,6 +154,54 @@ export default async function UserProfilePage({ params }: Props) {
           </CourseCardGrid>
         )}
       </div>
+
+      {/* 結業證明區塊（有證明才顯示） */}
+      {certificates.length > 0 && (
+        <div className="rounded-lg border p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <IconAward className="h-5 w-5 text-amber-500" />
+            <h2 className="text-base font-semibold">結業證明</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {certificates.map((cert) => (
+              <CompletionCertificateCard
+                key={cert.courseLevel}
+                courseLevel={cert.courseLevel}
+                title={cert.title}
+                teacherName={cert.teacherName}
+                graduatedAt={cert.graduatedAt}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 學習紀錄預覽（有結業紀錄才顯示） */}
+      {certificates.length > 0 && (
+        <div className="rounded-lg border p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <IconHistory className="h-5 w-5 text-primary" />
+              <h2 className="text-base font-semibold">學習紀錄</h2>
+            </div>
+            {certificates.length > 3 && (
+              <Link href="/learning" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                查看更多
+              </Link>
+            )}
+          </div>
+          <ul className="space-y-2">
+            {certificates.slice(0, 3).map((cert) => (
+              <li key={cert.courseLevel} className="flex items-center justify-between text-sm">
+                <span className="font-medium">{cert.title}</span>
+                <span className="text-muted-foreground text-xs">
+                  {cert.graduatedAt.getFullYear()}/{String(cert.graduatedAt.getMonth() + 1).padStart(2, '0')}/{String(cert.graduatedAt.getDate()).padStart(2, '0')}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* 授課單元（僅本人可見） */}
       {isOwnPage && (

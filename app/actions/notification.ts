@@ -35,7 +35,7 @@ export async function markNotificationRead(id: number): Promise<ActionResponse> 
     })
   }
 
-  revalidatePath('/', 'layout')
+  revalidatePath('/notifications')
   return { success: true }
 }
 
@@ -49,7 +49,7 @@ export async function markAllNotificationsRead(): Promise<ActionResponse> {
     data: { isRead: true, readAt: new Date() },
   })
 
-  revalidatePath('/', 'layout')
+  revalidatePath('/notifications')
   return { success: true }
 }
 

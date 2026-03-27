@@ -11,15 +11,23 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 import { formatDistanceToNow } from 'date-fns'
 import { zhTW } from 'date-fns/locale'
+import { IconAward } from '@tabler/icons-react'
+import { auth } from '@/lib/auth'
 import { getMyLearningRecords } from '@/app/actions/course-invite'
+import { getMyCompletionCertificates } from '@/lib/data/course-sessions'
 import { LevelProgress } from '@/components/learning/level-progress'
+import { COURSE_CATALOG, type CourseLevel } from '@/config/course-catalog'
 
 export const metadata: Metadata = {
   title: '學習紀錄 — 啟動靈人系統',
 }
 
 export default async function LearningPage() {
-  const { enrollments, invites, learningLevel } = await getMyLearningRecords()
+  const session = await auth()
+  const [{ enrollments, invites, learningLevel }, graduationRecords] = await Promise.all([
+    getMyLearningRecords(),
+    session?.user?.id ? getMyCompletionCertificates(session.user.id) : Promise.resolve([]),
+  ])
 
   return (
     <div className="space-y-6">
@@ -55,6 +63,46 @@ export default async function LearningPage() {
                     </td>
                   </tr>
                 ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* 結業紀錄 */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <IconAward className="h-5 w-5 text-amber-500" />
+          <h2 className="text-lg font-semibold">結業紀錄</h2>
+        </div>
+        {graduationRecords.length === 0 ? (
+          <p className="text-sm text-muted-foreground">尚無結業紀錄</p>
+        ) : (
+          <div className="rounded-lg border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50">
+                <tr className="text-muted-foreground text-left">
+                  <th className="px-4 py-2.5 font-medium">課程名稱</th>
+                  <th className="px-4 py-2.5 font-medium">等級</th>
+                  <th className="px-4 py-2.5 font-medium">授課教師</th>
+                  <th className="px-4 py-2.5 font-medium">結業日期</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {graduationRecords.map((rec) => {
+                  const catalogEntry = COURSE_CATALOG[rec.courseLevel as CourseLevel]
+                  const levelLabel = catalogEntry?.label ?? rec.courseLevel
+                  const g = rec.graduatedAt
+                  const dateStr = `${g.getFullYear()}/${String(g.getMonth() + 1).padStart(2, '0')}/${String(g.getDate()).padStart(2, '0')}`
+                  return (
+                    <tr key={rec.courseLevel}>
+                      <td className="px-4 py-3 font-medium">{rec.title}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{levelLabel}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{rec.teacherName}</td>
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{dateStr}</td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

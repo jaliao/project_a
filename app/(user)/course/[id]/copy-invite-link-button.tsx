@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
- * CopyInviteLinkButton - 複製邀請連結按鈕
- * 2026-03-24
+ * ShareCourseButton - 分享課程連結按鈕
+ * 2026-03-24 (Updated: 2026-03-26)
  * app/(user)/course/[id]/copy-invite-link-button.tsx
  * ----------------------------------------------
  */
@@ -9,7 +9,8 @@
 'use client'
 
 import { useState } from 'react'
-import { IconLink } from '@tabler/icons-react'
+import { toast } from 'sonner'
+import { IconShare } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 
 type Props = {
@@ -19,17 +20,26 @@ type Props = {
 export function CopyInviteLinkButton({ courseId }: Props) {
   const [copied, setCopied] = useState(false)
 
-  async function handleCopy() {
+  async function handleShare() {
     const url = `${window.location.origin}/course/${courseId}`
-    await navigator.clipboard.writeText(url)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: '課程連結', url })
+      } catch {
+        // 使用者取消分享，不顯示錯誤
+      }
+    } else {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      toast.success('已複製課程連結！')
+      setTimeout(() => setCopied(false), 2000)
+    }
   }
 
   return (
-    <Button variant="outline" onClick={handleCopy} className="w-fit gap-2">
-      <IconLink className="h-4 w-4" />
-      {copied ? '已複製！' : '複製課程連結'}
+    <Button variant="outline" onClick={handleShare} className="w-fit gap-2">
+      <IconShare className="h-4 w-4" />
+      {copied ? '已複製！' : '分享'}
     </Button>
   )
 }
