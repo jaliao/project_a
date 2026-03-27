@@ -244,6 +244,7 @@ export default async function CourseDetailPage({
           isCancelled={isCancelled}
           isCompleted={isCompleted}
           isStarted={!!courseSession.startedAt}
+          hasApprovedStudents={courseSession.approvedEnrollments.length > 0}
         />
       )}
     </div>

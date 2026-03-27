@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.25（2026-03-26）
+> 自動產生，版本 0.1.27（2026-03-27）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -42,7 +42,8 @@ app/
 │   ├── user/[id]/courses/ # 我的開課列表（本人專屬，Spirit ID 小寫路由）
 │   ├── course-sessions/ # 開課查詢頁（保留，將逐步以 /user/[id]/courses 取代）
 │   ├── notifications/   # 通知歷史頁面（分頁，每頁 20 則）
-│   ├── course/[id]/     # 課程詳情頁（授課老師、學員名單、取消課程、結業申請）
+│   ├── course/[id]/     # 課程詳情頁（授課老師、學員名單、取消課程）
+│   ├── course/[id]/graduate/  # 課程結業表單頁（填寫→預覽→送出）
 │   ├── learning/        # 學習紀錄頁面
 │   └── profile/         # 個人資料維護
 ├── change-password/ # 臨時密碼強制變更
@@ -65,8 +66,9 @@ components/
 │   └── course-order-form.tsx    # 訂購表單（RadioGroup + 條件欄位）
 ├── course-invite/
 │   ├── create-invite-dialog.tsx # 建立邀請 Dialog
-│   ├── create-invite-form.tsx   # 建立邀請表單 + 複製連結 View
-│   └── invite-copy-button.tsx   # 複製邀請連結按鈕（Client）
+│   ├── create-invite-form.tsx   # 建立邀請表單 + 分享連結 View（Web Share API + clipboard fallback）
+│   ├── invite-copy-button.tsx   # 分享邀請連結按鈕（Client；Web Share API + clipboard fallback）
+│   └── completion-certificate-card.tsx  # 結業證明卡片（courseLevel、title、teacherName、graduatedAt）
 ├── course-session/
 │   ├── course-session-dialog.tsx  # 新增開課 Dialog（合併訂購 + 邀請）
 │   ├── course-session-form.tsx    # 合併表單（DatePicker、課程 Select、DEV 預填）
@@ -87,7 +89,7 @@ lib/
 ├── data/
 │   ├── user.ts              # 使用者資料查詢
 │   ├── password-reset.ts    # 密碼重設查詢
-│   ├── course-sessions.ts   # 開課記錄查詢（getMyCourseSessions, getMyCourseSessionCount, getCourseSessionById）
+│   ├── course-sessions.ts   # 開課記錄查詢（getMyCourseSessions, getMyCourseSessionCount, getCourseSessionById, getMyEnrollments, getMyCompletionCertificates）
 │   └── notification.ts      # 通知查詢（getNotifications, getUnreadNotificationCount, getNotificationsPaginated）
 └── utils.ts         # cn() 等工具函數
 
@@ -167,6 +169,8 @@ userId         String（學員 UUID）
 status         EnrollmentStatus（pending | approved，預設 pending）
 materialChoice MaterialChoice（none | traditional | simplified，預設 none）
 joinedAt       DateTime
+graduatedAt          DateTime?（結業時間；有值代表通過結業）
+nonGraduateReason    String?（未結業原因：insufficient_time | other）
 @@unique([inviteId, userId])
 ```
 
@@ -253,6 +257,9 @@ createdAt       DateTime
 - `cr-spec-260326-012` — UI 改善批次：新增 `CourseCardGrid` 共用 RWD 網格元件（1→2→3→4 欄）；首頁課程區塊改為單一平鋪列表（移除三分組）；我的開課頁補傳狀態欄位；Topbar 改為 sticky + 移除新增課程按鈕
 - `cr-spec-260326-013` — 首頁授課單元改善：授課單元顯示最近 3 筆授課卡片 + 超過 3 筆顯示「更多授課資訊」卡片；CourseInvite 新增 courseDate/notes 欄位；新增授課表單簡化（移除教材訂購欄位，新增可編輯課程名稱與備註）
 - `cr-refactor-260326-001` — 移除 token-based 邀請連結（`/invite/[token]`）；改由分享 `/course/{id}` 直接連結，學員至課程頁面申請；移除 `CourseInvite.token` DB 欄位、`joinInvite()` action、公開路由；複製按鈕改為複製課程 URL
+- `cr-spec-260326-014` — 結業系統完整實作：`InviteEnrollment.graduatedAt` 欄位（migration）；`graduateCourse()` 接收 graduatedUserIds 批次寫入；`GraduationDialog` 結業確認 Dialog（預設全選已核准學員、空選禁止送出）；分享按鈕改 Web Share API + clipboard fallback；`getMyCompletionCertificates` 查詢以 courseLevel 去重；`CompletionCertificateCard` 結業證明卡片；學員頁面新增「結業證明」+ 「學習紀錄」預覽區塊；學習紀錄頁新增「結業紀錄」區塊
+
+- `cr-spec-260327-001` — 課程結業頁面：移除 GraduationDialog，改為獨立頁面 `/course/[id]/graduate`；三步驟流程（填寫→預覽→送出）；新增最後一堂課程日期欄位；未結業原因下拉（時間不足/其他）；`InviteEnrollment.nonGraduateReason` 欄位；`graduateCourse` action 更新介面
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）

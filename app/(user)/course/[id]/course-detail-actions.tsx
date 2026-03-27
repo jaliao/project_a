@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * CourseDetailActions - 講師操作按鈕（結業、取消授課）
- * 2026-03-24 (Updated: 2026-03-24)
+ * 2026-03-24 (Updated: 2026-03-26)
  * app/(user)/course/[id]/course-detail-actions.tsx
  * ----------------------------------------------
  */
@@ -10,29 +10,29 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog'
 import { CancelCourseDialog } from '@/components/course-session/cancel-course-dialog'
-import { graduateCourse, startCourseSession } from '@/app/actions/course-invite'
+import { startCourseSession } from '@/app/actions/course-invite'
 
 type Props = {
   inviteId: number
   isCancelled: boolean
   isCompleted: boolean
   isStarted: boolean
+  hasApprovedStudents: boolean
 }
 
-export function CourseDetailActions({ inviteId, isCancelled, isCompleted, isStarted }: Props) {
+export function CourseDetailActions({
+  inviteId,
+  isCancelled,
+  isCompleted,
+  isStarted,
+  hasApprovedStudents,
+}: Props) {
   const router = useRouter()
   const [cancelOpen, setCancelOpen] = useState(false)
-  const [graduateOpen, setGraduateOpen] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const canAct = !isCancelled && !isCompleted
@@ -43,19 +43,6 @@ export function CourseDetailActions({ inviteId, isCancelled, isCompleted, isStar
     setLoading(false)
     if (result.success) {
       toast.success('課程已開始')
-      router.refresh()
-    } else {
-      toast.error(result.message ?? '操作失敗，請稍後再試')
-    }
-  }
-
-  async function handleGraduate() {
-    setLoading(true)
-    const result = await graduateCourse(inviteId)
-    setLoading(false)
-    if (result.success) {
-      toast.success('課程已結業')
-      setGraduateOpen(false)
       router.refresh()
     } else {
       toast.error(result.message ?? '操作失敗，請稍後再試')
@@ -73,35 +60,24 @@ export function CourseDetailActions({ inviteId, isCancelled, isCompleted, isStar
         </Button>
       )}
 
-      {/* 結業按鈕 */}
-      <Button variant="outline" onClick={() => setGraduateOpen(true)}>
-        結業
-      </Button>
+      {/* 結業按鈕：導向結業頁面 */}
+      {hasApprovedStudents ? (
+        <Button variant="outline" asChild>
+          <Link href={`/course/${inviteId}/graduate`}>結業</Link>
+        </Button>
+      ) : (
+        <Button
+          variant="outline"
+          onClick={() => toast.error('尚無已核准學員，無法結業')}
+        >
+          結業
+        </Button>
+      )}
 
       {/* 取消授課按鈕 */}
       <Button variant="destructive" onClick={() => setCancelOpen(true)}>
         取消授課
       </Button>
-
-      {/* 結業確認 Dialog */}
-      <Dialog open={graduateOpen} onOpenChange={setGraduateOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>確認結業</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground py-2">
-            確認將此課程標記為已結業？此操作不可還原。
-          </p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setGraduateOpen(false)} disabled={loading}>
-              取消
-            </Button>
-            <Button onClick={handleGraduate} disabled={loading}>
-              {loading ? '處理中...' : '確認結業'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* 取消授課 Dialog */}
       <CancelCourseDialog

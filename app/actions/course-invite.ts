@@ -298,10 +298,24 @@ export async function approveEnrollment(enrollmentId: number): Promise<ActionRes
   return { success: true, message: '已同意申請' }
 }
 
-// ── 講師結業課程 ──────────────────────────────
-export async function graduateCourse(inviteId: number): Promise<ActionResponse> {
+// ── 講師結業課程（含選擇通過學員與未結業原因）──────────────
+export type EnrollmentResult = {
+  userId: string
+  graduated: boolean
+  nonGraduateReason?: string // insufficient_time | other（graduated: false 時必填）
+}
+
+export async function graduateCourse(
+  inviteId: number,
+  lastCourseDate: Date,
+  enrollmentResults: EnrollmentResult[]
+): Promise<ActionResponse> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  // 驗證未結業學員皆有原因
+  const missingReason = enrollmentResults.some((r) => !r.graduated && !r.nonGraduateReason)
+  if (missingReason) return { success: false, message: '請填寫未結業原因' }
 
   const invite = await prisma.courseInvite.findUnique({ where: { id: inviteId } })
   if (!invite) return { success: false, message: '找不到課程' }
@@ -310,23 +324,46 @@ export async function graduateCourse(inviteId: number): Promise<ActionResponse> 
   }
   if (invite.completedAt) return { success: false, message: '課程已結業' }
 
-  const graduatedCount = await prisma.inviteEnrollment.count({
+  // 驗證：僅 approved 學員才能被處理
+  const approvedEnrollments = await prisma.inviteEnrollment.findMany({
     where: { inviteId, status: 'approved' },
+    select: { userId: true },
   })
+  const approvedUserIds = new Set(approvedEnrollments.map((e) => e.userId))
+  const validResults = enrollmentResults.filter((r) => approvedUserIds.has(r.userId))
 
-  await prisma.courseInvite.update({
-    where: { id: inviteId },
-    data: { completedAt: new Date() },
-  })
+  const graduatedIds = validResults.filter((r) => r.graduated).map((r) => r.userId)
+  const nonGraduated = validResults.filter((r) => !r.graduated)
+
+  await prisma.$transaction([
+    // 已結業學員：設定 graduatedAt 為最後一堂課程日期
+    prisma.inviteEnrollment.updateMany({
+      where: { inviteId, userId: { in: graduatedIds } },
+      data: { graduatedAt: lastCourseDate },
+    }),
+    // 未結業學員：儲存原因
+    ...nonGraduated.map((r) =>
+      prisma.inviteEnrollment.updateMany({
+        where: { inviteId, userId: r.userId },
+        data: { nonGraduateReason: r.nonGraduateReason },
+      })
+    ),
+    // 標記課程結業（以講師指定日期）
+    prisma.courseInvite.update({
+      where: { id: inviteId },
+      data: { completedAt: lastCourseDate },
+    }),
+  ])
 
   const { revalidatePath } = await import('next/cache')
   revalidatePath(`/course/${inviteId}`)
+  revalidatePath(`/course/${inviteId}/graduate`)
 
   try {
     await createNotification(
       session.user.id,
       '課程結業完成',
-      `${invite.title} 課程已結業，共 ${graduatedCount} 位學員完成課程。`
+      `${invite.title} 課程已結業，共 ${graduatedIds.length} 位學員通過結業。`
     )
   } catch (e) {
     console.error('結業通知寫入失敗', e)

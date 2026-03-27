@@ -86,7 +86,9 @@ model InviteEnrollment {
   status         EnrollmentStatus @default(pending) // 申請狀態
   materialChoice MaterialChoice   @default(none) // 書籍選擇
 
-  joinedAt DateTime @default(now())
+  joinedAt          DateTime  @default(now())
+  graduatedAt       DateTime? // 結業時間（有值即代表通過結業）
+  nonGraduateReason String? // 未結業原因（insufficient_time / other）
 
   @@unique([inviteId, userId])
   @@map("invite_enrollments")
