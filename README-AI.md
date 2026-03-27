@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.28（2026-03-27）
+> 自動產生，版本 0.1.29（2026-03-28）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -262,6 +262,8 @@ createdAt       DateTime
 - `cr-spec-260327-001` — 課程結業頁面：移除 GraduationDialog，改為獨立頁面 `/course/[id]/graduate`；三步驟流程（填寫→預覽→送出）；新增最後一堂課程日期欄位；未結業原因下拉（時間不足/其他）；`InviteEnrollment.nonGraduateReason` 欄位；`graduateCourse` action 更新介面
 
 - `cr-spec-260327-002` — 課程詳情頁結業資訊：已結業課程新增「結業資訊」區塊（最後課程日期、已結業／未結業學員清單含原因）；data layer 補充 `nonGraduateReason` 欄位
+
+- `cr-spec-260328-001` — 身分標籤多標籤：學員頁面身分標籤改為多 Badge（系統管理員依 role、啟動靈人 N 講師依結業證書），移除舊 learningLevel 學員標籤
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）

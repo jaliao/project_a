@@ -26,12 +26,12 @@ export const metadata: Metadata = {
   title: '學員資料 — 啟動靈人系統',
 }
 
-// learningLevel → 身分標籤
-const LEARNING_LEVEL_LABEL: Record<number, string> = {
-  1: '啟動靈人 1 學員',
-  2: '啟動靈人 2 學員',
-  3: '啟動靈人 3 學員',
-  4: '啟動靈人 4 學員',
+// courseLevel → 講師標籤
+const INSTRUCTOR_LABEL: Record<string, string> = {
+  level1: '啟動靈人 1 講師',
+  level2: '啟動靈人 2 講師',
+  level3: '啟動靈人 3 講師',
+  level4: '啟動靈人 4 講師',
 }
 
 type Props = {
@@ -54,6 +54,7 @@ export default async function UserProfilePage({ params }: Props) {
       phone: true,
       learningLevel: true,
       spiritId: true,
+      role: true,
     },
   })
 
@@ -71,7 +72,19 @@ export default async function UserProfilePage({ params }: Props) {
   const certificates = await getMyCompletionCertificates(user.id)
 
   const displayName = user.realName || user.name || '（未設定姓名）'
-  const levelLabel = user.learningLevel ? LEARNING_LEVEL_LABEL[user.learningLevel] : null
+
+  // 計算身分標籤（角色標籤優先，講師標籤依等級升序）
+  const identityTags: string[] = []
+  if (user.role === 'admin' || user.role === 'superadmin') {
+    identityTags.push('系統管理員')
+  }
+  const instructorLevelOrder = ['level1', 'level2', 'level3', 'level4']
+  const certLevels = new Set(certificates.map((c) => c.courseLevel))
+  for (const level of instructorLevelOrder) {
+    if (certLevels.has(level) && INSTRUCTOR_LABEL[level]) {
+      identityTags.push(INSTRUCTOR_LABEL[level])
+    }
+  }
 
   // 判斷是否為本人頁面
   const isOwnPage = session?.user?.spiritId?.toLowerCase() === id
@@ -113,10 +126,14 @@ export default async function UserProfilePage({ params }: Props) {
           )}
 
           {/* 身分標籤 */}
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground w-20 shrink-0">身分標籤</span>
-            {levelLabel ? (
-              <Badge variant="secondary">{levelLabel}</Badge>
+          <div className="flex items-start gap-3">
+            <span className="text-sm text-muted-foreground w-20 shrink-0 pt-0.5">身分標籤</span>
+            {identityTags.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {identityTags.map((tag) => (
+                  <Badge key={tag} variant="secondary">{tag}</Badge>
+                ))}
+              </div>
             ) : (
               <span className="text-sm text-muted-foreground">—</span>
             )}
