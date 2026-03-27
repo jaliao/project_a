@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.27（2026-03-27）
+> 自動產生，版本 0.1.28（2026-03-27）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -260,6 +260,8 @@ createdAt       DateTime
 - `cr-spec-260326-014` — 結業系統完整實作：`InviteEnrollment.graduatedAt` 欄位（migration）；`graduateCourse()` 接收 graduatedUserIds 批次寫入；`GraduationDialog` 結業確認 Dialog（預設全選已核准學員、空選禁止送出）；分享按鈕改 Web Share API + clipboard fallback；`getMyCompletionCertificates` 查詢以 courseLevel 去重；`CompletionCertificateCard` 結業證明卡片；學員頁面新增「結業證明」+ 「學習紀錄」預覽區塊；學習紀錄頁新增「結業紀錄」區塊
 
 - `cr-spec-260327-001` — 課程結業頁面：移除 GraduationDialog，改為獨立頁面 `/course/[id]/graduate`；三步驟流程（填寫→預覽→送出）；新增最後一堂課程日期欄位；未結業原因下拉（時間不足/其他）；`InviteEnrollment.nonGraduateReason` 欄位；`graduateCourse` action 更新介面
+
+- `cr-spec-260327-002` — 課程詳情頁結業資訊：已結業課程新增「結業資訊」區塊（最後課程日期、已結業／未結業學員清單含原因）；data layer 補充 `nonGraduateReason` 欄位
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）

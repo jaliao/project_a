@@ -130,6 +130,67 @@ export default async function CourseDetailPage({
         </div>
       )}
 
+      {/* 結業資訊區塊 */}
+      {isCompleted && courseSession.completedAt && (() => {
+        const NON_GRADUATE_REASON_LABELS: Record<string, string> = {
+          insufficient_time: '時間不足',
+          other: '其他',
+        }
+        const graduated = courseSession.approvedEnrollments.filter((e) => e.graduatedAt)
+        const nonGraduated = courseSession.approvedEnrollments.filter((e) => !e.graduatedAt)
+        return (
+          <div className="rounded-lg border border-green-200 bg-green-50 p-5 space-y-4">
+            <h2 className="text-sm font-medium text-green-800">結業資訊</h2>
+            {/* 最後一堂課程日期 */}
+            <div className="text-sm">
+              <span className="text-green-700">最後一堂課程日期：</span>
+              <span className="font-medium text-green-900">
+                {formatDate(courseSession.completedAt)}
+              </span>
+            </div>
+            {/* 已結業學員 */}
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-green-700">
+                已結業（{graduated.length} 人）
+              </p>
+              {graduated.length === 0 ? (
+                <p className="text-sm text-green-600">無</p>
+              ) : (
+                <ul className="space-y-0.5">
+                  {graduated.map((e) => (
+                    <li key={e.id} className="text-sm text-green-900 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
+                      {e.user.name ?? e.user.email ?? '—'}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            {/* 未結業學員 */}
+            {nonGraduated.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-orange-700">
+                  未結業（{nonGraduated.length} 人）
+                </p>
+                <ul className="space-y-0.5">
+                  {nonGraduated.map((e) => (
+                    <li key={e.id} className="text-sm text-orange-900 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0" />
+                      {e.user.name ?? e.user.email ?? '—'}
+                      <span className="text-xs text-orange-600">
+                        — {e.nonGraduateReason
+                          ? (NON_GRADUATE_REASON_LABELS[e.nonGraduateReason] ?? e.nonGraduateReason)
+                          : '—'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )
+      })()}
+
       {/* 基本資訊區塊 */}
       <div className="rounded-lg border p-5 space-y-3">
         <h2 className="text-sm font-medium text-muted-foreground">基本資訊</h2>
