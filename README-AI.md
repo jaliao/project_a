@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.35（2026-03-30）
+> 自動產生，版本 0.1.36（2026-03-30）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -42,7 +42,8 @@ app/
 │   ├── user/[id]/courses/ # 我的開課列表（本人專屬，Spirit ID 小寫路由）
 │   ├── course-sessions/ # 開課查詢頁（保留，將逐步以 /user/[id]/courses 取代）
 │   ├── notifications/   # 通知歷史頁面（分頁，每頁 20 則）
-│   ├── course/[id]/     # 課程詳情頁（授課老師、學員名單、取消課程）
+│   ├── admin/materials/ # 教材申請管理（管理者查看、確認已寄送）
+│   ├── course/[id]/     # 課程詳情頁（授課老師、學員名單、取消課程、教材申請）
 │   ├── course/[id]/graduate/  # 課程結業表單頁（填寫→預覽→送出）
 │   ├── learning/        # 學習紀錄頁面
 │   └── profile/         # 個人資料維護
@@ -69,12 +70,15 @@ components/
 │   ├── create-invite-form.tsx   # 建立邀請表單 + 分享連結 View（Web Share API + clipboard fallback）
 │   ├── invite-copy-button.tsx   # 分享邀請連結按鈕（Client；Web Share API + clipboard fallback）
 │   └── completion-certificate-card.tsx  # 結業證明卡片（courseCatalogLabel、title、teacherName、graduatedAt）
+├── admin/
+│   └── material-order-table.tsx  # 教材申請管理表格（狀態 Badge、確認已寄送、展開詳情）
 ├── course-session/
 │   ├── course-session-dialog.tsx  # 新增開課 Dialog 入口（含 canTeach disabled gate + tooltip）
 │   ├── course-session-form.tsx    # 舊版合併表單（保留，目前精靈流程未使用）
 │   ├── course-session-card.tsx    # 開課卡片共用元件（compact / full variant，支援 href 連結）
 │   ├── course-card-grid.tsx       # 課程卡片響應式網格容器（1→2→3→4 欄 RWD）
 │   ├── cancel-course-dialog.tsx   # 取消課程確認 Dialog（下拉選單 + 自填 textarea）
+│   ├── material-order-dialog.tsx  # 教材申請 Dialog（預填資料、已寄送唯讀模式）
 │   ├── enrolled-students-list.tsx # 已接受邀請學員清單（Server Component）
 │   └── create-course-wizard/
 │       ├── create-course-wizard.tsx   # 精靈主容器（step 1|2|3|'invite' 狀態機）
@@ -97,6 +101,7 @@ lib/
 │   ├── password-reset.ts    # 密碼重設查詢
 │   ├── course-sessions.ts   # 開課記錄查詢（getMyCourseSessions, getMyCourseSessionCount, getCourseSessionById, getMyEnrollments, getMyCompletionCertificates）
 │   ├── course-catalog.ts    # 課程目錄查詢（getAllCourses, getActiveCourses, getCourse, checkPrerequisites, getGraduatedCatalogIds）
+│   ├── course-order.ts      # 課程訂購查詢（getCourseOrderByInviteId, getAllCourseOrdersWithInvite）
 │   └── notification.ts      # 通知查詢（getNotifications, getUnreadNotificationCount, getNotificationsPaginated）
 └── utils.ts         # cn() 等工具函數
 
@@ -208,6 +213,8 @@ courseDate      String（預計開課日期，可為「無」）
 taxId           String?（統一編號，選填）
 deliveryMethod  DeliveryMethod（sevenEleven | familyMart | delivery）
 submittedById   String?（提交者 UUID，選填關聯 User）
+shippedAt       DateTime?（管理者確認寄送時間）
+receivedAt      DateTime?（講師確認收件時間）
 createdAt       DateTime
 ```
 
@@ -306,7 +313,7 @@ createdAt       DateTime
 - `cr-spec-260330-006` — 啟動靈人 1 先修清除：migration 刪除 join table 殘留；seed 補顯式清除
 - `cr-fix-260330-001` — Makefile prisma studio `--browser none`：修正 WSL2 缺少 `xdg-open` 導致 studio 指令崩潰：migration 刪除 join table 中 A=1 的殘留資料；seed 補顯式 set:[] 確保入門課程永遠無先修：`CourseCatalog` 新增 `description` 欄位（選填）；seed 改為累積式先修（啟動靈人 N 需先修 1..N-1）；Admin 課程列表顯示簡介（line-clamp-2）；編輯 Dialog 新增簡介 Textarea
 - `cr-spec-260330-004` — 申請按鈕先修資格前置檢查：`/course/[id]` 頁面呼叫 `checkPrerequisites`；不符資格時按鈕 disabled，下方顯示缺少先修課程清單
+- `cr-spec-260330-005` — 教材申請作業流程：`CourseOrder` 新增 `shippedAt`/`receivedAt` 欄位；課程詳情頁新增「申請教材」按鈕（預填 Profile 資料）、寄送狀態提示、「我已收到教材」確認收件；「開始上課」前置條件改為 `receivedAt != null`；後台新增 `/admin/materials` 教材申請管理頁（列表、狀態 Badge、確認已寄送、展開詳情）
 
 ### 進行中 / 待規劃
-- 訂單管理後台（列表、狀態管理）
 - 會員管理後台（CRUD、搜尋、分頁）

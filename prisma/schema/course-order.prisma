@@ -1,7 +1,7 @@
 /**
  * ----------------------------------------------
  * Prisma Schema - 課程訂購模型
- * 2026-03-23
+ * 2026-03-23 (Updated: 2026-03-30)
  * prisma/schema/course-order.prisma
  * ----------------------------------------------
  */
@@ -66,6 +66,10 @@ model CourseOrder {
   submittedBy   User?   @relation(fields: [submittedById], references: [id])
 
   createdAt DateTime @default(now())
+
+  // 教材寄送追蹤
+  shippedAt  DateTime? // 管理者確認寄送時間
+  receivedAt DateTime? // 講師確認收件時間
 
   // 課程邀請關聯
   courseInvites CourseInvite[]

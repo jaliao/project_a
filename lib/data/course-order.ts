@@ -1,0 +1,143 @@
+/*
+ * ----------------------------------------------
+ * Data Layer - 課程訂購查詢
+ * 2026-03-30
+ * lib/data/course-order.ts
+ * ----------------------------------------------
+ */
+
+import { prisma } from '@/lib/prisma'
+
+export type CourseOrderDetail = {
+  id: number
+  buyerNameZh: string
+  buyerNameEn: string
+  teacherName: string
+  churchOrg: string
+  email: string
+  phone: string
+  materialVersion: string
+  purchaseType: string
+  studentNames: string | null
+  quantity: number
+  quantityNote: string | null
+  courseDate: string
+  taxId: string | null
+  deliveryMethod: string
+  shippedAt: Date | null
+  receivedAt: Date | null
+  createdAt: Date
+}
+
+export type CourseOrderWithInvite = CourseOrderDetail & {
+  inviteId: number | null
+  inviteTitle: string | null
+  instructorName: string | null
+  instructorEmail: string | null
+}
+
+/**
+ * 取得指定 CourseInvite 的 CourseOrder（含寄送狀態）
+ */
+export async function getCourseOrderByInviteId(
+  inviteId: number
+): Promise<CourseOrderDetail | null> {
+  const invite = await prisma.courseInvite.findUnique({
+    where: { id: inviteId },
+    select: {
+      courseOrder: {
+        select: {
+          id: true,
+          buyerNameZh: true,
+          buyerNameEn: true,
+          teacherName: true,
+          churchOrg: true,
+          email: true,
+          phone: true,
+          materialVersion: true,
+          purchaseType: true,
+          studentNames: true,
+          quantity: true,
+          quantityNote: true,
+          courseDate: true,
+          taxId: true,
+          deliveryMethod: true,
+          shippedAt: true,
+          receivedAt: true,
+          createdAt: true,
+        },
+      },
+    },
+  })
+
+  if (!invite?.courseOrder) return null
+  return invite.courseOrder as CourseOrderDetail
+}
+
+/**
+ * 取得所有 CourseOrder 及關聯的 CourseInvite 資訊（後台管理列表用）
+ */
+export async function getAllCourseOrdersWithInvite(): Promise<
+  CourseOrderWithInvite[]
+> {
+  const orders = await prisma.courseOrder.findMany({
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      buyerNameZh: true,
+      buyerNameEn: true,
+      teacherName: true,
+      churchOrg: true,
+      email: true,
+      phone: true,
+      materialVersion: true,
+      purchaseType: true,
+      studentNames: true,
+      quantity: true,
+      quantityNote: true,
+      courseDate: true,
+      taxId: true,
+      deliveryMethod: true,
+      shippedAt: true,
+      receivedAt: true,
+      createdAt: true,
+      courseInvites: {
+        take: 1,
+        select: {
+          id: true,
+          title: true,
+          createdBy: { select: { realName: true, name: true, email: true } },
+        },
+      },
+    },
+  })
+
+  return orders.map((order) => {
+    const invite = order.courseInvites[0]
+    return {
+      id: order.id,
+      buyerNameZh: order.buyerNameZh,
+      buyerNameEn: order.buyerNameEn,
+      teacherName: order.teacherName,
+      churchOrg: order.churchOrg,
+      email: order.email,
+      phone: order.phone,
+      materialVersion: order.materialVersion,
+      purchaseType: order.purchaseType,
+      studentNames: order.studentNames,
+      quantity: order.quantity,
+      quantityNote: order.quantityNote,
+      courseDate: order.courseDate,
+      taxId: order.taxId,
+      deliveryMethod: order.deliveryMethod,
+      shippedAt: order.shippedAt,
+      receivedAt: order.receivedAt,
+      createdAt: order.createdAt,
+      inviteId: invite?.id ?? null,
+      inviteTitle: invite?.title ?? null,
+      instructorName:
+        invite?.createdBy.realName ?? invite?.createdBy.name ?? null,
+      instructorEmail: invite?.createdBy.email ?? null,
+    }
+  })
+}

@@ -304,7 +304,7 @@ export default async function CourseDetailPage({
         />
       )}
 
-      {/* 講師：操作按鈕（結業、取消授課） */}
+      {/* 講師：操作按鈕（教材申請、結業、取消授課） */}
       {isInstructor && (
         <CourseDetailActions
           inviteId={courseSession.id}
@@ -312,6 +312,12 @@ export default async function CourseDetailPage({
           isCompleted={isCompleted}
           isStarted={!!courseSession.startedAt}
           hasApprovedStudents={courseSession.approvedEnrollments.length > 0}
+          courseOrder={courseSession.courseOrder}
+          courseDatePrefill={courseSession.courseDate ?? undefined}
+          userPrefill={{
+            buyerNameZh: courseSession.createdBy.realName ?? courseSession.createdBy.name ?? undefined,
+            email: courseSession.createdBy.email ?? undefined,
+          }}
         />
       )}
     </div>

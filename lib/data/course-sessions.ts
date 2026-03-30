@@ -170,6 +170,25 @@ export type CourseSessionDetail = {
   approvedEnrollments: EnrollmentRecord[]
   pendingEnrollments: EnrollmentRecord[]
   courseDate: string | null
+  courseOrder: {
+    id: number
+    buyerNameZh: string
+    buyerNameEn: string
+    teacherName: string
+    churchOrg: string
+    email: string
+    phone: string
+    materialVersion: string
+    purchaseType: string
+    studentNames: string | null
+    quantity: number
+    quantityNote: string | null
+    courseDate: string
+    taxId: string | null
+    deliveryMethod: string
+    shippedAt: Date | null
+    receivedAt: Date | null
+  } | null
 }
 
 /**
@@ -205,7 +224,27 @@ export async function getCourseSessionById(
         },
         orderBy: { joinedAt: 'asc' },
       },
-      courseOrder: { select: { courseDate: true } },
+      courseOrder: {
+        select: {
+          id: true,
+          buyerNameZh: true,
+          buyerNameEn: true,
+          teacherName: true,
+          churchOrg: true,
+          email: true,
+          phone: true,
+          materialVersion: true,
+          purchaseType: true,
+          studentNames: true,
+          quantity: true,
+          quantityNote: true,
+          courseDate: true,
+          taxId: true,
+          deliveryMethod: true,
+          shippedAt: true,
+          receivedAt: true,
+        },
+      },
     },
   })
 
@@ -230,6 +269,7 @@ export async function getCourseSessionById(
     approvedEnrollments,
     pendingEnrollments,
     courseDate: invite.courseDate ?? invite.courseOrder?.courseDate ?? null,
+    courseOrder: invite.courseOrder ?? null,
   }
 }
 
