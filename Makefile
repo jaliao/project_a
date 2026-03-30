@@ -219,7 +219,7 @@ prisma-reset: ## ⚠️  重置資料庫（會刪除所有資料）
 prisma-studio: ## 🎨 開啟 Prisma Studio
 	@echo "🎨 開啟 Prisma Studio..."
 	@echo "🌐 瀏覽器將開啟 http://localhost:5555"
-	@$(PRISMA_DEV_DB) npx prisma studio  
+	@$(PRISMA_DEV_DB) npx prisma studio --browser none
 
 prisma-seed: ## 🌱 執行種子資料
 	@echo "🌱 初始化種子資料..."
@@ -446,7 +446,7 @@ prisma-vps3-seed: ## 部署 migrations 到 VPS3（正式/遠端 DB 用）
 
 prisma-vps3-studio: ## 連 VPS3 開 Prisma Studio（需先開 tunnel）
 	@echo "🌐 Prisma Studio (VPS3) <http://localhost:5555>"
-	@$(PRISMA_VPS3_DB) npx prisma studio
+	@$(PRISMA_VPS3_DB) npx prisma studio --browser none
 
 
 
@@ -467,3 +467,8 @@ prisma-dev-seed: ## 部署 migrations 到 VPS3（正式/遠端 DB 用）
 	else \
 		echo "❌ 找不到 prisma/seed.ts"; \
 	fi
+
+prisma-dev-studio:
+	@echo "Prisma Studio (DEV) http://localhost:5555"
+	$(DEV_COMPOSE) --profile studio up studio
+	

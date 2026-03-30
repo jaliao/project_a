@@ -6,6 +6,24 @@
 #  */
 
 services:
+  studio:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    user: "${UID}:${GID}"
+    volumes:
+      - .:/app
+      - ./node_modules:/app/node_modules
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    command: npx prisma studio --browser none --port 5555
+    depends_on:
+      - db
+    profiles:
+      - studio
+
   web:
     volumes:
       - .:/app

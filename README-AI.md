@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.34（2026-03-30）
+> 自動產生，版本 0.1.35（2026-03-30）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -303,7 +303,8 @@ createdAt       DateTime
 - `cr-spec-260330-001` — 授課精靈流程：新增授課改為三步驟精靈（卡片選課→基本資料→預覽確認）；入口加講師身分前置檢核（canTeach）；邀請學員階段新增 Spirit ID 邀請方式（`inviteBySpirtId` → Inbox 通知）
 - `cr-spec-260330-002` — 課程目錄 DB 化：移除 `CourseLevel` enum 與 `config/course-catalog.ts`；新增 `CourseCatalog` DB model（id/label/isActive/sortOrder/prerequisites 多對多自關聯）；Admin UI 維護課程名稱、isActive、先修關係；先修驗證改為 DB Set 比對；所有課程名稱顯示改為讀取 `CourseCatalog.label`；`LevelProgress` 元件改為 DB 課程清單 + 已結業 id 集合
 - `cr-spec-260330-003` — 先修資料累積修正 + 課程簡介欄位：`CourseCatalog` 新增 `description` 欄位；seed 改為累積式先修；Admin 課程列表顯示簡介；編輯 Dialog 新增簡介 Textarea
-- `cr-spec-260330-006` — 啟動靈人 1 先修清除：migration 刪除 join table 中 A=1 的殘留資料；seed 補顯式 set:[] 確保入門課程永遠無先修：`CourseCatalog` 新增 `description` 欄位（選填）；seed 改為累積式先修（啟動靈人 N 需先修 1..N-1）；Admin 課程列表顯示簡介（line-clamp-2）；編輯 Dialog 新增簡介 Textarea
+- `cr-spec-260330-006` — 啟動靈人 1 先修清除：migration 刪除 join table 殘留；seed 補顯式清除
+- `cr-fix-260330-001` — Makefile prisma studio `--browser none`：修正 WSL2 缺少 `xdg-open` 導致 studio 指令崩潰：migration 刪除 join table 中 A=1 的殘留資料；seed 補顯式 set:[] 確保入門課程永遠無先修：`CourseCatalog` 新增 `description` 欄位（選填）；seed 改為累積式先修（啟動靈人 N 需先修 1..N-1）；Admin 課程列表顯示簡介（line-clamp-2）；編輯 Dialog 新增簡介 Textarea
 - `cr-spec-260330-004` — 申請按鈕先修資格前置檢查：`/course/[id]` 頁面呼叫 `checkPrerequisites`；不符資格時按鈕 disabled，下方顯示缺少先修課程清單
 
 ### 進行中 / 待規劃
