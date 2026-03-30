@@ -9,7 +9,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { CourseLevel } from '@/config/course-catalog'
+import type { CourseCatalogEntry } from '@/lib/data/course-catalog'
 import { Step1CourseCard } from './step-1-course-card'
 import { Step2BasicInfo, type Step2FormValues } from './step-2-basic-info'
 import { Step3Preview } from './step-3-preview'
@@ -19,8 +19,9 @@ type WizardStep = 1 | 2 | 3 | 'invite'
 
 interface CreateCourseWizardProps {
   instructorName: string
-  // 使用者已取得的講師等級數字陣列（e.g. [1, 2]），由 Server Component 傳入
-  instructorLevels: number[]
+  activeCourses: CourseCatalogEntry[]
+  // 使用者已結業的課程 id 陣列（由 Server Component 傳入）
+  graduatedCatalogIds: number[]
   isAdmin: boolean
   onClose: () => void
 }
@@ -35,12 +36,13 @@ const STEP_TITLES: Record<WizardStep, string> = {
 
 export function CreateCourseWizard({
   instructorName,
-  instructorLevels,
+  activeCourses,
+  graduatedCatalogIds,
   isAdmin,
   onClose,
 }: CreateCourseWizardProps) {
   const [step, setStep] = useState<WizardStep>(1)
-  const [selectedLevel, setSelectedLevel] = useState<CourseLevel | null>(null)
+  const [selectedCatalogId, setSelectedCatalogId] = useState<number | null>(null)
   const [formValues, setFormValues] = useState<Step2FormValues | null>(null)
   const [createdInviteId, setCreatedInviteId] = useState<number | null>(null)
 
@@ -75,18 +77,20 @@ export function CreateCourseWizard({
       {/* Step 1 */}
       {step === 1 && (
         <Step1CourseCard
-          selected={selectedLevel}
-          onSelect={setSelectedLevel}
+          courses={activeCourses}
+          selected={selectedCatalogId}
+          onSelect={setSelectedCatalogId}
           onNext={() => setStep(2)}
-          instructorLevels={instructorLevels}
+          graduatedCatalogIds={graduatedCatalogIds}
           isAdmin={isAdmin}
         />
       )}
 
       {/* Step 2 */}
-      {step === 2 && selectedLevel && (
+      {step === 2 && selectedCatalogId !== null && (
         <Step2BasicInfo
-          courseLevel={selectedLevel}
+          courseCatalogId={selectedCatalogId}
+          courseCatalogLabel={activeCourses.find((c) => c.id === selectedCatalogId)?.label ?? ''}
           instructorName={instructorName}
           defaultValues={formValues ?? undefined}
           onNext={(values) => {

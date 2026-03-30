@@ -21,17 +21,10 @@ import { CourseSessionCard } from '@/components/course-session/course-session-ca
 import { CourseCardGrid } from '@/components/course-session/course-card-grid'
 import { CompletionCertificateCard } from '@/components/course-invite/completion-certificate-card'
 import { getMyEnrollments, getMyCourseSessions, getMyCompletionCertificates } from '@/lib/data/course-sessions'
+import { getActiveCourses, getGraduatedCatalogIds } from '@/lib/data/course-catalog'
 
 export const metadata: Metadata = {
   title: '學員資料 — 啟動靈人系統',
-}
-
-// courseLevel → 講師標籤
-const INSTRUCTOR_LABEL: Record<string, string> = {
-  level1: '啟動靈人 1 講師',
-  level2: '啟動靈人 2 講師',
-  level3: '啟動靈人 3 講師',
-  level4: '啟動靈人 4 講師',
 }
 
 type Props = {
@@ -52,7 +45,6 @@ export default async function UserProfilePage({ params }: Props) {
       email: true,
       commEmail: true,
       phone: true,
-      learningLevel: true,
       spiritId: true,
       role: true,
     },
@@ -70,20 +62,23 @@ export default async function UserProfilePage({ params }: Props) {
   const myCourseSessions = isOwnPageEarly ? await getMyCourseSessions(user.id, 4) : []
   // 查詢結業證明（所有人可見）
   const certificates = await getMyCompletionCertificates(user.id)
+  // 查詢已結業課程 id 集合（用於開課資格判斷）
+  const graduatedCatalogIdsSet = isOwnPageEarly
+    ? await getGraduatedCatalogIds(user.id)
+    : new Set<number>()
+  const graduatedCatalogIds = [...graduatedCatalogIdsSet]
+  // 查詢可開設課程（開課精靈使用）
+  const activeCourses = isOwnPageEarly ? await getActiveCourses() : []
 
   const displayName = user.realName || user.name || '（未設定姓名）'
 
-  // 計算身分標籤（角色標籤優先，講師標籤依等級升序）
+  // 計算身分標籤（角色標籤優先，講師標籤依結業紀錄升序排列）
   const identityTags: string[] = []
   if (user.role === 'admin' || user.role === 'superadmin') {
     identityTags.push('系統管理員')
   }
-  const instructorLevelOrder = ['level1', 'level2', 'level3', 'level4']
-  const certLevels = new Set(certificates.map((c) => c.courseLevel))
-  for (const level of instructorLevelOrder) {
-    if (certLevels.has(level) && INSTRUCTOR_LABEL[level]) {
-      identityTags.push(INSTRUCTOR_LABEL[level])
-    }
+  for (const cert of certificates) {
+    identityTags.push(`${cert.courseCatalogLabel} 講師`)
   }
 
   // 判斷是否為本人頁面
@@ -94,14 +89,7 @@ export default async function UserProfilePage({ params }: Props) {
   const isProfileComplete = !!(user.realName && effectiveCommEmail && user.phone)
   const isAdmin = session?.user?.role === 'admin' || session?.user?.role === 'superadmin'
 
-  // 計算講師等級（以結業證書推導，用於開課資格與精靈顯示）
-  const instructorLevels = certificates
-    .map((c) => {
-      const match = c.courseLevel.match(/^level(\d+)$/)
-      return match ? parseInt(match[1], 10) : null
-    })
-    .filter((n): n is number => n !== null)
-  const canTeach = isAdmin || instructorLevels.length > 0
+  const canTeach = isAdmin || certificates.length > 0
 
   return (
     <div className="space-y-6">
@@ -165,7 +153,8 @@ export default async function UserProfilePage({ params }: Props) {
               <CourseSessionCard
                 key={e.enrollmentId}
                 title={e.title}
-                courseLevel={e.courseLevel}
+                courseCatalogId={e.courseCatalogId}
+                courseCatalogLabel={e.courseCatalogLabel}
                 courseDate={e.courseDate}
                 maxCount={e.maxCount}
                 enrolledCount={e.enrolledCount}
@@ -191,8 +180,8 @@ export default async function UserProfilePage({ params }: Props) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {certificates.map((cert) => (
               <CompletionCertificateCard
-                key={cert.courseLevel}
-                courseLevel={cert.courseLevel}
+                key={cert.courseCatalogId}
+                courseCatalogLabel={cert.courseCatalogLabel}
                 title={cert.title}
                 teacherName={cert.teacherName}
                 graduatedAt={cert.graduatedAt}
@@ -218,7 +207,7 @@ export default async function UserProfilePage({ params }: Props) {
           </div>
           <ul className="space-y-2">
             {certificates.slice(0, 3).map((cert) => (
-              <li key={cert.courseLevel} className="flex items-center justify-between text-sm">
+              <li key={cert.courseCatalogId} className="flex items-center justify-between text-sm">
                 <span className="font-medium">{cert.title}</span>
                 <span className="text-muted-foreground text-xs">
                   {cert.graduatedAt.getFullYear()}/{String(cert.graduatedAt.getMonth() + 1).padStart(2, '0')}/{String(cert.graduatedAt.getDate()).padStart(2, '0')}
@@ -246,7 +235,8 @@ export default async function UserProfilePage({ params }: Props) {
                 <CourseSessionCard
                   key={item.id}
                   title={item.title}
-                  courseLevel={item.courseLevel}
+                  courseCatalogId={item.courseCatalogId}
+                  courseCatalogLabel={item.courseCatalogLabel}
                   courseDate={item.courseDate}
                   maxCount={item.maxCount}
                   enrolledCount={item.enrolledCount}
@@ -272,7 +262,8 @@ export default async function UserProfilePage({ params }: Props) {
           <Suspense>
             <CourseSessionDialog
               instructorName={displayName}
-              instructorLevels={instructorLevels}
+              activeCourses={activeCourses}
+              graduatedCatalogIds={graduatedCatalogIds}
               isAdmin={isAdmin}
             />
           </Suspense>

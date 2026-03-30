@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * CreateInviteForm - 建立邀請表單
- * 2026-03-23 (Updated: 2026-03-23)
+ * 2026-03-23 (Updated: 2026-03-30)
  * components/course-invite/create-invite-form.tsx
  * ----------------------------------------------
  */
@@ -15,7 +15,6 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { IconShare, IconCheck } from '@tabler/icons-react'
 import { createInvite } from '@/app/actions/course-invite'
-import { getActiveCourses } from '@/config/course-catalog'
 import {
   Form,
   FormControl,
@@ -34,16 +33,19 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-const activeCourses = getActiveCourses()
-
-// 前端表單 schema（輸入為字串）
+// 前端表單 schema（courseCatalogId 以字串傳入後由 server action 轉換）
 const formSchema = z.object({
-  courseLevel: z.string().min(1, '請選擇課程'),
+  courseCatalogId: z.string().min(1, '請選擇課程'),
   maxCount: z.string().min(1, '預計人數為必填'),
   courseOrderId: z.string().optional(),
 })
 
 type FormValues = z.infer<typeof formSchema>
+
+interface ActiveCourse {
+  id: number
+  label: string
+}
 
 interface Order {
   id: number
@@ -52,18 +54,19 @@ interface Order {
 }
 
 interface CreateInviteFormProps {
+  activeCourses: ActiveCourse[]
   orders: Order[]
   onSuccess: () => void
 }
 
-export function CreateInviteForm({ orders, onSuccess }: CreateInviteFormProps) {
+export function CreateInviteForm({ activeCourses, orders, onSuccess }: CreateInviteFormProps) {
   const [isPending, startTransition] = useTransition()
   const [courseLink, setCourseLink] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { courseLevel: '', maxCount: '', courseOrderId: '' },
+    defaultValues: { courseCatalogId: '', maxCount: '', courseOrderId: '' },
   })
 
   const onSubmit = (values: FormValues) => {
@@ -118,7 +121,7 @@ export function CreateInviteForm({ orders, onSuccess }: CreateInviteFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         {/* 課程選擇 */}
-        <FormField control={form.control} name="courseLevel" render={({ field }) => (
+        <FormField control={form.control} name="courseCatalogId" render={({ field }) => (
           <FormItem>
             <FormLabel>課程 *</FormLabel>
             <Select onValueChange={field.onChange} value={field.value}>
@@ -129,7 +132,7 @@ export function CreateInviteForm({ orders, onSuccess }: CreateInviteFormProps) {
               </FormControl>
               <SelectContent>
                 {activeCourses.map((c) => (
-                  <SelectItem key={c.level} value={c.level}>
+                  <SelectItem key={c.id} value={String(c.id)}>
                     {c.label}
                   </SelectItem>
                 ))}

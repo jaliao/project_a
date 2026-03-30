@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * Server Actions - 課程邀請
- * 2026-03-23 (Updated: 2026-03-23)
+ * 2026-03-23 (Updated: 2026-03-30)
  * app/actions/course-invite.ts
  * ----------------------------------------------
  */
@@ -11,7 +11,7 @@
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { createInviteSchema } from '@/lib/schemas/course-invite'
-import { COURSE_CATALOG, type CourseLevel } from '@/config/course-catalog'
+import { checkPrerequisites } from '@/lib/data/course-catalog'
 import { createNotification } from '@/app/actions/notification'
 
 type ActionResponse<T = undefined> = {
@@ -19,24 +19,6 @@ type ActionResponse<T = undefined> = {
   message?: string
   data?: T
   errors?: Record<string, string[]>
-}
-
-// ── 計算使用者學習進度等級 ────────────────────
-export async function getUserLearningLevel(userId: string): Promise<number> {
-  const enrollments = await prisma.inviteEnrollment.findMany({
-    where: { userId },
-    include: { invite: { select: { courseLevel: true } } },
-  })
-
-  if (enrollments.length === 0) return 0
-
-  // 取得最高完成等級數字
-  const levelNums = enrollments.map((e) => {
-    const entry = COURSE_CATALOG[e.invite.courseLevel as CourseLevel]
-    return entry?.levelNum ?? 0
-  })
-
-  return Math.max(...levelNums)
 }
 
 // ── 建立開課邀請 ──────────────────────────────
@@ -51,23 +33,32 @@ export async function createInvite(
     return { success: false, errors: parsed.error.flatten().fieldErrors }
   }
 
-  const { courseLevel, maxCount, courseOrderId } = parsed.data
-  const courseLevelKey = courseLevel as CourseLevel
-  const courseEntry = COURSE_CATALOG[courseLevelKey]
+  const { courseCatalogId, maxCount, courseOrderId } = parsed.data
 
-  // 驗證教師先修：learningLevel >= courseLevel.levelNum
-  const learningLevel = await getUserLearningLevel(session.user.id)
-  if (learningLevel < courseEntry.levelNum) {
-    return {
-      success: false,
-      message: `需先完成${courseEntry.label}才能開設此課程`,
+  // 取得課程資料
+  const course = await prisma.courseCatalog.findUnique({
+    where: { id: courseCatalogId },
+    select: { id: true, label: true, isActive: true },
+  })
+  if (!course) return { success: false, message: '找不到課程' }
+  if (!course.isActive) return { success: false, message: '此課程目前未開放' }
+
+  // 驗證教師先修（admin/superadmin 豁免）
+  const isAdmin = session.user.role === 'admin' || session.user.role === 'superadmin'
+  if (!isAdmin) {
+    const missingPrereqs = await checkPrerequisites(session.user.id, courseCatalogId)
+    if (missingPrereqs.length > 0) {
+      return {
+        success: false,
+        message: `需先完成${missingPrereqs.map((p) => p.label).join('、')}才能開設此課程`,
+      }
     }
   }
 
   const invite = await prisma.courseInvite.create({
     data: {
-      title: courseEntry.label,
-      courseLevel: courseLevelKey,
+      title: course.label,
+      courseCatalogId,
       maxCount,
       courseOrderId: courseOrderId ?? null,
       createdById: session.user.id,
@@ -128,6 +119,7 @@ export async function getMyInvites() {
     where: { createdById: session.user.id },
     orderBy: { createdAt: 'desc' },
     include: {
+      courseCatalog: { select: { id: true, label: true } },
       courseOrder: { select: { id: true, buyerNameZh: true, courseDate: true } },
       enrollments: {
         include: {
@@ -196,9 +188,9 @@ export async function cancelCourseSession(
 // ── 查詢當前使用者的學習與授課紀錄 ────────────
 export async function getMyLearningRecords() {
   const session = await auth()
-  if (!session?.user?.id) return { enrollments: [], invites: [], learningLevel: 0 }
+  if (!session?.user?.id) return { enrollments: [], invites: [] }
 
-  const [enrollments, invites, learningLevel] = await Promise.all([
+  const [enrollments, invites] = await Promise.all([
     // 已完成學習（學員）
     prisma.inviteEnrollment.findMany({
       where: { userId: session.user.id },
@@ -208,7 +200,7 @@ export async function getMyLearningRecords() {
           select: {
             id: true,
             title: true,
-            courseLevel: true,
+            courseCatalog: { select: { id: true, label: true } },
             createdBy: { select: { realName: true, name: true } },
           },
         },
@@ -221,15 +213,14 @@ export async function getMyLearningRecords() {
       select: {
         id: true,
         title: true,
-        courseLevel: true,
+        courseCatalog: { select: { id: true, label: true } },
         createdAt: true,
         _count: { select: { enrollments: true } },
       },
     }),
-    getUserLearningLevel(session.user.id),
   ])
 
-  return { enrollments, invites, learningLevel }
+  return { enrollments, invites }
 }
 
 // ── 學員申請參加課程（含書籍選擇）────────────────────
@@ -240,7 +231,10 @@ export async function applyToCourse(
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
 
-  const invite = await prisma.courseInvite.findUnique({ where: { id: inviteId } })
+  const invite = await prisma.courseInvite.findUnique({
+    where: { id: inviteId },
+    include: { courseCatalog: { select: { id: true, prerequisites: { select: { id: true, label: true } } } } },
+  })
   if (!invite) return { success: false, message: '找不到課程' }
   if (invite.cancelledAt) return { success: false, message: '此課程已取消' }
   if (invite.completedAt) return { success: false, message: '此課程已結業' }
@@ -252,6 +246,15 @@ export async function applyToCourse(
     where: { inviteId_userId: { inviteId, userId: session.user.id } },
   })
   if (existing) return { success: false, message: '已有申請記錄' }
+
+  // 驗證學員先修
+  const missingPrereqs = await checkPrerequisites(session.user.id, invite.courseCatalogId)
+  if (missingPrereqs.length > 0) {
+    return {
+      success: false,
+      message: `需先完成${missingPrereqs.map((p) => p.label).join('、')}才能加入此課程`,
+    }
+  }
 
   await prisma.inviteEnrollment.create({
     data: { inviteId, userId: session.user.id, status: 'pending', materialChoice },

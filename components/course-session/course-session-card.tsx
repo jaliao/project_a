@@ -1,14 +1,13 @@
 /*
  * ----------------------------------------------
  * CourseSessionCard - 開課卡片共用元件
- * 2026-03-24
+ * 2026-03-24 (Updated: 2026-03-30)
  * components/course-session/course-session-card.tsx
  * ----------------------------------------------
  */
 
 import Link from 'next/link'
 import { IconCalendar, IconUsers, IconClock } from '@tabler/icons-react'
-import { COURSE_CATALOG, type CourseLevel } from '@/config/course-catalog'
 import { cn } from '@/lib/utils'
 
 type CourseStatus = 'recruiting' | 'active' | 'completed' | 'cancelled'
@@ -39,9 +38,24 @@ function getCourseStatus(item: {
   return 'recruiting'
 }
 
+// 課程目錄 id 循環色彩（id 1 → 藍，2 → 綠，3 → 紫，4 → 橘，以此類推）
+const CATALOG_COLORS = [
+  'bg-blue-100 text-blue-700',
+  'bg-green-100 text-green-700',
+  'bg-purple-100 text-purple-700',
+  'bg-orange-100 text-orange-700',
+  'bg-pink-100 text-pink-700',
+  'bg-teal-100 text-teal-700',
+]
+
+function getCatalogColor(id: number): string {
+  return CATALOG_COLORS[(id - 1) % CATALOG_COLORS.length]
+}
+
 type CourseSessionCardProps = {
   title: string
-  courseLevel: string
+  courseCatalogId: number
+  courseCatalogLabel: string
   courseDate: string | null
   maxCount: number
   enrolledCount: number
@@ -53,14 +67,6 @@ type CourseSessionCardProps = {
   completedAt?: Date | null
 }
 
-// 課程等級對應的標籤顏色
-const LEVEL_COLORS: Record<string, string> = {
-  level1: 'bg-blue-100 text-blue-700',
-  level2: 'bg-green-100 text-green-700',
-  level3: 'bg-purple-100 text-purple-700',
-  level4: 'bg-orange-100 text-orange-700',
-}
-
 function formatDate(date: Date): string {
   const y = date.getFullYear()
   const m = String(date.getMonth() + 1).padStart(2, '0')
@@ -70,7 +76,8 @@ function formatDate(date: Date): string {
 
 export function CourseSessionCard({
   title,
-  courseLevel,
+  courseCatalogId,
+  courseCatalogLabel,
   courseDate,
   maxCount,
   enrolledCount,
@@ -81,10 +88,7 @@ export function CourseSessionCard({
   cancelledAt,
   completedAt,
 }: CourseSessionCardProps) {
-  const catalogEntry = COURSE_CATALOG[courseLevel as CourseLevel]
-  const levelLabel = catalogEntry?.label ?? courseLevel
-  const levelColor = LEVEL_COLORS[courseLevel] ?? 'bg-gray-100 text-gray-700'
-
+  const levelColor = getCatalogColor(courseCatalogId)
   const status = getCourseStatus({ cancelledAt, completedAt, startedAt })
   const progressRatio = maxCount > 0 ? Math.min(enrolledCount / maxCount, 1) : 0
 
@@ -108,7 +112,7 @@ export function CourseSessionCard({
             </span>
           )}
           <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', levelColor)}>
-            {levelLabel}
+            {courseCatalogLabel}
           </span>
         </div>
       </div>

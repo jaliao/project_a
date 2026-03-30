@@ -10,41 +10,42 @@
 
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { getActiveCourses, type CourseLevel } from '@/config/course-catalog'
+import type { CourseCatalogEntry } from '@/lib/data/course-catalog'
 import { IconCheck } from '@tabler/icons-react'
 
 interface Step1CourseCardProps {
-  selected: CourseLevel | null
-  onSelect: (level: CourseLevel) => void
+  courses: CourseCatalogEntry[]
+  selected: number | null
+  onSelect: (id: number) => void
   onNext: () => void
-  // 使用者已取得的講師等級（以結業證書推導）
-  instructorLevels: number[]
+  // 使用者已結業的課程 id 陣列（由 Server Component 傳入）
+  graduatedCatalogIds: number[]
   isAdmin: boolean
 }
 
 export function Step1CourseCard({
+  courses,
   selected,
   onSelect,
   onNext,
-  instructorLevels,
+  graduatedCatalogIds,
   isAdmin,
 }: Step1CourseCardProps) {
-  const activeCourses = getActiveCourses()
-
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">請選擇要開設的課程</p>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {activeCourses.map((course) => {
-          const isSelected = selected === course.level
-          const hasQualification = isAdmin || instructorLevels.includes(course.levelNum)
+        {courses.map((course) => {
+          const isSelected = selected === course.id
+          const hasQualification =
+            isAdmin || course.prerequisites.every((p) => graduatedCatalogIds.includes(p.id))
 
           return (
             <button
-              key={course.level}
+              key={course.id}
               type="button"
-              onClick={() => hasQualification && onSelect(course.level)}
+              onClick={() => hasQualification && onSelect(course.id)}
               disabled={!hasQualification}
               className={cn(
                 'relative rounded-lg border p-4 text-left transition-all',
@@ -66,9 +67,9 @@ export function Step1CourseCard({
               <p className="font-semibold text-sm">{course.label}</p>
 
               {/* 無授課資格提示 */}
-              {!hasQualification && (
+              {!hasQualification && course.prerequisites.length > 0 && (
                 <p className="mt-1.5 text-xs text-muted-foreground">
-                  須先完成{course.label}才能授課
+                  須先完成{course.prerequisites.map((p) => p.label).join('、')}才能授課
                 </p>
               )}
             </button>

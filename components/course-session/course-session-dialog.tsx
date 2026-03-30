@@ -18,18 +18,21 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { CreateCourseWizard } from './create-course-wizard/create-course-wizard'
+import type { CourseCatalogEntry } from '@/lib/data/course-catalog'
 import { IconPlus } from '@tabler/icons-react'
 
 interface CourseSessionDialogProps {
   instructorName?: string
-  // 使用者已取得的講師等級數字陣列（由 Server Component 傳入）
-  instructorLevels?: number[]
+  activeCourses?: CourseCatalogEntry[]
+  // 使用者已結業的課程 id 陣列（由 Server Component 傳入）
+  graduatedCatalogIds?: number[]
   isAdmin?: boolean
 }
 
 export function CourseSessionDialog({
   instructorName = '',
-  instructorLevels = [],
+  activeCourses = [],
+  graduatedCatalogIds = [],
   isAdmin = false,
 }: CourseSessionDialogProps) {
   const [open, setOpen] = useState(false)
@@ -49,7 +52,8 @@ export function CourseSessionDialog({
         </DialogHeader>
         <CreateCourseWizard
           instructorName={instructorName}
-          instructorLevels={instructorLevels}
+          activeCourses={activeCourses}
+          graduatedCatalogIds={graduatedCatalogIds}
           isAdmin={isAdmin}
           onClose={() => setOpen(false)}
         />

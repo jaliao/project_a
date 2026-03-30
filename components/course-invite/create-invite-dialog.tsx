@@ -14,6 +14,11 @@ import {
 } from '@/components/ui/dialog'
 import { CreateInviteForm } from './create-invite-form'
 
+interface ActiveCourse {
+  id: number
+  label: string
+}
+
 interface Order {
   id: number
   buyerNameZh: string
@@ -23,10 +28,11 @@ interface Order {
 interface CreateInviteDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  activeCourses: ActiveCourse[]
   orders: Order[]
 }
 
-export function CreateInviteDialog({ open, onOpenChange, orders }: CreateInviteDialogProps) {
+export function CreateInviteDialog({ open, onOpenChange, activeCourses, orders }: CreateInviteDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -34,6 +40,7 @@ export function CreateInviteDialog({ open, onOpenChange, orders }: CreateInviteD
           <DialogTitle>開課邀請</DialogTitle>
         </DialogHeader>
         <CreateInviteForm
+          activeCourses={activeCourses}
           orders={orders}
           onSuccess={() => onOpenChange(false)}
         />

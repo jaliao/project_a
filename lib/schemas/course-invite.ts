@@ -1,18 +1,19 @@
 /*
  * ----------------------------------------------
  * Zod 驗證 Schema - 課程邀請
- * 2026-03-23
+ * 2026-03-23 (Updated: 2026-03-30)
  * lib/schemas/course-invite.ts
  * ----------------------------------------------
  */
 
 import { z } from 'zod'
-import { COURSE_LEVEL_VALUES } from '@/config/course-catalog'
 
 export const createInviteSchema = z.object({
-  courseLevel: z.enum(COURSE_LEVEL_VALUES as [string, ...string[]], {
-    error: '請選擇課程',
-  }),
+  courseCatalogId: z
+    .string()
+    .min(1, '請選擇課程')
+    .transform((v) => parseInt(v, 10))
+    .pipe(z.number().int().positive('請選擇課程')),
   maxCount: z
     .string()
     .min(1, '預計人數為必填')

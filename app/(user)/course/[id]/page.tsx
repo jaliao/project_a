@@ -21,7 +21,7 @@ import {
 } from '@tabler/icons-react'
 import { auth } from '@/lib/auth'
 import { getCourseSessionById } from '@/lib/data/course-sessions'
-import { COURSE_CATALOG, type CourseLevel } from '@/config/course-catalog'
+import { checkPrerequisites } from '@/lib/data/course-catalog'
 import { CourseDetailActions } from './course-detail-actions'
 import { CopyInviteLinkButton } from './copy-invite-link-button'
 import { StudentApplySection } from './student-apply-section'
@@ -66,8 +66,7 @@ export default async function CourseDetailPage({
 
   if (!courseSession) notFound()
 
-  const catalogEntry = COURSE_CATALOG[courseSession.courseLevel as CourseLevel]
-  const levelLabel = catalogEntry?.label ?? courseSession.courseLevel
+  const levelLabel = courseSession.courseCatalogLabel
 
   const teacherName =
     courseSession.createdBy.realName ??
@@ -87,6 +86,12 @@ export default async function CourseDetailPage({
 
   const isCancelled = !!courseSession.cancelledAt
   const isCompleted = !!courseSession.completedAt
+
+  // 學員先修資格檢查（講師本人、已有申請、已取消/結業時不需要）
+  const missingPrerequisites =
+    !isInstructor && currentUserId && !myEnrollment && !isCancelled && !isCompleted
+      ? await checkPrerequisites(currentUserId, courseSession.courseCatalogId)
+      : []
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -295,6 +300,7 @@ export default async function CourseDetailPage({
           courseTitle={courseSession.title}
           courseDate={courseSession.courseDate ?? null}
           instructorName={teacherName}
+          missingPrerequisites={missingPrerequisites}
         />
       )}
 

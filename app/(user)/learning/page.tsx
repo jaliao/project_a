@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 學習紀錄頁面
- * 2026-03-23
+ * 2026-03-23 (Updated: 2026-03-30)
  * app/(user)/learning/page.tsx
  * ----------------------------------------------
  */
@@ -15,8 +15,8 @@ import { IconAward } from '@tabler/icons-react'
 import { auth } from '@/lib/auth'
 import { getMyLearningRecords } from '@/app/actions/course-invite'
 import { getMyCompletionCertificates } from '@/lib/data/course-sessions'
+import { getAllCourses, getGraduatedCatalogIds } from '@/lib/data/course-catalog'
 import { LevelProgress } from '@/components/learning/level-progress'
-import { COURSE_CATALOG, type CourseLevel } from '@/config/course-catalog'
 
 export const metadata: Metadata = {
   title: '學習紀錄 — 啟動靈人系統',
@@ -24,9 +24,13 @@ export const metadata: Metadata = {
 
 export default async function LearningPage() {
   const session = await auth()
-  const [{ enrollments, invites, learningLevel }, graduationRecords] = await Promise.all([
+  const userId = session?.user?.id
+
+  const [{ enrollments, invites }, graduationRecords, allCourses, graduatedCatalogIds] = await Promise.all([
     getMyLearningRecords(),
-    session?.user?.id ? getMyCompletionCertificates(session.user.id) : Promise.resolve([]),
+    userId ? getMyCompletionCertificates(userId) : Promise.resolve([]),
+    getAllCourses(),
+    userId ? getGraduatedCatalogIds(userId) : Promise.resolve(new Set<number>()),
   ])
 
   return (
@@ -34,7 +38,7 @@ export default async function LearningPage() {
       <h1 className="text-2xl font-semibold">學習紀錄</h1>
 
       {/* 學習進度摘要 */}
-      <LevelProgress learningLevel={learningLevel} />
+      <LevelProgress allCourses={allCourses} graduatedCatalogIds={graduatedCatalogIds} />
 
       {/* 已完成學習（學員） */}
       <section className="space-y-3">
@@ -90,14 +94,12 @@ export default async function LearningPage() {
               </thead>
               <tbody className="divide-y">
                 {graduationRecords.map((rec) => {
-                  const catalogEntry = COURSE_CATALOG[rec.courseLevel as CourseLevel]
-                  const levelLabel = catalogEntry?.label ?? rec.courseLevel
                   const g = rec.graduatedAt
                   const dateStr = `${g.getFullYear()}/${String(g.getMonth() + 1).padStart(2, '0')}/${String(g.getDate()).padStart(2, '0')}`
                   return (
-                    <tr key={rec.courseLevel}>
+                    <tr key={rec.courseCatalogId}>
                       <td className="px-4 py-3 font-medium">{rec.title}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{levelLabel}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{rec.courseCatalogLabel}</td>
                       <td className="px-4 py-3 text-muted-foreground">{rec.teacherName}</td>
                       <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{dateStr}</td>
                     </tr>

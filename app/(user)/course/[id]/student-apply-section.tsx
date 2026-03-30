@@ -27,6 +27,7 @@ type Props = {
   courseTitle: string
   courseDate?: string | null
   instructorName: string
+  missingPrerequisites: { id: number; label: string }[]
 }
 
 export function StudentApplySection({
@@ -38,6 +39,7 @@ export function StudentApplySection({
   courseTitle,
   courseDate,
   instructorName,
+  missingPrerequisites,
 }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false)
 
@@ -70,18 +72,39 @@ export function StudentApplySection({
     )
   }
 
-  // 可申請
+  const hasPrereqBlock = missingPrerequisites.length > 0
+
   return (
-    <>
-      <Button onClick={() => setDialogOpen(true)}>申請參加</Button>
-      <EnrollmentApplicationDialog
-        inviteId={inviteId}
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        courseTitle={courseTitle}
-        courseDate={courseDate}
-        instructorName={instructorName}
-      />
-    </>
+    <div className="space-y-3">
+      <Button disabled={hasPrereqBlock} onClick={() => !hasPrereqBlock && setDialogOpen(true)}>
+        申請參加
+      </Button>
+
+      {/* 先修課程不符資格提醒 */}
+      {hasPrereqBlock && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          <p className="font-medium mb-1">尚未符合報名資格，須先完成以下課程：</p>
+          <ul className="space-y-0.5">
+            {missingPrerequisites.map((p) => (
+              <li key={p.id} className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                {p.label}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {!hasPrereqBlock && (
+        <EnrollmentApplicationDialog
+          inviteId={inviteId}
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          courseTitle={courseTitle}
+          courseDate={courseDate}
+          instructorName={instructorName}
+        />
+      )}
+    </div>
   )
 }

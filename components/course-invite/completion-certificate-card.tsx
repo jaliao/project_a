@@ -1,16 +1,15 @@
 /*
  * ----------------------------------------------
  * CompletionCertificateCard - 結業證明卡片
- * 2026-03-26
+ * 2026-03-26 (Updated: 2026-03-30)
  * components/course-invite/completion-certificate-card.tsx
  * ----------------------------------------------
  */
 
 import { IconAward } from '@tabler/icons-react'
-import { COURSE_CATALOG, type CourseLevel } from '@/config/course-catalog'
 
 type Props = {
-  courseLevel: string
+  courseCatalogLabel: string
   title: string
   teacherName: string
   graduatedAt: Date
@@ -23,15 +22,12 @@ function formatDate(date: Date): string {
   return `${y}/${m}/${d}`
 }
 
-export function CompletionCertificateCard({ courseLevel, title, teacherName, graduatedAt }: Props) {
-  const catalogEntry = COURSE_CATALOG[courseLevel as CourseLevel]
-  const levelLabel = catalogEntry?.label ?? courseLevel
-
+export function CompletionCertificateCard({ courseCatalogLabel, title, teacherName, graduatedAt }: Props) {
   return (
     <div className="rounded-lg border bg-card p-4 space-y-2">
       <div className="flex items-center gap-2">
         <IconAward className="h-5 w-5 text-amber-500 shrink-0" />
-        <span className="text-sm font-semibold">{levelLabel}</span>
+        <span className="text-sm font-semibold">{courseCatalogLabel}</span>
       </div>
       <p className="text-sm text-muted-foreground truncate">{title}</p>
       <div className="flex items-center justify-between text-xs text-muted-foreground">

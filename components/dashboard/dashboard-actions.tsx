@@ -15,6 +15,11 @@ import { IconSpeakerphone, IconListCheck } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { CreateInviteDialog } from '@/components/course-invite/create-invite-dialog'
 
+interface ActiveCourse {
+  id: number
+  label: string
+}
+
 interface Order {
   id: number
   buyerNameZh: string
@@ -22,10 +27,11 @@ interface Order {
 }
 
 interface DashboardActionsProps {
+  activeCourses: ActiveCourse[]
   orders: Order[]
 }
 
-export function DashboardActions({ orders }: DashboardActionsProps) {
+export function DashboardActions({ activeCourses, orders }: DashboardActionsProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isInviteOpen, setIsInviteOpen] = useState(false)
@@ -54,6 +60,7 @@ export function DashboardActions({ orders }: DashboardActionsProps) {
       <CreateInviteDialog
         open={isInviteOpen}
         onOpenChange={setIsInviteOpen}
+        activeCourses={activeCourses}
         orders={orders}
       />
     </>

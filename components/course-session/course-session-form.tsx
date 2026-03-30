@@ -14,7 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { courseSessionSchema, type CourseSessionFormValues } from '@/lib/schemas/course-session'
 import { createCourseSession } from '@/app/actions/course-session'
-import { getActiveCourses, COURSE_CATALOG, type CourseLevel } from '@/config/course-catalog'
+import type { CourseCatalogEntry } from '@/lib/data/course-catalog'
 import {
   Form,
   FormControl,
@@ -33,36 +33,36 @@ import { DatePicker } from '@/components/ui/date-picker'
 const isDev = process.env.NODE_ENV === 'development'
 
 interface CourseSessionFormProps {
+  activeCourses: CourseCatalogEntry[]
   instructorName?: string
   onSuccess: (inviteId: number) => void
 }
 
-export function CourseSessionForm({ instructorName = '', onSuccess }: CourseSessionFormProps) {
+export function CourseSessionForm({ activeCourses, instructorName = '', onSuccess }: CourseSessionFormProps) {
   const [isPending, startTransition] = useTransition()
-  const activeCourses = getActiveCourses()
   // 追蹤使用者是否已手動修改課程名稱
   const titleDirtyRef = useRef(false)
 
   // 產生預設課程名稱
-  const buildDefaultTitle = (level: string) => {
-    const label = COURSE_CATALOG[level as CourseLevel]?.label ?? level
+  const buildDefaultTitle = (catalogId: number) => {
+    const label = activeCourses.find((c) => c.id === catalogId)?.label ?? ''
     return instructorName ? `${instructorName} 的 ${label}` : label
   }
 
-  const defaultLevel = isDev ? 'level1' : ''
+  const firstCourse = activeCourses[0]
   const form = useForm<CourseSessionFormValues>({
     resolver: zodResolver(courseSessionSchema),
-    defaultValues: isDev
+    defaultValues: isDev && firstCourse
       ? {
-          courseLevel: 'level1',
-          title: buildDefaultTitle('level1'),
+          courseCatalogId: firstCourse.id,
+          title: buildDefaultTitle(firstCourse.id),
           maxCount: '5',
           expiredAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
           courseDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
           notes: '',
         }
       : {
-          courseLevel: defaultLevel,
+          courseCatalogId: 0,
           title: '',
           maxCount: '',
           notes: '',
@@ -70,10 +70,11 @@ export function CourseSessionForm({ instructorName = '', onSuccess }: CourseSess
   })
 
   // 課程選擇變更時自動更新課程名稱（若尚未手動修改）
-  const handleCourseLevelChange = (value: string, fieldOnChange: (v: string) => void) => {
-    fieldOnChange(value)
+  const handleCatalogChange = (value: string, fieldOnChange: (v: number) => void) => {
+    const id = parseInt(value, 10)
+    fieldOnChange(id)
     if (!titleDirtyRef.current) {
-      form.setValue('title', buildDefaultTitle(value))
+      form.setValue('title', buildDefaultTitle(id))
     }
   }
 
@@ -98,12 +99,12 @@ export function CourseSessionForm({ instructorName = '', onSuccess }: CourseSess
           <div className="space-y-4 pb-2">
 
             {/* 課程選擇 */}
-            <FormField control={form.control} name="courseLevel" render={({ field }) => (
+            <FormField control={form.control} name="courseCatalogId" render={({ field }) => (
               <FormItem>
                 <FormLabel>開設課程 *</FormLabel>
                 <Select
-                  onValueChange={(v) => handleCourseLevelChange(v, field.onChange)}
-                  value={field.value}
+                  onValueChange={(v) => handleCatalogChange(v, field.onChange)}
+                  value={field.value ? String(field.value) : ''}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -112,7 +113,7 @@ export function CourseSessionForm({ instructorName = '', onSuccess }: CourseSess
                   </FormControl>
                   <SelectContent>
                     {activeCourses.map((c) => (
-                      <SelectItem key={c.level} value={c.level}>
+                      <SelectItem key={c.id} value={String(c.id)}>
                         {c.label}
                       </SelectItem>
                     ))}

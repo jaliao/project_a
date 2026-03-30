@@ -1,20 +1,10 @@
 /**
  * ----------------------------------------------
  * Prisma Schema - 課程邀請模型
- * 2026-03-23 (Updated: 2026-03-24)
+ * 2026-03-23 (Updated: 2026-03-30)
  * prisma/schema/course-invite.prisma
  * ----------------------------------------------
  */
-
-// ==========================================
-// 課程等級枚舉
-// ==========================================
-enum CourseLevel {
-  level1 // 啟動靈人 1
-  level2 // 啟動靈人 2
-  level3 // 啟動靈人 3（未開放）
-  level4 // 啟動靈人 4（未開放）
-}
 
 // ==========================================
 // 報名狀態枚舉
@@ -39,9 +29,10 @@ enum MaterialChoice {
 model CourseInvite {
   id Int @id @default(autoincrement())
 
-  title       String // 課程名稱（可自訂，預設為「{講師} 的 {課程}」）
-  courseLevel CourseLevel @default(level1) // 課程等級
-  maxCount    Int // 預計人數
+  title           String // 課程名稱（可自訂，預設為「{講師} 的 {課程}」）
+  courseCatalogId Int // 對應課程目錄
+  courseCatalog   CourseCatalog @relation(fields: [courseCatalogId], references: [id])
+  maxCount        Int // 預計人數
 
   expiredAt  DateTime? // 邀請截止日期（選填）
   courseDate String? // 預計開課日期（YYYY/MM/DD 字串，選填）

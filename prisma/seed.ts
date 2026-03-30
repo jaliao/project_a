@@ -131,6 +131,47 @@ async function main() {
   console.log(`  密碼來源 : ${usingDefaultStudent ? '預設值（Student@1234）' : '環境變數 SEED_STUDENT_PASSWORD'}`)
   console.log('  ⚠️  首次登入後請立即變更密碼')
   console.log('─────────────────────────────────\n')
+
+  // ── 初始化課程目錄 ──────────────────────────
+  const courses = [
+    { label: '啟動靈人 1', isActive: true, sortOrder: 1 },
+    { label: '啟動靈人 2', isActive: true, sortOrder: 2 },
+    { label: '啟動靈人 3', isActive: false, sortOrder: 3 },
+    { label: '啟動靈人 4', isActive: false, sortOrder: 4 },
+  ]
+
+  for (const course of courses) {
+    await prisma.courseCatalog.upsert({
+      where: { id: course.sortOrder },
+      create: course,
+      update: { label: course.label, isActive: course.isActive },
+    })
+  }
+
+  // 設定先修關聯（id 2 先修 1，3 先修 2，4 先修 3）
+  const prerequisiteMap = [
+    { courseId: 2, prereqId: 1 },
+    { courseId: 3, prereqId: 2 },
+    { courseId: 4, prereqId: 3 },
+  ]
+
+  for (const { courseId, prereqId } of prerequisiteMap) {
+    await prisma.courseCatalog.update({
+      where: { id: courseId },
+      data: {
+        prerequisites: {
+          connect: { id: prereqId },
+        },
+      },
+    })
+  }
+
+  console.log('✅ 課程目錄初始化完成')
+  console.log('─────────────────────────────────')
+  courses.forEach((c) => {
+    console.log(`  ${c.label}（${c.isActive ? '開放' : '未開放'}）`)
+  })
+  console.log('─────────────────────────────────\n')
 }
 
 main()

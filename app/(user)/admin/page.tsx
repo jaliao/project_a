@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic'
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { IconBook } from '@tabler/icons-react'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { getMyOrders } from '@/app/actions/course-invite'
@@ -20,6 +21,7 @@ import { DashboardActions } from '@/components/dashboard/dashboard-actions'
 import { EnrolledStudentsList } from '@/components/course-session/enrolled-students-list'
 import { CourseSessionCard } from '@/components/course-session/course-session-card'
 import { getMyCourseSessions, getMyCourseSessionCount } from '@/lib/data/course-sessions'
+import { getActiveCourses } from '@/lib/data/course-catalog'
 
 export const metadata: Metadata = {
   title: '管理後台 — 啟動靈人系統',
@@ -32,7 +34,7 @@ export default async function AdminPage() {
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
   const PREVIEW_LIMIT = 5
 
-  const [totalMembers, newThisMonth, withSpiritId, recentMembers, orders, previewSessions, totalSessionCount] =
+  const [totalMembers, newThisMonth, withSpiritId, recentMembers, orders, previewSessions, totalSessionCount, activeCourses] =
     await Promise.all([
       prisma.user.count(),
       prisma.user.count({ where: { createdAt: { gte: firstDayOfMonth } } }),
@@ -45,6 +47,7 @@ export default async function AdminPage() {
       getMyOrders(),
       session?.user?.id ? getMyCourseSessions(session.user.id, PREVIEW_LIMIT) : [],
       session?.user?.id ? getMyCourseSessionCount(session.user.id) : 0,
+      getActiveCourses(),
     ])
 
   return (
@@ -52,8 +55,19 @@ export default async function AdminPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">管理後台</h1>
         <Suspense>
-          <DashboardActions orders={orders} />
+          <DashboardActions activeCourses={activeCourses} orders={orders} />
         </Suspense>
+      </div>
+
+      {/* 管理功能入口 */}
+      <div className="flex gap-3">
+        <Link
+          href="/admin/course-catalog"
+          className="inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-muted/50 transition-colors"
+        >
+          <IconBook className="h-4 w-4 text-primary" />
+          課程目錄管理
+        </Link>
       </div>
 
       {/* 已新增的開課 */}
@@ -75,7 +89,8 @@ export default async function AdminPage() {
               <CourseSessionCard
                 key={item.id}
                 title={item.title}
-                courseLevel={item.courseLevel}
+                courseCatalogId={item.courseCatalogId}
+                courseCatalogLabel={item.courseCatalogLabel}
                 courseDate={item.courseDate}
                 maxCount={item.maxCount}
                 enrolledCount={item.enrolledCount}

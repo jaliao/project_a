@@ -73,7 +73,8 @@ export default async function UserCoursesPage({ params }: Props) {
             <CourseSessionCard
               key={item.id}
               title={item.title}
-              courseLevel={item.courseLevel}
+              courseCatalogId={item.courseCatalogId}
+              courseCatalogLabel={item.courseCatalogLabel}
               courseDate={item.courseDate}
               maxCount={item.maxCount}
               enrolledCount={item.enrolledCount}

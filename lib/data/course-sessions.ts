@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * Data Layer - 開課記錄查詢
- * 2026-03-24
+ * 2026-03-24 (Updated: 2026-03-30)
  * lib/data/course-sessions.ts
  * ----------------------------------------------
  */
@@ -11,7 +11,8 @@ import { prisma } from '@/lib/prisma'
 export type CourseSessionItem = {
   id: number
   title: string
-  courseLevel: string
+  courseCatalogId: number
+  courseCatalogLabel: string
   maxCount: number
   enrolledCount: number
   expiredAt: Date | null
@@ -38,7 +39,7 @@ export async function getMyCourseSessions(
     select: {
       id: true,
       title: true,
-      courseLevel: true,
+      courseCatalog: { select: { id: true, label: true } },
       maxCount: true,
       expiredAt: true,
       createdAt: true,
@@ -54,11 +55,11 @@ export async function getMyCourseSessions(
   return invites.map((invite) => ({
     id: invite.id,
     title: invite.title,
-    courseLevel: invite.courseLevel,
+    courseCatalogId: invite.courseCatalog.id,
+    courseCatalogLabel: invite.courseCatalog.label,
     maxCount: invite.maxCount,
     enrolledCount: invite._count.enrollments,
     expiredAt: invite.expiredAt,
-    // 優先取 invite.courseDate（新流程），fallback 至 courseOrder.courseDate（舊流程）
     courseDate: invite.courseDate ?? invite.courseOrder?.courseDate ?? null,
     createdAt: invite.createdAt,
     startedAt: invite.startedAt,
@@ -72,7 +73,8 @@ export type MyEnrollmentItem = {
   status: 'pending' | 'approved'
   inviteId: number
   title: string
-  courseLevel: string
+  courseCatalogId: number
+  courseCatalogLabel: string
   maxCount: number
   enrolledCount: number
   courseDate: string | null
@@ -96,7 +98,7 @@ export async function getMyEnrollments(userId: string): Promise<MyEnrollmentItem
         select: {
           id: true,
           title: true,
-          courseLevel: true,
+          courseCatalog: { select: { id: true, label: true } },
           maxCount: true,
           expiredAt: true,
           startedAt: true,
@@ -114,7 +116,8 @@ export async function getMyEnrollments(userId: string): Promise<MyEnrollmentItem
     status: e.status as 'pending' | 'approved',
     inviteId: e.invite.id,
     title: e.invite.title,
-    courseLevel: e.invite.courseLevel,
+    courseCatalogId: e.invite.courseCatalog.id,
+    courseCatalogLabel: e.invite.courseCatalog.label,
     maxCount: e.invite.maxCount,
     enrolledCount: e.invite._count.enrollments,
     courseDate: e.invite.courseOrder?.courseDate ?? null,
@@ -149,7 +152,8 @@ type EnrollmentRecord = {
 export type CourseSessionDetail = {
   id: number
   title: string
-  courseLevel: string
+  courseCatalogId: number
+  courseCatalogLabel: string
   maxCount: number
   expiredAt: Date | null
   createdAt: Date
@@ -179,7 +183,7 @@ export async function getCourseSessionById(
     select: {
       id: true,
       title: true,
-      courseLevel: true,
+      courseCatalog: { select: { id: true, label: true } },
       maxCount: true,
       expiredAt: true,
       createdAt: true,
@@ -213,7 +217,8 @@ export async function getCourseSessionById(
   return {
     id: invite.id,
     title: invite.title,
-    courseLevel: invite.courseLevel,
+    courseCatalogId: invite.courseCatalog.id,
+    courseCatalogLabel: invite.courseCatalog.label,
     maxCount: invite.maxCount,
     expiredAt: invite.expiredAt,
     createdAt: invite.createdAt,
@@ -229,14 +234,15 @@ export async function getCourseSessionById(
 }
 
 export type CompletionCertificate = {
-  courseLevel: string
+  courseCatalogId: number
+  courseCatalogLabel: string
   title: string
   teacherName: string
   graduatedAt: Date
 }
 
 /**
- * 取得指定使用者的結業證明，每個 courseLevel 只保留最新一筆
+ * 取得指定使用者的結業證明，每個 courseCatalogId 只保留最新一筆
  */
 export async function getMyCompletionCertificates(
   userId: string
@@ -248,7 +254,7 @@ export async function getMyCompletionCertificates(
       invite: {
         select: {
           title: true,
-          courseLevel: true,
+          courseCatalog: { select: { id: true, label: true } },
           createdBy: { select: { realName: true, name: true } },
         },
       },
@@ -256,14 +262,16 @@ export async function getMyCompletionCertificates(
     orderBy: { graduatedAt: 'desc' },
   })
 
-  // 以 courseLevel 去重，取最新一筆
-  const seen = new Set<string>()
+  // 以 courseCatalogId 去重，取最新一筆
+  const seen = new Set<number>()
   const result: CompletionCertificate[] = []
   for (const row of rows) {
-    if (seen.has(row.invite.courseLevel)) continue
-    seen.add(row.invite.courseLevel)
+    const catalogId = row.invite.courseCatalog.id
+    if (seen.has(catalogId)) continue
+    seen.add(catalogId)
     result.push({
-      courseLevel: row.invite.courseLevel,
+      courseCatalogId: catalogId,
+      courseCatalogLabel: row.invite.courseCatalog.label,
       title: row.invite.title,
       teacherName: row.invite.createdBy.realName ?? row.invite.createdBy.name ?? '—',
       graduatedAt: row.graduatedAt!,

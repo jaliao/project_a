@@ -12,7 +12,6 @@ import { useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { courseSessionSchema, type CourseSessionFormValues } from '@/lib/schemas/course-session'
-import { COURSE_CATALOG, type CourseLevel } from '@/config/course-catalog'
 import {
   Form,
   FormControl,
@@ -31,7 +30,8 @@ const isDev = process.env.NODE_ENV === 'development'
 export type Step2FormValues = CourseSessionFormValues
 
 interface Step2BasicInfoProps {
-  courseLevel: CourseLevel
+  courseCatalogId: number
+  courseCatalogLabel: string
   instructorName: string
   defaultValues?: Partial<Step2FormValues>
   onNext: (values: Step2FormValues) => void
@@ -39,24 +39,24 @@ interface Step2BasicInfoProps {
 }
 
 export function Step2BasicInfo({
-  courseLevel,
+  courseCatalogId,
+  courseCatalogLabel,
   instructorName,
   defaultValues,
   onNext,
   onBack,
 }: Step2BasicInfoProps) {
   const titleDirtyRef = useRef(false)
-  const courseLabel = COURSE_CATALOG[courseLevel]?.label ?? ''
 
   const buildDefaultTitle = () =>
-    instructorName ? `${instructorName} 的 ${courseLabel}` : courseLabel
+    instructorName ? `${instructorName} 的 ${courseCatalogLabel}` : courseCatalogLabel
 
   const form = useForm<Step2FormValues>({
     resolver: zodResolver(courseSessionSchema),
     defaultValues: defaultValues ?? (
       isDev
         ? {
-            courseLevel,
+            courseCatalogId,
             title: buildDefaultTitle(),
             maxCount: '5',
             expiredAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -64,7 +64,7 @@ export function Step2BasicInfo({
             notes: '',
           }
         : {
-            courseLevel,
+            courseCatalogId,
             title: buildDefaultTitle(),
             maxCount: '',
             notes: '',
@@ -73,7 +73,7 @@ export function Step2BasicInfo({
   })
 
   const onSubmit = (values: Step2FormValues) => {
-    onNext({ ...values, courseLevel })
+    onNext({ ...values, courseCatalogId })
   }
 
   return (

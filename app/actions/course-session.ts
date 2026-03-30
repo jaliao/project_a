@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * Server Actions - 新增授課
- * 2026-03-23 (Updated: 2026-03-26)
+ * 2026-03-23 (Updated: 2026-03-30)
  * app/actions/course-session.ts
  * ----------------------------------------------
  */
@@ -11,8 +11,7 @@
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { courseSessionSchema } from '@/lib/schemas/course-session'
-import { COURSE_CATALOG, type CourseLevel } from '@/config/course-catalog'
-import { getUserLearningLevel } from '@/app/actions/course-invite'
+import { checkPrerequisites } from '@/lib/data/course-catalog'
 import { createNotification } from '@/app/actions/notification'
 
 type ActionResponse = {
@@ -43,17 +42,23 @@ export async function createCourseSession(
   }
 
   const d = parsed.data
-  const courseLevelKey = d.courseLevel as CourseLevel
-  const courseEntry = COURSE_CATALOG[courseLevelKey]
+
+  // 取得課程資料
+  const course = await prisma.courseCatalog.findUnique({
+    where: { id: d.courseCatalogId },
+    select: { id: true, label: true, isActive: true },
+  })
+  if (!course) return { success: false, message: '找不到課程' }
+  if (!course.isActive) return { success: false, message: '此課程目前未開放' }
 
   // 驗證教師先修資格（管理者略過）
   const isAdmin = session.user.role === 'admin' || session.user.role === 'superadmin'
   if (!isAdmin) {
-    const learningLevel = await getUserLearningLevel(session.user.id)
-    if (learningLevel < courseEntry.levelNum) {
+    const missingPrereqs = await checkPrerequisites(session.user.id, d.courseCatalogId)
+    if (missingPrereqs.length > 0) {
       return {
         success: false,
-        message: `開授${courseEntry.label}須先完成該課程學習`,
+        message: `開授${course.label}須先完成${missingPrereqs.map((p) => p.label).join('、')}`,
       }
     }
   }
@@ -61,7 +66,7 @@ export async function createCourseSession(
   const invite = await prisma.courseInvite.create({
     data: {
       title: d.title,
-      courseLevel: courseLevelKey,
+      courseCatalogId: d.courseCatalogId,
       maxCount: parseInt(d.maxCount, 10),
       expiredAt: d.expiredAt,
       courseDate: formatDateString(d.courseDate),

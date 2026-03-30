@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.30（2026-03-30）
+> 自動產生，版本 0.1.32（2026-03-30）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -68,7 +68,7 @@ components/
 │   ├── create-invite-dialog.tsx # 建立邀請 Dialog
 │   ├── create-invite-form.tsx   # 建立邀請表單 + 分享連結 View（Web Share API + clipboard fallback）
 │   ├── invite-copy-button.tsx   # 分享邀請連結按鈕（Client；Web Share API + clipboard fallback）
-│   └── completion-certificate-card.tsx  # 結業證明卡片（courseLevel、title、teacherName、graduatedAt）
+│   └── completion-certificate-card.tsx  # 結業證明卡片（courseCatalogLabel、title、teacherName、graduatedAt）
 ├── course-session/
 │   ├── course-session-dialog.tsx  # 新增開課 Dialog 入口（含 canTeach disabled gate + tooltip）
 │   ├── course-session-form.tsx    # 舊版合併表單（保留，目前精靈流程未使用）
@@ -96,26 +96,36 @@ lib/
 │   ├── user.ts              # 使用者資料查詢
 │   ├── password-reset.ts    # 密碼重設查詢
 │   ├── course-sessions.ts   # 開課記錄查詢（getMyCourseSessions, getMyCourseSessionCount, getCourseSessionById, getMyEnrollments, getMyCompletionCertificates）
+│   ├── course-catalog.ts    # 課程目錄查詢（getAllCourses, getActiveCourses, getCourse, checkPrerequisites, getGraduatedCatalogIds）
 │   └── notification.ts      # 通知查詢（getNotifications, getUnreadNotificationCount, getNotificationsPaginated）
 └── utils.ts         # cn() 等工具函數
 
 prisma/
 ├── schema/
-│   ├── base.prisma          # generator + datasource
-│   ├── user.prisma          # User, Account, Session, WhitelistedEmail, Notification
-│   ├── course-order.prisma  # CourseOrder + enums
-│   └── course-invite.prisma # CourseInvite + InviteEnrollment
+│   ├── base.prisma           # generator + datasource
+│   ├── user.prisma           # User, Account, Session, WhitelistedEmail, Notification
+│   ├── course-order.prisma   # CourseOrder + enums
+│   ├── course-invite.prisma  # CourseInvite + InviteEnrollment
+│   └── course-catalog.prisma # CourseCatalog（id, label, isActive, sortOrder, prerequisites 自關聯）
 └── seed.ts
 
 config/
-├── version.json       # 版本號（SemVer 唯一來源）
-├── course-catalog.ts  # 課程目錄設定（啟動靈人 1～4，含 isActive、prerequisiteLevel）
+├── version.json          # 版本號（SemVer 唯一來源）
 └── project-status.ts, project-type.ts
 ```
 
 ---
 
 ## 4. 核心資料模型
+
+### CourseCatalog
+```
+id           Int（主鍵，autoincrement）
+label        String（課程名稱，DB 唯一來源）
+isActive     Boolean（預設 false；true 才可開課）
+sortOrder    Int（預設 0；決定顯示順序）
+prerequisites CourseCatalog[]（多對多自關聯，_CoursePrerequisites join table）
+```
 
 ### User
 ```
@@ -124,7 +134,6 @@ email         String（唯一，登入帳號）
 name          String?
 role          UserRole (user | admin | superadmin)
 spiritId      String?（唯一，格式 PA+YY+XXXX）
-learningLevel Int（預設 0；1～4 對應已完成的啟動靈人課程等級）
 passwordHash  String?（Google-only 為 null）
 isTempPassword Boolean（臨時密碼強制變更旗標）
 commEmail     String?（通訊 Email）
@@ -155,8 +164,8 @@ createdAt DateTime
 ### CourseInvite
 ```
 id            Int（主鍵）
-title         String（課程名稱，由 courseLevel label 自動填入）
-courseLevel   CourseLevel（level1|level2|level3|level4，預設 level1）
+title         String（課程名稱，由 courseCatalog.label 自動填入）
+courseCatalogId Int（關聯 CourseCatalog）
 maxCount      Int（預計人數）
 expiredAt     DateTime?（邀請截止日期，選填）
 courseOrderId Int?（選填關聯 CourseOrder）
@@ -216,18 +225,26 @@ createdAt       DateTime
 - 格式：`PA` + 年份後兩碼 + 4 位流水號（例 `PA261001`）
 - 首次 Google 登入自動觸發核發
 
+### 課程目錄管理
+- `CourseCatalog` 為 DB 唯一來源（不使用 `config/course-catalog.ts`）
+- Admin UI：`/admin/course-catalog`；可設定名稱、isActive、先修課程（多選）
+- `isActive = true` 才可被選為開課目標
+- 先修驗證：`checkPrerequisites(userId, catalogId)` 回傳未完成先修清單（空 = 通過）
+- 結業後 `InviteEnrollment.graduatedAt` 有值，`getGraduatedCatalogIds(userId)` 回傳 Set
+
 ### 身分標籤
-- 來源：`User.role`（管理者）+ `InviteEnrollment.graduatedAt`（講師，以結業證書推導）
+- 來源：`User.role`（管理者）+ `InviteEnrollment.graduatedAt`（講師，以結業證書 courseCatalogLabel 推導）
 - `role = admin | superadmin` → 顯示「系統管理員」Badge
-- 有結業證書的對應等級 → 顯示「啟動靈人 N 講師」Badge（可多標籤）
+- 有結業證書 → 顯示「{courseCatalogLabel} 講師」Badge（可多標籤）
 
 ### 開課身分驗證
-- `canTeach = isAdmin || instructorLevels.length > 0`（instructorLevels 由結業證書推導）
+- `canTeach = isAdmin || certificates.length > 0`（certificates = getMyCompletionCertificates）
+- 精靈 Step 1：卡片資格判斷 = `isAdmin || course.prerequisites.every(p => graduatedCatalogIds.includes(p.id))`
 - `canTeach = false` → 按鈕 disabled + tooltip「需具備講師身分才能開課」
-- Server Action 層仍保留先修等級驗證（defense-in-depth）
+- Server Action 層仍保留先修驗證（defense-in-depth）
 
 ### 新增授課精靈（三步驟）
-1. **Step 1**：卡片式課程選擇（啟動靈人 1 / 2；顯示先修條件說明）
+1. **Step 1**：卡片式課程選擇（DB 課程列表；顯示先修條件說明）
 2. **Step 2**：基本資料（課程名稱、人數、開課日期、截止日期、備註）
 3. **Step 3**：預覽確認 → 呼叫 `createCourseSession` → 進入邀請學員階段
 - **邀請階段**：複製課程連結 `/course/{id}` 或填寫 Spirit ID → `inviteBySpirtId` → 發送 Inbox 通知
@@ -283,6 +300,8 @@ createdAt       DateTime
 
 - `cr-spec-260328-001` — 身分標籤多標籤：學員頁面身分標籤改為多 Badge（系統管理員依 role、啟動靈人 N 講師依結業證書），移除舊 learningLevel 學員標籤
 - `cr-spec-260330-001` — 授課精靈流程：新增授課改為三步驟精靈（卡片選課→基本資料→預覽確認）；入口加講師身分前置檢核（canTeach）；邀請學員階段新增 Spirit ID 邀請方式（`inviteBySpirtId` → Inbox 通知）
+- `cr-spec-260330-002` — 課程目錄 DB 化：移除 `CourseLevel` enum 與 `config/course-catalog.ts`；新增 `CourseCatalog` DB model（id/label/isActive/sortOrder/prerequisites 多對多自關聯）；Admin UI 維護課程名稱、isActive、先修關係；先修驗證改為 DB Set 比對；所有課程名稱顯示改為讀取 `CourseCatalog.label`；`LevelProgress` 元件改為 DB 課程清單 + 已結業 id 集合
+- `cr-spec-260330-004` — 申請按鈕先修資格前置檢查：`/course/[id]` 頁面呼叫 `checkPrerequisites`；不符資格時按鈕 disabled，下方顯示缺少先修課程清單
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）
