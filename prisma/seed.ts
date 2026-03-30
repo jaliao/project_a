@@ -148,19 +148,26 @@ async function main() {
     })
   }
 
-  // 設定先修關聯（id 2 先修 1，3 先修 2，4 先修 3）
-  const prerequisiteMap = [
-    { courseId: 2, prereqId: 1 },
-    { courseId: 3, prereqId: 2 },
-    { courseId: 4, prereqId: 3 },
+  // 確保入門課程（啟動靈人 1）先修列表為空
+  await prisma.courseCatalog.update({
+    where: { id: 1 },
+    data: { prerequisites: { set: [] } },
+  })
+
+  // 設定先修關聯（累積式：每個課程需先修所有低編號課程）
+  const prerequisiteMap: { courseId: number; prereqIds: number[] }[] = [
+    { courseId: 2, prereqIds: [1] },
+    { courseId: 3, prereqIds: [1, 2] },
+    { courseId: 4, prereqIds: [1, 2, 3] },
   ]
 
-  for (const { courseId, prereqId } of prerequisiteMap) {
+  for (const { courseId, prereqIds } of prerequisiteMap) {
     await prisma.courseCatalog.update({
       where: { id: courseId },
       data: {
         prerequisites: {
-          connect: { id: prereqId },
+          set: [],  // 先清空，確保幂等
+          connect: prereqIds.map((id) => ({ id })),
         },
       },
     })

@@ -10,10 +10,11 @@
 // 課程目錄
 // ==========================================
 model CourseCatalog {
-  id        Int     @id @default(autoincrement())
-  label     String // 顯示名稱（可動態修改）
-  isActive  Boolean @default(false) // 是否開放開課與報名
-  sortOrder Int     @default(0) // 顯示排序
+  id          Int     @id @default(autoincrement())
+  label       String // 顯示名稱（可動態修改）
+  description String? // 課程簡介（選填）
+  isActive    Boolean @default(false) // 是否開放開課與報名
+  sortOrder   Int     @default(0) // 顯示排序
 
   // 先修課程（多對多自關聯）
   prerequisites  CourseCatalog[] @relation("CoursePrerequisites")

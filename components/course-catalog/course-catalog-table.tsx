@@ -37,7 +37,14 @@ export function CourseCatalogTable({ courses }: CourseCatalogTableProps) {
           <tbody className="divide-y">
             {courses.map((course) => (
               <tr key={course.id} className="hover:bg-muted/30">
-                <td className="px-4 py-3 font-medium">{course.label}</td>
+                <td className="px-4 py-3">
+                  <p className="font-medium">{course.label}</p>
+                  {course.description ? (
+                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{course.description}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground/50 mt-0.5">—</p>
+                  )}
+                </td>
                 <td className="px-4 py-3">
                   {course.isActive ? (
                     <Badge variant="default" className="bg-green-100 text-green-700 hover:bg-green-100">開放</Badge>

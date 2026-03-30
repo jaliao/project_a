@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.32（2026-03-30）
+> 自動產生，版本 0.1.34（2026-03-30）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -106,7 +106,7 @@ prisma/
 │   ├── user.prisma           # User, Account, Session, WhitelistedEmail, Notification
 │   ├── course-order.prisma   # CourseOrder + enums
 │   ├── course-invite.prisma  # CourseInvite + InviteEnrollment
-│   └── course-catalog.prisma # CourseCatalog（id, label, isActive, sortOrder, prerequisites 自關聯）
+│   └── course-catalog.prisma # CourseCatalog（id, label, description?, isActive, sortOrder, prerequisites 自關聯）
 └── seed.ts
 
 config/
@@ -120,11 +120,12 @@ config/
 
 ### CourseCatalog
 ```
-id           Int（主鍵，autoincrement）
-label        String（課程名稱，DB 唯一來源）
-isActive     Boolean（預設 false；true 才可開課）
-sortOrder    Int（預設 0；決定顯示順序）
-prerequisites CourseCatalog[]（多對多自關聯，_CoursePrerequisites join table）
+id            Int（主鍵，autoincrement）
+label         String（課程名稱，DB 唯一來源）
+description   String?（課程簡介，選填）
+isActive      Boolean（預設 false；true 才可開課）
+sortOrder     Int（預設 0；決定顯示順序）
+prerequisites CourseCatalog[]（多對多自關聯，_CoursePrerequisites join table，累積式：啟動靈人 N 需先修 1..N-1）
 ```
 
 ### User
@@ -301,6 +302,8 @@ createdAt       DateTime
 - `cr-spec-260328-001` — 身分標籤多標籤：學員頁面身分標籤改為多 Badge（系統管理員依 role、啟動靈人 N 講師依結業證書），移除舊 learningLevel 學員標籤
 - `cr-spec-260330-001` — 授課精靈流程：新增授課改為三步驟精靈（卡片選課→基本資料→預覽確認）；入口加講師身分前置檢核（canTeach）；邀請學員階段新增 Spirit ID 邀請方式（`inviteBySpirtId` → Inbox 通知）
 - `cr-spec-260330-002` — 課程目錄 DB 化：移除 `CourseLevel` enum 與 `config/course-catalog.ts`；新增 `CourseCatalog` DB model（id/label/isActive/sortOrder/prerequisites 多對多自關聯）；Admin UI 維護課程名稱、isActive、先修關係；先修驗證改為 DB Set 比對；所有課程名稱顯示改為讀取 `CourseCatalog.label`；`LevelProgress` 元件改為 DB 課程清單 + 已結業 id 集合
+- `cr-spec-260330-003` — 先修資料累積修正 + 課程簡介欄位：`CourseCatalog` 新增 `description` 欄位；seed 改為累積式先修；Admin 課程列表顯示簡介；編輯 Dialog 新增簡介 Textarea
+- `cr-spec-260330-006` — 啟動靈人 1 先修清除：migration 刪除 join table 中 A=1 的殘留資料；seed 補顯式 set:[] 確保入門課程永遠無先修：`CourseCatalog` 新增 `description` 欄位（選填）；seed 改為累積式先修（啟動靈人 N 需先修 1..N-1）；Admin 課程列表顯示簡介（line-clamp-2）；編輯 Dialog 新增簡介 Textarea
 - `cr-spec-260330-004` — 申請按鈕先修資格前置檢查：`/course/[id]` 頁面呼叫 `checkPrerequisites`；不符資格時按鈕 disabled，下方顯示缺少先修課程清單
 
 ### 進行中 / 待規劃

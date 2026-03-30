@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -34,6 +35,7 @@ interface EditCourseDialogProps {
 export function EditCourseDialog({ course, allCourses, open, onOpenChange }: EditCourseDialogProps) {
   const [isPending, startTransition] = useTransition()
   const [label, setLabel] = useState(course.label)
+  const [description, setDescription] = useState(course.description ?? '')
   const [isActive, setIsActive] = useState(course.isActive)
   const [prerequisiteIds, setPrerequisiteIds] = useState<number[]>(
     course.prerequisites.map((p) => p.id)
@@ -56,6 +58,7 @@ export function EditCourseDialog({ course, allCourses, open, onOpenChange }: Edi
     startTransition(async () => {
       const result = await updateCourse(course.id, {
         label: label.trim(),
+        description: description.trim() || null,
         isActive,
         prerequisiteIds,
       })
@@ -83,6 +86,18 @@ export function EditCourseDialog({ course, allCourses, open, onOpenChange }: Edi
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               placeholder="輸入課程名稱"
+              disabled={isPending}
+            />
+          </div>
+
+          {/* 課程簡介 */}
+          <div className="space-y-1.5">
+            <Label>課程簡介（選填）</Label>
+            <Textarea
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="輸入課程簡介"
               disabled={isPending}
             />
           </div>

@@ -21,15 +21,17 @@ type ActionResponse = {
 
 const updateCourseSchema = z.object({
   label: z.string().min(1, '課程名稱不可為空'),
+  description: z.string().optional().nullable(),
   isActive: z.boolean(),
   prerequisiteIds: z.array(z.number().int().positive()),
 })
 
-// ── 更新課程設定（名稱、isActive、先修課程）──────────────
+// ── 更新課程設定（名稱、簡介、isActive、先修課程）──────────────
 export async function updateCourse(
   id: number,
   data: {
     label: string
+    description?: string | null
     isActive: boolean
     prerequisiteIds: number[]
   }
@@ -45,7 +47,7 @@ export async function updateCourse(
     return { success: false, errors: parsed.error.flatten().fieldErrors }
   }
 
-  const { label, isActive, prerequisiteIds } = parsed.data
+  const { label, description, isActive, prerequisiteIds } = parsed.data
 
   // 不允許設定自身為先修
   const filteredPrereqIds = prerequisiteIds.filter((pid) => pid !== id)
@@ -54,6 +56,7 @@ export async function updateCourse(
     where: { id },
     data: {
       label,
+      description: description?.trim() || null,
       isActive,
       prerequisites: {
         // 全量重設先修關聯

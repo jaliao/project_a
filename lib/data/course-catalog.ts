@@ -11,6 +11,7 @@ import { prisma } from '@/lib/prisma'
 export type CourseCatalogEntry = {
   id: number
   label: string
+  description: string | null
   isActive: boolean
   sortOrder: number
   prerequisites: { id: number; label: string }[]
@@ -23,6 +24,7 @@ export async function getAllCourses(): Promise<CourseCatalogEntry[]> {
     select: {
       id: true,
       label: true,
+      description: true,
       isActive: true,
       sortOrder: true,
       prerequisites: { select: { id: true, label: true } },
@@ -38,6 +40,7 @@ export async function getActiveCourses(): Promise<CourseCatalogEntry[]> {
     select: {
       id: true,
       label: true,
+      description: true,
       isActive: true,
       sortOrder: true,
       prerequisites: { select: { id: true, label: true } },
@@ -52,6 +55,7 @@ export async function getCourse(id: number): Promise<CourseCatalogEntry | null> 
     select: {
       id: true,
       label: true,
+      description: true,
       isActive: true,
       sortOrder: true,
       prerequisites: { select: { id: true, label: true } },
