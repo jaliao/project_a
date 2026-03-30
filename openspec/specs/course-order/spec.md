@@ -1,88 +1,60 @@
 ## ADDED Requirements
 
-### Requirement: 課程訂購 Dialog 入口
-系統 SHALL 提供課程訂購 Dialog，由 Topbar「新增課程」按鈕觸發開啟。
+### Requirement: CourseOrder shippedAt 欄位
+`CourseOrder` model SHALL 新增 `shippedAt DateTime?` 欄位，有值代表管理者已確認寄送。
 
-#### Scenario: 開啟訂購 Dialog
-- **WHEN** 已登入使用者點擊 Topbar「新增課程」按鈕
-- **THEN** 系統顯示課程訂購表單 Dialog
+#### Scenario: 預設值為 null
+- **WHEN** 建立新的 CourseOrder
+- **THEN** `shippedAt` 預設為 null（待寄送狀態）
 
-#### Scenario: 關閉 Dialog
-- **WHEN** 使用者點擊關閉按鈕或 Dialog 外部區域
-- **THEN** Dialog 關閉，表單資料清空
+### Requirement: CourseOrder receivedAt 欄位
+`CourseOrder` model SHALL 新增 `receivedAt DateTime?` 欄位，有值代表講師已確認收件。
 
-### Requirement: 購買人基本資料欄位
-訂購表單 SHALL 包含以下必填欄位：購買人中文姓名、購買人英文姓名、購買人的教師姓名、購買人所屬教會/單位、購買人 Email、購買人聯絡電話。
+#### Scenario: 預設值為 null
+- **WHEN** 建立新的 CourseOrder
+- **THEN** `receivedAt` 預設為 null
 
-#### Scenario: 必填欄位空白時提交
-- **WHEN** 使用者未填寫任何必填欄位即點擊送出
-- **THEN** 系統顯示各欄位的錯誤提示，不送出表單
+#### Scenario: receivedAt 只能在 shippedAt 存在後設定
+- **WHEN** `confirmReceipt` Action 被呼叫但 `shippedAt == null`
+- **THEN** 回傳 `{ success: false, message: '教材尚未寄出' }`
 
-#### Scenario: Email 格式錯誤
-- **WHEN** 使用者輸入非 Email 格式的字串於「購買人 Email」欄位
-- **THEN** 系統顯示「請輸入有效的 Email 格式」錯誤提示
+### Requirement: confirmShipment Server Action
+系統 SHALL 提供 `confirmShipment(orderId)` Server Action，僅管理者可呼叫，設定 `shippedAt`。
 
-### Requirement: 教材版本選擇
-訂購表單 SHALL 提供三個教材版本選項（單選必填）：繁體版、簡體版、繁體＋簡體。
+#### Scenario: 成功標記已寄送
+- **WHEN** 管理者呼叫 `confirmShipment`，`shippedAt == null`
+- **THEN** `shippedAt` 設為當前時間，回傳 `{ success: true }`
 
-#### Scenario: 選擇教材版本
-- **WHEN** 使用者選擇「繁體版」、「簡體版」或「繁體＋簡體」其中一項
-- **THEN** 該選項被選中，其餘取消選中
+#### Scenario: 重複標記已寄送
+- **WHEN** `shippedAt` 已有值
+- **THEN** 回傳 `{ success: false, message: '已標記為寄送中' }`
 
-### Requirement: 購買性質選擇與條件欄位
-訂購表單 SHALL 提供三個購買性質選項（單選必填）：種子教師自用、自用＋代購、純代購。當選擇含代購（自用＋代購 或 純代購）時，SHALL 顯示「幫學員代購」姓名輸入欄位並設為必填。
+### Requirement: confirmReceipt Server Action
+系統 SHALL 提供 `confirmReceipt(inviteId)` Server Action，由講師呼叫，設定關聯 CourseOrder 的 `receivedAt`。
 
-#### Scenario: 選擇「種子教師自用」
-- **WHEN** 使用者選擇「只買 1 本：種子教師自用」
-- **THEN** 「幫學員代購」欄位隱藏
+#### Scenario: 成功確認收件
+- **WHEN** 講師呼叫 `confirmReceipt`，`shippedAt != null` 且 `receivedAt == null`
+- **THEN** `receivedAt` 設為當前時間，回傳 `{ success: true }`
 
-#### Scenario: 選擇含代購選項
-- **WHEN** 使用者選擇「自用＋代購」或「只幫學員代購」
-- **THEN** 「幫學員代購（務必填寫學員完整中文姓名）」欄位顯示並標記必填
+#### Scenario: 非課程講師不可操作
+- **WHEN** 非 CourseInvite.createdById 的使用者呼叫
+- **THEN** 回傳 `{ success: false, message: '無權限' }`
 
-#### Scenario: 代購欄位空白時提交
-- **WHEN** 使用者選擇含代購選項但未填寫學員姓名即提交
-- **THEN** 系統顯示「請填寫學員姓名」錯誤提示
+### Requirement: applyMaterialOrder Server Action
+系統 SHALL 提供 `applyMaterialOrder(inviteId, data)` Server Action，讓講師建立或更新 CourseOrder 並關聯至 CourseInvite。
 
-### Requirement: 購買數量選擇
-訂購表單 SHALL 提供 1–8 本的固定選項（含單價：每本 $300）以及「其他」自填選項。選擇「其他」時 SHALL 顯示數量輸入欄位。
+#### Scenario: 首次建立 CourseOrder
+- **WHEN** `CourseInvite.courseOrderId == null`，講師送出完整表單資料
+- **THEN** 新建 CourseOrder，更新 `CourseInvite.courseOrderId`，回傳 `{ success: true, data: { orderId } }`
 
-#### Scenario: 選擇固定數量
-- **WHEN** 使用者選擇 1–8 本其中一項
-- **THEN** 數量選中，「其他數量」欄位隱藏
+#### Scenario: 更新現有 CourseOrder
+- **WHEN** `CourseInvite.courseOrderId != null` 且 `shippedAt == null`
+- **THEN** 更新 CourseOrder 欄位，回傳 `{ success: true }`
 
-#### Scenario: 選擇「其他」
-- **WHEN** 使用者選擇「其他」
-- **THEN** 顯示自填數量文字輸入欄位
+#### Scenario: 已寄送後禁止修改
+- **WHEN** `CourseOrder.shippedAt != null`
+- **THEN** 回傳 `{ success: false, message: '教材已寄出，無法修改申請' }`
 
-### Requirement: 預計開課日期
-訂購表單 SHALL 包含「預計開課日期」必填欄位，允許輸入日期或「無」。
-
-#### Scenario: 填寫日期或「無」
-- **WHEN** 使用者輸入日期文字或「無」
-- **THEN** 系統接受該輸入值不顯示錯誤
-
-### Requirement: 統一編號（選填）
-訂購表單 SHALL 包含「統一編號」選填欄位。
-
-#### Scenario: 不填統一編號
-- **WHEN** 使用者不填寫統一編號
-- **THEN** 系統不顯示錯誤，可正常提交
-
-### Requirement: 取貨方式選擇
-訂購表單 SHALL 提供三個取貨方式選項（單選必填）：7-11 取貨、全家取貨、郵寄/宅配。
-
-#### Scenario: 選擇取貨方式
-- **WHEN** 使用者選擇任一取貨方式
-- **THEN** 該選項被選中
-
-### Requirement: 表單提交與儲存
-使用者填寫完整表單並提交後，系統 SHALL 將訂單儲存至資料庫，並顯示成功提示（含訂單編號）。
-
-#### Scenario: 成功提交
-- **WHEN** 使用者填寫所有必填欄位並點擊提交
-- **THEN** 系統儲存訂單、顯示「訂單已送出（編號 #N）」成功提示，並關閉 Dialog
-
-#### Scenario: 伺服器錯誤
-- **WHEN** 提交過程中發生伺服器錯誤
-- **THEN** 系統顯示「送出失敗，請稍後再試」錯誤提示，Dialog 保持開啟
+#### Scenario: 非課程講師不可申請
+- **WHEN** 非 CourseInvite.createdById 的使用者呼叫
+- **THEN** 回傳 `{ success: false, message: '無權限' }`
