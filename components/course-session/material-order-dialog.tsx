@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * MaterialOrderDialog - 教材申請 Dialog
- * 2026-03-30
+ * 2026-03-30 (Updated: 2026-03-30)
  * components/course-session/material-order-dialog.tsx
  * ----------------------------------------------
  */
@@ -28,28 +28,14 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
-  courseOrderSchema,
-  type CourseOrderFormValues,
+  materialOrderSchema,
+  type MaterialOrderFormValues,
 } from '@/lib/schemas/course-order'
 import { applyMaterialOrder } from '@/app/actions/course-order'
-
-// 數量選項
-const QUANTITY_OPTIONS = [
-  { value: '1', label: '1 本 $300' },
-  { value: '2', label: '2 本 $600' },
-  { value: '3', label: '3 本 $900' },
-  { value: '4', label: '4 本 $1200' },
-  { value: '5', label: '5 本 $1500' },
-  { value: '6', label: '6 本 $1800' },
-  { value: '7', label: '7 本 $2100' },
-  { value: '8', label: '8 本 $2400' },
-  { value: 'other', label: '其他' },
-]
 
 interface MaterialOrderDialogProps {
   open: boolean
@@ -71,14 +57,10 @@ interface MaterialOrderDialogProps {
     churchOrg: string
     email: string
     phone: string
-    materialVersion: string
-    purchaseType: string
-    studentNames: string | null
-    quantity: number
-    quantityNote: string | null
     courseDate: string
     taxId: string | null
     deliveryMethod: string
+    deliveryAddress: string | null
     shippedAt: Date | null
   } | null
 }
@@ -96,16 +78,8 @@ export function MaterialOrderDialog({
   // 已寄送後設為唯讀
   const isReadonly = !!existingOrder?.shippedAt
 
-  // 計算數量選項（現有訂單）
-  const getQuantityOption = () => {
-    if (!existingOrder) return ''
-    const q = existingOrder.quantity
-    if (q >= 1 && q <= 8) return String(q)
-    return 'other'
-  }
-
-  const form = useForm<CourseOrderFormValues>({
-    resolver: zodResolver(courseOrderSchema),
+  const form = useForm<MaterialOrderFormValues>({
+    resolver: zodResolver(materialOrderSchema),
     defaultValues: existingOrder
       ? {
           buyerNameZh: existingOrder.buyerNameZh,
@@ -114,14 +88,10 @@ export function MaterialOrderDialog({
           churchOrg: existingOrder.churchOrg,
           email: existingOrder.email,
           phone: existingOrder.phone,
-          materialVersion: existingOrder.materialVersion as CourseOrderFormValues['materialVersion'],
-          purchaseType: existingOrder.purchaseType as CourseOrderFormValues['purchaseType'],
-          studentNames: existingOrder.studentNames ?? '',
-          quantityOption: getQuantityOption(),
-          quantityNote: existingOrder.quantityNote ?? '',
           courseDate: existingOrder.courseDate,
           taxId: existingOrder.taxId ?? '',
-          deliveryMethod: existingOrder.deliveryMethod as CourseOrderFormValues['deliveryMethod'],
+          deliveryMethod: existingOrder.deliveryMethod as MaterialOrderFormValues['deliveryMethod'],
+          deliveryAddress: existingOrder.deliveryAddress ?? '',
         }
       : {
           buyerNameZh: prefill?.buyerNameZh ?? '',
@@ -130,20 +100,18 @@ export function MaterialOrderDialog({
           churchOrg: '',
           email: prefill?.email ?? '',
           phone: prefill?.phone ?? '',
-          studentNames: '',
-          quantityNote: '',
           courseDate: prefill?.courseDate ?? '',
           taxId: '',
+          deliveryAddress: '',
         },
   })
 
-  const purchaseType = form.watch('purchaseType')
-  const quantityOption = form.watch('quantityOption')
-  const showStudentNames =
-    purchaseType === 'selfAndProxy' || purchaseType === 'proxyOnly'
-  const showQuantityNote = quantityOption === 'other'
+  const deliveryMethod = form.watch('deliveryMethod')
+  const isConvenienceStore =
+    deliveryMethod === 'sevenEleven' || deliveryMethod === 'familyMart'
+  const addressLabel = isConvenienceStore ? '門市店號 / 門市名稱 *' : '收件地址 *'
 
-  const onSubmit = (values: CourseOrderFormValues) => {
+  const onSubmit = (values: MaterialOrderFormValues) => {
     if (isReadonly) return
     startTransition(async () => {
       const result = await applyMaterialOrder(
@@ -235,108 +203,6 @@ export function MaterialOrderDialog({
                   )} />
                 </div>
 
-                {/* ── 教材版本 ───────────────────────── */}
-                <FormField control={form.control} name="materialVersion" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>教材版本 *</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        className="space-y-1"
-                        disabled={isReadonly}
-                      >
-                        {[
-                          { value: 'traditional', label: '繁體版' },
-                          { value: 'simplified', label: '簡體版' },
-                          { value: 'both', label: '繁體＋簡體（請在學員姓名後備註哪位是簡體教材）' },
-                        ].map((opt) => (
-                          <div key={opt.value} className="flex items-start gap-2">
-                            <RadioGroupItem value={opt.value} id={`mv-${opt.value}`} className="mt-0.5" />
-                            <label htmlFor={`mv-${opt.value}`} className="text-sm cursor-pointer">{opt.label}</label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
-                {/* ── 購買性質 ───────────────────────── */}
-                <FormField control={form.control} name="purchaseType" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>教師自用或協助代購 *</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        className="space-y-1"
-                        disabled={isReadonly}
-                      >
-                        {[
-                          { value: 'selfOnly', label: '只買 1 本：種子教師自用' },
-                          { value: 'selfAndProxy', label: '自用之外，還要幫學員代購' },
-                          { value: 'proxyOnly', label: '只幫學員代購' },
-                        ].map((opt) => (
-                          <div key={opt.value} className="flex items-start gap-2">
-                            <RadioGroupItem value={opt.value} id={`pt-${opt.value}`} className="mt-0.5" />
-                            <label htmlFor={`pt-${opt.value}`} className="text-sm cursor-pointer">{opt.label}</label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
-                {/* ── 學員代購姓名（條件顯示） ─────────── */}
-                {showStudentNames && (
-                  <FormField control={form.control} name="studentNames" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>幫學員代購（務必填寫學員完整中文姓名）*</FormLabel>
-                      <p className="text-xs text-muted-foreground -mt-1">例：學員1-李大明；學員2-吳小魚…</p>
-                      <FormControl>
-                        <Textarea rows={3} {...field} disabled={isReadonly} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                )}
-
-                {/* ── 購買數量 ───────────────────────── */}
-                <FormField control={form.control} name="quantityOption" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>總購買數量 *（運費另計：本島$70/1處；離島$100/1處）</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        className="grid grid-cols-2 gap-1"
-                        disabled={isReadonly}
-                      >
-                        {QUANTITY_OPTIONS.map((opt) => (
-                          <div key={opt.value} className="flex items-center gap-2">
-                            <RadioGroupItem value={opt.value} id={`qty-${opt.value}`} />
-                            <label htmlFor={`qty-${opt.value}`} className="text-sm cursor-pointer">{opt.label}</label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
-                {/* ── 自填數量（條件顯示） ──────────────── */}
-                {showQuantityNote && (
-                  <FormField control={form.control} name="quantityNote" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>請填寫數量 *</FormLabel>
-                      <FormControl><Input {...field} disabled={isReadonly} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                )}
-
                 {/* ── 預計開課日期 ──────────────────────── */}
                 <FormField control={form.control} name="courseDate" render={({ field }) => (
                   <FormItem>
@@ -381,6 +247,15 @@ export function MaterialOrderDialog({
                         ))}
                       </RadioGroup>
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+
+                {/* ── 地址（依取貨方式動態 label）────────── */}
+                <FormField control={form.control} name="deliveryAddress" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{addressLabel}</FormLabel>
+                    <FormControl><Input {...field} disabled={isReadonly} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />

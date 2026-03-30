@@ -57,9 +57,10 @@ model CourseOrder {
   quantityNote String? // 自填數量說明
 
   // 其他
-  courseDate     String // 預計開課日期（可填「無」）
-  taxId          String? // 統一編號（選填）
-  deliveryMethod DeliveryMethod
+  courseDate      String // 預計開課日期（可填「無」）
+  taxId           String? // 統一編號（選填）
+  deliveryMethod  DeliveryMethod
+  deliveryAddress String? // 收件地址或門市店號/名稱
 
   // 提交者（選填關聯）
   submittedById String? @db.Uuid

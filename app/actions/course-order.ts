@@ -11,7 +11,7 @@
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
-import { courseOrderSchema } from '@/lib/schemas/course-order'
+import { courseOrderSchema, materialOrderSchema } from '@/lib/schemas/course-order'
 import type { MaterialVersion, PurchaseType, DeliveryMethod } from '@prisma/client'
 
 type ActionResponse = {
@@ -96,14 +96,12 @@ export async function applyMaterialOrder(
     }
   }
 
-  const parsed = courseOrderSchema.safeParse(formData)
+  const parsed = materialOrderSchema.safeParse(formData)
   if (!parsed.success) {
     return { success: false, errors: parsed.error.flatten().fieldErrors }
   }
 
   const d = parsed.data
-  const quantity =
-    d.quantityOption === 'other' ? 0 : parseInt(d.quantityOption, 10)
 
   const orderData = {
     buyerNameZh: d.buyerNameZh,
@@ -112,14 +110,14 @@ export async function applyMaterialOrder(
     churchOrg: d.churchOrg,
     email: d.email,
     phone: d.phone,
-    materialVersion: d.materialVersion as MaterialVersion,
-    purchaseType: d.purchaseType as PurchaseType,
-    studentNames: d.studentNames || null,
-    quantity,
-    quantityNote: d.quantityOption === 'other' ? (d.quantityNote ?? null) : null,
+    // 書籍欄位改由學員 materialChoice 統計，以預設值填入廢棄欄位
+    materialVersion: 'traditional' as MaterialVersion,
+    purchaseType: 'selfOnly' as PurchaseType,
+    quantity: 0,
     courseDate: d.courseDate,
     taxId: d.taxId || null,
     deliveryMethod: d.deliveryMethod as DeliveryMethod,
+    deliveryAddress: d.deliveryAddress || null,
     submittedById: session.user.id,
   }
 

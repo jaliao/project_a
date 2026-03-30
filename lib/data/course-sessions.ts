@@ -178,14 +178,10 @@ export type CourseSessionDetail = {
     churchOrg: string
     email: string
     phone: string
-    materialVersion: string
-    purchaseType: string
-    studentNames: string | null
-    quantity: number
-    quantityNote: string | null
     courseDate: string
     taxId: string | null
     deliveryMethod: string
+    deliveryAddress: string | null
     shippedAt: Date | null
     receivedAt: Date | null
   } | null
@@ -233,14 +229,10 @@ export async function getCourseSessionById(
           churchOrg: true,
           email: true,
           phone: true,
-          materialVersion: true,
-          purchaseType: true,
-          studentNames: true,
-          quantity: true,
-          quantityNote: true,
           courseDate: true,
           taxId: true,
           deliveryMethod: true,
+          deliveryAddress: true,
           shippedAt: true,
           receivedAt: true,
         },
@@ -318,4 +310,28 @@ export async function getMyCompletionCertificates(
     })
   }
   return result
+}
+
+/**
+ * 統計指定課程已核准學員的書籍選擇數量（出貨單用）
+ */
+export async function getEnrollmentMaterialSummary(
+  inviteId: number
+): Promise<{ traditional: number; simplified: number }> {
+  const rows = await prisma.inviteEnrollment.findMany({
+    where: {
+      inviteId,
+      status: 'approved',
+      materialChoice: { not: 'none' },
+    },
+    select: { materialChoice: true },
+  })
+
+  let traditional = 0
+  let simplified = 0
+  for (const row of rows) {
+    if (row.materialChoice === 'traditional') traditional++
+    else if (row.materialChoice === 'simplified') simplified++
+  }
+  return { traditional, simplified }
 }

@@ -26,14 +26,10 @@ type CourseOrder = {
   churchOrg: string
   email: string
   phone: string
-  materialVersion: string
-  purchaseType: string
-  studentNames: string | null
-  quantity: number
-  quantityNote: string | null
   courseDate: string
   taxId: string | null
   deliveryMethod: string
+  deliveryAddress: string | null
   shippedAt: Date | null
   receivedAt: Date | null
 }

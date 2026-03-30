@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.36（2026-03-30）
+> 自動產生，版本 0.1.38（2026-03-30）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -247,7 +247,7 @@ createdAt       DateTime
 
 ### 開課身分驗證
 - `canTeach = isAdmin || certificates.length > 0`（certificates = getMyCompletionCertificates）
-- 精靈 Step 1：卡片資格判斷 = `isAdmin || course.prerequisites.every(p => graduatedCatalogIds.includes(p.id))`
+- 精靈 Step 1：卡片資格判斷 = `isAdmin || graduatedCatalogIds.includes(course.id)`（結業該課程本身）
 - `canTeach = false` → 按鈕 disabled + tooltip「需具備講師身分才能開課」
 - Server Action 層仍保留先修驗證（defense-in-depth）
 
@@ -314,6 +314,12 @@ createdAt       DateTime
 - `cr-fix-260330-001` — Makefile prisma studio `--browser none`：修正 WSL2 缺少 `xdg-open` 導致 studio 指令崩潰：migration 刪除 join table 中 A=1 的殘留資料；seed 補顯式 set:[] 確保入門課程永遠無先修：`CourseCatalog` 新增 `description` 欄位（選填）；seed 改為累積式先修（啟動靈人 N 需先修 1..N-1）；Admin 課程列表顯示簡介（line-clamp-2）；編輯 Dialog 新增簡介 Textarea
 - `cr-spec-260330-004` — 申請按鈕先修資格前置檢查：`/course/[id]` 頁面呼叫 `checkPrerequisites`；不符資格時按鈕 disabled，下方顯示缺少先修課程清單
 - `cr-spec-260330-005` — 教材申請作業流程：`CourseOrder` 新增 `shippedAt`/`receivedAt` 欄位；課程詳情頁新增「申請教材」按鈕（預填 Profile 資料）、寄送狀態提示、「我已收到教材」確認收件；「開始上課」前置條件改為 `receivedAt != null`；後台新增 `/admin/materials` 教材申請管理頁（列表、狀態 Badge、確認已寄送、展開詳情）
+- `cr-fix-260330-002` — 授課資格判斷修正：精靈 Step 1 `hasQualification` 從「完成先修課程」改為「結業該課程本身」（`graduatedCatalogIds.includes(course.id)`）；提示文字從顯示先修課程名稱改為顯示課程本身名稱
+- `cr-spec-260330-007` — 教材作業優化：`CourseOrder` 新增 `deliveryAddress` 欄位（migration）；教材申請表單移除書籍相關欄位（materialVersion/purchaseType/studentNames/quantity），改由學員 `materialChoice` 自動統計；新增出貨單列印頁 `/admin/materials/[id]/print`（收件者、寄件方式、地址、書本數量）；後台管理表格新增「列印」按鈕
+
+### 開課身分驗證（修正後）
+- `canTeach = isAdmin || certificates.length > 0`（入口顯示控制）
+- 精靈 Step 1 卡片資格：`isAdmin || graduatedCatalogIds.includes(course.id)`（結業該課程本身才能授課）
 
 ### 進行中 / 待規劃
 - 會員管理後台（CRUD、搜尋、分頁）

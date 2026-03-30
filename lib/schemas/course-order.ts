@@ -62,3 +62,34 @@ export const courseOrderSchema = z
   })
 
 export type CourseOrderFormValues = z.infer<typeof courseOrderSchema>
+
+// ── 教材申請 Schema（移除書籍欄位，新增 deliveryAddress）────────────
+export const materialOrderSchema = z
+  .object({
+    buyerNameZh: z.string().min(1, '購買人中文姓名為必填'),
+    buyerNameEn: z.string().min(1, '購買人英文姓名為必填'),
+    teacherName: z.string().min(1, '教師姓名為必填'),
+    churchOrg: z.string().min(1, '所屬教會/單位為必填'),
+    email: z.string().email('請輸入有效的 Email 格式'),
+    phone: z.string().min(1, '聯絡電話為必填'),
+    courseDate: z.string().min(1, '預計開課日期為必填'),
+    taxId: z.string().optional(),
+    deliveryMethod: z.enum(['sevenEleven', 'familyMart', 'delivery'], {
+      error: '請選擇取貨方式',
+    }),
+    deliveryAddress: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.deliveryAddress?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          data.deliveryMethod === 'delivery'
+            ? '請填寫收件地址'
+            : '請填寫門市店號 / 門市名稱',
+        path: ['deliveryAddress'],
+      })
+    }
+  })
+
+export type MaterialOrderFormValues = z.infer<typeof materialOrderSchema>

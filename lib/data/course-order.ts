@@ -24,6 +24,7 @@ export type CourseOrderDetail = {
   courseDate: string
   taxId: string | null
   deliveryMethod: string
+  deliveryAddress: string | null
   shippedAt: Date | null
   receivedAt: Date | null
   createdAt: Date
@@ -34,6 +35,19 @@ export type CourseOrderWithInvite = CourseOrderDetail & {
   inviteTitle: string | null
   instructorName: string | null
   instructorEmail: string | null
+}
+
+export type CourseOrderForPrint = {
+  id: number
+  buyerNameZh: string
+  teacherName: string
+  deliveryMethod: string
+  deliveryAddress: string | null
+  courseDate: string
+  taxId: string | null
+  shippedAt: Date | null
+  inviteId: number | null
+  inviteTitle: string | null
 }
 
 /**
@@ -62,6 +76,7 @@ export async function getCourseOrderByInviteId(
           courseDate: true,
           taxId: true,
           deliveryMethod: true,
+          deliveryAddress: true,
           shippedAt: true,
           receivedAt: true,
           createdAt: true,
@@ -98,6 +113,7 @@ export async function getAllCourseOrdersWithInvite(): Promise<
       courseDate: true,
       taxId: true,
       deliveryMethod: true,
+      deliveryAddress: true,
       shippedAt: true,
       receivedAt: true,
       createdAt: true,
@@ -130,6 +146,7 @@ export async function getAllCourseOrdersWithInvite(): Promise<
       courseDate: order.courseDate,
       taxId: order.taxId,
       deliveryMethod: order.deliveryMethod,
+      deliveryAddress: order.deliveryAddress,
       shippedAt: order.shippedAt,
       receivedAt: order.receivedAt,
       createdAt: order.createdAt,
@@ -140,4 +157,45 @@ export async function getAllCourseOrdersWithInvite(): Promise<
       instructorEmail: invite?.createdBy.email ?? null,
     }
   })
+}
+
+/**
+ * 取得單筆 CourseOrder 出貨單資料（列印頁用）
+ */
+export async function getCourseOrderForPrint(
+  orderId: number
+): Promise<CourseOrderForPrint | null> {
+  const order = await prisma.courseOrder.findUnique({
+    where: { id: orderId },
+    select: {
+      id: true,
+      buyerNameZh: true,
+      teacherName: true,
+      deliveryMethod: true,
+      deliveryAddress: true,
+      courseDate: true,
+      taxId: true,
+      shippedAt: true,
+      courseInvites: {
+        take: 1,
+        select: { id: true, title: true },
+      },
+    },
+  })
+
+  if (!order) return null
+
+  const invite = order.courseInvites[0]
+  return {
+    id: order.id,
+    buyerNameZh: order.buyerNameZh,
+    teacherName: order.teacherName,
+    deliveryMethod: order.deliveryMethod,
+    deliveryAddress: order.deliveryAddress,
+    courseDate: order.courseDate,
+    taxId: order.taxId,
+    shippedAt: order.shippedAt,
+    inviteId: invite?.id ?? null,
+    inviteTitle: invite?.title ?? null,
+  }
 }

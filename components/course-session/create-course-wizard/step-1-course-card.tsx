@@ -39,7 +39,7 @@ export function Step1CourseCard({
         {courses.map((course) => {
           const isSelected = selected === course.id
           const hasQualification =
-            isAdmin || course.prerequisites.every((p) => graduatedCatalogIds.includes(p.id))
+            isAdmin || graduatedCatalogIds.includes(course.id)
 
           return (
             <button
@@ -67,9 +67,9 @@ export function Step1CourseCard({
               <p className="font-semibold text-sm">{course.label}</p>
 
               {/* 無授課資格提示 */}
-              {!hasQualification && course.prerequisites.length > 0 && (
+              {!hasQualification && (
                 <p className="mt-1.5 text-xs text-muted-foreground">
-                  須先完成{course.prerequisites.map((p) => p.label).join('、')}才能授課
+                  須先完成{course.label}才能授課
                 </p>
               )}
             </button>

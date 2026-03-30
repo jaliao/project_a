@@ -11,7 +11,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { IconChevronDown, IconChevronRight } from '@tabler/icons-react'
+import { IconChevronDown, IconChevronRight, IconPrinter } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { confirmShipment } from '@/app/actions/course-order'
 import type { CourseOrderWithInvite } from '@/lib/data/course-order'
@@ -184,6 +184,7 @@ export function MaterialOrderTable({ orders }: MaterialOrderTableProps) {
             <th className="px-4 py-3">申請時間</th>
             <th className="px-4 py-3">狀態</th>
             <th className="px-4 py-3">操作</th>
+            <th className="px-4 py-3">出貨單</th>
           </tr>
         </thead>
         <tbody>
@@ -248,11 +249,31 @@ export function MaterialOrderTable({ orders }: MaterialOrderTableProps) {
                     </Button>
                   )}
                 </td>
+                <td
+                  className="px-4 py-3"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    asChild
+                  >
+                    <a
+                      href={`/admin/materials/${order.id}/print`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1"
+                    >
+                      <IconPrinter className="h-4 w-4" />
+                      列印
+                    </a>
+                  </Button>
+                </td>
               </tr>
               {/* 展開詳情列 */}
               {expandedId === order.id && (
                 <tr key={`detail-${order.id}`}>
-                  <td colSpan={10} className="p-0">
+                  <td colSpan={11} className="p-0">
                     <OrderDetail order={order} />
                   </td>
                 </tr>
