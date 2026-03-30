@@ -94,6 +94,15 @@ export default async function UserProfilePage({ params }: Props) {
   const isProfileComplete = !!(user.realName && effectiveCommEmail && user.phone)
   const isAdmin = session?.user?.role === 'admin' || session?.user?.role === 'superadmin'
 
+  // 計算講師等級（以結業證書推導，用於開課資格與精靈顯示）
+  const instructorLevels = certificates
+    .map((c) => {
+      const match = c.courseLevel.match(/^level(\d+)$/)
+      return match ? parseInt(match[1], 10) : null
+    })
+    .filter((n): n is number => n !== null)
+  const canTeach = isAdmin || instructorLevels.length > 0
+
   return (
     <div className="space-y-6">
       {/* 資料完整度提醒（僅本人可見） */}
@@ -220,8 +229,8 @@ export default async function UserProfilePage({ params }: Props) {
         </div>
       )}
 
-      {/* 授課單元（僅本人可見） */}
-      {isOwnPage && (
+      {/* 授課單元（本人且具備講師身分才顯示） */}
+      {isOwnPage && canTeach && (
         <div className="rounded-lg border p-5 space-y-4">
           <div className="flex items-center gap-2">
             <IconChalkboard className="h-5 w-5 text-primary" />
@@ -261,7 +270,11 @@ export default async function UserProfilePage({ params }: Props) {
 
           {/* 操作按鈕 */}
           <Suspense>
-            <CourseSessionDialog instructorName={displayName} />
+            <CourseSessionDialog
+              instructorName={displayName}
+              instructorLevels={instructorLevels}
+              isAdmin={isAdmin}
+            />
           </Suspense>
         </div>
       )}

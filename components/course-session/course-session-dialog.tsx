@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
- * CourseSessionDialog - 新增授課 Dialog
- * 2026-03-23 (Updated: 2026-03-26)
+ * CourseSessionDialog - 新增授課精靈入口 Dialog
+ * 2026-03-23 (Updated: 2026-03-30)
  * components/course-session/course-session-dialog.tsx
  * ----------------------------------------------
  */
@@ -17,19 +17,22 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { CourseSessionForm } from './course-session-form'
+import { CreateCourseWizard } from './create-course-wizard/create-course-wizard'
 import { IconPlus } from '@tabler/icons-react'
 
 interface CourseSessionDialogProps {
   instructorName?: string
+  // 使用者已取得的講師等級數字陣列（由 Server Component 傳入）
+  instructorLevels?: number[]
+  isAdmin?: boolean
 }
 
-export function CourseSessionDialog({ instructorName = '' }: CourseSessionDialogProps) {
+export function CourseSessionDialog({
+  instructorName = '',
+  instructorLevels = [],
+  isAdmin = false,
+}: CourseSessionDialogProps) {
   const [open, setOpen] = useState(false)
-
-  const handleSuccess = (_inviteId: number) => {
-    setOpen(false)
-  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -39,11 +42,17 @@ export function CourseSessionDialog({ instructorName = '' }: CourseSessionDialog
           新增授課
         </Button>
       </DialogTrigger>
+
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>新增授課</DialogTitle>
         </DialogHeader>
-        <CourseSessionForm instructorName={instructorName} onSuccess={handleSuccess} />
+        <CreateCourseWizard
+          instructorName={instructorName}
+          instructorLevels={instructorLevels}
+          isAdmin={isAdmin}
+          onClose={() => setOpen(false)}
+        />
       </DialogContent>
     </Dialog>
   )

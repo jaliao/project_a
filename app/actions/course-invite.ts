@@ -81,6 +81,44 @@ export async function createInvite(
   }
 }
 
+// ── 透過 Spirit ID 邀請學員 ───────────────────
+export async function inviteBySpirtId(
+  courseInviteId: number,
+  spiritId: string
+): Promise<ActionResponse<undefined>> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  // 驗證 CourseInvite 存在
+  const invite = await prisma.courseInvite.findUnique({
+    where: { id: courseInviteId },
+    select: { id: true, title: true },
+  })
+  if (!invite) return { success: false, message: '課程邀請不存在' }
+
+  // 查找 Spirit ID 對應的 User
+  const targetUser = await prisma.user.findUnique({
+    where: { spiritId: spiritId.toUpperCase() },
+    select: { id: true },
+  })
+  if (!targetUser) return { success: false, message: '找不到此會員編號，請確認後重試' }
+
+  // 發送 Inbox 通知（fire-and-forget）
+  try {
+    const origin = process.env.NEXTAUTH_URL ?? ''
+    const inviteLink = `${origin}/course/${courseInviteId}`
+    await createNotification(
+      targetUser.id,
+      '課程邀請',
+      `您收到「${invite.title}」的課程邀請，請點擊連結查看詳情：${inviteLink}`
+    )
+  } catch (e) {
+    console.error('Spirit ID 邀請通知寫入失敗', e)
+  }
+
+  return { success: true, message: '邀請通知已送出' }
+}
+
 // ── 查詢當前使用者建立的邀請列表 ──────────────
 export async function getMyInvites() {
   const session = await auth()

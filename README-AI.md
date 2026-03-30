@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.29（2026-03-28）
+> 自動產生，版本 0.1.30（2026-03-30）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -70,12 +70,18 @@ components/
 │   ├── invite-copy-button.tsx   # 分享邀請連結按鈕（Client；Web Share API + clipboard fallback）
 │   └── completion-certificate-card.tsx  # 結業證明卡片（courseLevel、title、teacherName、graduatedAt）
 ├── course-session/
-│   ├── course-session-dialog.tsx  # 新增開課 Dialog（合併訂購 + 邀請）
-│   ├── course-session-form.tsx    # 合併表單（DatePicker、課程 Select、DEV 預填）
+│   ├── course-session-dialog.tsx  # 新增開課 Dialog 入口（含 canTeach disabled gate + tooltip）
+│   ├── course-session-form.tsx    # 舊版合併表單（保留，目前精靈流程未使用）
 │   ├── course-session-card.tsx    # 開課卡片共用元件（compact / full variant，支援 href 連結）
 │   ├── course-card-grid.tsx       # 課程卡片響應式網格容器（1→2→3→4 欄 RWD）
 │   ├── cancel-course-dialog.tsx   # 取消課程確認 Dialog（下拉選單 + 自填 textarea）
-│   └── enrolled-students-list.tsx # 已接受邀請學員清單（Server Component）
+│   ├── enrolled-students-list.tsx # 已接受邀請學員清單（Server Component）
+│   └── create-course-wizard/
+│       ├── create-course-wizard.tsx   # 精靈主容器（step 1|2|3|'invite' 狀態機）
+│       ├── step-1-course-card.tsx     # 卡片式課程選擇（isActive 課程 + 資格提示）
+│       ├── step-2-basic-info.tsx      # 基本資料表單（課程名稱、人數、DatePicker）
+│       ├── step-3-preview.tsx         # 預覽確認（唯讀摘要 → createCourseSession）
+│       └── invite-step.tsx            # 邀請學員（複製連結 + Spirit ID 邀請）
 ├── profile/
 │   └── sign-out-section.tsx     # 登出按鈕區塊（Client）
 └── learning/
@@ -210,9 +216,21 @@ createdAt       DateTime
 - 格式：`PA` + 年份後兩碼 + 4 位流水號（例 `PA261001`）
 - 首次 Google 登入自動觸發核發
 
-### 學員身分標籤（learningLevel）
-- `learningLevel` 0：無標籤
-- `learningLevel` 1～4：對應「啟動靈人 N 學員」Badge
+### 身分標籤
+- 來源：`User.role`（管理者）+ `InviteEnrollment.graduatedAt`（講師，以結業證書推導）
+- `role = admin | superadmin` → 顯示「系統管理員」Badge
+- 有結業證書的對應等級 → 顯示「啟動靈人 N 講師」Badge（可多標籤）
+
+### 開課身分驗證
+- `canTeach = isAdmin || instructorLevels.length > 0`（instructorLevels 由結業證書推導）
+- `canTeach = false` → 按鈕 disabled + tooltip「需具備講師身分才能開課」
+- Server Action 層仍保留先修等級驗證（defense-in-depth）
+
+### 新增授課精靈（三步驟）
+1. **Step 1**：卡片式課程選擇（啟動靈人 1 / 2；顯示先修條件說明）
+2. **Step 2**：基本資料（課程名稱、人數、開課日期、截止日期、備註）
+3. **Step 3**：預覽確認 → 呼叫 `createCourseSession` → 進入邀請學員階段
+- **邀請階段**：複製課程連結 `/course/{id}` 或填寫 Spirit ID → `inviteBySpirtId` → 發送 Inbox 通知
 
 ---
 
@@ -264,6 +282,7 @@ createdAt       DateTime
 - `cr-spec-260327-002` — 課程詳情頁結業資訊：已結業課程新增「結業資訊」區塊（最後課程日期、已結業／未結業學員清單含原因）；data layer 補充 `nonGraduateReason` 欄位
 
 - `cr-spec-260328-001` — 身分標籤多標籤：學員頁面身分標籤改為多 Badge（系統管理員依 role、啟動靈人 N 講師依結業證書），移除舊 learningLevel 學員標籤
+- `cr-spec-260330-001` — 授課精靈流程：新增授課改為三步驟精靈（卡片選課→基本資料→預覽確認）；入口加講師身分前置檢核（canTeach）；邀請學員階段新增 Spirit ID 邀請方式（`inviteBySpirtId` → Inbox 通知）
 
 ### 進行中 / 待規劃
 - 訂單管理後台（列表、狀態管理）
