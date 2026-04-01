@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.46（2026-04-01）
+> 自動產生，版本 0.1.47（2026-04-01）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -37,7 +37,9 @@ app/
 ├── (user)/          # 已登入路由群組（共用 Topbar layout）
 │   ├── layout.tsx   # Topbar 包裝層（含未讀通知數 server fetch）
 │   ├── dashboard/       # redirect → /user/{id}（舊書籤相容）
-│   ├── admin/           # 管理後台：統計卡片 + 已新增開課預覽 + 近期活動
+│   ├── admin/           # 管理後台：功能按鈕網格（儀錶板/課程/授課/教材/會員）
+│   │   ├── members/         # 會員管理清單（搜尋 + 重設密碼 + 查看詳情）
+│   │   └── members/[id]/    # 會員詳情（基本資料、學習紀錄、授課紀錄、刪除）
 │   ├── user/[id]/       # 學員專屬頁面：基本資料（姓名、身分標籤、已完成課程）+ 本人功能單元
 │   ├── user/[id]/courses/ # 我的開課列表（本人專屬，Spirit ID 小寫路由）
 │   ├── course-sessions/ # 開課查詢頁（保留，將逐步以 /user/[id]/courses 取代）
@@ -74,7 +76,10 @@ components/
 │   ├── invite-copy-button.tsx   # 分享邀請連結按鈕（Client；Web Share API + clipboard fallback）
 │   └── completion-certificate-card.tsx  # 結業證明卡片（courseCatalogLabel、title、teacherName、graduatedAt）
 ├── admin/
-│   └── material-order-table.tsx  # 教材申請管理表格（狀態 Badge、確認已寄送、展開詳情）
+│   ├── material-order-table.tsx  # 教材申請管理表格（狀態 Badge、確認已寄送、展開詳情）
+│   ├── member-reset-button.tsx   # 重設密碼按鈕（AlertDialog 確認）
+│   ├── member-search-input.tsx   # 會員搜尋輸入框（debounce 300ms，更新 ?q= URL param）
+│   └── member-delete-button.tsx  # 刪除會員按鈕（AlertDialog 二次確認；ENABLE_MEMBER_DELETE 控制）
 ├── ecpay-store-selector/
 │   └── store-selector.tsx   # ECPay MapCVS 超商門市選擇器（7-11 UNIMART / 全家 FAMI，postMessage 同源）
 ├── course-session/
@@ -107,6 +112,7 @@ lib/
 │   ├── course-sessions.ts   # 開課記錄查詢（getMyCourseSessions, getMyCourseSessionCount, getCourseSessionById, getMyEnrollments, getMyCompletionCertificates）
 │   ├── course-catalog.ts    # 課程目錄查詢（getAllCourses, getActiveCourses, getCourse, checkPrerequisites, getGraduatedCatalogIds）
 │   ├── course-order.ts      # 課程訂購查詢（getCourseOrderByInviteId, getAllCourseOrdersWithInvite）
+│   ├── members.ts           # 會員管理查詢（searchMembers, getMemberDetail）
 │   └── notification.ts      # 通知查詢（getNotifications, getUnreadNotificationCount, getNotificationsPaginated）
 ├── ecpay/
 │   └── logistics.ts         # ECPay 物流工具（calcLogisticsCheckMacValue，MD5，物流 CMV-MD5 規格）
@@ -333,5 +339,7 @@ createdAt       DateTime
 - `canTeach = isAdmin || certificates.length > 0`（入口顯示控制）
 - 精靈 Step 1 卡片資格：`isAdmin || graduatedCatalogIds.includes(course.id)`（結業該課程本身才能授課）
 
+- `cr-spec-260401-003` — 會員管理增強：`/admin/members` 搜尋欄（?q= URL param，debounce 300ms）；新增 `/admin/members/[id]` 詳情頁（基本資料、學習紀錄 `inviteEnrollments startedAt IS NOT NULL`、授課紀錄 `courseInvites startedAt IS NOT NULL`）；`ENABLE_MEMBER_DELETE=true` 條件式刪除功能（AlertDialog 二次確認）
+
 ### 進行中 / 待規劃
-- 會員管理後台（CRUD、搜尋、分頁）
+- （無）

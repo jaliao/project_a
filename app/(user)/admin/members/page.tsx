@@ -7,10 +7,14 @@
  */
 
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { Suspense } from 'react'
 import { auth } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { searchMembers } from '@/lib/data/members'
 import { MemberResetButton } from '@/components/admin/member-reset-button'
+import { MemberSearchInput } from '@/components/admin/member-search-input'
+import { Button } from '@/components/ui/button'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +22,11 @@ export const metadata: Metadata = {
   title: '會員管理 — 啟動靈人系統',
 }
 
-export default async function AdminMembersPage() {
+export default async function AdminMembersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>
+}) {
   const session = await auth()
   if (!session?.user) redirect('/login')
 
@@ -26,17 +34,8 @@ export default async function AdminMembersPage() {
     session.user.role === 'admin' || session.user.role === 'superadmin'
   if (!isAdmin) redirect('/')
 
-  const members = await prisma.user.findMany({
-    orderBy: { createdAt: 'desc' },
-    select: {
-      id: true,
-      name: true,
-      realName: true,
-      email: true,
-      spiritId: true,
-      createdAt: true,
-    },
-  })
+  const { q } = await searchParams
+  const members = await searchMembers(q)
 
   return (
     <div className="space-y-6">
@@ -44,6 +43,11 @@ export default async function AdminMembersPage() {
         <h1 className="text-2xl font-semibold">會員管理</h1>
         <span className="text-sm text-muted-foreground">{members.length} 位會員</span>
       </div>
+
+      {/* 搜尋列 */}
+      <Suspense fallback={null}>
+        <MemberSearchInput />
+      </Suspense>
 
       <div className="rounded-lg border">
         <table className="w-full text-sm">
@@ -76,7 +80,12 @@ export default async function AdminMembersPage() {
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{joinDate}</td>
                   <td className="px-4 py-3 text-right">
-                    <MemberResetButton userId={member.id} memberName={displayName} />
+                    <div className="flex items-center justify-end gap-2">
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/admin/members/${member.id}`}>查看詳情</Link>
+                      </Button>
+                      <MemberResetButton userId={member.id} memberName={displayName} />
+                    </div>
                   </td>
                 </tr>
               )
@@ -84,7 +93,9 @@ export default async function AdminMembersPage() {
           </tbody>
         </table>
         {members.length === 0 && (
-          <p className="px-4 py-8 text-center text-sm text-muted-foreground">尚無會員資料</p>
+          <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+            {q ? '查無符合的會員' : '尚無會員資料'}
+          </p>
         )}
       </div>
     </div>

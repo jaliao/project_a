@@ -59,3 +59,28 @@ export async function resetMemberPassword(userId: string): Promise<ActionRespons
 
   return { success: true, message: '密碼已重設，臨時密碼已寄至該會員信箱' }
 }
+
+/**
+ * 刪除指定會員（hard delete，需管理者權限）
+ */
+export async function deleteMember(userId: string): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  const isAdmin =
+    session.user.role === 'admin' || session.user.role === 'superadmin'
+  if (!isAdmin) return { success: false, message: '無權限' }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true },
+  })
+  if (!user) return { success: false, message: '找不到此會員' }
+
+  // 依序刪除關聯資料
+  await prisma.inviteEnrollment.deleteMany({ where: { userId } })
+  await prisma.courseInvite.deleteMany({ where: { createdById: userId } })
+  await prisma.user.delete({ where: { id: userId } })
+
+  return { success: true, message: '會員已刪除' }
+}
