@@ -45,6 +45,8 @@ export type CourseOrderForPrint = {
   teacherName: string
   deliveryMethod: string
   deliveryAddress: string | null
+  storeId: string | null
+  storeName: string | null
   courseDate: string
   taxId: string | null
   shippedAt: Date | null
@@ -181,6 +183,8 @@ export async function getCourseOrderForPrint(
       teacherName: true,
       deliveryMethod: true,
       deliveryAddress: true,
+      storeId: true,
+      storeName: true,
       courseDate: true,
       taxId: true,
       shippedAt: true,
@@ -200,6 +204,8 @@ export async function getCourseOrderForPrint(
     teacherName: order.teacherName,
     deliveryMethod: order.deliveryMethod,
     deliveryAddress: order.deliveryAddress,
+    storeId: order.storeId,
+    storeName: order.storeName,
     courseDate: order.courseDate,
     taxId: order.taxId,
     shippedAt: order.shippedAt,

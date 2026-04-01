@@ -117,9 +117,9 @@ export async function applyMaterialOrder(
     courseDate: d.courseDate,
     taxId: d.taxId || null,
     deliveryMethod: d.deliveryMethod as DeliveryMethod,
-    deliveryAddress: d.deliveryMethod === 'sevenEleven' ? null : (d.deliveryAddress || null),
-    storeId: d.deliveryMethod === 'sevenEleven' ? (d.storeId || null) : null,
-    storeName: d.deliveryMethod === 'sevenEleven' ? (d.storeName || null) : null,
+    deliveryAddress: d.deliveryMethod === 'delivery' ? (d.deliveryAddress || null) : null,
+    storeId: (d.deliveryMethod === 'sevenEleven' || d.deliveryMethod === 'familyMart') ? (d.storeId || null) : null,
+    storeName: (d.deliveryMethod === 'sevenEleven' || d.deliveryMethod === 'familyMart') ? (d.storeName || null) : null,
     submittedById: session.user.id,
   }
 

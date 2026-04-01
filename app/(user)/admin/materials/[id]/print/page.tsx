@@ -18,13 +18,6 @@ const DELIVERY_METHOD_LABELS: Record<string, string> = {
   delivery: '郵寄 / 宅配',
 }
 
-function getAddressLabel(deliveryMethod: string): string {
-  if (deliveryMethod === 'sevenEleven' || deliveryMethod === 'familyMart') {
-    return '門市店號 / 門市名稱'
-  }
-  return '收件地址'
-}
-
 export default async function PrintShippingOrderPage({
   params,
 }: {
@@ -49,7 +42,7 @@ export default async function PrintShippingOrderPage({
     ? await getEnrollmentMaterialSummary(order.inviteId)
     : { traditional: 0, simplified: 0 }
 
-  const addressLabel = getAddressLabel(order.deliveryMethod)
+  const isCVS = order.deliveryMethod === 'sevenEleven' || order.deliveryMethod === 'familyMart'
 
   return (
     <div className="min-h-screen bg-white">
@@ -89,8 +82,19 @@ export default async function PrintShippingOrderPage({
             <span>{order.buyerNameZh}</span>
             <span className="text-muted-foreground">寄件方式</span>
             <span>{DELIVERY_METHOD_LABELS[order.deliveryMethod] ?? order.deliveryMethod}</span>
-            <span className="text-muted-foreground">{addressLabel}</span>
-            <span>{order.deliveryAddress || '（未填）'}</span>
+            {isCVS ? (
+              <>
+                <span className="text-muted-foreground">門市名稱</span>
+                <span>{order.storeName || '（未填）'}</span>
+                <span className="text-muted-foreground">門市店號</span>
+                <span>{order.storeId || '（未填）'}</span>
+              </>
+            ) : (
+              <>
+                <span className="text-muted-foreground">收件地址</span>
+                <span>{order.deliveryAddress || '（未填）'}</span>
+              </>
+            )}
           </div>
         </section>
 
