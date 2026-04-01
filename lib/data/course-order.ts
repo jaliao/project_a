@@ -52,6 +52,7 @@ export type CourseOrderForPrint = {
   shippedAt: Date | null
   inviteId: number | null
   inviteTitle: string | null
+  catalogLabel: string | null
 }
 
 /**
@@ -190,7 +191,11 @@ export async function getCourseOrderForPrint(
       shippedAt: true,
       courseInvites: {
         take: 1,
-        select: { id: true, title: true },
+        select: {
+          id: true,
+          title: true,
+          courseCatalog: { select: { label: true } },
+        },
       },
     },
   })
@@ -211,5 +216,6 @@ export async function getCourseOrderForPrint(
     shippedAt: order.shippedAt,
     inviteId: invite?.id ?? null,
     inviteTitle: invite?.title ?? null,
+    catalogLabel: invite?.courseCatalog?.label ?? null,
   }
 }

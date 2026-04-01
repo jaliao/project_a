@@ -64,12 +64,18 @@ export default async function PrintShippingOrderPage({
         </div>
 
         {/* 課程資訊 */}
-        {order.inviteTitle && (
+        {(order.inviteTitle || order.catalogLabel) && (
           <section className="space-y-1">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">課程資訊</h2>
             <div className="grid grid-cols-[120px_1fr] gap-y-2 text-sm">
-              <span className="text-muted-foreground">課程名稱</span>
-              <span>{order.inviteTitle}</span>
+              {order.inviteTitle && (
+                <>
+                  <span className="text-muted-foreground">課程名稱</span>
+                  <span>{order.inviteTitle}</span>
+                </>
+              )}
+              <span className="text-muted-foreground">書本名稱</span>
+              <span>{order.catalogLabel || '（未填）'}</span>
             </div>
           </section>
         )}
