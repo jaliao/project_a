@@ -13,6 +13,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { signIn } from 'next-auth/react'
 import { updateProfile, updateCommEmail, resendCommVerification, unlinkGoogleAccount } from '@/app/actions/profile'
 import { updateProfileSchema, commEmailSchema } from '@/lib/schemas/profile'
 
@@ -69,6 +70,12 @@ export default function ProfileForm({ user, linkedProviders }: ProfileFormProps)
     startTransition(async () => {
       const result = await resendCommVerification()
       result.success ? toast.success(result.message) : toast.error(result.message)
+    })
+  }
+
+  const handleLinkGoogle = () => {
+    startTransition(async () => {
+      await signIn('google', { callbackUrl: '/profile' })
     })
   }
 
@@ -205,8 +212,9 @@ export default function ProfileForm({ user, linkedProviders }: ProfileFormProps)
             </button>
           ) : (
             <button
-              disabled
-              className="rounded-md border px-4 py-2 text-sm opacity-50"
+              onClick={handleLinkGoogle}
+              disabled={isPending}
+              className="rounded-md border px-4 py-2 text-sm disabled:opacity-50"
             >
               連結帳號
             </button>

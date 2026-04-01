@@ -179,10 +179,3 @@ export async function unlinkGoogleAccount(): Promise<ActionResponse> {
   revalidatePath('/(user)/profile')
   return { success: true, message: 'Google 帳號已解除連結' }
 }
-
-// ── 連結 Google 帳號（由 OAuth callback 處理，此處預留） ──
-export async function linkGoogleAccount(): Promise<ActionResponse> {
-  // Google 帳號連結透過 NextAuth signIn("google") 完成
-  // 此 action 預留供未來手動綁定邏輯使用
-  return { success: true, message: '請使用 Google 登入按鈕進行連結' }
-}
