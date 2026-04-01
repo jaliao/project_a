@@ -182,6 +182,8 @@ export type CourseSessionDetail = {
     taxId: string | null
     deliveryMethod: string
     deliveryAddress: string | null
+    storeId: string | null
+    storeName: string | null
     shippedAt: Date | null
     receivedAt: Date | null
   } | null
@@ -233,6 +235,8 @@ export async function getCourseSessionById(
           taxId: true,
           deliveryMethod: true,
           deliveryAddress: true,
+          storeId: true,
+          storeName: true,
           shippedAt: true,
           receivedAt: true,
         },

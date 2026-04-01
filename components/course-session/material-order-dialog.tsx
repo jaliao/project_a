@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * MaterialOrderDialog - 教材申請 Dialog
- * 2026-03-30 (Updated: 2026-03-30)
+ * 2026-03-30 (Updated: 2026-03-31)
  * components/course-session/material-order-dialog.tsx
  * ----------------------------------------------
  */
@@ -36,6 +36,7 @@ import {
   type MaterialOrderFormValues,
 } from '@/lib/schemas/course-order'
 import { applyMaterialOrder } from '@/app/actions/course-order'
+import { EcpayStoreSelector } from '@/components/ecpay-store-selector/store-selector'
 
 interface MaterialOrderDialogProps {
   open: boolean
@@ -61,6 +62,8 @@ interface MaterialOrderDialogProps {
     taxId: string | null
     deliveryMethod: string
     deliveryAddress: string | null
+    storeId: string | null
+    storeName: string | null
     shippedAt: Date | null
   } | null
 }
@@ -92,6 +95,8 @@ export function MaterialOrderDialog({
           taxId: existingOrder.taxId ?? '',
           deliveryMethod: existingOrder.deliveryMethod as MaterialOrderFormValues['deliveryMethod'],
           deliveryAddress: existingOrder.deliveryAddress ?? '',
+          storeId: existingOrder.storeId ?? '',
+          storeName: existingOrder.storeName ?? '',
         }
       : {
           buyerNameZh: prefill?.buyerNameZh ?? '',
@@ -103,13 +108,23 @@ export function MaterialOrderDialog({
           courseDate: prefill?.courseDate ?? '',
           taxId: '',
           deliveryAddress: '',
+          storeId: '',
+          storeName: '',
         },
   })
 
   const deliveryMethod = form.watch('deliveryMethod')
-  const isConvenienceStore =
-    deliveryMethod === 'sevenEleven' || deliveryMethod === 'familyMart'
-  const addressLabel = isConvenienceStore ? '門市店號 / 門市名稱 *' : '收件地址 *'
+  const isCVS = deliveryMethod === 'sevenEleven' || deliveryMethod === 'familyMart'
+  const cvsSubType = deliveryMethod === 'sevenEleven' ? 'UNIMART' : 'FAMI'
+
+  // 切換取貨方式時清除不對應的欄位
+  function handleDeliveryMethodChange(value: string) {
+    form.setValue('deliveryMethod', value as MaterialOrderFormValues['deliveryMethod'])
+    // 切換後清除門市與地址（避免殘留舊值）
+    form.setValue('storeId', '')
+    form.setValue('storeName', '')
+    form.setValue('deliveryAddress', '')
+  }
 
   const onSubmit = (values: MaterialOrderFormValues) => {
     if (isReadonly) return
@@ -230,7 +245,7 @@ export function MaterialOrderDialog({
                     <FormLabel>取貨方式 *</FormLabel>
                     <FormControl>
                       <RadioGroup
-                        onValueChange={field.onChange}
+                        onValueChange={handleDeliveryMethodChange}
                         value={field.value}
                         className="space-y-1"
                         disabled={isReadonly}
@@ -251,14 +266,41 @@ export function MaterialOrderDialog({
                   </FormItem>
                 )} />
 
-                {/* ── 地址（依取貨方式動態 label）────────── */}
-                <FormField control={form.control} name="deliveryAddress" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{addressLabel}</FormLabel>
-                    <FormControl><Input {...field} disabled={isReadonly} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+                {/* ── 超商門市選擇器（7-11 / 全家）──────── */}
+                {isCVS && (
+                  <FormField control={form.control} name="storeId" render={() => (
+                    <FormItem>
+                      <FormLabel>取貨門市 *</FormLabel>
+                      <FormControl>
+                        <EcpayStoreSelector
+                          logisticsSubType={cvsSubType}
+                          value={
+                            form.watch('storeId') && form.watch('storeName')
+                              ? { storeId: form.watch('storeId')!, storeName: form.watch('storeName')! }
+                              : null
+                          }
+                          onChange={(store) => {
+                            form.setValue('storeId', store?.storeId ?? '')
+                            form.setValue('storeName', store?.storeName ?? '')
+                          }}
+                          disabled={isReadonly}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                )}
+
+                {/* ── 地址（郵寄用）──────────────────────── */}
+                {!isCVS && (
+                  <FormField control={form.control} name="deliveryAddress" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>收件地址 *</FormLabel>
+                      <FormControl><Input {...field} disabled={isReadonly} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                )}
 
               </div>
             </ScrollArea>

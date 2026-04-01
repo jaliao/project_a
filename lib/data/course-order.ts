@@ -25,6 +25,8 @@ export type CourseOrderDetail = {
   taxId: string | null
   deliveryMethod: string
   deliveryAddress: string | null
+  storeId: string | null
+  storeName: string | null
   shippedAt: Date | null
   receivedAt: Date | null
   createdAt: Date
@@ -77,6 +79,8 @@ export async function getCourseOrderByInviteId(
           taxId: true,
           deliveryMethod: true,
           deliveryAddress: true,
+          storeId: true,
+          storeName: true,
           shippedAt: true,
           receivedAt: true,
           createdAt: true,
@@ -114,6 +118,8 @@ export async function getAllCourseOrdersWithInvite(): Promise<
       taxId: true,
       deliveryMethod: true,
       deliveryAddress: true,
+      storeId: true,
+      storeName: true,
       shippedAt: true,
       receivedAt: true,
       createdAt: true,
@@ -147,6 +153,8 @@ export async function getAllCourseOrdersWithInvite(): Promise<
       taxId: order.taxId,
       deliveryMethod: order.deliveryMethod,
       deliveryAddress: order.deliveryAddress,
+      storeId: order.storeId,
+      storeName: order.storeName,
       shippedAt: order.shippedAt,
       receivedAt: order.receivedAt,
       createdAt: order.createdAt,

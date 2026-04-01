@@ -30,6 +30,8 @@ type CourseOrder = {
   taxId: string | null
   deliveryMethod: string
   deliveryAddress: string | null
+  storeId: string | null
+  storeName: string | null
   shippedAt: Date | null
   receivedAt: Date | null
 }

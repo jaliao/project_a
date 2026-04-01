@@ -103,6 +103,20 @@ function OrderDetail({ order }: { order: CourseOrderWithInvite }) {
       <div>
         <span className="text-muted-foreground">取貨方式：</span>
         {DELIVERY_METHOD_LABELS[order.deliveryMethod] ?? order.deliveryMethod}
+        {/* 7-11：優先顯示結構化門市資訊，fallback 至 deliveryAddress */}
+        {order.deliveryMethod === 'sevenEleven' && (
+          <span className="ml-1 text-muted-foreground">
+            {order.storeName && order.storeId
+              ? `— ${order.storeName}（${order.storeId}）`
+              : order.deliveryAddress
+                ? `— ${order.deliveryAddress}`
+                : ''}
+          </span>
+        )}
+        {/* 全家、郵寄：顯示 deliveryAddress */}
+        {order.deliveryMethod !== 'sevenEleven' && order.deliveryAddress && (
+          <span className="ml-1 text-muted-foreground">— {order.deliveryAddress}</span>
+        )}
       </div>
       <div>
         <span className="text-muted-foreground">預計開課日期：</span>

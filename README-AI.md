@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.38（2026-03-30）
+> 自動產生，版本 0.1.40（2026-04-01）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -49,6 +49,9 @@ app/
 │   └── profile/         # 個人資料維護
 ├── change-password/ # 臨時密碼強制變更
 ├── api/auth/        # NextAuth handlers
+├── api/ecpay/
+│   ├── store-map/       # GET：產生 ECPay MapCVS auto-submit form（Mock 模式支援）
+│   └── store-callback/  # POST：接收 ECPay 門市選擇結果，postMessage 回前端後關閉視窗
 ├── middleware.ts    # 未登入攔截 + 臨時密碼強制導向
 └── layout.tsx       # Root layout（Toaster）
 
@@ -72,13 +75,15 @@ components/
 │   └── completion-certificate-card.tsx  # 結業證明卡片（courseCatalogLabel、title、teacherName、graduatedAt）
 ├── admin/
 │   └── material-order-table.tsx  # 教材申請管理表格（狀態 Badge、確認已寄送、展開詳情）
+├── ecpay-store-selector/
+│   └── store-selector.tsx   # ECPay MapCVS 超商門市選擇器（7-11 UNIMART / 全家 FAMI，postMessage 同源）
 ├── course-session/
 │   ├── course-session-dialog.tsx  # 新增開課 Dialog 入口（含 canTeach disabled gate + tooltip）
 │   ├── course-session-form.tsx    # 舊版合併表單（保留，目前精靈流程未使用）
 │   ├── course-session-card.tsx    # 開課卡片共用元件（compact / full variant，支援 href 連結）
 │   ├── course-card-grid.tsx       # 課程卡片響應式網格容器（1→2→3→4 欄 RWD）
 │   ├── cancel-course-dialog.tsx   # 取消課程確認 Dialog（下拉選單 + 自填 textarea）
-│   ├── material-order-dialog.tsx  # 教材申請 Dialog（預填資料、已寄送唯讀模式）
+│   ├── material-order-dialog.tsx  # 教材申請 Dialog（預填資料、EcpayStoreSelector（7-11/全家）、已寄送唯讀模式）
 │   ├── enrolled-students-list.tsx # 已接受邀請學員清單（Server Component）
 │   └── create-course-wizard/
 │       ├── create-course-wizard.tsx   # 精靈主容器（step 1|2|3|'invite' 狀態機）
@@ -103,6 +108,8 @@ lib/
 │   ├── course-catalog.ts    # 課程目錄查詢（getAllCourses, getActiveCourses, getCourse, checkPrerequisites, getGraduatedCatalogIds）
 │   ├── course-order.ts      # 課程訂購查詢（getCourseOrderByInviteId, getAllCourseOrdersWithInvite）
 │   └── notification.ts      # 通知查詢（getNotifications, getUnreadNotificationCount, getNotificationsPaginated）
+├── ecpay/
+│   └── logistics.ts         # ECPay 物流工具（calcLogisticsCheckMacValue，MD5，物流 CMV-MD5 規格）
 └── utils.ts         # cn() 等工具函數
 
 prisma/
@@ -212,6 +219,9 @@ quantityNote    String?（自填數量說明）
 courseDate      String（預計開課日期，可為「無」）
 taxId           String?（統一編號，選填）
 deliveryMethod  DeliveryMethod（sevenEleven | familyMart | delivery）
+deliveryAddress String?（收件地址，全家/郵寄用）
+storeId         String?（超商門市店號，透過 ECPay MapCVS 選擇器取得）
+storeName       String?（超商門市名稱，透過 ECPay MapCVS 選擇器取得）
 submittedById   String?（提交者 UUID，選填關聯 User）
 shippedAt       DateTime?（管理者確認寄送時間）
 receivedAt      DateTime?（講師確認收件時間）
@@ -316,6 +326,8 @@ createdAt       DateTime
 - `cr-spec-260330-005` — 教材申請作業流程：`CourseOrder` 新增 `shippedAt`/`receivedAt` 欄位；課程詳情頁新增「申請教材」按鈕（預填 Profile 資料）、寄送狀態提示、「我已收到教材」確認收件；「開始上課」前置條件改為 `receivedAt != null`；後台新增 `/admin/materials` 教材申請管理頁（列表、狀態 Badge、確認已寄送、展開詳情）
 - `cr-fix-260330-002` — 授課資格判斷修正：精靈 Step 1 `hasQualification` 從「完成先修課程」改為「結業該課程本身」（`graduatedCatalogIds.includes(course.id)`）；提示文字從顯示先修課程名稱改為顯示課程本身名稱
 - `cr-spec-260330-007` — 教材作業優化：`CourseOrder` 新增 `deliveryAddress` 欄位（migration）；教材申請表單移除書籍相關欄位（materialVersion/purchaseType/studentNames/quantity），改由學員 `materialChoice` 自動統計；新增出貨單列印頁 `/admin/materials/[id]/print`（收件者、寄件方式、地址、書本數量）；後台管理表格新增「列印」按鈕
+- `cr-spec-260330-008` — 7-11 門市選擇器整合：`CourseOrder` 新增 `storeId`/`storeName` 欄位（migration）；教材申請表單選擇 7-11 取貨時以 `StoreSelector711` 元件取代文字輸入（`window.open` + `postMessage`）；Zod schema 條件驗證（7-11 必須選取門市）；後台管理頁優先顯示結構化門市資訊，舊資料 fallback 至 `deliveryAddress`
+- `cr-spec-260331-002` — ECPay MapCVS 超商門市選擇器整合：以 ECPay 官方物流 API 取代 7-11 非正式 Map URL；新增 `/api/ecpay/store-map`（Server 端產生 CheckMacValue form，mock 模式支援）與 `/api/ecpay/store-callback`（接收 ECPay POST → postMessage 同源回前端）；新增 `EcpayStoreSelector` 元件支援 UNIMART / FAMI；全家取貨現可選取門市（先前為文字輸入）；移除 `StoreSelector711` 與 `NEXT_PUBLIC_711_MAP_URL`；`lib/ecpay/logistics.ts` 實作 MD5 CheckMacValue
 
 ### 開課身分驗證（修正後）
 - `canTeach = isAdmin || certificates.length > 0`（入口顯示控制）

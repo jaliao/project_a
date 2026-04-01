@@ -1,7 +1,7 @@
 /**
  * ----------------------------------------------
  * Prisma Schema - 課程訂購模型
- * 2026-03-23 (Updated: 2026-03-30)
+ * 2026-03-23 (Updated: 2026-03-31)
  * prisma/schema/course-order.prisma
  * ----------------------------------------------
  */
@@ -60,7 +60,9 @@ model CourseOrder {
   courseDate      String // 預計開課日期（可填「無」）
   taxId           String? // 統一編號（選填）
   deliveryMethod  DeliveryMethod
-  deliveryAddress String? // 收件地址或門市店號/名稱
+  deliveryAddress String? // 收件地址（全家、郵寄用）
+  storeId         String? // 7-11 門市店號（透過門市選擇器取得）
+  storeName       String? // 7-11 門市名稱（透過門市選擇器取得）
 
   // 提交者（選填關聯）
   submittedById String? @db.Uuid

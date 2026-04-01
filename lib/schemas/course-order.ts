@@ -78,17 +78,28 @@ export const materialOrderSchema = z
       error: '請選擇取貨方式',
     }),
     deliveryAddress: z.string().optional(),
+    storeId: z.string().optional(),
+    storeName: z.string().optional(),
   })
   .superRefine((data, ctx) => {
-    if (!data.deliveryAddress?.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message:
-          data.deliveryMethod === 'delivery'
-            ? '請填寫收件地址'
-            : '請填寫門市店號 / 門市名稱',
-        path: ['deliveryAddress'],
-      })
+    if (data.deliveryMethod === 'sevenEleven' || data.deliveryMethod === 'familyMart') {
+      // 7-11 / 全家需透過 ECPay MapCVS 門市選擇器選取
+      if (!data.storeId?.trim() || !data.storeName?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '請選取取貨門市',
+          path: ['storeId'],
+        })
+      }
+    } else {
+      // 郵寄需填寫地址
+      if (!data.deliveryAddress?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '請填寫收件地址',
+          path: ['deliveryAddress'],
+        })
+      }
     }
   })
 
