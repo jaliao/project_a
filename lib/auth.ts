@@ -69,48 +69,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
 
-  events: {
-    // ── 新使用者建立（Google OAuth 首次登入）：核發 Spirit ID 並填入姓名 ──
-    async createUser({ user }) {
-      const updates: { spiritId?: string; realName?: string; nickname?: string } = {}
-
-      // 核發 Spirit ID
-      updates.spiritId = await generateSpiritId()
-
-      // 從 Google display name 填入真實名稱與匿稱
-      if (user.name) {
-        updates.realName = user.name
-        updates.nickname = user.name
-      }
-
-      await prisma.user.update({
-        where: { id: user.id as string },
-        data: updates,
-      })
-    },
-  },
-
   callbacks: {
-    // ── Google 連動現有帳號：補核 Spirit ID（安全防護） ──
-    async signIn({ user, account }) {
-      if (account?.provider === 'google' && user.email) {
-        const existing = await prisma.user.findUnique({
-          where: { email: user.email },
-          select: { id: true, spiritId: true },
-        })
-
-        if (existing && !existing.spiritId) {
-          const spiritId = await generateSpiritId()
-          await prisma.user.update({
-            where: { id: existing.id },
-            data: { spiritId },
-          })
-        }
-      }
-      return true
-    },
-
-    // ── JWT：寫入自定義欄位 ────────────────────
+    // ── JWT：寫入自定義欄位，並補核 Google 首次登入所需資料 ──
     async jwt({ token, user, account }) {
       if (user) {
         // 初次登入時 user 物件存在，從 DB 取最新資料
@@ -118,8 +78,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { id: user.id as string },
         })
         if (dbUser) {
-          // Google OAuth 首次建帳：確保 spiritId 與姓名已填入
-          // （events.createUser 為 fire-and-forget，此處補核保證順序）
+          // Google OAuth：補核 spiritId 與姓名（jwt 為唯一寫入點，避免 race condition）
           if (account?.provider === 'google') {
             const needsUpdate: { spiritId?: string; realName?: string; nickname?: string } = {}
             if (!dbUser.spiritId) {
