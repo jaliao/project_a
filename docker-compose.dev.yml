@@ -30,8 +30,21 @@ services:
       - ./node_modules:/app/node_modules # 專案目錄模式
       - ./ssl:/app/ssl # 自簽憑證掛載進入容器
     ports:
-      - "3000:3000"      
+      - "3000:3000"
     env_file:
       - .env
     environment:
       - NODE_OPTIONS=--max-old-space-size=6144
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    # 強制 http2：避免 WSL2/Docker 的 QUIC/UDP 問題
+    # TUNNEL_TOKEN 由環境變數傳入，不放在 command 避免解析錯誤
+    command: tunnel --no-autoupdate --protocol http2 run
+    restart: unless-stopped
+    depends_on:
+      - web
+    env_file:
+      - .env
+    environment:
+      - TUNNEL_TOKEN=${CF_TUNNEL_TOKEN}

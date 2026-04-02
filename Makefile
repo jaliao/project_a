@@ -425,7 +425,7 @@ tunnel-vps3: ## 開啟 VPS3 Postgres SSH Tunnel（localhost:15432）
 	@/home/psyduck/devops-toolkit/remote-admin/tunnel/pg-tunnel-vps3.sh
 
 tunnel-deploy: ## 開啟 VPS3 Deploy Docker
-	@/home/psyduck/devops-toolkit/remote-admin/tunnel/project-a-tunnel-deploy.sh 
+	@/home/psyduck/devops-toolkit/remote-admin/tunnel/project-a-tunnel-deploy.sh
 
 prisma-vps3-status: ## 檢查 VPS3 Migration 狀態（建議先跑）
 	@echo "Prisma migrate status (VPS3)..."
