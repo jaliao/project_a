@@ -16,6 +16,23 @@ enum UserRole {
 }
 
 // ==========================================
+// 性別枚舉
+// ==========================================
+enum Gender {
+  male
+  female
+  unspecified
+}
+
+// ==========================================
+// 顯示名稱模式枚舉
+// ==========================================
+enum DisplayNameMode {
+  chinese // 使用中文名稱（nickname → realName）
+  english // 使用英文名稱（englishName → name）
+}
+
+// ==========================================
 // 主要使用者模型
 // ==========================================
 model User {
@@ -39,10 +56,13 @@ model User {
 
   // 個人資料
   realName        String?
+  englishName     String? // 英文名稱
   nickname        String? // 自訂暱稱（最多 20 字）
   phone           String?
-  isPhoneVerified Boolean @default(false)
+  isPhoneVerified Boolean         @default(false)
   address         String?
+  gender          Gender          @default(unspecified)
+  displayNameMode DisplayNameMode @default(chinese)
 
   // 學習等級（0=未完成任何課程；1~4=已完成啟動靈人對應等級）
   learningLevel Int @default(0)

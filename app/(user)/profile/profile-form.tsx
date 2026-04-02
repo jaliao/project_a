@@ -16,15 +16,19 @@ import { toast } from 'sonner'
 import { signIn } from 'next-auth/react'
 import { updateProfile, updateCommEmail, resendCommVerification, unlinkGoogleAccount } from '@/app/actions/profile'
 import { updateProfileSchema, commEmailSchema } from '@/lib/schemas/profile'
+import { getMemberDisplayName } from '@/lib/utils/member-display'
 
 type Church = { id: number; name: string; isActive: boolean }
 
 type ProfileFormProps = {
   user: {
     realName: string
+    englishName: string
     nickname: string
     phone: string
     address: string
+    gender: 'male' | 'female' | 'unspecified'
+    displayNameMode: 'chinese' | 'english'
     commEmail: string
     isCommVerified: boolean
     churchType: 'church' | 'other' | 'none'
@@ -60,9 +64,12 @@ export default function ProfileForm({ user, activeChurches, linkedProviders }: P
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
       realName: user.realName,
+      englishName: user.englishName,
       nickname: user.nickname,
       phone: user.phone,
       address: user.address,
+      gender: user.gender,
+      displayNameMode: user.displayNameMode,
       churchType: user.churchType,
       churchId: user.churchId ?? undefined,
       churchOther: user.churchOther,
@@ -95,9 +102,12 @@ export default function ProfileForm({ user, activeChurches, linkedProviders }: P
     startTransition(async () => {
       const fd = new FormData()
       fd.set('realName', data.realName)
+      fd.set('englishName', data.englishName ?? '')
       fd.set('nickname', data.nickname ?? '')
       fd.set('phone', data.phone ?? '')
       fd.set('address', data.address ?? '')
+      fd.set('gender', data.gender)
+      fd.set('displayNameMode', data.displayNameMode)
       fd.set('churchType', data.churchType)
       fd.set('churchId', data.churchId ? String(data.churchId) : '')
       fd.set('churchOther', data.churchOther ?? '')
@@ -138,6 +148,18 @@ export default function ProfileForm({ user, activeChurches, linkedProviders }: P
   const isGoogleLinked = linkedProviders.includes('google')
   const showOtherInput = selectValue === 'other'
 
+  // 顯示名稱即時預覽
+  const watchedRealName = profileForm.watch('realName')
+  const watchedEnglishName = profileForm.watch('englishName')
+  const watchedNickname = profileForm.watch('nickname')
+  const watchedDisplayNameMode = profileForm.watch('displayNameMode')
+  const displayNamePreview = getMemberDisplayName({
+    realName: watchedRealName,
+    englishName: watchedEnglishName,
+    nickname: watchedNickname,
+    displayNameMode: watchedDisplayNameMode,
+  })
+
   return (
     <div className="space-y-8">
       {/* ── 個人資料 ── */}
@@ -156,6 +178,15 @@ export default function ProfileForm({ user, activeChurches, linkedProviders }: P
             )}
           </div>
           <div>
+            <label className="block text-sm font-medium mb-1">英文名稱</label>
+            <input
+              {...profileForm.register('englishName')}
+              className="w-full rounded-md border px-3 py-2"
+              placeholder="English name（選填）"
+              disabled={isPending}
+            />
+          </div>
+          <div>
             <label className="block text-sm font-medium mb-1">暱稱</label>
             <input
               {...profileForm.register('nickname')}
@@ -166,6 +197,35 @@ export default function ProfileForm({ user, activeChurches, linkedProviders }: P
             {profileForm.formState.errors.nickname && (
               <p className="text-sm text-red-500 mt-1">{profileForm.formState.errors.nickname.message}</p>
             )}
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">性別</label>
+              <select
+                {...profileForm.register('gender')}
+                className="w-full rounded-md border px-3 py-2 text-sm bg-background"
+                disabled={isPending}
+              >
+                <option value="unspecified">未設定</option>
+                <option value="male">男</option>
+                <option value="female">女</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">顯示名稱方式</label>
+              <select
+                {...profileForm.register('displayNameMode')}
+                className="w-full rounded-md border px-3 py-2 text-sm bg-background"
+                disabled={isPending}
+              >
+                <option value="chinese">匿名（中文名稱）</option>
+                <option value="english">匿名（英文名稱）</option>
+              </select>
+            </div>
+          </div>
+          <div className="rounded-md bg-muted px-3 py-2 text-sm">
+            <span className="text-muted-foreground">顯示名稱預覽：</span>
+            <span className="font-medium ml-1">{displayNamePreview}</span>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">手機號碼</label>

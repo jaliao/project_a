@@ -18,13 +18,26 @@ const SPIRIT_COURSE_ID = 1 // 啟動靈人
 export type HierarchyNode = {
   id: string
   realName: string | null
+  englishName: string | null
+  nickname: string | null
   name: string | null
+  displayNameMode: 'chinese' | 'english' | null
   spiritId: string | null
   children: HierarchyNode[]
 }
 
+type MemberRef = {
+  id: string
+  realName: string | null
+  englishName: string | null
+  nickname: string | null
+  name: string | null
+  displayNameMode: 'chinese' | 'english' | null
+  spiritId: string | null
+}
+
 export type MemberHierarchy = {
-  teacher: { id: string; realName: string | null; name: string | null; spiritId: string | null } | null
+  teacher: MemberRef | null
   root: HierarchyNode
 }
 
@@ -35,7 +48,7 @@ export async function getMemberHierarchy(userId: string, depth: number): Promise
   // ── 取得根節點資料 ──────────────────────────
   const rootUser = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, realName: true, name: true, spiritId: true },
+    select: { id: true, realName: true, englishName: true, nickname: true, name: true, displayNameMode: true, spiritId: true },
   })
 
   // ── 查老師：此會員在啟動靈人已結業的 enrollment，其 invite.createdBy 即為老師 ──
@@ -50,7 +63,7 @@ export async function getMemberHierarchy(userId: string, depth: number): Promise
       invite: {
         select: {
           createdBy: {
-            select: { id: true, realName: true, name: true, spiritId: true },
+            select: { id: true, realName: true, englishName: true, nickname: true, name: true, displayNameMode: true, spiritId: true },
           },
         },
       },
@@ -63,7 +76,10 @@ export async function getMemberHierarchy(userId: string, depth: number): Promise
   const root: HierarchyNode = {
     id: rootUser?.id ?? userId,
     realName: rootUser?.realName ?? null,
+    englishName: rootUser?.englishName ?? null,
+    nickname: rootUser?.nickname ?? null,
     name: rootUser?.name ?? null,
+    displayNameMode: rootUser?.displayNameMode ?? null,
     spiritId: rootUser?.spiritId ?? null,
     children: [],
   }
@@ -87,7 +103,7 @@ export async function getMemberHierarchy(userId: string, depth: number): Promise
       take: 200,
       select: {
         user: {
-          select: { id: true, realName: true, name: true, spiritId: true },
+          select: { id: true, realName: true, englishName: true, nickname: true, name: true, displayNameMode: true, spiritId: true },
         },
       },
     })
@@ -101,7 +117,10 @@ export async function getMemberHierarchy(userId: string, depth: number): Promise
       const childNode: HierarchyNode = {
         id: user.id,
         realName: user.realName,
+        englishName: user.englishName,
+        nickname: user.nickname,
         name: user.name,
+        displayNameMode: user.displayNameMode,
         spiritId: user.spiritId,
         children: [],
       }

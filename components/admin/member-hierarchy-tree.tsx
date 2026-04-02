@@ -8,21 +8,18 @@
 
 import Link from 'next/link'
 import { getMemberHierarchy, type HierarchyNode } from '@/lib/data/hierarchy'
+import { getMemberDisplayName } from '@/lib/utils/member-display'
 
 type Props = {
   userId: string
   depth: number
 }
 
-function displayName(node: { realName: string | null; name: string | null }): string {
-  return node.realName || node.name || '（未填）'
-}
-
 function NodeLink({
   node,
   isRoot = false,
 }: {
-  node: { id: string; realName: string | null; name: string | null; spiritId: string | null }
+  node: { id: string; realName: string | null; englishName?: string | null; nickname?: string | null; name: string | null; displayNameMode?: 'chinese' | 'english' | null; spiritId: string | null }
   isRoot?: boolean
 }) {
   return (
@@ -34,7 +31,7 @@ function NodeLink({
           : 'inline-flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-muted'
       }
     >
-      <span>{displayName(node)}</span>
+      <span>{getMemberDisplayName(node)}</span>
       {node.spiritId && (
         <span className="font-mono text-xs text-muted-foreground">{node.spiritId}</span>
       )}

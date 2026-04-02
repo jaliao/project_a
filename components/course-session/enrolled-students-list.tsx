@@ -9,6 +9,7 @@
 import { prisma } from '@/lib/prisma'
 import { format } from 'date-fns'
 import { zhTW } from 'date-fns/locale'
+import { getMemberDisplayName } from '@/lib/utils/member-display'
 
 // 取得最新邀請的接受學員清單
 async function getEnrolledStudents() {
@@ -20,7 +21,7 @@ async function getEnrolledStudents() {
         orderBy: { joinedAt: 'desc' },
         include: {
           user: {
-            select: { realName: true, nickname: true, name: true },
+            select: { realName: true, englishName: true, nickname: true, name: true, displayNameMode: true },
           },
         },
       },
@@ -30,16 +31,6 @@ async function getEnrolledStudents() {
   return latestInvite?.enrollments ?? []
 }
 
-// 組合學員顯示名稱（realName | nickname）
-function formatStudentName(user: {
-  realName: string | null
-  nickname: string | null
-  name: string | null
-}): string {
-  const displayName = user.realName || user.name || '（未設定姓名）'
-  const nickname = user.nickname || '—'
-  return `${displayName} | ${nickname}`
-}
 
 export async function EnrolledStudentsList() {
   const enrollments = await getEnrolledStudents()
@@ -57,7 +48,7 @@ export async function EnrolledStudentsList() {
           key={enrollment.id}
           className="flex items-center justify-between text-sm"
         >
-          <span className="font-medium">{formatStudentName(enrollment.user)}</span>
+          <span className="font-medium">{getMemberDisplayName(enrollment.user)}</span>
           <span className="text-muted-foreground text-xs">
             {format(new Date(enrollment.joinedAt), 'yyyy/MM/dd HH:mm', { locale: zhTW })}
           </span>

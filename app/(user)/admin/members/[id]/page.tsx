@@ -11,6 +11,7 @@ import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { getMemberDetail } from '@/lib/data/members'
+import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { getAdminSetting } from '@/lib/data/admin-settings'
 import { MemberResetButton } from '@/components/admin/member-reset-button'
 import { MemberDeleteButton } from '@/components/admin/member-delete-button'
@@ -49,7 +50,7 @@ export default async function MemberDetailPage({
   ])
   if (!member) notFound()
 
-  const displayName = member.realName || member.name || '（未填）'
+  const displayName = getMemberDisplayName(member)
   const enableDelete = process.env.ENABLE_MEMBER_DELETE === 'true'
   const hierarchyDepth = Math.min(10, Math.max(1, parseInt(depthStr, 10) || 3))
 
@@ -80,8 +81,20 @@ export default async function MemberDetailPage({
                 <dd className="font-medium">{member.realName || '—'}</dd>
               </div>
               <div>
+                <dt className="text-muted-foreground">英文名稱</dt>
+                <dd>{member.englishName || '—'}</dd>
+              </div>
+              <div>
                 <dt className="text-muted-foreground">暱稱</dt>
                 <dd>{member.nickname || '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">性別</dt>
+                <dd>{member.gender === 'male' ? '男' : member.gender === 'female' ? '女' : '未設定'}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">顯示名稱</dt>
+                <dd>{displayName}</dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Email</dt>

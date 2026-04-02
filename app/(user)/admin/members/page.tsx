@@ -12,6 +12,7 @@ import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { auth } from '@/lib/auth'
 import { searchMembers } from '@/lib/data/members'
+import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { MemberResetButton } from '@/components/admin/member-reset-button'
 import { MemberSearchInput } from '@/components/admin/member-search-input'
 import { Button } from '@/components/ui/button'
@@ -62,7 +63,7 @@ export default async function AdminMembersPage({
           </thead>
           <tbody>
             {members.map((member, i) => {
-              const displayName = member.realName || member.name || '（未填）'
+              const displayName = getMemberDisplayName(member)
               const joinDate = member.createdAt.toLocaleDateString('zh-TW', {
                 year: 'numeric',
                 month: '2-digit',

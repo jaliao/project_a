@@ -52,9 +52,12 @@ export default async function ProfilePage() {
       <ProfileForm
         user={{
           realName: user.realName ?? '',
+          englishName: user.englishName ?? '',
           nickname: user.nickname ?? '',
           phone: user.phone ?? '',
           address: user.address ?? '',
+          gender: user.gender,
+          displayNameMode: user.displayNameMode,
           commEmail: user.commEmail ?? user.email,
           isCommVerified: user.isCommVerified,
           churchType: user.churchType,
