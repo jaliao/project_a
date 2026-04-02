@@ -1,13 +1,13 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.47（2026-04-01）
+> 自動產生，版本 0.1.48（2026-04-02）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
 
 ## 1. 專案核心目標
 
-**啟動靈人系統**（project_a）是一套面向課程教學機構的會員管理 ERP 平台。
+**啟動事工**（project_a）是一套面向課程教學機構的會員管理 ERP 平台。
 核心目標：
 - 集中管理會員（學員）資料與 Spirit ID 身分識別
 - 提供課程管理入口（規劃中）
@@ -37,9 +37,10 @@ app/
 ├── (user)/          # 已登入路由群組（共用 Topbar layout）
 │   ├── layout.tsx   # Topbar 包裝層（含未讀通知數 server fetch）
 │   ├── dashboard/       # redirect → /user/{id}（舊書籤相容）
-│   ├── admin/           # 管理後台：功能按鈕網格（儀錶板/課程/授課/教材/會員）
+│   ├── admin/           # 管理後台：功能按鈕網格（儀錶板/課程/授課/教材/會員/系統設定）
 │   │   ├── members/         # 會員管理清單（搜尋 + 重設密碼 + 查看詳情）
-│   │   └── members/[id]/    # 會員詳情（基本資料、學習紀錄、授課紀錄、刪除）
+│   │   ├── members/[id]/    # 會員詳情（Tabs：基本資料/學習階層）
+│   │   └── settings/        # 系統設定（superadmin；hierarchy_depth）
 │   ├── user/[id]/       # 學員專屬頁面：基本資料（姓名、身分標籤、已完成課程）+ 本人功能單元
 │   ├── user/[id]/courses/ # 我的開課列表（本人專屬，Spirit ID 小寫路由）
 │   ├── course-sessions/ # 開課查詢頁（保留，將逐步以 /user/[id]/courses 取代）
@@ -76,10 +77,12 @@ components/
 │   ├── invite-copy-button.tsx   # 分享邀請連結按鈕（Client；Web Share API + clipboard fallback）
 │   └── completion-certificate-card.tsx  # 結業證明卡片（courseCatalogLabel、title、teacherName、graduatedAt）
 ├── admin/
-│   ├── material-order-table.tsx  # 教材申請管理表格（狀態 Badge、確認已寄送、展開詳情）
-│   ├── member-reset-button.tsx   # 重設密碼按鈕（AlertDialog 確認）
-│   ├── member-search-input.tsx   # 會員搜尋輸入框（debounce 300ms，更新 ?q= URL param）
-│   └── member-delete-button.tsx  # 刪除會員按鈕（AlertDialog 二次確認；ENABLE_MEMBER_DELETE 控制）
+│   ├── material-order-table.tsx    # 教材申請管理表格（狀態 Badge、確認已寄送、展開詳情）
+│   ├── member-reset-button.tsx     # 重設密碼按鈕（AlertDialog 確認）
+│   ├── member-search-input.tsx     # 會員搜尋輸入框（debounce 300ms，更新 ?q= URL param）
+│   ├── member-delete-button.tsx    # 刪除會員按鈕（AlertDialog 二次確認；ENABLE_MEMBER_DELETE 控制）
+│   ├── member-hierarchy-tree.tsx   # 師生傳承樹（Server Component；老師/本人/學生 N 層縮排）
+│   └── hierarchy-depth-form.tsx    # 學習階層深度設定表單（Client；1–10 整數）
 ├── ecpay-store-selector/
 │   └── store-selector.tsx   # ECPay MapCVS 超商門市選擇器（7-11 UNIMART / 全家 FAMI，postMessage 同源）
 ├── course-session/
@@ -113,6 +116,8 @@ lib/
 │   ├── course-catalog.ts    # 課程目錄查詢（getAllCourses, getActiveCourses, getCourse, checkPrerequisites, getGraduatedCatalogIds）
 │   ├── course-order.ts      # 課程訂購查詢（getCourseOrderByInviteId, getAllCourseOrdersWithInvite）
 │   ├── members.ts           # 會員管理查詢（searchMembers, getMemberDetail）
+│   ├── hierarchy.ts         # 師生傳承查詢（getMemberHierarchy，BFS，僅限啟動靈人 catalogId=1，graduatedAt IS NOT NULL）
+│   ├── admin-settings.ts    # 後台設定查詢（getAdminSetting, upsertAdminSetting）
 │   └── notification.ts      # 通知查詢（getNotifications, getUnreadNotificationCount, getNotificationsPaginated）
 ├── ecpay/
 │   └── logistics.ts         # ECPay 物流工具（calcLogisticsCheckMacValue，MD5，物流 CMV-MD5 規格）
@@ -124,7 +129,8 @@ prisma/
 │   ├── user.prisma           # User, Account, Session, WhitelistedEmail, Notification
 │   ├── course-order.prisma   # CourseOrder + enums
 │   ├── course-invite.prisma  # CourseInvite + InviteEnrollment
-│   └── course-catalog.prisma # CourseCatalog（id, label, description?, isActive, sortOrder, prerequisites 自關聯）
+│   ├── course-catalog.prisma # CourseCatalog（id, label, description?, isActive, sortOrder, prerequisites 自關聯）
+│   └── admin-setting.prisma  # AdminSetting（key/value store；hierarchy_depth 預設 3）
 └── seed.ts
 
 config/
@@ -207,6 +213,14 @@ graduatedAt          DateTime?（結業時間；有值代表通過結業）
 nonGraduateReason    String?（未結業原因：insufficient_time | other）
 @@unique([inviteId, userId])
 ```
+
+### AdminSetting
+```
+key   String（主鍵，@unique）
+value String（值為字串，應用層轉型）
+```
+目前使用的鍵：
+- `hierarchy_depth`：學習階層展開層數，整數字串，預設 `"3"`，有效範圍 1–10
 
 ### CourseOrder
 ```
@@ -340,6 +354,12 @@ createdAt       DateTime
 - 精靈 Step 1 卡片資格：`isAdmin || graduatedCatalogIds.includes(course.id)`（結業該課程本身才能授課）
 
 - `cr-spec-260401-003` — 會員管理增強：`/admin/members` 搜尋欄（?q= URL param，debounce 300ms）；新增 `/admin/members/[id]` 詳情頁（基本資料、學習紀錄 `inviteEnrollments startedAt IS NOT NULL`、授課紀錄 `courseInvites startedAt IS NOT NULL`）；`ENABLE_MEMBER_DELETE=true` 條件式刪除功能（AlertDialog 二次確認）
+- `cr-spec-260402-004` — Cloudflare Tunnel 整合：`cloudflared` 加入 docker-compose.dev.yml（--protocol http2，內部 http://web:3000），隧道文件 `tunnel.md`
+- `cr-spec-260402-005` — 服務條款 `/terms` 與隱私政策 `/privacy` 公開靜態頁面
+- `cr-spec-260402-006` — 品牌更名 + 首頁改版：`啟動靈人系統`→`啟動事工`；課程 `啟動靈人 1`→`啟動靈人`、`啟動靈人 2`→`啟動豐盛`；首頁改為公開 Landing Page（未登入可瀏覽功能介紹）
+- `cr-spec-260402-007` — 修正 admin JWT role 即時同步：JWT callback `else if (token.id)` 分支於每次請求從 DB 同步 role/spiritId/isTempPassword，防止管理員 role 變更後需重新登入
+- `cr-spec-260402-008` — 修正 Google OAuth spiritId 衝突：seed 建立學員後同步 `spiritIdCounter`；JWT callback 以帶重試的 `updateMany WHERE spiritId IS NULL` 避免 race condition
+- `cr-spec-260402-009` — 會員學習階層：`AdminSetting` 模型（key/value store）；`getMemberHierarchy` BFS 查詢（僅啟動靈人，`graduatedAt IS NOT NULL`，上 1 層老師 + 下 N 層學生）；`MemberHierarchyTree` Server Component；會員詳情頁改為 Tabs（基本資料/學習階層）；`/admin/settings` superadmin 設定頁（hierarchy_depth 1–10）；後台首頁新增「系統設定」卡片（superadmin only）
 
 ### 進行中 / 待規劃
 - （無）

@@ -1,0 +1,14 @@
+/**
+ * ----------------------------------------------
+ * Prisma Schema - 後台系統設定
+ * 2026-04-02
+ * prisma/schema/admin-setting.prisma
+ * ----------------------------------------------
+ */
+
+model AdminSetting {
+  key   String @id
+  value String
+
+  @@map("admin_settings")
+}
