@@ -63,16 +63,9 @@ export const courseOrderSchema = z
 
 export type CourseOrderFormValues = z.infer<typeof courseOrderSchema>
 
-// ── 教材申請 Schema（移除書籍欄位，新增 deliveryAddress）────────────
+// ── 教材申請 Schema（學員僅填取貨資訊，其餘由 Server Action 自動帶入）────
 export const materialOrderSchema = z
   .object({
-    buyerNameZh: z.string().min(1, '購買人中文姓名為必填'),
-    buyerNameEn: z.string().min(1, '購買人英文姓名為必填'),
-    teacherName: z.string().min(1, '教師姓名為必填'),
-    churchOrg: z.string().min(1, '所屬教會/單位為必填'),
-    email: z.string().email('請輸入有效的 Email 格式'),
-    phone: z.string().min(1, '聯絡電話為必填'),
-    courseDate: z.string().min(1, '預計開課日期為必填'),
     taxId: z.string().optional(),
     deliveryMethod: z.enum(['sevenEleven', 'familyMart', 'delivery'], {
       error: '請選擇取貨方式',
@@ -83,7 +76,6 @@ export const materialOrderSchema = z
   })
   .superRefine((data, ctx) => {
     if (data.deliveryMethod === 'sevenEleven' || data.deliveryMethod === 'familyMart') {
-      // 7-11 / 全家需透過 ECPay MapCVS 門市選擇器選取
       if (!data.storeId?.trim() || !data.storeName?.trim()) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -92,7 +84,6 @@ export const materialOrderSchema = z
         })
       }
     } else {
-      // 郵寄需填寫地址
       if (!data.deliveryAddress?.trim()) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -104,3 +95,17 @@ export const materialOrderSchema = z
   })
 
 export type MaterialOrderFormValues = z.infer<typeof materialOrderSchema>
+
+// ── 管理者編輯教材申請 Schema ─────────────────────────────────────────
+export const adminMaterialOrderEditSchema = z.object({
+  buyerNameZh: z.string().min(1, '購買人中文姓名為必填'),
+  buyerNameEn: z.string().min(1, '購買人英文姓名為必填'),
+  teacherName: z.string().min(1, '教師姓名為必填'),
+  churchOrg: z.string().min(1, '所屬教會/單位為必填'),
+  email: z.string().email('請輸入有效的 Email 格式'),
+  phone: z.string().min(1, '聯絡電話為必填'),
+  courseDate: z.string().min(1, '預計開課日期為必填'),
+  taxId: z.string().optional(),
+})
+
+export type AdminMaterialOrderEditValues = z.infer<typeof adminMaterialOrderEditSchema>

@@ -20,13 +20,6 @@ import { confirmReceipt } from '@/app/actions/course-order'
 
 type CourseOrder = {
   id: number
-  buyerNameZh: string
-  buyerNameEn: string
-  teacherName: string
-  churchOrg: string
-  email: string
-  phone: string
-  courseDate: string
   taxId: string | null
   deliveryMethod: string
   deliveryAddress: string | null
@@ -43,11 +36,6 @@ type Props = {
   isStarted: boolean
   hasApprovedStudents: boolean
   courseOrder: CourseOrder | null
-  courseDatePrefill?: string
-  userPrefill?: {
-    buyerNameZh?: string
-    email?: string
-  }
 }
 
 export function CourseDetailActions({
@@ -57,8 +45,6 @@ export function CourseDetailActions({
   isStarted,
   hasApprovedStudents,
   courseOrder,
-  courseDatePrefill,
-  userPrefill,
 }: Props) {
   const router = useRouter()
   const [cancelOpen, setCancelOpen] = useState(false)
@@ -199,11 +185,6 @@ export function CourseDetailActions({
         open={materialOpen}
         onOpenChange={setMaterialOpen}
         inviteId={inviteId}
-        prefill={{
-          buyerNameZh: userPrefill?.buyerNameZh,
-          email: userPrefill?.email,
-          courseDate: courseDatePrefill,
-        }}
         existingOrder={courseOrder}
       />
     </div>

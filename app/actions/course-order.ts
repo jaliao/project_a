@@ -11,7 +11,7 @@
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
-import { courseOrderSchema, materialOrderSchema } from '@/lib/schemas/course-order'
+import { courseOrderSchema, materialOrderSchema, adminMaterialOrderEditSchema } from '@/lib/schemas/course-order'
 import type { MaterialVersion, PurchaseType, DeliveryMethod } from '@prisma/client'
 
 type ActionResponse = {
@@ -75,15 +75,37 @@ export async function applyMaterialOrder(
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
 
-  // 確認是課程講師
-  const invite = await prisma.courseInvite.findUnique({
-    where: { id: inviteId },
-    select: { createdById: true, courseOrderId: true },
-  })
+  // 確認是課程講師，同時取得快照所需資料
+  const [invite, user] = await Promise.all([
+    prisma.courseInvite.findUnique({
+      where: { id: inviteId },
+      select: {
+        createdById: true,
+        courseOrderId: true,
+        courseDate: true,
+        createdBy: { select: { realName: true, name: true } },
+      },
+    }),
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        realName: true,
+        englishName: true,
+        name: true,
+        commEmail: true,
+        email: true,
+        phone: true,
+        churchType: true,
+        churchOther: true,
+        church: { select: { name: true } },
+      },
+    }),
+  ])
   if (!invite) return { success: false, message: '找不到課程' }
   if (invite.createdById !== session.user.id) {
     return { success: false, message: '無權限' }
   }
+  if (!user) return { success: false, message: '找不到會員資料' }
 
   // 若已有 CourseOrder，且已寄送則禁止修改
   if (invite.courseOrderId) {
@@ -103,18 +125,23 @@ export async function applyMaterialOrder(
 
   const d = parsed.data
 
+  // 快照：從會員與課程資料自動帶入
+  const churchOrg =
+    user.churchType === 'church' ? (user.church?.name ?? '') :
+    user.churchType === 'other' ? (user.churchOther ?? '') : ''
+
   const orderData = {
-    buyerNameZh: d.buyerNameZh,
-    buyerNameEn: d.buyerNameEn,
-    teacherName: d.teacherName,
-    churchOrg: d.churchOrg,
-    email: d.email,
-    phone: d.phone,
+    buyerNameZh: user.realName || user.name || '（未填）',
+    buyerNameEn: user.englishName || '',
+    teacherName: invite.createdBy.realName || invite.createdBy.name || '',
+    churchOrg,
+    email: user.commEmail || user.email,
+    phone: user.phone || '',
+    courseDate: invite.courseDate || '無',
     // 書籍欄位改由學員 materialChoice 統計，以預設值填入廢棄欄位
     materialVersion: 'traditional' as MaterialVersion,
     purchaseType: 'selfOnly' as PurchaseType,
     quantity: 0,
-    courseDate: d.courseDate,
     taxId: d.taxId || null,
     deliveryMethod: d.deliveryMethod as DeliveryMethod,
     deliveryAddress: d.deliveryMethod === 'delivery' ? (d.deliveryAddress || null) : null,
@@ -203,4 +230,47 @@ export async function confirmReceipt(inviteId: number): Promise<ActionResponse> 
 
   revalidatePath(`/course/${inviteId}`)
   return { success: true, message: '已確認收件，可以開始上課了！' }
+}
+
+/**
+ * 管理者編輯教材申請快照欄位
+ */
+export async function updateMaterialOrderAdmin(
+  orderId: number,
+  formData: Record<string, string>
+): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  const isAdmin = session.user.role === 'admin' || session.user.role === 'superadmin'
+  if (!isAdmin) return { success: false, message: '無權限' }
+
+  const parsed = adminMaterialOrderEditSchema.safeParse(formData)
+  if (!parsed.success) {
+    return { success: false, errors: parsed.error.flatten().fieldErrors }
+  }
+
+  const order = await prisma.courseOrder.findUnique({
+    where: { id: orderId },
+    select: { id: true },
+  })
+  if (!order) return { success: false, message: '找不到申請記錄' }
+
+  const d = parsed.data
+  await prisma.courseOrder.update({
+    where: { id: orderId },
+    data: {
+      buyerNameZh: d.buyerNameZh,
+      buyerNameEn: d.buyerNameEn,
+      teacherName: d.teacherName,
+      churchOrg: d.churchOrg,
+      email: d.email,
+      phone: d.phone,
+      courseDate: d.courseDate,
+      taxId: d.taxId || null,
+    },
+  })
+
+  revalidatePath('/admin/materials')
+  return { success: true, message: '已更新申請資料' }
 }

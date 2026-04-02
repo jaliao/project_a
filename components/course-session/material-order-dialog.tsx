@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * MaterialOrderDialog - 教材申請 Dialog
- * 2026-03-30 (Updated: 2026-03-31)
+ * 2026-03-30 (Updated: 2026-04-02)
  * components/course-session/material-order-dialog.tsx
  * ----------------------------------------------
  */
@@ -30,7 +30,6 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   materialOrderSchema,
   type MaterialOrderFormValues,
@@ -42,23 +41,8 @@ interface MaterialOrderDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   inviteId: number
-  // 預填資料
-  prefill?: {
-    buyerNameZh?: string
-    buyerNameEn?: string
-    email?: string
-    phone?: string
-    courseDate?: string
-  }
   // 現有 CourseOrder（修改模式）
   existingOrder?: {
-    buyerNameZh: string
-    buyerNameEn: string
-    teacherName: string
-    churchOrg: string
-    email: string
-    phone: string
-    courseDate: string
     taxId: string | null
     deliveryMethod: string
     deliveryAddress: string | null
@@ -72,7 +56,6 @@ export function MaterialOrderDialog({
   open,
   onOpenChange,
   inviteId,
-  prefill,
   existingOrder,
 }: MaterialOrderDialogProps) {
   const router = useRouter()
@@ -85,13 +68,6 @@ export function MaterialOrderDialog({
     resolver: zodResolver(materialOrderSchema),
     defaultValues: existingOrder
       ? {
-          buyerNameZh: existingOrder.buyerNameZh,
-          buyerNameEn: existingOrder.buyerNameEn,
-          teacherName: existingOrder.teacherName,
-          churchOrg: existingOrder.churchOrg,
-          email: existingOrder.email,
-          phone: existingOrder.phone,
-          courseDate: existingOrder.courseDate,
           taxId: existingOrder.taxId ?? '',
           deliveryMethod: existingOrder.deliveryMethod as MaterialOrderFormValues['deliveryMethod'],
           deliveryAddress: existingOrder.deliveryAddress ?? '',
@@ -99,13 +75,6 @@ export function MaterialOrderDialog({
           storeName: existingOrder.storeName ?? '',
         }
       : {
-          buyerNameZh: prefill?.buyerNameZh ?? '',
-          buyerNameEn: prefill?.buyerNameEn ?? '',
-          teacherName: '',
-          churchOrg: '',
-          email: prefill?.email ?? '',
-          phone: prefill?.phone ?? '',
-          courseDate: prefill?.courseDate ?? '',
           taxId: '',
           deliveryAddress: '',
           storeId: '',
@@ -160,75 +129,7 @@ export function MaterialOrderDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-            <ScrollArea className="h-[60vh] pr-4">
-              <div className="space-y-5 pb-2">
-
-                {/* ── 購買人基本資料 ─────────────────── */}
-                <div className="space-y-3">
-                  <p className="text-sm font-medium text-muted-foreground">購買人資料</p>
-
-                  <FormField control={form.control} name="buyerNameZh" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>購買人中文姓名 *</FormLabel>
-                      <FormControl><Input {...field} disabled={isReadonly} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-
-                  <FormField control={form.control} name="buyerNameEn" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>購買人英文姓名 *</FormLabel>
-                      <FormControl><Input {...field} disabled={isReadonly} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-
-                  <FormField control={form.control} name="teacherName" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>購買人的教師姓名 *</FormLabel>
-                      <p className="text-xs text-muted-foreground -mt-1">請填寫您的教師姓名，而非您的姓名</p>
-                      <FormControl><Input {...field} disabled={isReadonly} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-
-                  <FormField control={form.control} name="churchOrg" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>所屬教會/單位 *</FormLabel>
-                      <p className="text-xs text-muted-foreground -mt-1">例：101、心欣、Kua、全福會…</p>
-                      <FormControl><Input {...field} disabled={isReadonly} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-
-                  <FormField control={form.control} name="email" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>購買人 Email *</FormLabel>
-                      <FormControl><Input type="email" {...field} disabled={isReadonly} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-
-                  <FormField control={form.control} name="phone" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>購買人聯絡電話 *</FormLabel>
-                      <FormControl><Input type="tel" {...field} disabled={isReadonly} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                </div>
-
-                {/* ── 預計開課日期 ──────────────────────── */}
-                <FormField control={form.control} name="courseDate" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>預計開課日期 *</FormLabel>
-                    <p className="text-xs text-muted-foreground -mt-1">暫無開課計畫請填「無」</p>
-                    <FormControl>
-                      <Input placeholder="例：2026-05-01 或 無" {...field} disabled={isReadonly} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+            <div className="space-y-5">
 
                 {/* ── 統一編號（選填） ──────────────────── */}
                 <FormField control={form.control} name="taxId" render={({ field }) => (
@@ -302,8 +203,7 @@ export function MaterialOrderDialog({
                   )} />
                 )}
 
-              </div>
-            </ScrollArea>
+            </div>
 
             {!isReadonly && (
               <Button type="submit" className="w-full" disabled={isPending}>

@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * MaterialOrderTable - 後台教材申請管理表格
- * 2026-03-30
+ * 2026-03-30 (Updated: 2026-04-02)
  * components/admin/material-order-table.tsx
  * ----------------------------------------------
  */
@@ -11,10 +11,11 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { IconChevronDown, IconChevronRight, IconPrinter } from '@tabler/icons-react'
+import { IconChevronDown, IconChevronRight, IconPrinter, IconEdit } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { confirmShipment } from '@/app/actions/course-order'
 import type { CourseOrderWithInvite } from '@/lib/data/course-order'
+import { MaterialOrderEditDialog } from './material-order-edit-dialog'
 
 // ── 教材版本標籤 ──────────────────────────
 const MATERIAL_VERSION_LABELS: Record<string, string> = {
@@ -67,85 +68,86 @@ function ShipmentStatusBadge({
 }
 
 // ── 詳情展開列 ───────────────────────────
-function OrderDetail({ order }: { order: CourseOrderWithInvite }) {
+function OrderDetail({
+  order,
+  onEditClick,
+}: {
+  order: CourseOrderWithInvite
+  onEditClick: () => void
+}) {
   return (
-    <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm p-4 bg-muted/30 border-t">
-      <div>
-        <span className="text-muted-foreground">購買人英文姓名：</span>
-        {order.buyerNameEn}
+    <div className="p-4 bg-muted/30 border-t space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">購買人資料（自動快照）</p>
+        <Button size="sm" variant="outline" onClick={onEditClick} className="h-7 gap-1">
+          <IconEdit className="h-3.5 w-3.5" />
+          編輯
+        </Button>
       </div>
-      <div>
-        <span className="text-muted-foreground">教師姓名：</span>
-        {order.teacherName}
-      </div>
-      <div>
-        <span className="text-muted-foreground">所屬教會/單位：</span>
-        {order.churchOrg}
-      </div>
-      <div>
-        <span className="text-muted-foreground">聯絡電話：</span>
-        {order.phone}
-      </div>
-      <div>
-        <span className="text-muted-foreground">Email：</span>
-        {order.email}
-      </div>
-      <div>
-        <span className="text-muted-foreground">購買性質：</span>
-        {PURCHASE_TYPE_LABELS[order.purchaseType] ?? order.purchaseType}
-      </div>
-      {order.studentNames && (
-        <div className="col-span-2">
-          <span className="text-muted-foreground">學員代購姓名：</span>
-          {order.studentNames}
+      <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+        <div>
+          <span className="text-muted-foreground">購買人中文姓名：</span>
+          {order.buyerNameZh}
         </div>
-      )}
-      <div>
-        <span className="text-muted-foreground">取貨方式：</span>
-        {DELIVERY_METHOD_LABELS[order.deliveryMethod] ?? order.deliveryMethod}
-        {/* 7-11：優先顯示結構化門市資訊，fallback 至 deliveryAddress */}
-        {order.deliveryMethod === 'sevenEleven' && (
-          <span className="ml-1 text-muted-foreground">
-            {order.storeName && order.storeId
-              ? `— ${order.storeName}（${order.storeId}）`
-              : order.deliveryAddress
-                ? `— ${order.deliveryAddress}`
-                : ''}
-          </span>
-        )}
-        {/* 全家、郵寄：顯示 deliveryAddress */}
-        {order.deliveryMethod !== 'sevenEleven' && order.deliveryAddress && (
-          <span className="ml-1 text-muted-foreground">— {order.deliveryAddress}</span>
+        <div>
+          <span className="text-muted-foreground">購買人英文姓名：</span>
+          {order.buyerNameEn}
+        </div>
+        <div>
+          <span className="text-muted-foreground">教師姓名：</span>
+          {order.teacherName}
+        </div>
+        <div>
+          <span className="text-muted-foreground">所屬教會/單位：</span>
+          {order.churchOrg}
+        </div>
+        <div>
+          <span className="text-muted-foreground">Email：</span>
+          {order.email}
+        </div>
+        <div>
+          <span className="text-muted-foreground">聯絡電話：</span>
+          {order.phone}
+        </div>
+        <div>
+          <span className="text-muted-foreground">預計開課日期：</span>
+          {order.courseDate}
+        </div>
+        {order.taxId && (
+          <div>
+            <span className="text-muted-foreground">統一編號：</span>
+            {order.taxId}
+          </div>
         )}
       </div>
-      <div>
-        <span className="text-muted-foreground">預計開課日期：</span>
-        {order.courseDate}
+      <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm pt-2 border-t">
+        <div>
+          <span className="text-muted-foreground">取貨方式：</span>
+          {DELIVERY_METHOD_LABELS[order.deliveryMethod] ?? order.deliveryMethod}
+          {order.deliveryMethod === 'sevenEleven' && (
+            <span className="ml-1 text-muted-foreground">
+              {order.storeName && order.storeId
+                ? `— ${order.storeName}（${order.storeId}）`
+                : order.deliveryAddress ? `— ${order.deliveryAddress}` : ''}
+            </span>
+          )}
+          {order.deliveryMethod !== 'sevenEleven' && order.deliveryAddress && (
+            <span className="ml-1 text-muted-foreground">— {order.deliveryAddress}</span>
+          )}
+        </div>
+        {order.shippedAt && (
+          <div>
+            <span className="text-muted-foreground">寄送時間：</span>
+            {order.shippedAt.toLocaleString('zh-TW')}
+          </div>
+        )}
+        {order.receivedAt && (
+          <div>
+            <span className="text-muted-foreground">收件時間：</span>
+            {order.receivedAt.toLocaleString('zh-TW')}
+          </div>
+        )}
       </div>
-      {order.taxId && (
-        <div>
-          <span className="text-muted-foreground">統一編號：</span>
-          {order.taxId}
-        </div>
-      )}
-      {order.quantityNote && (
-        <div>
-          <span className="text-muted-foreground">數量備註：</span>
-          {order.quantityNote}
-        </div>
-      )}
-      {order.shippedAt && (
-        <div>
-          <span className="text-muted-foreground">寄送時間：</span>
-          {order.shippedAt.toLocaleString('zh-TW')}
-        </div>
-      )}
-      {order.receivedAt && (
-        <div>
-          <span className="text-muted-foreground">收件時間：</span>
-          {order.receivedAt.toLocaleString('zh-TW')}
-        </div>
-      )}
     </div>
   )
 }
@@ -158,8 +160,11 @@ interface MaterialOrderTableProps {
 export function MaterialOrderTable({ orders }: MaterialOrderTableProps) {
   const router = useRouter()
   const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [editOrderId, setEditOrderId] = useState<number | null>(null)
   const [pending, startTransition] = useTransition()
   const [loadingId, setLoadingId] = useState<number | null>(null)
+
+  const editingOrder = editOrderId !== null ? orders.find((o) => o.id === editOrderId) ?? null : null
 
   function handleConfirmShipment(orderId: number) {
     setLoadingId(orderId)
@@ -288,7 +293,7 @@ export function MaterialOrderTable({ orders }: MaterialOrderTableProps) {
               {expandedId === order.id && (
                 <tr key={`detail-${order.id}`}>
                   <td colSpan={11} className="p-0">
-                    <OrderDetail order={order} />
+                    <OrderDetail order={order} onEditClick={() => setEditOrderId(order.id)} />
                   </td>
                 </tr>
               )}
@@ -296,6 +301,24 @@ export function MaterialOrderTable({ orders }: MaterialOrderTableProps) {
           ))}
         </tbody>
       </table>
+
+      {editingOrder && (
+        <MaterialOrderEditDialog
+          open={editOrderId !== null}
+          onOpenChange={(open) => { if (!open) setEditOrderId(null) }}
+          orderId={editingOrder.id}
+          defaultValues={{
+            buyerNameZh: editingOrder.buyerNameZh,
+            buyerNameEn: editingOrder.buyerNameEn,
+            teacherName: editingOrder.teacherName,
+            churchOrg: editingOrder.churchOrg,
+            email: editingOrder.email,
+            phone: editingOrder.phone,
+            courseDate: editingOrder.courseDate,
+            taxId: editingOrder.taxId,
+          }}
+        />
+      )}
     </div>
   )
 }

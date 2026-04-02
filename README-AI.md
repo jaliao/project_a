@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.50（2026-04-02）
+> 自動產生，版本 0.1.51（2026-04-02）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -390,6 +390,7 @@ createdAt       DateTime
 
 - `cr-spec-260402-010` — 所屬教會管理：`Church` model + `ChurchType` enum；後台 `/admin/churches` CRUD（停用保留關聯，有關聯時拒絕刪除）；`User` 新增 `churchType/churchId/churchOther`；個人資料頁教會下拉（清單/其他自填/無）；會員詳情頁補顯示所屬教會；seed 預設四個教會（101、心欣、Kua、全福會）
 - `cr-spec-260402-011` — 會員 Profile 增強：`User` 新增 `englishName`/`gender`/`displayNameMode`；`getMemberDisplayName()` 純函式（括號省略規則：匿名==真名時僅顯示一次）；`MemberDisplayName` 元件；個人資料頁新增英文名稱/性別/顯示名稱偏好欄位 + 即時預覽；管理員會員詳情頁顯示英文名稱/性別/顯示名稱；全站會員名稱統一改用 `getMemberDisplayName()`；管理員 email 改為 `101@iwillshare.org.tw`；seed 擴充為 20 位指定學員
+- `cr-spec-260402-012` — 申請教材簡化：表單精簡為統一編號（選填）+ 取貨方式；`applyMaterialOrder` 自動快照 buyerNameZh/En/teacherName/churchOrg/email/phone/courseDate；後台 `/admin/materials` 展開詳情新增「編輯」按鈕 + `MaterialOrderEditDialog`；新增 `updateMaterialOrderAdmin` Server Action
 
 ### 進行中 / 待規劃
 - （無）

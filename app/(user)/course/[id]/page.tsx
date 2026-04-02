@@ -313,11 +313,6 @@ export default async function CourseDetailPage({
           isStarted={!!courseSession.startedAt}
           hasApprovedStudents={courseSession.approvedEnrollments.length > 0}
           courseOrder={courseSession.courseOrder}
-          courseDatePrefill={courseSession.courseDate ?? undefined}
-          userPrefill={{
-            buyerNameZh: courseSession.createdBy.realName ?? courseSession.createdBy.name ?? undefined,
-            email: courseSession.createdBy.email ?? undefined,
-          }}
         />
       )}
     </div>
