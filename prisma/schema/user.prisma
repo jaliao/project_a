@@ -47,6 +47,12 @@ model User {
   // 學習等級（0=未完成任何課程；1~4=已完成啟動靈人對應等級）
   learningLevel Int @default(0)
 
+  // 所屬教會/單位
+  churchType  ChurchType @default(none)
+  churchId    Int?
+  church      Church?    @relation(fields: [churchId], references: [id], onDelete: SetNull)
+  churchOther String? // churchType = other 時的自填文字
+
   // 第三方帳號（保留欄位）
   lineId String? @unique
 

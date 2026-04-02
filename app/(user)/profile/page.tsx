@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 個人資料頁面
- * 2026-03-23
+ * 2026-03-23 (Updated: 2026-04-02)
  * app/(user)/profile/page.tsx
  * ----------------------------------------------
  */
@@ -11,15 +11,22 @@ import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import ProfileForm from './profile-form'
 import { SignOutSection } from '@/components/profile/sign-out-section'
+import { getActiveChurches } from '@/lib/data/churches'
 
 export default async function ProfilePage() {
   const session = await auth()
   if (!session?.user?.id) redirect('/login')
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    include: { accounts: { select: { provider: true } } },
-  })
+  const [user, activeChurches] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: {
+        accounts: { select: { provider: true } },
+        church: { select: { id: true, name: true, isActive: true } },
+      },
+    }),
+    getActiveChurches(),
+  ])
 
   if (!user) redirect('/login')
 
@@ -50,7 +57,12 @@ export default async function ProfilePage() {
           address: user.address ?? '',
           commEmail: user.commEmail ?? user.email,
           isCommVerified: user.isCommVerified,
+          churchType: user.churchType,
+          churchId: user.churchId ?? null,
+          churchOther: user.churchOther ?? '',
+          currentChurch: user.church ?? null,
         }}
+        activeChurches={activeChurches}
         linkedProviders={linkedProviders}
       />
 

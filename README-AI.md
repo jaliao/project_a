@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.48（2026-04-02）
+> 自動產生，版本 0.1.49（2026-04-02）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -37,9 +37,10 @@ app/
 ├── (user)/          # 已登入路由群組（共用 Topbar layout）
 │   ├── layout.tsx   # Topbar 包裝層（含未讀通知數 server fetch）
 │   ├── dashboard/       # redirect → /user/{id}（舊書籤相容）
-│   ├── admin/           # 管理後台：功能按鈕網格（儀錶板/課程/授課/教材/會員/系統設定）
+│   ├── admin/           # 管理後台：功能按鈕網格（儀錶板/課程/授課/教材/會員/教會/系統設定）
 │   │   ├── members/         # 會員管理清單（搜尋 + 重設密碼 + 查看詳情）
-│   │   ├── members/[id]/    # 會員詳情（Tabs：基本資料/學習階層）
+│   │   ├── members/[id]/    # 會員詳情（Tabs：基本資料含所屬教會/學習階層）
+│   │   ├── churches/        # 教會/單位管理（CRUD，停用保留歷史關聯）
 │   │   └── settings/        # 系統設定（superadmin；hierarchy_depth）
 │   ├── user/[id]/       # 學員專屬頁面：基本資料（姓名、身分標籤、已完成課程）+ 本人功能單元
 │   ├── user/[id]/courses/ # 我的開課列表（本人專屬，Spirit ID 小寫路由）
@@ -82,7 +83,8 @@ components/
 │   ├── member-search-input.tsx     # 會員搜尋輸入框（debounce 300ms，更新 ?q= URL param）
 │   ├── member-delete-button.tsx    # 刪除會員按鈕（AlertDialog 二次確認；ENABLE_MEMBER_DELETE 控制）
 │   ├── member-hierarchy-tree.tsx   # 師生傳承樹（Server Component；老師/本人/學生 N 層縮排）
-│   └── hierarchy-depth-form.tsx    # 學習階層深度設定表單（Client；1–10 整數）
+│   ├── hierarchy-depth-form.tsx    # 學習階層深度設定表單（Client；1–10 整數）
+│   └── church-list.tsx             # 教會清單管理（Client；CRUD inline，AlertDialog 刪除確認）
 ├── ecpay-store-selector/
 │   └── store-selector.tsx   # ECPay MapCVS 超商門市選擇器（7-11 UNIMART / 全家 FAMI，postMessage 同源）
 ├── course-session/
@@ -118,6 +120,7 @@ lib/
 │   ├── members.ts           # 會員管理查詢（searchMembers, getMemberDetail）
 │   ├── hierarchy.ts         # 師生傳承查詢（getMemberHierarchy，BFS，僅限啟動靈人 catalogId=1，graduatedAt IS NOT NULL）
 │   ├── admin-settings.ts    # 後台設定查詢（getAdminSetting, upsertAdminSetting）
+│   ├── churches.ts          # 教會管理查詢（getActiveChurches, getAllChurches, createChurch, updateChurch, toggleChurchActive, deleteChurch）
 │   └── notification.ts      # 通知查詢（getNotifications, getUnreadNotificationCount, getNotificationsPaginated）
 ├── ecpay/
 │   └── logistics.ts         # ECPay 物流工具（calcLogisticsCheckMacValue，MD5，物流 CMV-MD5 規格）
@@ -130,7 +133,8 @@ prisma/
 │   ├── course-order.prisma   # CourseOrder + enums
 │   ├── course-invite.prisma  # CourseInvite + InviteEnrollment
 │   ├── course-catalog.prisma # CourseCatalog（id, label, description?, isActive, sortOrder, prerequisites 自關聯）
-│   └── admin-setting.prisma  # AdminSetting（key/value store；hierarchy_depth 預設 3）
+│   ├── admin-setting.prisma  # AdminSetting（key/value store；hierarchy_depth 預設 3）
+│   └── church.prisma         # Church（id, name @unique, isActive, sortOrder）+ ChurchType enum（church|other|none）
 └── seed.ts
 
 config/
@@ -212,6 +216,22 @@ joinedAt       DateTime
 graduatedAt          DateTime?（結業時間；有值代表通過結業）
 nonGraduateReason    String?（未結業原因：insufficient_time | other）
 @@unique([inviteId, userId])
+```
+
+### Church
+```
+id        Int（主鍵，autoincrement）
+name      String（唯一）
+isActive  Boolean（預設 true）
+sortOrder Int（預設 0）
+users     User[]
+```
+
+### User（所屬教會欄位）
+```
+churchType  ChurchType（church | other | none，預設 none）
+churchId    Int?（關聯 Church，onDelete: SetNull）
+churchOther String?（churchType = other 時的自填文字）
 ```
 
 ### AdminSetting
@@ -360,6 +380,8 @@ createdAt       DateTime
 - `cr-spec-260402-007` — 修正 admin JWT role 即時同步：JWT callback `else if (token.id)` 分支於每次請求從 DB 同步 role/spiritId/isTempPassword，防止管理員 role 變更後需重新登入
 - `cr-spec-260402-008` — 修正 Google OAuth spiritId 衝突：seed 建立學員後同步 `spiritIdCounter`；JWT callback 以帶重試的 `updateMany WHERE spiritId IS NULL` 避免 race condition
 - `cr-spec-260402-009` — 會員學習階層：`AdminSetting` 模型（key/value store）；`getMemberHierarchy` BFS 查詢（僅啟動靈人，`graduatedAt IS NOT NULL`，上 1 層老師 + 下 N 層學生）；`MemberHierarchyTree` Server Component；會員詳情頁改為 Tabs（基本資料/學習階層）；`/admin/settings` superadmin 設定頁（hierarchy_depth 1–10）；後台首頁新增「系統設定」卡片（superadmin only）
+
+- `cr-spec-260402-010` — 所屬教會管理：`Church` model + `ChurchType` enum；後台 `/admin/churches` CRUD（停用保留關聯，有關聯時拒絕刪除）；`User` 新增 `churchType/churchId/churchOther`；個人資料頁教會下拉（清單/其他自填/無）；會員詳情頁補顯示所屬教會；seed 預設四個教會（101、心欣、Kua、全福會）
 
 ### 進行中 / 待規劃
 - （無）

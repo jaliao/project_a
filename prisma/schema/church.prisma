@@ -1,0 +1,30 @@
+/**
+ * ----------------------------------------------
+ * Prisma Schema - 教會/單位模型
+ * 2026-04-02
+ * prisma/schema/church.prisma
+ * ----------------------------------------------
+ */
+
+// ==========================================
+// 所屬教會類型枚舉
+// ==========================================
+enum ChurchType {
+  church // 選清單中的教會
+  other // 自填其他
+  none // 無 / 未填
+}
+
+// ==========================================
+// 教會/單位清單
+// ==========================================
+model Church {
+  id        Int     @id @default(autoincrement())
+  name      String  @unique
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  users User[]
+
+  @@map("churches")
+}

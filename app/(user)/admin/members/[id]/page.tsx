@@ -105,6 +105,16 @@ export default async function MemberDetailPage({
                   })}
                 </dd>
               </div>
+              <div>
+                <dt className="text-muted-foreground">所屬教會/單位</dt>
+                <dd>
+                  {member.churchType === 'church' && member.church
+                    ? member.church.name
+                    : member.churchType === 'other' && member.churchOther
+                      ? member.churchOther
+                      : '—'}
+                </dd>
+              </div>
             </dl>
           </div>
 

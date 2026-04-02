@@ -185,6 +185,29 @@ async function main() {
     create: { year: currentYear, seq: maxSeq },
   })
 
+  // ── 初始化教會/單位清單 ──────────────────────
+  const churches = [
+    { name: '101',    sortOrder: 1 },
+    { name: '心欣',   sortOrder: 2 },
+    { name: 'Kua',   sortOrder: 3 },
+    { name: '全福會', sortOrder: 4 },
+  ]
+
+  for (const church of churches) {
+    await prisma.church.upsert({
+      where: { name: church.name },
+      create: { name: church.name, sortOrder: church.sortOrder, isActive: true },
+      update: { sortOrder: church.sortOrder, isActive: true },
+    })
+  }
+
+  console.log('✅ 教會/單位清單初始化完成')
+  console.log('─────────────────────────────────')
+  churches.forEach((c) => {
+    console.log(`  ${c.sortOrder}. ${c.name}`)
+  })
+  console.log('─────────────────────────────────\n')
+
   console.log('✅ 課程目錄初始化完成')
   console.log('─────────────────────────────────')
   courses.forEach((c) => {

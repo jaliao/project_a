@@ -1,14 +1,14 @@
 /*
  * ----------------------------------------------
  * 個人資料表單（Client Component）
- * 2026-03-23
+ * 2026-03-23 (Updated: 2026-04-02)
  * app/(user)/profile/profile-form.tsx
  * ----------------------------------------------
  */
 
 'use client'
 
-import { useTransition } from 'react'
+import { useTransition, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -16,6 +16,8 @@ import { toast } from 'sonner'
 import { signIn } from 'next-auth/react'
 import { updateProfile, updateCommEmail, resendCommVerification, unlinkGoogleAccount } from '@/app/actions/profile'
 import { updateProfileSchema, commEmailSchema } from '@/lib/schemas/profile'
+
+type Church = { id: number; name: string; isActive: boolean }
 
 type ProfileFormProps = {
   user: {
@@ -25,25 +27,69 @@ type ProfileFormProps = {
     address: string
     commEmail: string
     isCommVerified: boolean
+    churchType: 'church' | 'other' | 'none'
+    churchId: number | null
+    churchOther: string
+    currentChurch: { id: number; name: string; isActive: boolean } | null
   }
+  activeChurches: Church[]
   linkedProviders: string[]
 }
 
 type ProfileData = z.infer<typeof updateProfileSchema>
 type CommEmailData = z.infer<typeof commEmailSchema>
 
-export default function ProfileForm({ user, linkedProviders }: ProfileFormProps) {
+// 選單的 value 格式：'none' | 'other' | 'church:<id>'
+function toSelectValue(churchType: string, churchId: number | null): string {
+  if (churchType === 'church' && churchId) return `church:${churchId}`
+  if (churchType === 'other') return 'other'
+  return 'none'
+}
+
+export default function ProfileForm({ user, activeChurches, linkedProviders }: ProfileFormProps) {
   const [isPending, startTransition] = useTransition()
+  const [selectValue, setSelectValue] = useState(toSelectValue(user.churchType, user.churchId))
+
+  // 已停用的現有教會需補入選項（讓使用者看到並可更換）
+  const churchOptions: Church[] = [
+    ...activeChurches,
+    ...(user.currentChurch && !user.currentChurch.isActive ? [user.currentChurch] : []),
+  ]
 
   const profileForm = useForm<ProfileData>({
     resolver: zodResolver(updateProfileSchema),
-    defaultValues: { realName: user.realName, nickname: user.nickname, phone: user.phone, address: user.address },
+    defaultValues: {
+      realName: user.realName,
+      nickname: user.nickname,
+      phone: user.phone,
+      address: user.address,
+      churchType: user.churchType,
+      churchId: user.churchId ?? undefined,
+      churchOther: user.churchOther,
+    },
   })
 
   const commEmailForm = useForm<CommEmailData>({
     resolver: zodResolver(commEmailSchema),
     defaultValues: { commEmail: user.commEmail },
   })
+
+  function handleChurchSelectChange(val: string) {
+    setSelectValue(val)
+    if (val === 'none') {
+      profileForm.setValue('churchType', 'none')
+      profileForm.setValue('churchId', undefined)
+      profileForm.setValue('churchOther', '')
+    } else if (val === 'other') {
+      profileForm.setValue('churchType', 'other')
+      profileForm.setValue('churchId', undefined)
+    } else if (val.startsWith('church:')) {
+      const id = parseInt(val.replace('church:', ''), 10)
+      profileForm.setValue('churchType', 'church')
+      profileForm.setValue('churchId', id)
+      profileForm.setValue('churchOther', '')
+    }
+  }
 
   const onProfileSubmit = (data: ProfileData) => {
     startTransition(async () => {
@@ -52,6 +98,9 @@ export default function ProfileForm({ user, linkedProviders }: ProfileFormProps)
       fd.set('nickname', data.nickname ?? '')
       fd.set('phone', data.phone ?? '')
       fd.set('address', data.address ?? '')
+      fd.set('churchType', data.churchType)
+      fd.set('churchId', data.churchId ? String(data.churchId) : '')
+      fd.set('churchOther', data.churchOther ?? '')
       const result = await updateProfile(fd)
       result.success ? toast.success(result.message) : toast.error(result.message)
     })
@@ -87,6 +136,7 @@ export default function ProfileForm({ user, linkedProviders }: ProfileFormProps)
   }
 
   const isGoogleLinked = linkedProviders.includes('google')
+  const showOtherInput = selectValue === 'other'
 
   return (
     <div className="space-y-8">
@@ -137,6 +187,37 @@ export default function ProfileForm({ user, linkedProviders }: ProfileFormProps)
               disabled={isPending}
             />
           </div>
+
+          {/* 所屬教會/單位 */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium">所屬教會/單位</label>
+            <select
+              className="w-full rounded-md border px-3 py-2 text-sm bg-background"
+              value={selectValue}
+              onChange={(e) => handleChurchSelectChange(e.target.value)}
+              disabled={isPending}
+            >
+              <option value="none">無</option>
+              {churchOptions.map((c) => (
+                <option key={c.id} value={`church:${c.id}`}>
+                  {c.name}{!c.isActive ? '（已停用）' : ''}
+                </option>
+              ))}
+              <option value="other">其他</option>
+            </select>
+            {showOtherInput && (
+              <input
+                {...profileForm.register('churchOther')}
+                className="w-full rounded-md border px-3 py-2 text-sm"
+                placeholder="請填寫教會/單位名稱"
+                disabled={isPending}
+              />
+            )}
+            {profileForm.formState.errors.churchOther && (
+              <p className="text-sm text-red-500">{profileForm.formState.errors.churchOther.message}</p>
+            )}
+          </div>
+
           <button
             type="submit"
             disabled={isPending}

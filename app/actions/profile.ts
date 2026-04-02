@@ -33,11 +33,16 @@ export async function updateProfile(
     nickname: formData.get('nickname'),
     phone: formData.get('phone'),
     address: formData.get('address'),
+    churchType: formData.get('churchType') || 'none',
+    churchId: formData.get('churchId') || null,
+    churchOther: formData.get('churchOther'),
   })
 
   if (!parsed.success) {
     return { success: false, errors: parsed.error.flatten().fieldErrors }
   }
+
+  const { churchType, churchId, churchOther } = parsed.data
 
   await prisma.user.update({
     where: { id: session.user.id },
@@ -46,6 +51,9 @@ export async function updateProfile(
       nickname: parsed.data.nickname || null,
       phone: parsed.data.phone || null,
       address: parsed.data.address || null,
+      churchType,
+      churchId: churchType === 'church' ? (churchId ?? null) : null,
+      churchOther: churchType === 'other' ? (churchOther?.trim() || null) : null,
     },
   })
 

@@ -54,6 +54,9 @@ export async function getMemberDetail(id: string) {
       spiritId: true,
       role: true,
       createdAt: true,
+      churchType: true,
+      churchOther: true,
+      church: { select: { name: true } },
       // 學習紀錄：參加的課程（已開始）
       inviteEnrollments: {
         where: {
