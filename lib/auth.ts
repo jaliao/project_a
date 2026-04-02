@@ -80,20 +80,37 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (dbUser) {
           // Google OAuth：補核 spiritId 與姓名（jwt 為唯一寫入點，避免 race condition）
           if (account?.provider === 'google') {
-            const needsUpdate: { spiritId?: string; realName?: string; nickname?: string } = {}
+            // spiritId：分開處理，帶重試避免計數器與現有資料不同步時的 unique 衝突
             if (!dbUser.spiritId) {
-              needsUpdate.spiritId = await generateSpiritId()
+              for (let attempt = 0; attempt < 5; attempt++) {
+                const candidate = await generateSpiritId()
+                try {
+                  await prisma.user.updateMany({
+                    where: { id: dbUser.id, spiritId: null },
+                    data: { spiritId: candidate },
+                  })
+                  break // 成功，跳出重試迴圈
+                } catch (e: unknown) {
+                  const isUniqueViolation =
+                    typeof e === 'object' && e !== null &&
+                    'code' in e && (e as { code: string }).code === 'P2002'
+                  if (!isUniqueViolation || attempt === 4) throw e
+                  // unique 衝突：計數器與現有資料不同步，重試
+                }
+              }
+              // 重新讀取確保取得最新 spiritId
+              const refreshed = await prisma.user.findUnique({ where: { id: dbUser.id } })
+              if (refreshed) dbUser = refreshed
             }
-            if (!dbUser.realName && user.name) {
-              needsUpdate.realName = user.name
-            }
-            if (!dbUser.nickname && user.name) {
-              needsUpdate.nickname = user.name
-            }
-            if (Object.keys(needsUpdate).length > 0) {
+
+            // realName / nickname：獨立更新，不混入 spiritId 避免整批失敗
+            const nameUpdates: { realName?: string; nickname?: string } = {}
+            if (!dbUser.realName && user.name) nameUpdates.realName = user.name
+            if (!dbUser.nickname && user.name) nameUpdates.nickname = user.name
+            if (Object.keys(nameUpdates).length > 0) {
               dbUser = await prisma.user.update({
                 where: { id: dbUser.id },
-                data: needsUpdate,
+                data: nameUpdates,
               })
             }
           }

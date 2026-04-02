@@ -173,6 +173,18 @@ async function main() {
     })
   }
 
+  // ── 同步 spiritIdCounter（避免 generateSpiritId 與 seed 資料衝突）──────
+  const maxSeq = STUDENTS.reduce((max, s) => {
+    const seq = parseInt(s.spiritId.slice(-4), 10)
+    return seq > max ? seq : max
+  }, 0)
+  const currentYear = new Date().getFullYear()
+  await prisma.spiritIdCounter.upsert({
+    where: { year: currentYear },
+    update: { seq: maxSeq },
+    create: { year: currentYear, seq: maxSeq },
+  })
+
   console.log('✅ 課程目錄初始化完成')
   console.log('─────────────────────────────────')
   courses.forEach((c) => {
