@@ -13,7 +13,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { UserAuthForm } from './user-auth-form'
 
 export const metadata: Metadata = {
-  title: '登入 — 啟動靈人系統',
+  title: '登入 — 啟動事工',
 }
 
 export default function LoginPage() {
@@ -36,14 +36,14 @@ export default function LoginPage() {
           >
             <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
           </svg>
-          啟動靈人系統
+          啟動事工
         </div>
 
         {/* 底部引言 */}
         <div className="mt-auto">
           <blockquote className="space-y-2">
             <p className="text-lg leading-relaxed">
-              &ldquo;透過啟動靈人系統，我的課程管理與學員追蹤變得更加有條理，
+              &ldquo;透過啟動事工，我的課程管理與學員追蹤變得更加有條理，
               讓我能專注於教學本身。&rdquo;
             </p>
             <footer className="text-sm text-zinc-400">— 系統使用者</footer>
@@ -69,7 +69,7 @@ export default function LoginPage() {
             >
               <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
             </svg>
-            啟動靈人
+            啟動事工
           </div>
           {/* 建立帳號連結 */}
           <Link

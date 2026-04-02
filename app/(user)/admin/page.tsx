@@ -17,7 +17,7 @@ import {
 } from '@tabler/icons-react'
 
 export const metadata: Metadata = {
-  title: '管理後台 — 啟動靈人系統',
+  title: '管理後台 — 啟動事工',
 }
 
 const ADMIN_FEATURES = [

@@ -28,7 +28,7 @@ import { StudentApplySection } from './student-apply-section'
 import { PendingEnrollmentList } from './pending-enrollment-list'
 
 export const metadata: Metadata = {
-  title: '課程詳情 — 啟動靈人系統',
+  title: '課程詳情 — 啟動事工',
 }
 
 function formatDate(date: Date): string {

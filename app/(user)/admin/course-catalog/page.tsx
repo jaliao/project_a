@@ -17,7 +17,7 @@ import { getAllCourses } from '@/lib/data/course-catalog'
 import { CourseCatalogTable } from '@/components/course-catalog/course-catalog-table'
 
 export const metadata: Metadata = {
-  title: '課程目錄管理 — 啟動靈人系統',
+  title: '課程目錄管理 — 啟動事工',
 }
 
 export default async function AdminCourseCatalogPage() {

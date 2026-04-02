@@ -16,7 +16,7 @@ import { getMyCourseSessions } from '@/lib/data/course-sessions'
 import { CourseSessionCard } from '@/components/course-session/course-session-card'
 
 export const metadata: Metadata = {
-  title: '開課查詢 — 啟動靈人系統',
+  title: '開課查詢 — 啟動事工',
 }
 
 export default async function CourseSessionsPage() {

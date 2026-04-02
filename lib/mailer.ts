@@ -20,7 +20,7 @@ const transporter = nodemailer.createTransport({
 })
 
 // FROM 需使用在 Brevo 後台驗證過的寄件者 Email，不可用 SMTP_USER 帳號
-const FROM_ADDRESS = `"啟動靈人系統" <${process.env.SMTP_FROM ?? process.env.SMTP_USER}>`
+const FROM_ADDRESS = `"啟動事工" <${process.env.SMTP_FROM ?? process.env.SMTP_USER}>`
 
 // ── 臨時密碼通知信 ────────────────────────────
 export async function sendTempPasswordEmail(
@@ -31,11 +31,11 @@ export async function sendTempPasswordEmail(
   await transporter.sendMail({
     from: FROM_ADDRESS,
     to,
-    subject: '【啟動靈人】您的帳號已建立 — 請查收臨時密碼',
+    subject: '【啟動事工】您的帳號已建立 — 請查收臨時密碼',
     html: `
       <p>您好，</p>
-      <p>您的啟動靈人帳號已成功建立。</p>
-      <p><strong>啟動靈人編號（Spirit ID）：</strong> ${spiritId}</p>
+      <p>您的啟動事工帳號已成功建立。</p>
+      <p><strong>啟動事工編號（Spirit ID）：</strong> ${spiritId}</p>
       <p><strong>臨時登入密碼：</strong> <code>${tempPassword}</code></p>
       <p>請使用以上密碼登入後，系統將要求您立即變更密碼。</p>
       <p>如非您本人操作，請忽略此信。</p>
@@ -51,7 +51,7 @@ export async function sendCommEmailVerification(
   await transporter.sendMail({
     from: FROM_ADDRESS,
     to,
-    subject: '【啟動靈人】請驗證您的通訊 Email',
+    subject: '【啟動事工】請驗證您的通訊 Email',
     html: `
       <p>您好，</p>
       <p>您已更新通訊 Email 為：<strong>${to}</strong></p>
@@ -70,7 +70,7 @@ export async function sendPasswordResetEmail(
   await transporter.sendMail({
     from: FROM_ADDRESS,
     to,
-    subject: '【啟動靈人】密碼重設連結',
+    subject: '【啟動事工】密碼重設連結',
     html: `
       <p>您好，</p>
       <p>我們收到您的密碼重設請求。請點擊以下連結設定新密碼（連結 1 小時內有效）：</p>

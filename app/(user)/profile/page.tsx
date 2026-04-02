@@ -31,7 +31,7 @@ export default async function ProfilePage() {
 
       {/* Spirit ID 唯讀顯示 */}
       <div className="rounded-lg border p-4 space-y-1">
-        <p className="text-sm text-muted-foreground">啟動靈人編號</p>
+        <p className="text-sm text-muted-foreground">啟動事工編號</p>
         <p className="text-lg font-mono font-semibold">{user.spiritId ?? '—'}</p>
       </div>
 

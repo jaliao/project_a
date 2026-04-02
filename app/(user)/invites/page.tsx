@@ -15,7 +15,7 @@ import { getMyInvites } from '@/app/actions/course-invite'
 import { InviteCopyButton } from '@/components/course-invite/invite-copy-button'
 
 export const metadata: Metadata = {
-  title: '邀請進度 — 啟動靈人系統',
+  title: '邀請進度 — 啟動事工',
 }
 
 export default async function InvitesPage() {

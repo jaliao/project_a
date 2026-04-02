@@ -19,7 +19,7 @@ import { CourseSessionCard } from '@/components/course-session/course-session-ca
 import { CourseCardGrid } from '@/components/course-session/course-card-grid'
 
 export const metadata: Metadata = {
-  title: '我的開課 — 啟動靈人系統',
+  title: '我的開課 — 啟動事工',
 }
 
 type Props = {

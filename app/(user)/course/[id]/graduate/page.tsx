@@ -17,7 +17,7 @@ import { getCourseSessionById } from '@/lib/data/course-sessions'
 import { GraduationForm } from './graduation-form'
 
 export const metadata: Metadata = {
-  title: '課程結業 — 啟動靈人系統',
+  title: '課程結業 — 啟動事工',
 }
 
 export default async function GraduatePage({

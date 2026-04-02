@@ -134,7 +134,7 @@ export function CourseSessionForm({ activeCourses, instructorName = '', onSucces
                       titleDirtyRef.current = true
                       field.onChange(e)
                     }}
-                    placeholder={`例：${instructorName ? `${instructorName} 的 ` : ''}啟動靈人 1`}
+                    placeholder={`例：${instructorName ? `${instructorName} 的 ` : ''}啟動靈人`}
                   />
                 </FormControl>
                 <FormMessage />

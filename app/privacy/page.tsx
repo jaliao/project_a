@@ -10,7 +10,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: '隱私政策 — 啟動靈人系統',
+  title: '隱私政策 — 啟動事工',
 }
 
 export default function PrivacyPage() {

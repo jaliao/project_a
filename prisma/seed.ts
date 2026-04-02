@@ -134,8 +134,8 @@ async function main() {
 
   // ── 初始化課程目錄 ──────────────────────────
   const courses = [
-    { label: '啟動靈人 1', isActive: true, sortOrder: 1 },
-    { label: '啟動靈人 2', isActive: true, sortOrder: 2 },
+    { label: '啟動靈人', isActive: true, sortOrder: 1 },
+    { label: '啟動豐盛', isActive: true, sortOrder: 2 },
     { label: '啟動靈人 3', isActive: false, sortOrder: 3 },
     { label: '啟動靈人 4', isActive: false, sortOrder: 4 },
   ]
@@ -148,7 +148,7 @@ async function main() {
     })
   }
 
-  // 確保入門課程（啟動靈人 1）先修列表為空
+  // 確保入門課程（啟動靈人）先修列表為空
   await prisma.courseCatalog.update({
     where: { id: 1 },
     data: { prerequisites: { set: [] } },

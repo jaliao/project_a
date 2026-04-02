@@ -17,7 +17,7 @@ import { getAllCourseOrdersWithInvite } from '@/lib/data/course-order'
 import { MaterialOrderTable } from '@/components/admin/material-order-table'
 
 export const metadata: Metadata = {
-  title: '教材申請管理 — 啟動靈人系統',
+  title: '教材申請管理 — 啟動事工',
 }
 
 export default async function AdminMaterialsPage() {

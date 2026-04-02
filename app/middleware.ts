@@ -25,6 +25,7 @@ const PUBLIC_PATHS = [
   '/api/auth',
   '/terms',
   '/privacy',
+  '/',
 ]
 
 function isPublic(pathname: string): boolean {

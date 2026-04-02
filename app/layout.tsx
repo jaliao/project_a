@@ -11,8 +11,8 @@ import './globals.css'
 import { Toaster } from 'sonner'
 
 export const metadata: Metadata = {
-  title: '啟動靈人系統',
-  description: '啟動靈人 - 會員管理系統',
+  title: '啟動事工',
+  description: '啟動事工 - 會員管理系統',
 }
 
 export default function RootLayout({

@@ -24,7 +24,7 @@ import { getMyEnrollments, getMyCourseSessions, getMyCompletionCertificates } fr
 import { getActiveCourses, getGraduatedCatalogIds } from '@/lib/data/course-catalog'
 
 export const metadata: Metadata = {
-  title: '學員資料 — 啟動靈人系統',
+  title: '學員資料 — 啟動事工',
 }
 
 type Props = {

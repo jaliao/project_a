@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: '會員管理 — 啟動靈人系統',
+  title: '會員管理 — 啟動事工',
 }
 
 export default async function AdminMembersPage({

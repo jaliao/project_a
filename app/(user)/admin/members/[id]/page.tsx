@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: '會員詳情 — 啟動靈人系統',
+  title: '會員詳情 — 啟動事工',
 }
 
 const ROLE_LABELS: Record<string, string> = {

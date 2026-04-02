@@ -19,7 +19,7 @@ import { getAllCourses, getGraduatedCatalogIds } from '@/lib/data/course-catalog
 import { LevelProgress } from '@/components/learning/level-progress'
 
 export const metadata: Metadata = {
-  title: '學習紀錄 — 啟動靈人系統',
+  title: '學習紀錄 — 啟動事工',
 }
 
 export default async function LearningPage() {

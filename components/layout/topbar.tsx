@@ -25,7 +25,7 @@ export function Topbar({ unreadCount = 0 }: TopbarProps) {
   return (
     <header className="sticky top-0 z-50 bg-background flex h-16 items-center border-b px-4 gap-4">
       {/* 系統標題 */}
-      <span className="font-semibold text-lg flex-1">啟動靈人系統</span>
+      <span className="font-semibold text-lg flex-1">啟動事工</span>
 
       {/* 右側操作按鈕群組 */}
       <div className="flex items-center gap-2">

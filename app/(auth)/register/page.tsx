@@ -13,7 +13,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { RegisterForm } from './register-form'
 
 export const metadata: Metadata = {
-  title: '建立帳號 — 啟動靈人系統',
+  title: '建立帳號 — 啟動事工',
 }
 
 export default function RegisterPage() {
@@ -36,14 +36,14 @@ export default function RegisterPage() {
           >
             <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
           </svg>
-          啟動靈人系統
+          啟動事工
         </div>
 
         {/* 底部引言 */}
         <div className="mt-auto">
           <blockquote className="space-y-2">
             <p className="text-lg leading-relaxed">
-              &ldquo;加入啟動靈人系統，開始您的靈命成長旅程。&rdquo;
+              &ldquo;加入啟動事工，開始您的靈命成長旅程。&rdquo;
             </p>
             <footer className="text-sm text-zinc-400">— 系統使用者</footer>
           </blockquote>
@@ -68,7 +68,7 @@ export default function RegisterPage() {
             >
               <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
             </svg>
-            啟動靈人
+            啟動事工
           </div>
           {/* 登入連結 */}
           <Link

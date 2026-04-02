@@ -10,7 +10,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: '服務條款 — 啟動靈人系統',
+  title: '服務條款 — 啟動事工',
 }
 
 export default function TermsPage() {
@@ -33,7 +33,7 @@ export default function TermsPage() {
           <section>
             <h2 className="mb-3 text-lg font-semibold">一、接受條款</h2>
             <p>
-              歡迎使用啟動靈人系統（以下簡稱「本系統」）。當您存取或使用本系統，即表示您同意受本服務條款之約束。若您不同意本條款，請勿使用本系統。
+              歡迎使用啟動事工（以下簡稱「本系統」）。當您存取或使用本系統，即表示您同意受本服務條款之約束。若您不同意本條款，請勿使用本系統。
             </p>
           </section>
 
