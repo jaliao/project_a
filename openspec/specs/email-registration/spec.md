@@ -1,37 +1,24 @@
 ## ADDED Requirements
 
-### Requirement: Email 自主註冊
-系統 SHALL 提供 Email 自主註冊路徑，使用者輸入 Email 即可建立帳號，無需預先存在於白名單中。
+### Requirement: 註冊頁 Google OAuth 入口
+`/register` 頁面 SHALL 提供「以 Google 帳號繼續」按鈕，功能與行為和登入頁的 Google 按鈕一致。
 
-#### Scenario: 成功以未使用 Email 註冊
-- **WHEN** 使用者輸入一個系統中尚未存在的 Email 並送出註冊表單
-- **THEN** 系統建立帳號、核發 Spirit ID，並發送包含臨時密碼的通知信
+#### Scenario: 點擊 Google 按鈕觸發 OAuth
+- **WHEN** 使用者在 `/register` 頁點擊「以 Google 帳號繼續」
+- **THEN** 系統觸發 Google OAuth 流程，成功後導向 `/dashboard`
 
-#### Scenario: 使用已存在 Email 註冊
-- **WHEN** 使用者輸入一個系統中已存在的 Email 並送出
-- **THEN** 系統回傳錯誤提示「此 Email 已被使用」，不建立新帳號
+#### Scenario: 已有帳號的 Google 使用者在註冊頁登入
+- **WHEN** 使用者以已存在帳號的 Google email 完成 OAuth
+- **THEN** 系統正常登入，不重複建立帳號，導向 `/dashboard`
 
-### Requirement: 臨時密碼核發
-系統 SHALL 於 Email 註冊成功後，自動生成一組隨機臨時密碼並以 Email 寄送給使用者。
-
-#### Scenario: 臨時密碼格式
-- **WHEN** 系統生成臨時密碼
-- **THEN** 密碼 SHALL 包含大小寫英文字母與數字，長度不少於 12 字元（`[A-Za-z0-9]{12+}`）
-
-#### Scenario: 通知信寄送
-- **WHEN** 帳號建立成功
-- **THEN** 系統發送通知信至註冊 Email，信中包含使用者的 Spirit ID 及臨時密碼
-
-#### Scenario: 寄信失敗處理
-- **WHEN** 通知信寄送失敗（SMTP 錯誤）
-- **THEN** 帳號仍保持建立狀態，系統記錄錯誤；使用者可於登入後要求重發
+## MODIFIED Requirements
 
 ### Requirement: Google OAuth 首次登入自動建帳
-系統 SHALL 在 Google OAuth 使用者首次登入時自動建立帳號並核發 Spirit ID。
+系統 SHALL 在 Google OAuth 使用者首次登入（含從 `/register` 頁觸發）時自動建立帳號並核發 Spirit ID。`/register` 與 `/login` 兩個入口均支援此流程。
 
 #### Scenario: Google 新用戶首次登入
-- **WHEN** 使用者以 Google 帳號首次進行 OAuth 登入
-- **THEN** 系統自動建立帳號、核發 Spirit ID，並導向 Profile 頁面完成資料補填
+- **WHEN** 使用者以 Google 帳號首次進行 OAuth 登入（從任何入口）
+- **THEN** 系統自動建立帳號、核發 Spirit ID，並導向 `/dashboard`
 
 #### Scenario: Google 既有用戶再次登入
 - **WHEN** 已建立帳號的使用者再次以 Google 登入
