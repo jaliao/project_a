@@ -434,6 +434,71 @@ async function main() {
     console.log(`  ${c.label}（${c.isActive ? '開放' : '未開放'}）`)
   })
   console.log('─────────────────────────────────\n')
+
+  // ── 示範課程與黃國倫結業資料（快照 2026-04-02）────────────────────
+  const admin = await prisma.user.findUnique({ where: { email: ADMIN_EMAIL }, select: { id: true } })
+  const gorden = await prisma.user.findUnique({ where: { email: 'gorden@test.com' }, select: { id: true } })
+
+  if (admin && gorden) {
+    const adminInviteCount = await prisma.courseInvite.count({ where: { createdById: admin.id } })
+
+    if (adminInviteCount === 0) {
+      const DEMO_DATE = new Date('2026-04-02T00:00:00.000Z')
+      const COURSE_DATE = '2026/06/01'
+
+      // 建立兩筆示範課程邀請
+      const invite1 = await prisma.courseInvite.create({
+        data: {
+          title: '系統管理員 的 啟動靈人',
+          courseCatalogId: 1,
+          maxCount: 1,
+          courseDate: COURSE_DATE,
+          createdById: admin.id,
+          startedAt: DEMO_DATE,
+          completedAt: DEMO_DATE,
+        },
+      })
+
+      const invite2 = await prisma.courseInvite.create({
+        data: {
+          title: '系統管理員 的 啟動豐盛',
+          courseCatalogId: 2,
+          maxCount: 1,
+          courseDate: COURSE_DATE,
+          createdById: admin.id,
+          startedAt: DEMO_DATE,
+          completedAt: DEMO_DATE,
+        },
+      })
+
+      // 建立黃國倫的結業紀錄
+      await prisma.inviteEnrollment.createMany({
+        data: [
+          {
+            inviteId: invite1.id,
+            userId: gorden.id,
+            status: 'approved',
+            joinedAt: DEMO_DATE,
+            graduatedAt: DEMO_DATE,
+          },
+          {
+            inviteId: invite2.id,
+            userId: gorden.id,
+            status: 'approved',
+            joinedAt: DEMO_DATE,
+            graduatedAt: DEMO_DATE,
+          },
+        ],
+      })
+
+      console.log('✅ 示範課程與結業資料初始化完成')
+      console.log('─────────────────────────────────')
+      console.log('  黃國倫（PA260001）已結業：啟動靈人、啟動豐盛')
+      console.log('─────────────────────────────────\n')
+    } else {
+      console.log('⏭️  示範課程已存在，跳過建立')
+    }
+  }
 }
 
 main()
