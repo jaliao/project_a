@@ -23,6 +23,8 @@ const PUBLIC_PATHS = [
   '/reset-password',
   '/change-password',
   '/api/auth',
+  '/terms',
+  '/privacy',
 ]
 
 function isPublic(pathname: string): boolean {
