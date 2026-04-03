@@ -85,11 +85,6 @@ export default async function AdminPage() {
             <>
               <div className="flex items-center justify-between">
                 <Icon className="h-6 w-6 text-primary" />
-                {feature.badge && (
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                    {feature.badge}
-                  </span>
-                )}
               </div>
               <div>
                 <p className="font-medium">{feature.title}</p>
