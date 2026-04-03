@@ -1,14 +1,29 @@
 # .dockerignore
 
-# 忽略所有環境變數檔案
+# 環境變數
 .env
 .env.*
 
-# 其他不需要的檔案
+# 開發產物
 node_modules
-.git
 .next
-README.md
-README*.md
-Dockerfile
-docker-compose.yml
+.git
+
+# Docker 相關（不需打包進 image）
+Dockerfile*
+docker-compose*.yml
+Makefile
+
+# 文件
+*.md
+CLAUDE.md
+tunnel.md
+
+# 規格與 AI 工具
+openspec/
+
+# SSL 憑證
+ssl/
+
+# 本機開發設定
+prisma/migrations/
