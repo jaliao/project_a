@@ -65,7 +65,7 @@ export async function updateCourse(
     },
   })
 
-  revalidatePath('/admin/course-catalog')
+  revalidatePath('/admin/settings')
   revalidatePath('/admin')
 
   return { success: true, message: '課程設定已更新' }

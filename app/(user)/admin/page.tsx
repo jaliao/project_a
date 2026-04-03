@@ -11,7 +11,6 @@ import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import {
   IconLayoutDashboard,
-  IconBook,
   IconSchool,
   IconPackage,
   IconUsers,
@@ -31,13 +30,6 @@ const ADMIN_FEATURES = [
     icon: IconLayoutDashboard,
     href: null, // 待開發
     badge: '待開發',
-    superadminOnly: false,
-  },
-  {
-    title: '課程管理',
-    description: '管理課程目錄與內容',
-    icon: IconBook,
-    href: '/admin/course-catalog',
     superadminOnly: false,
   },
   {

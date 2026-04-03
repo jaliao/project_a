@@ -11,6 +11,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { getAdminSetting } from '@/lib/data/admin-settings'
 import { getAllChurches, getChurchMemberCount } from '@/lib/data/churches'
+import { getAllCourses } from '@/lib/data/course-catalog'
 import { SettingsTabs } from './settings-tabs'
 
 export const dynamic = 'force-dynamic'
@@ -30,11 +31,12 @@ export default async function AdminSettingsPage({
   if (role !== 'admin' && role !== 'superadmin') redirect('/')
 
   const { tab } = await searchParams
-  const activeTab = tab === 'churches' ? 'churches' : 'basic'
+  const activeTab = tab === 'churches' ? 'churches' : tab === 'courses' ? 'courses' : 'basic'
 
-  const [depthStr, churches] = await Promise.all([
+  const [depthStr, churches, courses] = await Promise.all([
     getAdminSetting('hierarchy_depth', '3'),
     getAllChurches(),
+    getAllCourses(),
   ])
   const currentDepth = Math.min(10, Math.max(1, parseInt(depthStr, 10) || 3))
   const churchesWithCount = await Promise.all(
@@ -52,6 +54,7 @@ export default async function AdminSettingsPage({
         role={role}
         currentDepth={currentDepth}
         churches={churchesWithCount}
+        courses={courses}
       />
     </div>
   )

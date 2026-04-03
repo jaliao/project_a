@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.55（2026-04-03）
+> 自動產生，版本 0.1.56（2026-04-03）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -42,7 +42,7 @@ app/
 │   │   ├── members/         # 會員管理清單（搜尋 + 重設密碼 + 查看詳情）
 │   │   ├── members/[id]/    # 會員詳情（Tabs：基本資料含所屬教會/學習階層）
 │   │   ├── churches/        # redirect → /admin/settings?tab=churches（舊路由相容）
-│   │   └── settings/        # 系統設定 Tabs（基本設定：hierarchy_depth superadmin only；教會代碼維護：admin+）
+│   │   └── settings/        # 系統設定 Tabs（基本設定：hierarchy_depth superadmin only；教會代碼維護：admin+；課程目錄管理：admin+）
 │   ├── user/[id]/       # 學員專屬頁面：基本資料（姓名、身分標籤、已完成課程）+ 本人功能單元
 │   ├── user/[id]/courses/ # 我的開課列表（本人專屬，Spirit ID 小寫路由）
 │   ├── course-sessions/ # 開課查詢頁（保留，將逐步以 /user/[id]/courses 取代）
@@ -397,6 +397,7 @@ createdAt       DateTime
 - `cr-spec-260402-014` — Topbar 導覽按鈕 + 個人資料路由遷移：Topbar 新增「回首頁」（→ `/user/{spiritId}`）與「後台管理」（→ `/admin`，admin/superadmin only）按鈕；通知 Drawer SheetHeader 加 `pr-10` 修正與 X 按鈕重疊；個人資料路由從 `/profile` 遷移至 `/user/{spiritId}/profile`（舊路由 server redirect 相容）；`/change-password` 密碼更新後導向 `/user/{spiritId}/profile`
 - `cr-spec-260403-001` — 系統設定 Tabs 整合：`/admin/settings` 改為 Tabs 佈局（「基本設定」：hierarchy_depth superadmin only；「教會代碼維護」：原 `/admin/churches` 內容 admin+）；`/admin/churches` 改為 redirect；後台首頁教會管理卡片連結更新至 `/admin/settings?tab=churches`；tab 以 URL `?tab=` 參數切換
 - `cr-spec-260403-003` — 後台開課管理：新增 `/admin/course-sessions` 全站開課列表（admin+）；文字搜尋（課程名稱/講師/學員）+ 下拉篩選（課程名稱/進度/日期區間）；顯示總筆數，前 30 筆；點擊另開視窗；`CourseSessionCard` 新增 `newTab` prop；`getAllCourseSessionsAdmin()` data layer
+- `cr-spec-260403-004` — 課程目錄管理整合至系統設定：`/admin/settings` Tabs 新增「課程目錄管理」第三分頁（`?tab=courses`）；`/admin/course-catalog` 改為 redirect；後台首頁移除課程管理卡片
 
 ### 進行中 / 待規劃
 - （無）
