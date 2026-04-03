@@ -61,9 +61,6 @@ RUN addgroup --system --gid 1001 nodejs && \
 RUN apk add --no-cache tzdata && \
     cp /usr/share/zoneinfo/Asia/Taipei /etc/localtime
 
-# 靜態資源
-COPY --from=builder /app/public ./public
-
 # Next standalone output
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
