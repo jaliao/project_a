@@ -16,7 +16,7 @@ RUN apk add --no-cache \
 # 2) 依賴安裝階段
 # ========================================================
 FROM base AS deps
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 # npm ci 預設會安裝 devDependencies（builder 需要 prisma CLI）
 RUN npm ci
 
