@@ -16,7 +16,6 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 import { changePasswordSchema } from '@/lib/schemas/auth'
 import { changeTempPassword } from '@/app/actions/auth'
@@ -25,7 +24,6 @@ type ChangeForm = z.infer<typeof changePasswordSchema>
 
 export default function ChangePasswordPage() {
   const router = useRouter()
-  const { data: session } = useSession()
   const [isPending, startTransition] = useTransition()
   const { register, handleSubmit, formState: { errors } } = useForm<ChangeForm>({
     resolver: zodResolver(changePasswordSchema),
@@ -40,7 +38,7 @@ export default function ChangePasswordPage() {
       const result = await changeTempPassword(formData)
       if (result.success) {
         toast.success(result.message ?? '密碼已更新')
-        const spiritId = session?.user?.spiritId
+        const spiritId = result.data?.spiritId
         router.push(spiritId ? `/user/${spiritId.toLowerCase()}/profile` : '/profile')
         router.refresh()
       } else {

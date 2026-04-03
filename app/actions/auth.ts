@@ -115,12 +115,13 @@ export async function changeTempPassword(
   }
 
   const newHash = await bcrypt.hash(newPassword, 12)
-  await prisma.user.update({
+  const updated = await prisma.user.update({
     where: { id: user.id },
     data: { passwordHash: newHash, isTempPassword: false },
+    select: { spiritId: true },
   })
 
-  return { success: true, message: '密碼已成功更新' }
+  return { success: true, message: '密碼已成功更新', data: { spiritId: updated.spiritId } }
 }
 
 // ── 申請密碼重設 ──────────────────────────────
