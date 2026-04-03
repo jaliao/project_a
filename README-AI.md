@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.53（2026-04-03）
+> 自動產生，版本 0.1.54（2026-04-03）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -40,8 +40,8 @@ app/
 │   ├── admin/           # 管理後台：功能按鈕網格（儀錶板/課程/授課/教材/會員/教會/系統設定）
 │   │   ├── members/         # 會員管理清單（搜尋 + 重設密碼 + 查看詳情）
 │   │   ├── members/[id]/    # 會員詳情（Tabs：基本資料含所屬教會/學習階層）
-│   │   ├── churches/        # 教會/單位管理（CRUD，停用保留歷史關聯）
-│   │   └── settings/        # 系統設定（superadmin；hierarchy_depth）
+│   │   ├── churches/        # redirect → /admin/settings?tab=churches（舊路由相容）
+│   │   └── settings/        # 系統設定 Tabs（基本設定：hierarchy_depth superadmin only；教會代碼維護：admin+）
 │   ├── user/[id]/       # 學員專屬頁面：基本資料（姓名、身分標籤、已完成課程）+ 本人功能單元
 │   ├── user/[id]/courses/ # 我的開課列表（本人專屬，Spirit ID 小寫路由）
 │   ├── course-sessions/ # 開課查詢頁（保留，將逐步以 /user/[id]/courses 取代）
@@ -394,6 +394,7 @@ createdAt       DateTime
 - `cr-spec-260402-012` — 申請教材簡化：表單精簡為統一編號（選填）+ 取貨方式；`applyMaterialOrder` 自動快照 buyerNameZh/En/teacherName/churchOrg/email/phone/courseDate；後台 `/admin/materials` 展開詳情新增「編輯」按鈕 + `MaterialOrderEditDialog`；新增 `updateMaterialOrderAdmin` Server Action
 - `cr-spec-260402-013` — Seed 補充課程與結業資料：`prisma/seed.ts` 新增冪等 guard（adminInviteCount === 0）；建立兩筆示範 CourseInvite（啟動靈人 catalogId=1、啟動豐盛 catalogId=2）；為黃國倫建立兩筆 InviteEnrollment（status=approved，graduatedAt=2026-04-02），使其具備 canTeach=true 授課資格
 - `cr-spec-260402-014` — Topbar 導覽按鈕 + 個人資料路由遷移：Topbar 新增「回首頁」（→ `/user/{spiritId}`）與「後台管理」（→ `/admin`，admin/superadmin only）按鈕；通知 Drawer SheetHeader 加 `pr-10` 修正與 X 按鈕重疊；個人資料路由從 `/profile` 遷移至 `/user/{spiritId}/profile`（舊路由 server redirect 相容）；`/change-password` 密碼更新後導向 `/user/{spiritId}/profile`
+- `cr-spec-260403-001` — 系統設定 Tabs 整合：`/admin/settings` 改為 Tabs 佈局（「基本設定」：hierarchy_depth superadmin only；「教會代碼維護」：原 `/admin/churches` 內容 admin+）；`/admin/churches` 改為 redirect；後台首頁教會管理卡片連結更新至 `/admin/settings?tab=churches`；tab 以 URL `?tab=` 參數切換
 
 ### 進行中 / 待規劃
 - （無）

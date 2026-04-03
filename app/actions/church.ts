@@ -38,7 +38,7 @@ export async function createChurchAction(
 
   try {
     await createChurch(name, sortOrder)
-    revalidatePath('/admin/churches')
+    revalidatePath('/admin/settings')
     return { success: true, message: '教會已新增' }
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : '新增失敗'
@@ -56,7 +56,7 @@ export async function updateChurchAction(
 
   try {
     await updateChurch(id, { name, sortOrder })
-    revalidatePath('/admin/churches')
+    revalidatePath('/admin/settings')
     return { success: true, message: '已更新' }
   } catch {
     return { success: false, message: '更新失敗' }
@@ -68,7 +68,7 @@ export async function toggleChurchActiveAction(id: number): Promise<ActionRespon
 
   try {
     await toggleChurchActive(id)
-    revalidatePath('/admin/churches')
+    revalidatePath('/admin/settings')
     return { success: true }
   } catch {
     return { success: false, message: '操作失敗' }
@@ -80,7 +80,7 @@ export async function deleteChurchAction(id: number): Promise<ActionResponse> {
 
   try {
     await deleteChurch(id)
-    revalidatePath('/admin/churches')
+    revalidatePath('/admin/settings')
     return { success: true, message: '教會已刪除' }
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : '刪除失敗'

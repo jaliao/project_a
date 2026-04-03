@@ -16,7 +16,6 @@ import {
   IconPackage,
   IconUsers,
   IconSettings,
-  IconBuildingChurch,
 } from '@tabler/icons-react'
 
 export const dynamic = 'force-dynamic'
@@ -60,13 +59,6 @@ const ADMIN_FEATURES = [
     description: '查看會員資料與重設密碼',
     icon: IconUsers,
     href: '/admin/members',
-    superadminOnly: false,
-  },
-  {
-    title: '教會管理',
-    description: '管理教會/單位清單',
-    icon: IconBuildingChurch,
-    href: '/admin/churches',
     superadminOnly: false,
   },
   {
