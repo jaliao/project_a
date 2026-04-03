@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.52（2026-04-02）
+> 自動產生，版本 0.1.53（2026-04-03）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -35,7 +35,7 @@
 app/
 ├── (auth)/          # 公開路由：login, register, forgot/reset-password
 ├── (user)/          # 已登入路由群組（共用 Topbar layout）
-│   ├── layout.tsx   # Topbar 包裝層（含未讀通知數 server fetch）
+│   ├── layout.tsx   # Topbar 包裝層（含未讀通知數 server fetch；傳遞 role/spiritId 給 Topbar）
 │   ├── dashboard/       # redirect → /user/{id}（舊書籤相容）
 │   ├── admin/           # 管理後台：功能按鈕網格（儀錶板/課程/授課/教材/會員/教會/系統設定）
 │   │   ├── members/         # 會員管理清單（搜尋 + 重設密碼 + 查看詳情）
@@ -50,7 +50,8 @@ app/
 │   ├── course/[id]/     # 課程詳情頁（授課老師、學員名單、取消課程、教材申請）
 │   ├── course/[id]/graduate/  # 課程結業表單頁（填寫→預覽→送出）
 │   ├── learning/        # 學習紀錄頁面
-│   └── profile/         # 個人資料維護
+│   ├── profile/         # 舊路由相容：server redirect → /user/{spiritId}/profile
+│   └── user/[spiritId]/profile/  # 個人資料維護（新路由，含 profile-form.tsx）
 ├── change-password/ # 臨時密碼強制變更
 ├── api/auth/        # NextAuth handlers
 ├── api/ecpay/
@@ -62,9 +63,9 @@ app/
 components/
 ├── ui/              # shadcn/ui 基礎元件
 ├── layout/
-│   └── topbar.tsx   # 頂部工具列（sticky；個人資料/訊息通知 Drawer）
+│   └── topbar.tsx   # 頂部工具列（sticky；回首頁→/user/{spiritId}；後台管理→/admin（admin only）；個人資料→/user/{spiritId}/profile；通知 Drawer）
 ├── notification/
-│   └── notification-drawer.tsx  # 右側通知 Drawer（Sheet，lazy load，標記已讀）
+│   └── notification-drawer.tsx  # 右側通知 Drawer（Sheet，lazy load，標記已讀；SheetHeader pr-10 避免與 X 重疊）
 ├── dashboard/
 │   ├── stats-card.tsx      # 統計卡片
 │   ├── recent-members.tsx  # 近期加入會員列表
@@ -392,6 +393,7 @@ createdAt       DateTime
 - `cr-spec-260402-011` — 會員 Profile 增強：`User` 新增 `englishName`/`gender`/`displayNameMode`；`getMemberDisplayName()` 純函式（括號省略規則：匿名==真名時僅顯示一次）；`MemberDisplayName` 元件；個人資料頁新增英文名稱/性別/顯示名稱偏好欄位 + 即時預覽；管理員會員詳情頁顯示英文名稱/性別/顯示名稱；全站會員名稱統一改用 `getMemberDisplayName()`；管理員 email 改為 `101@iwillshare.org.tw`；seed 擴充為 20 位指定學員
 - `cr-spec-260402-012` — 申請教材簡化：表單精簡為統一編號（選填）+ 取貨方式；`applyMaterialOrder` 自動快照 buyerNameZh/En/teacherName/churchOrg/email/phone/courseDate；後台 `/admin/materials` 展開詳情新增「編輯」按鈕 + `MaterialOrderEditDialog`；新增 `updateMaterialOrderAdmin` Server Action
 - `cr-spec-260402-013` — Seed 補充課程與結業資料：`prisma/seed.ts` 新增冪等 guard（adminInviteCount === 0）；建立兩筆示範 CourseInvite（啟動靈人 catalogId=1、啟動豐盛 catalogId=2）；為黃國倫建立兩筆 InviteEnrollment（status=approved，graduatedAt=2026-04-02），使其具備 canTeach=true 授課資格
+- `cr-spec-260402-014` — Topbar 導覽按鈕 + 個人資料路由遷移：Topbar 新增「回首頁」（→ `/user/{spiritId}`）與「後台管理」（→ `/admin`，admin/superadmin only）按鈕；通知 Drawer SheetHeader 加 `pr-10` 修正與 X 按鈕重疊；個人資料路由從 `/profile` 遷移至 `/user/{spiritId}/profile`（舊路由 server redirect 相容）；`/change-password` 密碼更新後導向 `/user/{spiritId}/profile`
 
 ### 進行中 / 待規劃
 - （無）

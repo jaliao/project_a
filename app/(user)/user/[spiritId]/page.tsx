@@ -95,7 +95,7 @@ export default async function UserProfilePage({ params }: Props) {
     <div className="space-y-6">
       {/* 資料完整度提醒（僅本人可見） */}
       {isOwnPage && (
-        <ProfileBanner isComplete={isProfileComplete} displayName={displayName} />
+        <ProfileBanner isComplete={isProfileComplete} displayName={displayName} spiritId={id} />
       )}
 
       <h1 className="text-2xl font-semibold">學員資料</h1>

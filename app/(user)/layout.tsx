@@ -22,7 +22,11 @@ export default async function UserLayout({
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Topbar unreadCount={unreadCount} />
+      <Topbar
+        unreadCount={unreadCount}
+        role={session?.user?.role}
+        spiritId={session?.user?.spiritId ?? undefined}
+      />
       <main className="flex-1 p-6">
         {children}
       </main>

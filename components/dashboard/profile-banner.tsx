@@ -12,9 +12,10 @@ import { IconAlertCircle, IconSparkles } from '@tabler/icons-react'
 interface ProfileBannerProps {
   isComplete: boolean
   displayName: string | null
+  spiritId: string
 }
 
-export function ProfileBanner({ isComplete, displayName }: ProfileBannerProps) {
+export function ProfileBanner({ isComplete, displayName, spiritId }: ProfileBannerProps) {
   if (isComplete) {
     return (
       <div className="flex items-center gap-2 rounded-lg bg-primary/5 border border-primary/20 px-4 py-3 text-sm text-primary">
@@ -33,7 +34,7 @@ export function ProfileBanner({ isComplete, displayName }: ProfileBannerProps) {
         <span>請完善您的個人資料（姓名、通訊 Email、手機號碼），以便接收重要通知。</span>
       </div>
       <Link
-        href="/profile"
+        href={`/user/${spiritId}/profile`}
         className="shrink-0 rounded-md bg-orange-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-orange-700 transition-colors"
       >
         前往填寫

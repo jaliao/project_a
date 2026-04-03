@@ -83,7 +83,7 @@ export function NotificationDrawer({ open, onOpenChange, initialUnreadCount }: N
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:w-96 p-0 flex flex-col">
-        <SheetHeader className="px-4 py-3 border-b flex-row items-center justify-between space-y-0">
+        <SheetHeader className="px-4 py-3 border-b flex-row items-center justify-between space-y-0 pr-10">
           <SheetTitle className="text-base">通知</SheetTitle>
           <Button
             variant="ghost"
