@@ -44,7 +44,7 @@ const ADMIN_FEATURES = [
     title: '授課管理',
     description: '管理開課場次與學員',
     icon: IconSchool,
-    href: '/course-sessions',
+    href: '/admin/course-sessions',
     superadminOnly: false,
   },
   {

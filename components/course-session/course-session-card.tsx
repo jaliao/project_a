@@ -62,6 +62,7 @@ type CourseSessionCardProps = {
   expiredAt: Date | null
   variant?: 'compact' | 'full'
   href?: string
+  newTab?: boolean
   startedAt?: Date | null
   cancelledAt?: Date | null
   completedAt?: Date | null
@@ -84,6 +85,7 @@ export function CourseSessionCard({
   expiredAt,
   variant = 'compact',
   href,
+  newTab = false,
   startedAt,
   cancelledAt,
   completedAt,
@@ -158,6 +160,13 @@ export function CourseSessionCard({
   )
 
   if (href) {
+    if (newTab) {
+      return (
+        <a href={href} target="_blank" rel="noopener noreferrer" className="block">
+          {card}
+        </a>
+      )
+    }
     return (
       <Link href={href} className="block">
         {card}

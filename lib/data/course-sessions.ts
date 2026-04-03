@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * Data Layer - 開課記錄查詢
- * 2026-03-24 (Updated: 2026-03-30)
+ * 2026-03-24 (Updated: 2026-04-03)
  * lib/data/course-sessions.ts
  * ----------------------------------------------
  */
@@ -314,6 +314,121 @@ export async function getMyCompletionCertificates(
     })
   }
   return result
+}
+
+export type AdminCourseSessionParams = {
+  q?: string
+  catalogId?: number
+  status?: 'recruiting' | 'started' | 'completed' | 'cancelled'
+  startDate?: string
+  endDate?: string
+}
+
+/**
+ * 後台查詢全站開課記錄（管理者用）
+ * 回傳符合篩選條件的總數與前 30 筆，按開課日期降序，null 排最後
+ */
+export async function getAllCourseSessionsAdmin(
+  params: AdminCourseSessionParams = {}
+): Promise<{ total: number; items: CourseSessionItem[] }> {
+  const { q, catalogId, status, startDate, endDate } = params
+
+  // 文字搜尋條件
+  const textWhere = q
+    ? {
+        OR: [
+          { title: { contains: q, mode: 'insensitive' as const } },
+          {
+            createdBy: {
+              OR: [
+                { name: { contains: q, mode: 'insensitive' as const } },
+                { realName: { contains: q, mode: 'insensitive' as const } },
+              ],
+            },
+          },
+          {
+            enrollments: {
+              some: {
+                user: {
+                  OR: [
+                    { name: { contains: q, mode: 'insensitive' as const } },
+                    { realName: { contains: q, mode: 'insensitive' as const } },
+                  ],
+                },
+              },
+            },
+          },
+        ],
+      }
+    : {}
+
+  // 進度篩選條件
+  const statusWhere = (() => {
+    if (!status) return {}
+    if (status === 'cancelled') return { cancelledAt: { not: null } }
+    if (status === 'completed') return { cancelledAt: null, completedAt: { not: null } }
+    if (status === 'started') return { cancelledAt: null, completedAt: null, startedAt: { not: null } }
+    // recruiting
+    return { cancelledAt: null, completedAt: null, startedAt: null }
+  })()
+
+  // 課程目錄篩選
+  const catalogWhere = catalogId ? { courseCatalogId: catalogId } : {}
+
+  // 開課日期區間篩選
+  const dateWhere =
+    startDate || endDate
+      ? {
+          courseDate: {
+            ...(startDate ? { gte: startDate } : {}),
+            ...(endDate ? { lte: endDate } : {}),
+          },
+        }
+      : {}
+
+  const where = { ...textWhere, ...statusWhere, ...catalogWhere, ...dateWhere }
+
+  const select = {
+    id: true,
+    title: true,
+    courseCatalog: { select: { id: true, label: true } },
+    maxCount: true,
+    expiredAt: true,
+    createdAt: true,
+    startedAt: true,
+    cancelledAt: true,
+    completedAt: true,
+    _count: { select: { enrollments: true } },
+    courseDate: true,
+    courseOrder: { select: { courseDate: true } },
+  }
+
+  const [total, invites] = await Promise.all([
+    prisma.courseInvite.count({ where }),
+    prisma.courseInvite.findMany({
+      where,
+      take: 30,
+      orderBy: { courseDate: { sort: 'desc', nulls: 'last' } },
+      select,
+    }),
+  ])
+
+  const items = invites.map((invite) => ({
+    id: invite.id,
+    title: invite.title,
+    courseCatalogId: invite.courseCatalog.id,
+    courseCatalogLabel: invite.courseCatalog.label,
+    maxCount: invite.maxCount,
+    enrolledCount: invite._count.enrollments,
+    expiredAt: invite.expiredAt,
+    courseDate: invite.courseDate ?? invite.courseOrder?.courseDate ?? null,
+    createdAt: invite.createdAt,
+    startedAt: invite.startedAt,
+    cancelledAt: invite.cancelledAt,
+    completedAt: invite.completedAt,
+  }))
+
+  return { total, items }
 }
 
 /**
