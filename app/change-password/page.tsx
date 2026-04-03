@@ -38,7 +38,7 @@ export default function ChangePasswordPage() {
       const result = await changeTempPassword(formData)
       if (result.success) {
         toast.success(result.message ?? '密碼已更新')
-        const spiritId = result.data?.spiritId
+        const spiritId = result.data?.spiritId as string | undefined
         router.push(spiritId ? `/user/${spiritId.toLowerCase()}/profile` : '/profile')
         router.refresh()
       } else {
