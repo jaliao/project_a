@@ -28,8 +28,7 @@ const ADMIN_FEATURES = [
     title: '儀錶板',
     description: '系統統計與概覽',
     icon: IconLayoutDashboard,
-    href: null, // 待開發
-    badge: '待開發',
+    href: '/admin/dashboard',
     superadminOnly: false,
   },
   {

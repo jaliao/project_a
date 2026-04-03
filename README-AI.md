@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.56（2026-04-03）
+> 自動產生，版本 0.1.57（2026-04-03）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -38,6 +38,7 @@ app/
 │   ├── layout.tsx   # Topbar 包裝層（含未讀通知數 server fetch；傳遞 role/spiritId 給 Topbar）
 │   ├── dashboard/       # redirect → /user/{id}（舊書籤相容）
 │   ├── admin/           # 管理後台：功能按鈕網格（儀錶板/課程/授課/教材/會員/教會/系統設定）
+│   │   ├── dashboard/       # 後台儀錶板（統計卡片 4 個；開始上課/結業 BarChart；時間區間切換 ?range=）
 │   │   ├── course-sessions/ # 開課管理（全站所有開課；搜尋 + 篩選；另開視窗；前 30 筆）
 │   │   ├── members/         # 會員管理清單（搜尋 + 重設密碼 + 查看詳情）
 │   │   ├── members/[id]/    # 會員詳情（Tabs：基本資料含所屬教會/學習階層）
@@ -398,6 +399,7 @@ createdAt       DateTime
 - `cr-spec-260403-001` — 系統設定 Tabs 整合：`/admin/settings` 改為 Tabs 佈局（「基本設定」：hierarchy_depth superadmin only；「教會代碼維護」：原 `/admin/churches` 內容 admin+）；`/admin/churches` 改為 redirect；後台首頁教會管理卡片連結更新至 `/admin/settings?tab=churches`；tab 以 URL `?tab=` 參數切換
 - `cr-spec-260403-003` — 後台開課管理：新增 `/admin/course-sessions` 全站開課列表（admin+）；文字搜尋（課程名稱/講師/學員）+ 下拉篩選（課程名稱/進度/日期區間）；顯示總筆數，前 30 筆；點擊另開視窗；`CourseSessionCard` 新增 `newTab` prop；`getAllCourseSessionsAdmin()` data layer
 - `cr-spec-260403-004` — 課程目錄管理整合至系統設定：`/admin/settings` Tabs 新增「課程目錄管理」第三分頁（`?tab=courses`）；`/admin/course-catalog` 改為 redirect；後台首頁移除課程管理卡片
+- `cr-spec-260403-005` — 後台儀錶板：新增 `/admin/dashboard`；統計卡片（總學員數/啟動靈人講師數/啟動豐盛講師數/進行中課程數）；開始上課 + 順利結業 BarChart（recharts，依課程類別分組，時間區間 3m/30d/7d 切換）；後台首頁儀錶板卡片啟用
 
 ### 進行中 / 待規劃
 - （無）
