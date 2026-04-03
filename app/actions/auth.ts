@@ -32,6 +32,7 @@ type ActionResponse = {
   success: boolean
   message?: string
   errors?: Record<string, string[]>
+  data?: Record<string, unknown>
 }
 
 // ── 生成臨時密碼（[A-Za-z0-9]{12}） ─────────
