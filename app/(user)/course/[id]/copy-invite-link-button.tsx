@@ -37,7 +37,7 @@ export function CopyInviteLinkButton({ courseId }: Props) {
   }
 
   return (
-    <Button variant="outline" onClick={handleShare} className="w-fit gap-2">
+    <Button variant="outline" size="sm" onClick={handleShare} className="w-fit gap-2">
       <IconShare className="h-4 w-4" />
       {copied ? '已複製！' : '分享'}
     </Button>

@@ -153,18 +153,20 @@ export function CourseDetailActions({
           <p className="text-xs text-muted-foreground">請先申請教材並確認收件，才能開始上課</p>
         )}
 
-        {/* 結業按鈕：導向結業頁面 */}
-        {hasApprovedStudents ? (
-          <Button variant="outline" asChild>
-            <Link href={`/course/${inviteId}/graduate`}>結業</Link>
-          </Button>
-        ) : (
-          <Button
-            variant="outline"
-            onClick={() => toast.error('尚無已核准學員，無法結業')}
-          >
-            結業
-          </Button>
+        {/* 結業按鈕：僅課程進行中（isStarted）才顯示 */}
+        {isStarted && (
+          hasApprovedStudents ? (
+            <Button variant="outline" asChild>
+              <Link href={`/course/${inviteId}/graduate`}>結業</Link>
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              onClick={() => toast.error('尚無已核准學員，無法結業')}
+            >
+              結業
+            </Button>
+          )
         )}
 
         {/* 取消授課按鈕 */}

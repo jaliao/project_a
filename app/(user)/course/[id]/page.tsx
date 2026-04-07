@@ -13,7 +13,6 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import {
   IconArrowLeft,
-  IconChalkboard,
   IconUsers,
   IconUserCheck,
   IconCalendar,
@@ -26,6 +25,8 @@ import { CourseDetailActions } from './course-detail-actions'
 import { CopyInviteLinkButton } from './copy-invite-link-button'
 import { StudentApplySection } from './student-apply-section'
 import { PendingEnrollmentList } from './pending-enrollment-list'
+import { CourseStatusBadge, getCourseStatus } from '@/components/course-session/course-status-badge'
+import { CourseCatalogBadge } from '@/components/course-session/course-catalog-badge'
 
 export const metadata: Metadata = {
   title: '課程詳情 — 啟動事工',
@@ -80,12 +81,13 @@ export default async function CourseDetailPage({
   // 當前使用者的申請記錄
   const myEnrollment = currentUserId
     ? [...courseSession.approvedEnrollments, ...courseSession.pendingEnrollments].find(
-        (e) => e.user.id === currentUserId
-      )
+      (e) => e.user.id === currentUserId
+    )
     : null
 
   const isCancelled = !!courseSession.cancelledAt
   const isCompleted = !!courseSession.completedAt
+  const courseStatus = getCourseStatus(courseSession)
 
   // 學員先修資格檢查（講師本人、已有申請、已取消/結業時不需要）
   const missingPrerequisites =
@@ -94,7 +96,7 @@ export default async function CourseDetailPage({
       : []
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6">
       {/* 返回連結 */}
       <Link
         href="/course-sessions"
@@ -104,25 +106,18 @@ export default async function CourseDetailPage({
         返回開課查詢
       </Link>
 
-      {/* 頁首：標題 + 狀態標籤 */}
+      {/* 頁首：標題 + 狀態標籤 + 分享按鈕 */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2 flex-wrap">
-          <IconChalkboard className="h-6 w-6 text-primary shrink-0" />
           <h1 className="text-2xl font-semibold">{courseSession.title}</h1>
-          <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-            {levelLabel}
-          </span>
+          {/* TODO CourseCatalogBadge 和 CourseStatusBadge 大小要一樣， */}
+          <CourseCatalogBadge catalogId={courseSession.courseCatalogId} label={levelLabel} size="sm" />
+          {courseStatus && <CourseStatusBadge status={courseStatus} size="sm" />}
         </div>
-        <div className="flex shrink-0 gap-2">
-          {isCancelled && (
-            <span className="rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-700">
-              已取消
-            </span>
-          )}
-          {isCompleted && !isCancelled && (
-            <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700">
-              已結業
-            </span>
+        <div className="flex shrink-0 items-center gap-2">
+          {/* 分享按鈕（講師專屬，置於右上） */}
+          {isInstructor && (
+            <CopyInviteLinkButton courseId={courseSession.id} />
           )}
         </div>
       </div>
@@ -242,11 +237,6 @@ export default async function CourseDetailPage({
         </div>
       </div>
 
-      {/* 講師：複製課程連結 */}
-      {isInstructor && (
-        <CopyInviteLinkButton courseId={courseSession.id} />
-      )}
-
       {/* 講師：待審申請 */}
       {isInstructor && courseSession.pendingEnrollments.length > 0 && (
         <PendingEnrollmentList enrollments={courseSession.pendingEnrollments} />
@@ -273,9 +263,8 @@ export default async function CourseDetailPage({
                 </div>
                 <div className="flex items-center gap-3">
                   <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      MATERIAL_COLORS[enrollment.materialChoice] ?? 'bg-gray-100 text-gray-600'
-                    }`}
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${MATERIAL_COLORS[enrollment.materialChoice] ?? 'bg-gray-100 text-gray-600'
+                      }`}
                   >
                     {MATERIAL_LABELS[enrollment.materialChoice] ?? enrollment.materialChoice}
                   </span>

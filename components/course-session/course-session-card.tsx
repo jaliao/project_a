@@ -9,48 +9,8 @@
 import Link from 'next/link'
 import { IconCalendar, IconUsers, IconClock } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
-
-type CourseStatus = 'recruiting' | 'active' | 'completed' | 'cancelled'
-
-const STATUS_LABELS: Record<CourseStatus, string> = {
-  recruiting: '招生中',
-  active: '進行中',
-  completed: '已結業',
-  cancelled: '已取消',
-}
-
-const STATUS_COLORS: Record<CourseStatus, string> = {
-  recruiting: 'bg-blue-100 text-blue-700',
-  active: 'bg-green-100 text-green-700',
-  completed: 'bg-gray-100 text-gray-600',
-  cancelled: 'bg-red-100 text-red-700',
-}
-
-function getCourseStatus(item: {
-  cancelledAt?: Date | null
-  completedAt?: Date | null
-  startedAt?: Date | null
-}): CourseStatus | null {
-  if (item.cancelledAt === undefined && item.completedAt === undefined && item.startedAt === undefined) return null
-  if (item.cancelledAt) return 'cancelled'
-  if (item.completedAt) return 'completed'
-  if (item.startedAt) return 'active'
-  return 'recruiting'
-}
-
-// 課程目錄 id 循環色彩（id 1 → 藍，2 → 綠，3 → 紫，4 → 橘，以此類推）
-const CATALOG_COLORS = [
-  'bg-blue-100 text-blue-700',
-  'bg-green-100 text-green-700',
-  'bg-purple-100 text-purple-700',
-  'bg-orange-100 text-orange-700',
-  'bg-pink-100 text-pink-700',
-  'bg-teal-100 text-teal-700',
-]
-
-function getCatalogColor(id: number): string {
-  return CATALOG_COLORS[(id - 1) % CATALOG_COLORS.length]
-}
+import { CourseStatusBadge, getCourseStatus } from '@/components/course-session/course-status-badge'
+import { CourseCatalogBadge } from '@/components/course-session/course-catalog-badge'
 
 type CourseSessionCardProps = {
   title: string
@@ -90,7 +50,6 @@ export function CourseSessionCard({
   cancelledAt,
   completedAt,
 }: CourseSessionCardProps) {
-  const levelColor = getCatalogColor(courseCatalogId)
   const status = getCourseStatus({ cancelledAt, completedAt, startedAt })
   const progressRatio = maxCount > 0 ? Math.min(enrolledCount / maxCount, 1) : 0
 
@@ -108,14 +67,8 @@ export function CourseSessionCard({
           {title}
         </p>
         <div className="flex shrink-0 items-center gap-1.5">
-          {status && (
-            <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', STATUS_COLORS[status])}>
-              {STATUS_LABELS[status]}
-            </span>
-          )}
-          <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', levelColor)}>
-            {courseCatalogLabel}
-          </span>
+          <CourseCatalogBadge catalogId={courseCatalogId} label={courseCatalogLabel} size="sm" />
+          {status && <CourseStatusBadge status={status} size="sm" />}
         </div>
       </div>
 
@@ -133,8 +86,8 @@ export function CourseSessionCard({
             className={cn(
               'h-full rounded-full transition-all',
               status === 'completed' ? 'bg-gray-400' :
-              status === 'cancelled' ? 'bg-red-400' :
-              status === 'active' ? 'bg-green-500' : 'bg-primary'
+                status === 'cancelled' ? 'bg-red-400' :
+                  status === 'active' ? 'bg-green-500' : 'bg-primary'
             )}
             style={{ width: `${progressRatio * 100}%` }}
           />
