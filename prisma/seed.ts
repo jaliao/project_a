@@ -43,13 +43,13 @@ type StudentSeed = {
 }
 
 const STUDENTS: StudentSeed[] = [
-  // 1. 黃國倫 Gorden
+  // 1. 黃國倫 Gordon
   {
-    email: 'gorden@test.com',
+    email: 'gordon@test.com',
     name: '黃國倫',
     realName: '黃國倫',
-    englishName: 'Gorden',
-    nickname: 'Gorden',
+    englishName: 'Gordon',
+    nickname: 'Gordon',
     gender: 'male',
     displayNameMode: 'chinese',
     spiritId: 'PA260001',
@@ -437,9 +437,9 @@ async function main() {
 
   // ── 示範課程與黃國倫結業資料（快照 2026-04-02）────────────────────
   const admin = await prisma.user.findUnique({ where: { email: ADMIN_EMAIL }, select: { id: true } })
-  const gorden = await prisma.user.findUnique({ where: { email: 'gorden@test.com' }, select: { id: true } })
+  const gordon = await prisma.user.findUnique({ where: { email: 'gordon@test.com' }, select: { id: true } })
 
-  if (admin && gorden) {
+  if (admin && gordon) {
     const adminInviteCount = await prisma.courseInvite.count({ where: { createdById: admin.id } })
 
     if (adminInviteCount === 0) {
@@ -476,14 +476,14 @@ async function main() {
         data: [
           {
             inviteId: invite1.id,
-            userId: gorden.id,
+            userId: gordon.id,
             status: 'approved',
             joinedAt: DEMO_DATE,
             graduatedAt: DEMO_DATE,
           },
           {
             inviteId: invite2.id,
-            userId: gorden.id,
+            userId: gordon.id,
             status: 'approved',
             joinedAt: DEMO_DATE,
             graduatedAt: DEMO_DATE,

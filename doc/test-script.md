@@ -22,9 +22,9 @@
 ### 牧師（已具備開課資格）
 | 欄位 | 值 |
 |------|-----|
-| Email | `gorden@test.com` |
+| Email | `gordon@test.com` |
 | 密碼 | `Student@1234` |
-| 姓名 | 黃國倫（Gorden） |
+| 姓名 | 黃國倫（Gordon） |
 | 靈人 ID | PA260001 |
 | 備註 | 已結業：啟動靈人、啟動豐盛 |
 
@@ -71,7 +71,7 @@
 
 **1. 牧師登入並開課**
 
-1. 以牧師帳號 `gorden@test.com` / `Student@1234` 登入
+1. 以牧師帳號 `gordon@test.com` / `Student@1234` 登入
 2. 進入「課程管理」
 3. 點擊「建立課程邀請」
 4. 填寫：
