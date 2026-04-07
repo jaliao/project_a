@@ -119,17 +119,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.role = dbUser.role
           token.spiritId = dbUser.spiritId
           token.isTempPassword = dbUser.isTempPassword
+          token.isProfileComplete = !!(dbUser.realName && dbUser.phone)
         }
       } else if (token.id) {
         // 後續請求：從 DB 同步動態欄位，確保 role/spiritId 變更立即生效，無需重新登入
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { role: true, spiritId: true, isTempPassword: true },
+          select: { role: true, spiritId: true, isTempPassword: true, realName: true, phone: true },
         })
         if (dbUser) {
           token.role = dbUser.role
           token.spiritId = dbUser.spiritId
           token.isTempPassword = dbUser.isTempPassword
+          token.isProfileComplete = !!(dbUser.realName && dbUser.phone)
         }
       }
       return token
@@ -142,6 +144,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.role = token.role as string
         session.user.spiritId = token.spiritId as string | null
         session.user.isTempPassword = token.isTempPassword as boolean
+        session.user.isProfileComplete = token.isProfileComplete as boolean ?? false
       }
       return session
     },

@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.57（2026-04-03）
+> 自動產生，版本 0.1.63（2026-04-07）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -35,7 +35,7 @@
 app/
 ├── (auth)/          # 公開路由：login, register, forgot/reset-password
 ├── (user)/          # 已登入路由群組（共用 Topbar layout）
-│   ├── layout.tsx   # Topbar 包裝層（含未讀通知數 server fetch；傳遞 role/spiritId 給 Topbar）
+│   ├── layout.tsx   # Topbar 包裝層（含未讀通知數 server fetch；profile completion guard；傳遞 role/spiritId 給 Topbar）
 │   ├── dashboard/       # redirect → /user/{id}（舊書籤相容）
 │   ├── admin/           # 管理後台：功能按鈕網格（儀錶板/課程/授課/教材/會員/教會/系統設定）
 │   │   ├── dashboard/       # 後台儀錶板（統計卡片 4 個；開始上課/結業 BarChart；時間區間切換 ?range=）
@@ -54,12 +54,13 @@ app/
 │   ├── learning/        # 學習紀錄頁面
 │   ├── profile/         # 舊路由相容：server redirect → /user/{spiritId}/profile
 │   └── user/[spiritId]/profile/  # 個人資料維護（新路由，含 profile-form.tsx）
-├── change-password/ # 臨時密碼強制變更
+├── onboarding/      # 首次登入 Onboarding Wizard（三步驟：設定密碼→基本資料→歡迎）
+├── change-password/ # 已登入用戶主動變更密碼（Profile 頁入口）
 ├── api/auth/        # NextAuth handlers
 ├── api/ecpay/
 │   ├── store-map/       # GET：產生 ECPay MapCVS auto-submit form（Mock 模式支援）
 │   └── store-callback/  # POST：接收 ECPay 門市選擇結果，postMessage 回前端後關閉視窗
-├── middleware.ts    # 未登入攔截 + 臨時密碼強制導向
+├── middleware.ts    # 未登入攔截 + 臨時密碼強制導向 + x-pathname header 注入
 └── layout.tsx       # Root layout（Toaster）
 
 components/
@@ -283,11 +284,12 @@ createdAt       DateTime
 ## 5. 關鍵業務邏輯
 
 ### 認證流程（多層）
-1. **Middleware** — 攔截未登入請求，導向 `/login?callbackUrl=<path>`
+1. **Middleware** — 攔截未登入請求，導向 `/login?callbackUrl=<path>`；注入 `x-pathname` header 供 layout guard 使用
 2. **Email 白名單** — Google OAuth callback 驗證 `WhitelistedEmail.isActive`
-3. **臨時密碼攔截** — `isTempPassword=true` 強制導向 `/change-password`
-4. **JWT** — 儲存 `id`, `role`, `spiritId`, `isTempPassword`（30 天）
-5. **登入後預設導向** — `/user/{currentUserId}`（學員專屬頁面）
+3. **臨時密碼攔截** — `isTempPassword=true` 強制導向 `/onboarding`（Onboarding Wizard）
+4. **Profile Completion Guard** — `(user)/layout.tsx` 讀取 `REQUIRE_PROFILE_COMPLETION` 環境變數（預設 true）；啟用時若 `realName`/`phone` 缺失則導向 `/user/{spiritId}/profile?incomplete=1`；排除 `/profile`、`/onboarding` 路徑
+5. **JWT** — 儲存 `id`, `role`, `spiritId`, `isTempPassword`（30 天）
+6. **登入後預設導向** — `/user/{currentUserId}`（學員專屬頁面）
 
 ### Spirit ID 核發
 - 格式：`PA` + 年份後兩碼 + 4 位流水號（例 `PA261001`）
@@ -400,6 +402,15 @@ createdAt       DateTime
 - `cr-spec-260403-003` — 後台開課管理：新增 `/admin/course-sessions` 全站開課列表（admin+）；文字搜尋（課程名稱/講師/學員）+ 下拉篩選（課程名稱/進度/日期區間）；顯示總筆數，前 30 筆；點擊另開視窗；`CourseSessionCard` 新增 `newTab` prop；`getAllCourseSessionsAdmin()` data layer
 - `cr-spec-260403-004` — 課程目錄管理整合至系統設定：`/admin/settings` Tabs 新增「課程目錄管理」第三分頁（`?tab=courses`）；`/admin/course-catalog` 改為 redirect；後台首頁移除課程管理卡片
 - `cr-spec-260403-005` — 後台儀錶板：新增 `/admin/dashboard`；統計卡片（總學員數/啟動靈人講師數/啟動豐盛講師數/進行中課程數）；開始上課 + 順利結業 BarChart（recharts，依課程類別分組，時間區間 3m/30d/7d 切換）；後台首頁儀錶板卡片啟用
+
+- `cr-spec-260407-001` — 測試腳本文件：新增 `doc/test-script.md`，覆蓋牧師開課、種子講師結業、學員報名、忘記密碼四個測試場景
+- `cr-spec-260407-002` — 課程詳情頁 UI 優化：結業按鈕改為進行中才顯示、分享按鈕移至右上角、課程狀態 Badge 完整實作（共用元件 `CourseStatusBadge`/`CourseCatalogBadge`）、課程詳情頁滿版（移除 `max-w-3xl`）
+- `cr-spec-260407-003` — 註冊成功 Dialog：Email 註冊成功後以 Dialog 提示（不可關閉），「返回首頁」導向 `/`
+- `cr-spec-260407-004` — 變更密碼功能：`/change-password` 改為兩欄品牌版型 + 眼睛 icon；Profile 頁新增 `ChangePasswordCard`（`changePassword` action 不修改 `isTempPassword`）
+- `cr-spec-260407-005` — 忘記密碼 UI 改寫：`/forgot-password` 與 `/reset-password` 改為兩欄品牌版型；登入頁新增「忘記密碼？」連結；密碼欄新增眼睛 icon 明碼切換
+- `cr-spec-260407-006` — Profile 完整度強制轉導：`REQUIRE_PROFILE_COMPLETION` 環境變數（預設 true）；`(user)/layout.tsx` 新增 guard（middleware 注入 `x-pathname`）；Profile 頁偵測 `?incomplete=1` 顯示強調提示；Dashboard ProfileBanner 改為 env=false 時才顯示
+
+- `cr-spec-260407-007` — Onboarding Wizard：首次登入三步驟 Wizard（`/onboarding`）；Step1 設定密碼（`changeTempPassword`）→ Step2 填基本資料（`completeOnboardingProfile`）→ Step3 歡迎畫面（顯示靈人編號）；middleware 攔截目標改為 `/onboarding`；`completeOnboardingProfile` 新增 action
 
 ### 進行中 / 待規劃
 - （無）

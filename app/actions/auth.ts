@@ -165,6 +165,33 @@ export async function changePassword(
   return { success: true, message: '密碼已成功更新' }
 }
 
+// ── Onboarding 基本資料填寫 ───────────────────
+export async function completeOnboardingProfile(
+  formData: FormData
+): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, message: '請先登入' }
+  }
+
+  const realName = (formData.get('realName') as string | null)?.trim() ?? ''
+  const phone = (formData.get('phone') as string | null)?.trim() ?? ''
+
+  if (!realName) {
+    return { success: false, errors: { realName: ['請輸入真實姓名'] } }
+  }
+  if (!phone) {
+    return { success: false, errors: { phone: ['請輸入手機號碼'] } }
+  }
+
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { realName, phone },
+  })
+
+  return { success: true, message: '基本資料已儲存' }
+}
+
 // ── 申請密碼重設 ──────────────────────────────
 export async function requestPasswordReset(
   formData: FormData

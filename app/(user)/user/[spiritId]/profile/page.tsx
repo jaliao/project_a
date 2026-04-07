@@ -14,7 +14,14 @@ import { ChangePasswordCard } from './change-password-card'
 import { SignOutSection } from '@/components/profile/sign-out-section'
 import { getActiveChurches } from '@/lib/data/churches'
 
-export default async function ProfilePage() {
+type Props = {
+  searchParams: Promise<{ incomplete?: string }>
+}
+
+export default async function ProfilePage({ searchParams }: Props) {
+  const { incomplete } = await searchParams
+  const isIncomplete = incomplete === '1'
+
   const session = await auth()
   if (!session?.user?.id) redirect('/login')
 
@@ -37,6 +44,13 @@ export default async function ProfilePage() {
   return (
     <div className="container mx-auto max-w-2xl py-8 space-y-8">
       <h1 className="text-2xl font-bold">個人資料</h1>
+
+      {/* 強制填寫提示（由 profile completion guard 轉導時顯示） */}
+      {isIncomplete && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+          請先填寫必要資料（真實姓名、手機號碼），才能繼續使用系統。
+        </div>
+      )}
 
       {/* Spirit ID 唯讀顯示 */}
       <div className="rounded-lg border p-4 space-y-1">

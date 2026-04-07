@@ -91,10 +91,13 @@ export default async function UserProfilePage({ params }: Props) {
 
   const canTeach = isAdmin || certificates.length > 0
 
+  // 強制轉導停用時才顯示 Banner（啟用時 layout guard 已轉導，無需 Banner）
+  const showProfileBanner = process.env.REQUIRE_PROFILE_COMPLETION === 'false'
+
   return (
     <div className="space-y-6">
-      {/* 資料完整度提醒（僅本人可見） */}
-      {isOwnPage && (
+      {/* 資料完整度提醒（僅本人可見，且強制轉導停用時才顯示） */}
+      {isOwnPage && showProfileBanner && (
         <ProfileBanner isComplete={isProfileComplete} displayName={displayName} spiritId={id} />
       )}
 

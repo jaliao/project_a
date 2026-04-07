@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * (user) Layout - 已登入使用者共用佈局
- * 2026-03-23 (Updated: 2026-03-24)
+ * 2026-03-23 (Updated: 2026-04-07)
  * app/(user)/layout.tsx
  * ----------------------------------------------
  */
@@ -16,9 +16,9 @@ export default async function UserLayout({
   children: React.ReactNode
 }) {
   const session = await auth()
-  const unreadCount = session?.user?.id
-    ? await getUnreadNotificationCount(session.user.id)
-    : 0
+  const userId = session?.user?.id
+
+  const unreadCount = userId ? await getUnreadNotificationCount(userId) : 0
 
   return (
     <div className="min-h-screen flex flex-col">

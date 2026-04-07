@@ -13,7 +13,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { signIn } from 'next-auth/react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { Suspense } from 'react'
 import Link from 'next/link'
@@ -56,7 +56,6 @@ function GoogleIcon({ className }: { className?: string }) {
 }
 
 function AuthForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') ?? '/dashboard'
   const [isPending, startTransition] = useTransition()
@@ -76,8 +75,8 @@ function AuthForm() {
       if (result?.error) {
         toast.error('Email 或密碼不正確')
       } else {
-        router.push(callbackUrl)
-        router.refresh()
+        // 強制 full page reload，確保 middleware 能正確攔截（例如 isTempPassword → onboarding）
+        window.location.href = callbackUrl
       }
     })
   }
