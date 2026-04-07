@@ -33,7 +33,7 @@
 
 | spiritId | realName | englishName | gender |
 |----------|----------|-------------|--------|
-| PA260001 | 黃國倫 | Gorden | male |
+| PA260001 | 黃國倫 | Gordon | male |
 | PA260002 | 吳容銘 | Romen | male |
 | PA260003 | — | Hilo | male |
 | PA260004 | — | Joyce | female |

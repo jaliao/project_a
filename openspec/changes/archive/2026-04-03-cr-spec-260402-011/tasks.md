@@ -27,7 +27,7 @@
 
 - [x] 5.1 更新 `prisma/seed.ts` 管理者 email → `101@iwillshare.org.tw`（spiritId 保持 `PA000001`，update 不覆蓋 passwordHash）
 - [x] 5.2 更新 `prisma/seed.ts` 會員列表（由 4 位擴充為 20 位），依指定順序：
-  - PA260001 黃國倫 Gorden（男）
+  - PA260001 黃國倫 Gordon（男）
   - PA260002 吳容銘 Romen（男）
   - PA260003 Hilo（男，無中文名）
   - PA260004 Joyce（女，無中文名）

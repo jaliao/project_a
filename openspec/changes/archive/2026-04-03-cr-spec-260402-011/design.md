@@ -61,7 +61,7 @@ function getMemberDisplayName(user):
 - 管理者 email 由 `justin@blockcode.com.tw` 改為 `101@iwillshare.org.tw`，spiritId 保持 `PA000001`
 - spiritIdCounter 同步至 seq=20
 - 指定順序（PA260001–PA260020）：
-  1. 黃國倫 Gorden（男）
+  1. 黃國倫 Gordon（男）
   2. 吳容銘 Romen（男）
   3. Hilo（男）
   4. Joyce（女）

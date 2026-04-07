@@ -16,8 +16,8 @@
 - **THEN** 回傳 `'黃國倫'`（不加括號）
 
 #### Scenario: 中文模式，nickname 與 realName 不同
-- **WHEN** `displayNameMode = 'chinese'`，`nickname = 'Gorden'`，`realName = '黃國倫'`
-- **THEN** 回傳 `'Gorden（黃國倫）'`
+- **WHEN** `displayNameMode = 'chinese'`，`nickname = 'Gordon'`，`realName = '黃國倫'`
+- **THEN** 回傳 `'Gordon（黃國倫）'`
 
 #### Scenario: 英文模式，englishName 與 realName 相同
 - **WHEN** `displayNameMode = 'english'`，`englishName = 'Hilo'`，`realName = 'Hilo'`（或 `realName = null`）
