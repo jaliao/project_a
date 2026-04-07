@@ -8,7 +8,7 @@
 
 'use client'
 
-import { useTransition } from 'react'
+import { useTransition, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -16,6 +16,8 @@ import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { Suspense } from 'react'
+import Link from 'next/link'
+import { IconEye, IconEyeOff } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -58,6 +60,7 @@ function AuthForm() {
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') ?? '/dashboard'
   const [isPending, startTransition] = useTransition()
+  const [showPassword, setShowPassword] = useState(false)
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -108,17 +111,34 @@ function AuthForm() {
           )}
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor="password" className="sr-only">
-            密碼
-          </Label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="密碼"
-            autoComplete="current-password"
-            disabled={isPending}
-            {...register('password')}
-          />
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className="sr-only">密碼</Label>
+            <Link
+              href="/forgot-password"
+              className="ml-auto text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+            >
+              忘記密碼？
+            </Link>
+          </div>
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="密碼"
+              autoComplete="current-password"
+              disabled={isPending}
+              className="pr-10"
+              {...register('password')}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              tabIndex={-1}
+            >
+              {showPassword ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
+            </button>
+          </div>
           {errors.password && (
             <p className="text-xs text-destructive">{errors.password.message}</p>
           )}
