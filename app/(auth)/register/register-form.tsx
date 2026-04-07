@@ -8,7 +8,8 @@
 
 'use client'
 
-import { useTransition } from 'react'
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -18,6 +19,14 @@ import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { registerSchema } from '@/lib/schemas/auth'
 import { registerWithEmail } from '@/app/actions/auth'
 
@@ -52,7 +61,9 @@ function GoogleIcon({ className }: { className?: string }) {
 }
 
 export function RegisterForm() {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [successOpen, setSuccessOpen] = useState(false)
 
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
@@ -64,7 +75,7 @@ export function RegisterForm() {
       formData.set('email', data.email)
       const result = await registerWithEmail(formData)
       if (result.success) {
-        toast.success(result.message ?? '帳號建立成功，請查收 Email')
+        setSuccessOpen(true)
       } else {
         toast.error(result.errors?.email?.[0] ?? result.message ?? '註冊失敗')
       }
@@ -122,6 +133,23 @@ export function RegisterForm() {
         <GoogleIcon className="mr-2 h-4 w-4" />
         以 Google 帳號繼續
       </Button>
+
+      {/* 註冊成功 Dialog */}
+      <Dialog open={successOpen} onOpenChange={() => { }}>
+        <DialogContent className="sm:max-w-sm" showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>帳號建立成功</DialogTitle>
+            <DialogDescription>
+              請查收 Email 取得臨時密碼，即可登入使用。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button className="w-full" onClick={() => router.push('/')}>
+              返回首頁
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
