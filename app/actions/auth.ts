@@ -125,6 +125,46 @@ export async function changeTempPassword(
   return { success: true, message: '密碼已成功更新', data: { spiritId: updated.spiritId } }
 }
 
+// ── 會員主動變更密碼（不修改 isTempPassword）────
+export async function changePassword(
+  formData: FormData
+): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, message: '請先登入' }
+  }
+
+  const parsed = changePasswordSchema.safeParse({
+    currentPassword: formData.get('currentPassword'),
+    newPassword: formData.get('newPassword'),
+    confirmPassword: formData.get('confirmPassword'),
+  })
+
+  if (!parsed.success) {
+    return { success: false, errors: parsed.error.flatten().fieldErrors }
+  }
+
+  const { currentPassword, newPassword } = parsed.data
+
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } })
+  if (!user?.passwordHash) {
+    return { success: false, message: '帳號不支援密碼登入' }
+  }
+
+  const isValid = await bcrypt.compare(currentPassword, user.passwordHash)
+  if (!isValid) {
+    return { success: false, errors: { currentPassword: ['目前密碼不正確'] } }
+  }
+
+  const newHash = await bcrypt.hash(newPassword, 12)
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { passwordHash: newHash },
+  })
+
+  return { success: true, message: '密碼已成功更新' }
+}
+
 // ── 申請密碼重設 ──────────────────────────────
 export async function requestPasswordReset(
   formData: FormData

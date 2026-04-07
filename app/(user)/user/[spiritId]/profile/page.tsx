@@ -10,6 +10,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import ProfileForm from './profile-form'
+import { ChangePasswordCard } from './change-password-card'
 import { SignOutSection } from '@/components/profile/sign-out-section'
 import { getActiveChurches } from '@/lib/data/churches'
 
@@ -31,6 +32,7 @@ export default async function ProfilePage() {
   if (!user) redirect('/login')
 
   const linkedProviders = user.accounts.map((a) => a.provider)
+  const hasPassword = user.passwordHash !== null
 
   return (
     <div className="container mx-auto max-w-2xl py-8 space-y-8">
@@ -69,6 +71,8 @@ export default async function ProfilePage() {
         linkedProviders={linkedProviders}
         spiritId={user.spiritId ?? ''}
       />
+
+      {hasPassword && <ChangePasswordCard />}
 
       <SignOutSection />
     </div>
