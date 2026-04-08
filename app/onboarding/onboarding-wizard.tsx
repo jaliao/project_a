@@ -10,6 +10,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { signOut } from 'next-auth/react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -293,9 +294,10 @@ export function OnboardingWizard({ initialStep, initialSpiritId }: OnboardingWiz
 
       {/* ── 右側 / 手機全版：表單區 ── */}
       <div className="flex min-h-screen flex-col lg:min-h-0">
-        {/* 手機版 Logo */}
-        <div className="flex items-center px-6 pt-6 lg:hidden">
-          <div className="flex items-center gap-2 text-base font-semibold">
+        {/* 頂部導覽：Logo（手機）+ 登出連結 */}
+        <div className="flex items-center justify-between px-6 pt-6">
+          {/* 手機版 Logo */}
+          <div className="flex items-center gap-2 text-base font-semibold lg:invisible">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
               className="h-5 w-5">
@@ -303,6 +305,14 @@ export function OnboardingWizard({ initialStep, initialSpiritId }: OnboardingWiz
             </svg>
             啟動事工
           </div>
+          {/* 登出連結 */}
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            className="text-sm text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
+          >
+            登出
+          </button>
         </div>
 
         {/* 表單主體 */}
