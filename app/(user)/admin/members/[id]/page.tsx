@@ -101,7 +101,7 @@ export default async function MemberDetailPage({
                 <dd>{member.email}</dd>
               </div>
               <div>
-                <dt className="text-muted-foreground">靈人編號</dt>
+                <dt className="text-muted-foreground">啟動編號</dt>
                 <dd className="font-mono text-xs">{member.spiritId || '—'}</dd>
               </div>
               <div>

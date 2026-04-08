@@ -69,7 +69,7 @@ export function InviteStep({ courseInviteId, onClose }: InviteStepProps) {
         <p className="text-sm font-medium">透過會員編號邀請</p>
         <div className="flex items-center gap-2">
           <Input
-            placeholder="輸入 Spirit ID（例：PA260001）"
+            placeholder="輸入啟動編號（例：PA260001）"
             value={spiritId}
             onChange={(e) => {
               setSpiritId(e.target.value)

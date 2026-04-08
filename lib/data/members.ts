@@ -19,13 +19,14 @@ export async function searchMembers(q?: string) {
           { name: { contains: q, mode: 'insensitive' as const } },
           { nickname: { contains: q, mode: 'insensitive' as const } },
           { email: { contains: q, mode: 'insensitive' as const } },
+          { spiritId: { contains: q, mode: 'insensitive' as const } },
         ],
       }
     : {}
 
   return prisma.user.findMany({
     where,
-    orderBy: { createdAt: 'desc' },
+    orderBy: [{ createdAt: 'desc' }, { realName: 'asc' }],
     select: {
       id: true,
       name: true,

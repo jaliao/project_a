@@ -245,7 +245,7 @@ function Step3Welcome({ spiritId }: { spiritId: string }) {
         <p className="text-sm text-muted-foreground">密碼與基本資料已設定完成。</p>
         {spiritId && (
           <div className="mt-2 rounded-lg bg-muted px-4 py-3">
-            <p className="text-xs text-muted-foreground mb-1">您的靈人編號</p>
+            <p className="text-xs text-muted-foreground mb-1">您的啟動編號</p>
             <p className="text-2xl font-mono font-bold tracking-widest">{spiritId}</p>
           </div>
         )}

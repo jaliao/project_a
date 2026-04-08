@@ -120,7 +120,7 @@ export default async function UserProfilePage({ params }: Props) {
           {/* Spirit ID */}
           {user.spiritId && (
             <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground w-20 shrink-0">Spirit ID</span>
+              <span className="text-sm text-muted-foreground w-20 shrink-0">啟動編號</span>
               <span className="text-sm font-mono">{user.spiritId}</span>
             </div>
           )}

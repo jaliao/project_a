@@ -56,7 +56,7 @@ export default async function AdminMembersPage({
             <tr className="border-b bg-muted/40">
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">姓名</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Email</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">靈人編號</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">啟動編號</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">加入日期</th>
               <th className="px-4 py-3 text-right font-medium text-muted-foreground">操作</th>
             </tr>
