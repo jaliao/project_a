@@ -21,6 +21,11 @@ import { prisma } from './prisma'
 import { generateSpiritId } from './spirit-id'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  pages: {
+    signIn: '/login',
+    error: '/login',
+  },
+
   adapter: PrismaAdapter(prisma),
 
   session: {
@@ -148,10 +153,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return session
     },
-  },
-
-  pages: {
-    signIn: '/login',
-    error: '/login',
   },
 })

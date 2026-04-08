@@ -83,7 +83,6 @@ model User {
 
   // NextAuth 關聯
   accounts Account[]
-  sessions Session[]
 
   // 課程訂購關聯
   courseOrders CourseOrder[]
@@ -119,32 +118,6 @@ model Account {
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
-}
-
-// ==========================================
-// NextAuth - Session 表（資料庫 session 策略）
-// ==========================================
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String   @db.Uuid
-  expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("sessions")
-}
-
-// ==========================================
-// NextAuth - 驗證 Token 表（Email provider 用）
-// ==========================================
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-  @@map("verification_tokens")
 }
 
 // ==========================================
