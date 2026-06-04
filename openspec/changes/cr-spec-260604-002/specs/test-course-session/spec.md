@@ -12,11 +12,15 @@
 - **THEN** 個人頁不渲染「新增測試授課」按鈕或任何相關 UI
 
 ### Requirement: 一鍵建立測試授課
-點擊「新增測試授課」SHALL 一次建立一筆完整的測試授課資料：1 筆 `CourseInvite`（`courseCatalogId = 1` 啟動靈人、`maxCount = 5`、建立者為當前使用者、`startedAt` 為 null 代表待開課），並關聯 5 位學員的 `InviteEnrollment`。SHALL NOT 建立任何 `CourseOrder`（代表教材尚未送出）。
+點擊「新增測試授課」SHALL 一次建立一筆完整的測試授課資料：1 筆 `CourseInvite`（`courseCatalogId = 1` 啟動靈人、`maxCount = 5`、建立者為當前使用者、`startedAt` 為 null 代表待開課），並設定預計開課日期（`courseDate`）與報名截止日期（`expiredAt`），且 `expiredAt` SHALL 早於 `courseDate`。SHALL 關聯 5 位學員的 `InviteEnrollment`。SHALL NOT 建立任何 `CourseOrder`（代表教材尚未送出）。
 
 #### Scenario: 成功建立測試授課
 - **WHEN** 講師於開發環境點擊「新增測試授課」
 - **THEN** 系統建立 1 筆 `CourseInvite`（啟動靈人、`maxCount=5`、`createdById` 為當前使用者、未設 `startedAt`）並回傳成功訊息
+
+#### Scenario: 設定計畫日期
+- **WHEN** 測試授課建立完成
+- **THEN** `CourseInvite.courseDate`（預計開課日期）與 `expiredAt`（報名截止日期）皆有值，且 `expiredAt` 早於 `courseDate`
 
 #### Scenario: 不建立教材訂購單
 - **WHEN** 測試授課建立完成
@@ -27,11 +31,15 @@
 - **THEN** `CourseInvite.startedAt`、`cancelledAt`、`completedAt` 皆為 null（處於已報名、待開課狀態）
 
 ### Requirement: 動態建立五位臨時測試學員
-系統 SHALL 在每次建立測試授課時，動態建立 5 位臨時測試 `User`，每位 SHALL 具備唯一 `email`、`realName` 與自動核發的唯一 `spiritId`，並各建立 1 筆 `InviteEnrollment`（`status = approved`、`materialChoice = none`）關聯至該授課。
+系統 SHALL 在每次建立測試授課時，動態建立 5 位臨時測試 `User`，每位 SHALL 具備唯一 `email`、`realName` 與自動核發的唯一 `spiritId`，並各建立 1 筆 `InviteEnrollment`（`status = approved`）關聯至該授課。每位學員的 `materialChoice` SHALL 自 `none`（無）、`traditional`（繁體）、`simplified`（簡體）中隨機指派。
 
 #### Scenario: 建立五位學員並報名
 - **WHEN** 測試授課建立完成
-- **THEN** 系統建立 5 位新的臨時測試 `User`，並為每位建立 `status = approved`、`materialChoice = none` 的 `InviteEnrollment`，共 5 筆
+- **THEN** 系統建立 5 位新的臨時測試 `User`，並為每位建立 `status = approved` 的 `InviteEnrollment`，共 5 筆
+
+#### Scenario: 隨機指派教材選項
+- **WHEN** 系統為 5 位測試學員建立報名
+- **THEN** 每筆 `InviteEnrollment.materialChoice` 為 `none`、`traditional`、`simplified` 三者之一（隨機）
 
 #### Scenario: 臨時學員具唯一識別
 - **WHEN** 系統建立臨時測試學員

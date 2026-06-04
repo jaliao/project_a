@@ -28,6 +28,17 @@ type ActionResponse = {
 const SPIRIT_COURSE_CATALOG_ID = 1 // 啟動靈人
 const TEST_STUDENT_COUNT = 5
 
+// 教材選項（隨機指派給測試學員）
+const MATERIAL_CHOICES = ['none', 'traditional', 'simplified'] as const
+
+// 格式化日期為 YYYY/MM/DD 字串（與 course-session action 一致）
+function formatDateString(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}/${m}/${d}`
+}
+
 // ── 建立測試授課（啟動靈人 + 5 位臨時學員，教材未送出）──
 export async function createTestCourseSession(): Promise<ActionResponse> {
   // 環境守衛：僅限非 production（不只靠 UI 隱藏）
@@ -48,20 +59,28 @@ export async function createTestCourseSession(): Promise<ActionResponse> {
   // 以時間戳確保臨時 User 的 email 唯一、不與既有資料衝突
   const stamp = Date.now()
 
+  // 計畫日期：報名截止 7 天後、預計開課 14 天後
+  const now = new Date()
+  const expiredAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+  const courseDate = formatDateString(new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000))
+
   const invite = await prisma.$transaction(async (tx) => {
-    // CourseInvite：啟動靈人、maxCount=5、待開課（不設 startedAt）、不關聯 CourseOrder
+    // CourseInvite：啟動靈人、maxCount=5、待開課（不設 startedAt）、含計畫日期、不關聯 CourseOrder
     const createdInvite = await tx.courseInvite.create({
       data: {
         title: '測試授課 - 啟動靈人',
         courseCatalogId: SPIRIT_COURSE_CATALOG_ID,
         maxCount: TEST_STUDENT_COUNT,
+        expiredAt,
+        courseDate,
         createdById,
       },
     })
 
-    // 5 位臨時測試學員 + approved 報名（materialChoice = none）
+    // 5 位臨時測試學員 + approved 報名（materialChoice 隨機：無／繁體／簡體）
     for (let i = 0; i < TEST_STUDENT_COUNT; i++) {
       const label = `測試學員${stamp}-${i}`
+      const materialChoice = MATERIAL_CHOICES[Math.floor(Math.random() * MATERIAL_CHOICES.length)]
       const testUser = await tx.user.create({
         data: {
           email: `test-stu-${stamp}-${i}@test.local`,
@@ -75,7 +94,7 @@ export async function createTestCourseSession(): Promise<ActionResponse> {
           inviteId: createdInvite.id,
           userId: testUser.id,
           status: 'approved',
-          materialChoice: 'none',
+          materialChoice,
         },
       })
     }
