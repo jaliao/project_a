@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.63（2026-04-07）
+> 自動產生，版本 0.1.67（2026-06-04）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -411,6 +411,10 @@ createdAt       DateTime
 - `cr-spec-260407-006` — Profile 完整度強制轉導：`REQUIRE_PROFILE_COMPLETION` 環境變數（預設 true）；`(user)/layout.tsx` 新增 guard（middleware 注入 `x-pathname`）；Profile 頁偵測 `?incomplete=1` 顯示強調提示；Dashboard ProfileBanner 改為 env=false 時才顯示
 
 - `cr-spec-260407-007` — Onboarding Wizard：首次登入三步驟 Wizard（`/onboarding`）；Step1 設定密碼（`changeTempPassword`）→ Step2 填基本資料（`completeOnboardingProfile`）→ Step3 歡迎畫面（顯示靈人編號）；middleware 攔截目標改為 `/onboarding`；`completeOnboardingProfile` 新增 action
+
+- `cr-spec-260408-004` — 啟動編號改名 + 會員管理：spiritId 顯示統一為「啟動編號」；會員管理頁支援啟動編號搜尋、列表依加入日期/姓名排序
+- `cr-spec-260408-005` — 會員 Excel 匯出：`/api/admin/members/export` Route Handler（依 `?q=` 篩選或全部，非 admin 回 401）；會員管理頁「匯出 N 筆／匯出全部」按鈕；13 欄欄位定義（性別/角色/教會中文化）
+- `cr-spec-260604-002` — 新增測試授課（僅測試環境）：使用者頁「新增授課」旁新增「新增測試授課」按鈕（`NODE_ENV=development` 才顯示）；`createTestCourseSession` action 一鍵建立啟動靈人 `CourseInvite`（待開課）+ 5 位動態臨時測試 `User` + 5 筆 approved 報名，不建 `CourseOrder`；action 內含 production 守衛
 
 ### 進行中 / 待規劃
 - （無）

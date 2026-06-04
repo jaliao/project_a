@@ -17,6 +17,7 @@ import { auth } from '@/lib/auth'
 import { Badge } from '@/components/ui/badge'
 import { ProfileBanner } from '@/components/dashboard/profile-banner'
 import { CourseSessionDialog } from '@/components/course-session/course-session-dialog'
+import { TestCourseSessionButton } from '@/components/course-session/test-course-session-button'
 import { CourseSessionCard } from '@/components/course-session/course-session-card'
 import { CourseCardGrid } from '@/components/course-session/course-card-grid'
 import { CompletionCertificateCard } from '@/components/course-invite/completion-certificate-card'
@@ -262,14 +263,18 @@ export default async function UserProfilePage({ params }: Props) {
           )}
 
           {/* 操作按鈕 */}
-          <Suspense>
-            <CourseSessionDialog
-              instructorName={displayName}
-              activeCourses={activeCourses}
-              graduatedCatalogIds={graduatedCatalogIds}
-              isAdmin={isAdmin}
-            />
-          </Suspense>
+          <div className="flex flex-wrap items-center gap-2">
+            <Suspense>
+              <CourseSessionDialog
+                instructorName={displayName}
+                activeCourses={activeCourses}
+                graduatedCatalogIds={graduatedCatalogIds}
+                isAdmin={isAdmin}
+              />
+            </Suspense>
+            {/* 測試環境專用：一鍵建立測試授課 */}
+            {process.env.NODE_ENV === 'development' && <TestCourseSessionButton />}
+          </div>
         </div>
       )}
 
