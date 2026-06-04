@@ -20,7 +20,18 @@ import bcrypt from 'bcryptjs'
 import { prisma } from './prisma'
 import { generateSpiritId } from './spirit-id'
 
+// 對外是否走 HTTPS（透過 Cloudflare Tunnel 對外時為 true）
+// 代理後容器內部為 http，請求協定判斷不可靠，故改以公開 URL 協定為準，
+// 確保 PKCE/session cookie 的 secure 旗標與 __Secure- 前綴在設定/讀取時一致。
+const useSecureCookies = (process.env.NEXTAUTH_URL ?? '').startsWith('https://')
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // 顯式釘住 secret，避免 dev 熱重載產生臨時 secret 導致 PKCE cookie 解密失敗
+  secret: process.env.NEXTAUTH_SECRET,
+  // 信任反向代理（Cloudflare Tunnel）轉發的 Host/Proto，正確組出 callback URL
+  trustHost: true,
+  useSecureCookies,
+
   pages: {
     signIn: '/login',
     error: '/login',
