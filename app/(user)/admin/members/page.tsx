@@ -42,7 +42,21 @@ export default async function AdminMembersPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">會員管理</h1>
-        <span className="text-sm text-muted-foreground">{members.length} 位會員</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">{members.length} 位會員</span>
+          <a
+            href={`/api/admin/members/export${q ? `?q=${encodeURIComponent(q)}` : ''}`}
+            className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+          >
+            匯出 {members.length} 筆
+          </a>
+          <a
+            href="/api/admin/members/export"
+            className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+          >
+            匯出全部
+          </a>
+        </div>
       </div>
 
       {/* 搜尋列 */}
@@ -54,9 +68,9 @@ export default async function AdminMembersPage({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/40">
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">啟動編號</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">姓名</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Email</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">啟動編號</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">加入日期</th>
               <th className="px-4 py-3 text-right font-medium text-muted-foreground">操作</th>
             </tr>
@@ -74,11 +88,11 @@ export default async function AdminMembersPage({
                   key={member.id}
                   className={i < members.length - 1 ? 'border-b' : ''}
                 >
-                  <td className="px-4 py-3 font-medium">{displayName}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{member.email}</td>
                   <td className="px-4 py-3 font-mono text-xs">
                     {member.spiritId ?? '—'}
                   </td>
+                  <td className="px-4 py-3 font-medium">{displayName}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{member.email}</td>
                   <td className="px-4 py-3 text-muted-foreground">{joinDate}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-2">

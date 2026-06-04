@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: 會員清單搜尋
-管理者 SHALL 能在 `/admin/members` 頁面透過搜尋列篩選會員，搜尋條件涵蓋 `realName`、`name`、`nickname`、`email` 欄位（OR 邏輯、不分大小寫、部分匹配）。搜尋條件 SHALL 透過 URL query string `?q=` 傳遞，以支援書籤與重新整理保留。
+管理者 SHALL 能在 `/admin/members` 頁面透過搜尋列篩選會員，搜尋條件涵蓋 `realName`、`name`、`nickname`、`email`、`spiritId` 欄位（OR 邏輯、不分大小寫、部分匹配）。搜尋條件 SHALL 透過 URL query string `?q=` 傳遞，以支援書籤與重新整理保留。表格欄位順序 SHALL 為：啟動編號、姓名、Email、加入日期、操作。
 
 #### Scenario: 依姓名搜尋
 - **WHEN** 管理者在搜尋列輸入名字後停頓（debounce）
@@ -14,6 +14,18 @@
 #### Scenario: 清除搜尋
 - **WHEN** 管理者清空搜尋列
 - **THEN** 頁面顯示全部會員清單
+
+#### Scenario: 依啟動編號搜尋
+- **WHEN** 管理者在搜尋框輸入完整或部分啟動編號（如「PA26」）
+- **THEN** 系統回傳 `spiritId` 包含該字串的所有會員（不分大小寫）
+
+#### Scenario: 啟動編號與姓名同時匹配
+- **WHEN** 管理者輸入可能匹配姓名或啟動編號的字串
+- **THEN** 系統回傳 `realName`、`email`、`spiritId` 任一匹配的會員
+
+#### Scenario: 表格欄位順序
+- **WHEN** 管理者進入 `/admin/members`
+- **THEN** 表格第一欄為「啟動編號」（`spiritId`），依序為姓名、Email、加入日期、操作
 
 ---
 
@@ -60,3 +72,29 @@
 #### Scenario: 取消刪除
 - **WHEN** 管理者在 AlertDialog 點擊取消
 - **THEN** 關閉 dialog，不執行任何刪除動作
+
+---
+
+### Requirement: 會員管理列表排序
+會員管理列表 SHALL 依加入日期（新→舊）為主要排序，姓名（A→Z）為次要排序。
+
+#### Scenario: 新加入會員排在前面
+- **WHEN** 管理員開啟會員管理頁，無搜尋條件
+- **THEN** 清單依 `createdAt` 降序排列，最新加入的會員排第一
+
+#### Scenario: 同日加入者依姓名排序
+- **WHEN** 多位會員在同一日加入
+- **THEN** 同日會員依 `realName` 升序排列
+
+---
+
+### Requirement: 會員管理欄位標題使用「啟動編號」
+會員管理表格及詳情頁 SHALL 以「啟動編號」顯示 spiritId 欄位。
+
+#### Scenario: 會員列表欄位標題
+- **WHEN** 管理員開啟會員管理列表
+- **THEN** 第三欄標題顯示「啟動編號」
+
+#### Scenario: 會員詳情欄位標籤
+- **WHEN** 管理員開啟個別會員詳情頁
+- **THEN** spiritId 欄位標籤顯示「啟動編號」

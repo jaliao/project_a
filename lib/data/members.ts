@@ -95,3 +95,42 @@ export async function getMemberDetail(id: string) {
 }
 
 export type MemberDetail = NonNullable<Awaited<ReturnType<typeof getMemberDetail>>>
+
+// ==========================================
+// 匯出會員資料（完整欄位）
+// ==========================================
+export async function exportMembers(q?: string) {
+  const where = q
+    ? {
+        OR: [
+          { realName: { contains: q, mode: 'insensitive' as const } },
+          { name: { contains: q, mode: 'insensitive' as const } },
+          { nickname: { contains: q, mode: 'insensitive' as const } },
+          { email: { contains: q, mode: 'insensitive' as const } },
+          { spiritId: { contains: q, mode: 'insensitive' as const } },
+        ],
+      }
+    : {}
+
+  return prisma.user.findMany({
+    where,
+    orderBy: [{ createdAt: 'desc' }, { realName: 'asc' }],
+    select: {
+      spiritId: true,
+      realName: true,
+      englishName: true,
+      nickname: true,
+      email: true,
+      commEmail: true,
+      phone: true,
+      gender: true,
+      role: true,
+      church: { select: { name: true } },
+      churchOther: true,
+      churchType: true,
+      learningLevel: true,
+      createdAt: true,
+      lastLoginAt: true,
+    },
+  })
+}
