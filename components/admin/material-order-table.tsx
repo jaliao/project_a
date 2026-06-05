@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { IconChevronDown, IconChevronRight, IconPrinter, IconEdit } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
-import { confirmShipment } from '@/app/actions/course-order'
+import { confirmShipment, confirmShipmentBatch } from '@/app/actions/course-order'
 import type { CourseOrderWithInvite } from '@/lib/data/course-order'
 import { MaterialOrderEditDialog } from './material-order-edit-dialog'
 
@@ -71,9 +71,15 @@ function ShipmentStatusBadge({
 function OrderDetail({
   order,
   onEditClick,
+  onConfirmBatch,
+  busyShipmentId,
+  pending,
 }: {
   order: CourseOrderWithInvite
   onEditClick: () => void
+  onConfirmBatch: (shipmentId: number) => void
+  busyShipmentId: number | null
+  pending: boolean
 }) {
   return (
     <div className="p-4 bg-muted/30 border-t space-y-3">
@@ -120,34 +126,79 @@ function OrderDetail({
           </div>
         )}
       </div>
-      <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm pt-2 border-t">
-        <div>
-          <span className="text-muted-foreground">取貨方式：</span>
-          {DELIVERY_METHOD_LABELS[order.deliveryMethod] ?? order.deliveryMethod}
-          {order.deliveryMethod === 'sevenEleven' && (
-            <span className="ml-1 text-muted-foreground">
-              {order.storeName && order.storeId
-                ? `— ${order.storeName}（${order.storeId}）`
-                : order.deliveryAddress ? `— ${order.deliveryAddress}` : ''}
-            </span>
-          )}
-          {order.deliveryMethod !== 'sevenEleven' && order.deliveryAddress && (
-            <span className="ml-1 text-muted-foreground">— {order.deliveryAddress}</span>
+      {order.shipMode === 'multiple' ? (
+        /* 多地址：逐批次列出與確認 */
+        <div className="pt-2 border-t space-y-2">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            多地址寄送（{order.shipments.filter((s) => s.shippedAt).length}/{order.shipments.length} 已寄送）
+          </p>
+          {order.shipments.map((s, i) => {
+            const addr =
+              s.deliveryMethod === 'delivery'
+                ? s.deliveryAddress || '（未填地址）'
+                : s.storeName && s.storeId
+                  ? `${s.storeName}（${s.storeId}）`
+                  : '（未選門市）'
+            return (
+              <div key={s.id} className="flex items-center justify-between gap-3 rounded-md border bg-background px-3 py-2">
+                <div className="text-sm">
+                  <span className="font-medium">地址 {i + 1}：</span>
+                  <span className="text-muted-foreground">{DELIVERY_METHOD_LABELS[s.deliveryMethod] ?? s.deliveryMethod} — {addr}</span>
+                  <span className="ml-2 text-xs text-muted-foreground">繁 {s.traditionalQty} / 簡 {s.simplifiedQty}</span>
+                </div>
+                {s.shippedAt ? (
+                  <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700 shrink-0">已寄送</span>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 shrink-0"
+                    disabled={pending && busyShipmentId === s.id}
+                    onClick={() => onConfirmBatch(s.id)}
+                  >
+                    {pending && busyShipmentId === s.id ? '處理中...' : '確認已寄送'}
+                  </Button>
+                )}
+              </div>
+            )
+          })}
+          {order.receivedAt && (
+            <div className="text-sm">
+              <span className="text-muted-foreground">收件時間：</span>
+              {order.receivedAt.toLocaleString('zh-TW')}
+            </div>
           )}
         </div>
-        {order.shippedAt && (
+      ) : (
+        <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm pt-2 border-t">
           <div>
-            <span className="text-muted-foreground">寄送時間：</span>
-            {order.shippedAt.toLocaleString('zh-TW')}
+            <span className="text-muted-foreground">取貨方式：</span>
+            {DELIVERY_METHOD_LABELS[order.deliveryMethod] ?? order.deliveryMethod}
+            {order.deliveryMethod === 'sevenEleven' && (
+              <span className="ml-1 text-muted-foreground">
+                {order.storeName && order.storeId
+                  ? `— ${order.storeName}（${order.storeId}）`
+                  : order.deliveryAddress ? `— ${order.deliveryAddress}` : ''}
+              </span>
+            )}
+            {order.deliveryMethod !== 'sevenEleven' && order.deliveryAddress && (
+              <span className="ml-1 text-muted-foreground">— {order.deliveryAddress}</span>
+            )}
           </div>
-        )}
-        {order.receivedAt && (
-          <div>
-            <span className="text-muted-foreground">收件時間：</span>
-            {order.receivedAt.toLocaleString('zh-TW')}
-          </div>
-        )}
-      </div>
+          {order.shippedAt && (
+            <div>
+              <span className="text-muted-foreground">寄送時間：</span>
+              {order.shippedAt.toLocaleString('zh-TW')}
+            </div>
+          )}
+          {order.receivedAt && (
+            <div>
+              <span className="text-muted-foreground">收件時間：</span>
+              {order.receivedAt.toLocaleString('zh-TW')}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -163,6 +214,7 @@ export function MaterialOrderTable({ orders }: MaterialOrderTableProps) {
   const [editOrderId, setEditOrderId] = useState<number | null>(null)
   const [pending, startTransition] = useTransition()
   const [loadingId, setLoadingId] = useState<number | null>(null)
+  const [busyShipmentId, setBusyShipmentId] = useState<number | null>(null)
 
   const editingOrder = editOrderId !== null ? orders.find((o) => o.id === editOrderId) ?? null : null
 
@@ -173,6 +225,20 @@ export function MaterialOrderTable({ orders }: MaterialOrderTableProps) {
       setLoadingId(null)
       if (result.success) {
         toast.success(result.message ?? '已標記為已寄送')
+        router.refresh()
+      } else {
+        toast.error(result.message ?? '操作失敗，請稍後再試')
+      }
+    })
+  }
+
+  function handleConfirmBatch(shipmentId: number) {
+    setBusyShipmentId(shipmentId)
+    startTransition(async () => {
+      const result = await confirmShipmentBatch(shipmentId)
+      setBusyShipmentId(null)
+      if (result.success) {
+        toast.success(result.message ?? '已標記此批次為已寄送')
         router.refresh()
       } else {
         toast.error(result.message ?? '操作失敗，請稍後再試')
@@ -246,26 +312,38 @@ export function MaterialOrderTable({ orders }: MaterialOrderTableProps) {
                   {order.createdAt.toLocaleDateString('zh-TW')}
                 </td>
                 <td className="px-4 py-3">
-                  <ShipmentStatusBadge
-                    shippedAt={order.shippedAt}
-                    receivedAt={order.receivedAt}
-                  />
+                  {order.shipMode === 'multiple' && !order.shippedAt && !order.receivedAt && order.shipments.some((s) => s.shippedAt) ? (
+                    <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
+                      部分已寄送（{order.shipments.filter((s) => s.shippedAt).length}/{order.shipments.length}）
+                    </span>
+                  ) : (
+                    <ShipmentStatusBadge
+                      shippedAt={order.shippedAt}
+                      receivedAt={order.receivedAt}
+                    />
+                  )}
                 </td>
                 <td
                   className="px-4 py-3"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {!order.shippedAt && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={pending && loadingId === order.id}
-                      onClick={() => handleConfirmShipment(order.id)}
-                    >
-                      {pending && loadingId === order.id
-                        ? '處理中...'
-                        : '確認已寄送'}
-                    </Button>
+                  {order.shipMode === 'multiple' ? (
+                    !order.shippedAt && (
+                      <span className="text-xs text-muted-foreground">展開逐批確認</span>
+                    )
+                  ) : (
+                    !order.shippedAt && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={pending && loadingId === order.id}
+                        onClick={() => handleConfirmShipment(order.id)}
+                      >
+                        {pending && loadingId === order.id
+                          ? '處理中...'
+                          : '確認已寄送'}
+                      </Button>
+                    )
                   )}
                 </td>
                 <td
@@ -293,7 +371,13 @@ export function MaterialOrderTable({ orders }: MaterialOrderTableProps) {
               {expandedId === order.id && (
                 <tr key={`detail-${order.id}`}>
                   <td colSpan={11} className="p-0">
-                    <OrderDetail order={order} onEditClick={() => setEditOrderId(order.id)} />
+                    <OrderDetail
+                      order={order}
+                      onEditClick={() => setEditOrderId(order.id)}
+                      onConfirmBatch={handleConfirmBatch}
+                      busyShipmentId={busyShipmentId}
+                      pending={pending}
+                    />
                   </td>
                 </tr>
               )}

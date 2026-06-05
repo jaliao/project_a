@@ -34,6 +34,14 @@ enum DeliveryMethod {
 }
 
 // ==========================================
+// 寄送模式枚舉（單一地址 / 多個地址）
+// ==========================================
+enum ShipMode {
+  single // 單一地址（沿用 CourseOrder 自身寄件欄位）
+  multiple // 多個地址（改用 MaterialShipment 批次）
+}
+
+// ==========================================
 // 課程訂購模型
 // ==========================================
 model CourseOrder {
@@ -46,6 +54,10 @@ model CourseOrder {
   churchOrg   String // 所屬教會/單位
   email       String
   phone       String
+
+  // 寄送模式（single：單一地址；multiple：多地址批次）
+  shipMode  ShipMode           @default(single)
+  shipments MaterialShipment[]
 
   // 教材與購買選項
   materialVersion MaterialVersion
@@ -78,4 +90,30 @@ model CourseOrder {
   courseInvites CourseInvite[]
 
   @@map("course_orders")
+}
+
+// ==========================================
+// 教材寄送批次（多地址模式：一張訂單對多筆寄送）
+// ==========================================
+model MaterialShipment {
+  id Int @id @default(autoincrement())
+
+  courseOrderId Int
+  courseOrder   CourseOrder @relation(fields: [courseOrderId], references: [id], onDelete: Cascade)
+
+  // 寄件資訊（沿用 CourseOrder 欄位語意）
+  deliveryMethod  DeliveryMethod
+  deliveryAddress String? // 宅配地址
+  storeId         String? // 超商門市店號
+  storeName       String? // 超商門市名稱
+
+  // 各版本本數
+  traditionalQty Int @default(0) // 繁體本數
+  simplifiedQty  Int @default(0) // 簡體本數
+
+  shippedAt DateTime? // 此批次寄送時間（有值即已寄送）
+  createdAt DateTime  @default(now())
+
+  @@index([courseOrderId])
+  @@map("material_shipments")
 }

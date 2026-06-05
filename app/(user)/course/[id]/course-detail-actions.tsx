@@ -18,6 +18,17 @@ import { MaterialOrderDialog } from '@/components/course-session/material-order-
 import { startCourseSession } from '@/app/actions/course-invite'
 import { confirmReceipt } from '@/app/actions/course-order'
 
+type Shipment = {
+  id: number
+  deliveryMethod: string
+  deliveryAddress: string | null
+  storeId: string | null
+  storeName: string | null
+  traditionalQty: number
+  simplifiedQty: number
+  shippedAt: Date | null
+}
+
 type CourseOrder = {
   id: number
   taxId: string | null
@@ -27,6 +38,8 @@ type CourseOrder = {
   storeName: string | null
   shippedAt: Date | null
   receivedAt: Date | null
+  shipMode: string
+  shipments: Shipment[]
 }
 
 type Props = {
@@ -36,6 +49,7 @@ type Props = {
   isStarted: boolean
   hasApprovedStudents: boolean
   courseOrder: CourseOrder | null
+  materialSummary: { traditional: number; simplified: number }
 }
 
 export function CourseDetailActions({
@@ -45,6 +59,7 @@ export function CourseDetailActions({
   isStarted,
   hasApprovedStudents,
   courseOrder,
+  materialSummary,
 }: Props) {
   const router = useRouter()
   const [cancelOpen, setCancelOpen] = useState(false)
@@ -188,6 +203,7 @@ export function CourseDetailActions({
         onOpenChange={setMaterialOpen}
         inviteId={inviteId}
         existingOrder={courseOrder}
+        materialSummary={materialSummary}
       />
     </div>
   )

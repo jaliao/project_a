@@ -186,6 +186,17 @@ export type CourseSessionDetail = {
     storeName: string | null
     shippedAt: Date | null
     receivedAt: Date | null
+    shipMode: string
+    shipments: {
+      id: number
+      deliveryMethod: string
+      deliveryAddress: string | null
+      storeId: string | null
+      storeName: string | null
+      traditionalQty: number
+      simplifiedQty: number
+      shippedAt: Date | null
+    }[]
   } | null
 }
 
@@ -239,6 +250,20 @@ export async function getCourseSessionById(
           storeName: true,
           shippedAt: true,
           receivedAt: true,
+          shipMode: true,
+          shipments: {
+            select: {
+              id: true,
+              deliveryMethod: true,
+              deliveryAddress: true,
+              storeId: true,
+              storeName: true,
+              traditionalQty: true,
+              simplifiedQty: true,
+              shippedAt: true,
+            },
+            orderBy: { id: 'asc' },
+          },
         },
       },
     },

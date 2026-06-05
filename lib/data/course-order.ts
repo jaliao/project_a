@@ -32,11 +32,24 @@ export type CourseOrderDetail = {
   createdAt: Date
 }
 
+export type ShipmentInfo = {
+  id: number
+  deliveryMethod: string
+  deliveryAddress: string | null
+  storeId: string | null
+  storeName: string | null
+  traditionalQty: number
+  simplifiedQty: number
+  shippedAt: Date | null
+}
+
 export type CourseOrderWithInvite = CourseOrderDetail & {
   inviteId: number | null
   inviteTitle: string | null
   instructorName: string | null
   instructorEmail: string | null
+  shipMode: string
+  shipments: ShipmentInfo[]
 }
 
 export type CourseOrderForPrint = {
@@ -53,7 +66,21 @@ export type CourseOrderForPrint = {
   inviteId: number | null
   inviteTitle: string | null
   catalogLabel: string | null
+  shipMode: string
+  shipments: ShipmentInfo[]
 }
+
+// 共用 Prisma select：寄送批次欄位
+const shipmentSelect = {
+  id: true,
+  deliveryMethod: true,
+  deliveryAddress: true,
+  storeId: true,
+  storeName: true,
+  traditionalQty: true,
+  simplifiedQty: true,
+  shippedAt: true,
+} as const
 
 /**
  * 取得指定 CourseInvite 的 CourseOrder（含寄送狀態）
@@ -126,6 +153,8 @@ export async function getAllCourseOrdersWithInvite(): Promise<
       shippedAt: true,
       receivedAt: true,
       createdAt: true,
+      shipMode: true,
+      shipments: { select: shipmentSelect, orderBy: { id: 'asc' } },
       courseInvites: {
         take: 1,
         select: {
@@ -161,6 +190,8 @@ export async function getAllCourseOrdersWithInvite(): Promise<
       shippedAt: order.shippedAt,
       receivedAt: order.receivedAt,
       createdAt: order.createdAt,
+      shipMode: order.shipMode,
+      shipments: order.shipments,
       inviteId: invite?.id ?? null,
       inviteTitle: invite?.title ?? null,
       instructorName:
@@ -189,6 +220,8 @@ export async function getCourseOrderForPrint(
       courseDate: true,
       taxId: true,
       shippedAt: true,
+      shipMode: true,
+      shipments: { select: shipmentSelect, orderBy: { id: 'asc' } },
       courseInvites: {
         take: 1,
         select: {
@@ -214,6 +247,8 @@ export async function getCourseOrderForPrint(
     courseDate: order.courseDate,
     taxId: order.taxId,
     shippedAt: order.shippedAt,
+    shipMode: order.shipMode,
+    shipments: order.shipments,
     inviteId: invite?.id ?? null,
     inviteTitle: invite?.title ?? null,
     catalogLabel: invite?.courseCatalog?.label ?? null,

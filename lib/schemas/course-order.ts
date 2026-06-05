@@ -63,34 +63,60 @@ export const courseOrderSchema = z
 
 export type CourseOrderFormValues = z.infer<typeof courseOrderSchema>
 
-// ── 教材申請 Schema（學員僅填取貨資訊，其餘由 Server Action 自動帶入）────
-export const materialOrderSchema = z
+// ── 單筆寄送地址（多地址模式用）──────────────────────────────────────
+export const shipmentItemSchema = z
   .object({
-    taxId: z.string().optional(),
     deliveryMethod: z.enum(['sevenEleven', 'familyMart', 'delivery'], {
       error: '請選擇取貨方式',
     }),
     deliveryAddress: z.string().optional(),
     storeId: z.string().optional(),
     storeName: z.string().optional(),
+    traditionalQty: z.number().int().min(0, '本數不可為負'),
+    simplifiedQty: z.number().int().min(0, '本數不可為負'),
   })
   .superRefine((data, ctx) => {
     if (data.deliveryMethod === 'sevenEleven' || data.deliveryMethod === 'familyMart') {
       if (!data.storeId?.trim() || !data.storeName?.trim()) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: '請選取取貨門市',
-          path: ['storeId'],
-        })
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: '請選取取貨門市', path: ['storeId'] })
       }
-    } else {
-      if (!data.deliveryAddress?.trim()) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: '請填寫收件地址',
-          path: ['deliveryAddress'],
-        })
+    } else if (!data.deliveryAddress?.trim()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: '請填寫收件地址', path: ['deliveryAddress'] })
+    }
+  })
+
+export type ShipmentItemValues = z.infer<typeof shipmentItemSchema>
+
+// ── 教材申請 Schema（學員僅填取貨資訊，其餘由 Server Action 自動帶入）────
+// 支援 single（單一地址，現行流程）與 multiple（多地址批次）兩種寄送模式
+export const materialOrderSchema = z
+  .object({
+    taxId: z.string().optional(),
+    shipMode: z.enum(['single', 'multiple']),
+    // 單一地址欄位
+    deliveryMethod: z.enum(['sevenEleven', 'familyMart', 'delivery']).optional(),
+    deliveryAddress: z.string().optional(),
+    storeId: z.string().optional(),
+    storeName: z.string().optional(),
+    // 多地址批次
+    shipments: z.array(shipmentItemSchema).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.shipMode === 'multiple') {
+      if (!data.shipments || data.shipments.length === 0) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: '請至少新增一個寄送地址', path: ['shipments'] })
       }
+      return
+    }
+    // single：取貨方式必填 + 對應門市/地址
+    if (!data.deliveryMethod) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: '請選擇取貨方式', path: ['deliveryMethod'] })
+    } else if (data.deliveryMethod === 'sevenEleven' || data.deliveryMethod === 'familyMart') {
+      if (!data.storeId?.trim() || !data.storeName?.trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: '請選取取貨門市', path: ['storeId'] })
+      }
+    } else if (!data.deliveryAddress?.trim()) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: '請填寫收件地址', path: ['deliveryAddress'] })
     }
   })
 

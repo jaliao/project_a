@@ -1,27 +1,3 @@
-## ADDED Requirements
-
-### Requirement: CourseOrder storeId 欄位
-`CourseOrder` model SHALL 新增 `storeId String?` 欄位，儲存 7-11 取貨門市店號。
-
-#### Scenario: 選擇 7-11 取貨時設定 storeId
-- **WHEN** 建立或更新 `CourseOrder` 且 `deliveryMethod == sevenEleven`
-- **THEN** `storeId` 儲存使用者透過門市選擇器選取的店號
-
-#### Scenario: 非 7-11 取貨時 storeId 為 null
-- **WHEN** `deliveryMethod` 為 `familyMart` 或 `delivery`
-- **THEN** `storeId` 為 null
-
-### Requirement: CourseOrder storeName 欄位
-`CourseOrder` model SHALL 新增 `storeName String?` 欄位，儲存 7-11 取貨門市店名。
-
-#### Scenario: 選擇 7-11 取貨時設定 storeName
-- **WHEN** 建立或更新 `CourseOrder` 且 `deliveryMethod == sevenEleven`
-- **THEN** `storeName` 儲存使用者透過門市選擇器選取的店名
-
-#### Scenario: 非 7-11 取貨時 storeName 為 null
-- **WHEN** `deliveryMethod` 為 `familyMart` 或 `delivery`
-- **THEN** `storeName` 為 null
-
 ## MODIFIED Requirements
 
 ### Requirement: applyMaterialOrder Server Action

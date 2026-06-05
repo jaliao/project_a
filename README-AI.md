@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.67（2026-06-04）
+> 自動產生，版本 0.1.68（2026-06-04）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -414,6 +414,7 @@ createdAt       DateTime
 
 - `cr-spec-260408-004` — 啟動編號改名 + 會員管理：spiritId 顯示統一為「啟動編號」；會員管理頁支援啟動編號搜尋、列表依加入日期/姓名排序
 - `cr-spec-260408-005` — 會員 Excel 匯出：`/api/admin/members/export` Route Handler（依 `?q=` 篩選或全部，非 admin 回 401）；會員管理頁「匯出 N 筆／匯出全部」按鈕；13 欄欄位定義（性別/角色/教會中文化）
+- `cr-spec-260604-001` — 多個教材寄送地址：新增 `ShipMode` enum、`CourseOrder.shipMode`、`MaterialShipment` 寄送批次 model；教材申請可選單一/多地址，多地址依繁/簡本數分配至全部完成；`applyMaterialOrder` 接收 `shipMode`/`shipments` 並權威驗證本數總和；新增 `confirmShipmentBatch`（全部批次寄完自動設 `CourseOrder.shippedAt`）；後台逐批次確認、出貨單列印每批次一份；單一地址流程與講師收件不變
 - `cr-spec-260604-002` — 新增測試授課（僅測試環境）：使用者頁「新增授課」旁新增「新增測試授課」按鈕（`NODE_ENV=development` 才顯示）；`createTestCourseSession` action 一鍵建立啟動靈人 `CourseInvite`（待開課）+ 5 位動態臨時測試 `User` + 5 筆 approved 報名，不建 `CourseOrder`；action 內含 production 守衛
 
 ### 進行中 / 待規劃

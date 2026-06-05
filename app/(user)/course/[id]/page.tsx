@@ -19,7 +19,7 @@ import {
   IconClock,
 } from '@tabler/icons-react'
 import { auth } from '@/lib/auth'
-import { getCourseSessionById } from '@/lib/data/course-sessions'
+import { getCourseSessionById, getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
 import { checkPrerequisites } from '@/lib/data/course-catalog'
 import { CourseDetailActions } from './course-detail-actions'
 import { CopyInviteLinkButton } from './copy-invite-link-button'
@@ -77,6 +77,11 @@ export default async function CourseDetailPage({
 
   const isInstructor = userSession?.user?.id === courseSession.createdBy.id
   const currentUserId = userSession?.user?.id
+
+  // 多地址寄送所需：應寄繁/簡本數（依 approved 學員 materialChoice 統計）
+  const materialSummary = isInstructor
+    ? await getEnrollmentMaterialSummary(courseSession.id)
+    : { traditional: 0, simplified: 0 }
 
   // 當前使用者的申請記錄
   const myEnrollment = currentUserId
@@ -302,6 +307,7 @@ export default async function CourseDetailPage({
           isStarted={!!courseSession.startedAt}
           hasApprovedStudents={courseSession.approvedEnrollments.length > 0}
           courseOrder={courseSession.courseOrder}
+          materialSummary={materialSummary}
         />
       )}
     </div>
