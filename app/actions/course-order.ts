@@ -11,6 +11,7 @@
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
+import { canAccessAdmin } from '@/lib/auth-roles'
 import { courseOrderSchema, materialOrderSchema, adminMaterialOrderEditSchema } from '@/lib/schemas/course-order'
 import { getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
 import type { MaterialVersion, PurchaseType, DeliveryMethod, ShipMode } from '@prisma/client'
@@ -238,9 +239,7 @@ export async function confirmShipment(orderId: number): Promise<ActionResponse> 
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
 
-  const isAdmin =
-    session.user.role === 'admin' || session.user.role === 'superadmin'
-  if (!isAdmin) return { success: false, message: '無權限' }
+  if (!canAccessAdmin(session.user.roles)) return { success: false, message: '無權限' }
 
   const order = await prisma.courseOrder.findUnique({
     where: { id: orderId },
@@ -266,9 +265,7 @@ export async function confirmShipmentBatch(shipmentId: number): Promise<ActionRe
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
 
-  const isAdmin =
-    session.user.role === 'admin' || session.user.role === 'superadmin'
-  if (!isAdmin) return { success: false, message: '無權限' }
+  if (!canAccessAdmin(session.user.roles)) return { success: false, message: '無權限' }
 
   const shipment = await prisma.materialShipment.findUnique({
     where: { id: shipmentId },
@@ -341,8 +338,7 @@ export async function updateMaterialOrderAdmin(
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
 
-  const isAdmin = session.user.role === 'admin' || session.user.role === 'superadmin'
-  if (!isAdmin) return { success: false, message: '無權限' }
+  if (!canAccessAdmin(session.user.roles)) return { success: false, message: '無權限' }
 
   const parsed = adminMaterialOrderEditSchema.safeParse(formData)
   if (!parsed.success) {

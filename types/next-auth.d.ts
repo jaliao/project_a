@@ -12,7 +12,7 @@ declare module 'next-auth' {
   interface Session {
     user: {
       id: string
-      role: string
+      roles: string[]
       spiritId: string | null
       isTempPassword: boolean
       isProfileComplete: boolean

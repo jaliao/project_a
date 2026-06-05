@@ -10,6 +10,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
+import { canAccessAdmin } from '@/lib/auth-roles'
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 
@@ -39,8 +40,7 @@ export async function updateCourse(
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
 
-  const isAdmin = session.user.role === 'admin' || session.user.role === 'superadmin'
-  if (!isAdmin) return { success: false, message: '無權限執行此操作' }
+  if (!canAccessAdmin(session.user.roles)) return { success: false, message: '無權限執行此操作' }
 
   const parsed = updateCourseSchema.safeParse(data)
   if (!parsed.success) {

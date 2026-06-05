@@ -14,6 +14,7 @@ import Link from 'next/link'
 import { IconUser, IconBook, IconChalkboard, IconShieldCheck, IconAward, IconHistory } from '@tabler/icons-react'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
+import { canAccessAdmin, canTeach as canTeachByRoles } from '@/lib/auth-roles'
 import { Badge } from '@/components/ui/badge'
 import { ProfileBanner } from '@/components/dashboard/profile-banner'
 import { CourseSessionDialog } from '@/components/course-session/course-session-dialog'
@@ -47,7 +48,7 @@ export default async function UserProfilePage({ params }: Props) {
       commEmail: true,
       phone: true,
       spiritId: true,
-      role: true,
+      roles: true,
     },
   })
 
@@ -75,7 +76,7 @@ export default async function UserProfilePage({ params }: Props) {
 
   // 計算身分標籤（角色標籤優先，講師標籤依結業紀錄升序排列）
   const identityTags: string[] = []
-  if (user.role === 'admin' || user.role === 'superadmin') {
+  if (canAccessAdmin(user.roles)) {
     identityTags.push('系統管理員')
   }
   for (const cert of certificates) {
@@ -88,9 +89,10 @@ export default async function UserProfilePage({ params }: Props) {
   // 本人頁面才需要的資料
   const effectiveCommEmail = user.commEmail ?? user.email
   const isProfileComplete = !!(user.realName && effectiveCommEmail && user.phone)
-  const isAdmin = session?.user?.role === 'admin' || session?.user?.role === 'superadmin'
+  const isAdmin = canAccessAdmin(session?.user?.roles)
 
-  const canTeach = isAdmin || certificates.length > 0
+  // 開課入口：依講師身分（teacher/admin/superadmin）顯示，與 server action 授權一致
+  const canTeach = canTeachByRoles(session?.user?.roles)
 
   // 強制轉導停用時才顯示 Banner（啟用時 layout guard 已轉導，無需 Banner）
   const showProfileBanner = process.env.REQUIRE_PROFILE_COMPLETION === 'false'

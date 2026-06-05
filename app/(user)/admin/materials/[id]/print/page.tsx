@@ -8,6 +8,7 @@
 
 import { notFound, redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
+import { canAccessAdmin } from '@/lib/auth-roles'
 import { getCourseOrderForPrint } from '@/lib/data/course-order'
 import { getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
 import { PrintButton } from './print-button'
@@ -27,9 +28,7 @@ export default async function PrintShippingOrderPage({
   const session = await auth()
   if (!session?.user) redirect('/login')
 
-  const isAdmin =
-    session.user.role === 'admin' || session.user.role === 'superadmin'
-  if (!isAdmin) redirect('/')
+  if (!canAccessAdmin(session.user.roles)) redirect('/')
 
   const orderId = parseInt(id, 10)
   if (isNaN(orderId)) notFound()

@@ -13,18 +13,19 @@ import { useRouter } from 'next/navigation'
 import { IconUser, IconBell, IconHome, IconLayoutDashboard } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { NotificationDrawer } from '@/components/notification/notification-drawer'
+import { canAccessAdmin } from '@/lib/auth-roles'
 
 interface TopbarProps {
   unreadCount?: number
-  role?: string
+  roles?: string[]
   spiritId?: string
 }
 
-export function Topbar({ unreadCount = 0, role, spiritId }: TopbarProps) {
+export function Topbar({ unreadCount = 0, roles, spiritId }: TopbarProps) {
   const router = useRouter()
   const [isNotifOpen, setIsNotifOpen] = useState(false)
 
-  const isAdmin = role === 'admin' || role === 'superadmin'
+  const isAdmin = canAccessAdmin(roles)
   const homeUrl = spiritId ? `/user/${spiritId.toLowerCase()}` : '/'
   const profileUrl = spiritId ? `/user/${spiritId.toLowerCase()}/profile` : '/profile'
 

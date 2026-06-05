@@ -289,12 +289,12 @@ async function main() {
       nickname: ADMIN_NICKNAME,
       spiritId: ADMIN_SPIRIT_ID,
       passwordHash: adminHash,
-      role: 'superadmin',
+      roles: ['user', 'superadmin'],
       isTempPassword: true,
     },
     update: {
       // 不覆蓋 passwordHash，避免管理員已改密碼後被重置
-      role: 'superadmin',
+      roles: ['user', 'superadmin'],
       name: ADMIN_NAME,
       realName: ADMIN_REAL_NAME,
       nickname: ADMIN_NICKNAME,
@@ -327,7 +327,7 @@ async function main() {
           spiritId: student.spiritId,
           phone: student.phone,
           passwordHash: studentHash,
-          role: 'user',
+          roles: ['user'],
           isTempPassword: true,
         },
         update: {

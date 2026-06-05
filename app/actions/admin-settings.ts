@@ -10,6 +10,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { auth } from '@/lib/auth'
+import { isSuperadmin } from '@/lib/auth-roles'
 import { upsertAdminSetting } from '@/lib/data/admin-settings'
 
 export type ActionResponse = {
@@ -20,7 +21,7 @@ export type ActionResponse = {
 
 export async function updateHierarchyDepth(depth: number): Promise<ActionResponse> {
   const session = await auth()
-  if (session?.user?.role !== 'superadmin') {
+  if (!isSuperadmin(session?.user?.roles)) {
     return { success: false, message: '權限不足' }
   }
 

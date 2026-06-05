@@ -10,9 +10,10 @@
 // 使用者角色枚舉
 // ==========================================
 enum UserRole {
-  user
-  admin
-  superadmin
+  user // 一般會員（基線身分，恆存在）
+  teacher // 講師（具開課權限）
+  admin // 管理者（可存取後台）
+  superadmin // 超級管理者（最高權限）
 }
 
 // ==========================================
@@ -41,7 +42,7 @@ model User {
   emailVerified DateTime?
   name          String?
   image         String?
-  role          UserRole  @default(user)
+  roles         UserRole[] @default([user]) // 多重身分集合，至少含 user 基線
 
   // 啟動靈人身分識別
   spiritId String? @unique // 格式：PA + YY + XXXX

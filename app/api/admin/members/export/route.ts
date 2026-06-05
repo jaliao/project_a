@@ -9,6 +9,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as XLSX from 'xlsx'
 import { auth } from '@/lib/auth'
+import { canAccessAdmin, ROLE_LABELS } from '@/lib/auth-roles'
+import type { UserRole } from '@prisma/client'
 import { exportMembers } from '@/lib/data/members'
 
 // 性別中文化
@@ -18,11 +20,9 @@ function formatGender(gender: string | null | undefined): string {
   return '未指定'
 }
 
-// 角色中文化
-function formatRole(role: string): string {
-  if (role === 'admin') return '管理員'
-  if (role === 'superadmin') return '超級管理員'
-  return '會員'
+// 身分中文化（輸出所有身分，以頓號分隔）
+function formatRoles(roles: UserRole[]): string {
+  return roles.map((r) => ROLE_LABELS[r] ?? r).join('、')
 }
 
 // 所屬教會組合
@@ -43,7 +43,7 @@ function formatDate(date: Date | null | undefined): string {
 export async function GET(req: NextRequest) {
   // 驗證 session + admin role
   const session = await auth()
-  if (!session?.user || !['admin', 'superadmin'].includes(session.user.role ?? '')) {
+  if (!session?.user || !canAccessAdmin(session.user.roles)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
     通訊Email: m.commEmail ?? '',
     手機: m.phone ?? '',
     性別: formatGender(m.gender),
-    角色: formatRole(m.role),
+    身分: formatRoles(m.roles),
     所屬教會: formatChurch(m.church?.name, m.churchOther, m.churchType),
     學習等級: m.learningLevel,
     加入日期: formatDate(m.createdAt),

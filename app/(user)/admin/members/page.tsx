@@ -11,10 +11,14 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { auth } from '@/lib/auth'
+import { canAccessAdmin, ROLE_LABELS } from '@/lib/auth-roles'
+import type { UserRole } from '@prisma/client'
 import { searchMembers } from '@/lib/data/members'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { MemberResetButton } from '@/components/admin/member-reset-button'
 import { MemberSearchInput } from '@/components/admin/member-search-input'
+import { CreateMemberDialog } from '@/components/admin/create-member-dialog'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
 export const dynamic = 'force-dynamic'
@@ -31,9 +35,7 @@ export default async function AdminMembersPage({
   const session = await auth()
   if (!session?.user) redirect('/login')
 
-  const isAdmin =
-    session.user.role === 'admin' || session.user.role === 'superadmin'
-  if (!isAdmin) redirect('/')
+  if (!canAccessAdmin(session.user.roles)) redirect('/')
 
   const { q } = await searchParams
   const members = await searchMembers(q)
@@ -43,6 +45,7 @@ export default async function AdminMembersPage({
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">會員管理</h1>
         <div className="flex items-center gap-2">
+          <CreateMemberDialog />
           <span className="text-sm text-muted-foreground">{members.length} 位會員</span>
           <a
             href={`/api/admin/members/export${q ? `?q=${encodeURIComponent(q)}` : ''}`}
@@ -71,18 +74,13 @@ export default async function AdminMembersPage({
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">啟動編號</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">姓名</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Email</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">加入日期</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">身分</th>
               <th className="px-4 py-3 text-right font-medium text-muted-foreground">操作</th>
             </tr>
           </thead>
           <tbody>
             {members.map((member, i) => {
               const displayName = getMemberDisplayName(member)
-              const joinDate = member.createdAt.toLocaleDateString('zh-TW', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-              })
               return (
                 <tr
                   key={member.id}
@@ -93,7 +91,15 @@ export default async function AdminMembersPage({
                   </td>
                   <td className="px-4 py-3 font-medium">{displayName}</td>
                   <td className="px-4 py-3 text-muted-foreground">{member.email}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{joinDate}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-1">
+                      {(member.roles as UserRole[]).map((r) => (
+                        <Badge key={r} variant="secondary" className="text-xs">
+                          {ROLE_LABELS[r] ?? r}
+                        </Badge>
+                      ))}
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Button variant="ghost" size="sm" asChild>

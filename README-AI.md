@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.68（2026-06-04）
+> 自動產生，版本 0.1.69（2026-06-05）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -35,7 +35,7 @@
 app/
 ├── (auth)/          # 公開路由：login, register, forgot/reset-password
 ├── (user)/          # 已登入路由群組（共用 Topbar layout）
-│   ├── layout.tsx   # Topbar 包裝層（含未讀通知數 server fetch；profile completion guard；傳遞 role/spiritId 給 Topbar）
+│   ├── layout.tsx   # Topbar 包裝層（含未讀通知數 server fetch；profile completion guard；傳遞 roles/spiritId 給 Topbar）
 │   ├── dashboard/       # redirect → /user/{id}（舊書籤相容）
 │   ├── admin/           # 管理後台：功能按鈕網格（儀錶板/課程/授課/教材/會員/教會/系統設定）
 │   │   ├── dashboard/       # 後台儀錶板（統計卡片 4 個；開始上課/結業 BarChart；時間區間切換 ?range=）
@@ -169,7 +169,7 @@ prerequisites CourseCatalog[]（多對多自關聯，_CoursePrerequisites join t
 id            UUID（主鍵）
 email         String（唯一，登入帳號）
 name          String?
-role          UserRole (user | admin | superadmin)
+roles         UserRole[] (多重身分；user 基線 + teacher/admin/superadmin，預設 [user])
 spiritId      String?（唯一，格式 PA+YY+XXXX）
 passwordHash  String?（Google-only 為 null）
 isTempPassword Boolean（臨時密碼強制變更旗標）
@@ -288,7 +288,7 @@ createdAt       DateTime
 2. **Email 白名單** — Google OAuth callback 驗證 `WhitelistedEmail.isActive`
 3. **臨時密碼攔截** — `isTempPassword=true` 強制導向 `/onboarding`（Onboarding Wizard）
 4. **Profile Completion Guard** — `(user)/layout.tsx` 讀取 `REQUIRE_PROFILE_COMPLETION` 環境變數（預設 true）；啟用時若 `realName`/`phone` 缺失則導向 `/user/{spiritId}/profile?incomplete=1`；排除 `/profile`、`/onboarding` 路徑
-5. **JWT** — 儲存 `id`, `role`, `spiritId`, `isTempPassword`（30 天）
+5. **JWT** — 儲存 `id`, `roles`（多重身分陣列）, `spiritId`, `isTempPassword`（30 天）；授權判定一律走 `lib/auth-roles.ts`（`canAccessAdmin`/`canTeach`/`isSuperadmin`/`hasRole`）
 6. **登入後預設導向** — `/user/{currentUserId}`（學員專屬頁面）
 
 ### Spirit ID 核發
@@ -303,15 +303,14 @@ createdAt       DateTime
 - 結業後 `InviteEnrollment.graduatedAt` 有值，`getGraduatedCatalogIds(userId)` 回傳 Set
 
 ### 身分標籤
-- 來源：`User.role`（管理者）+ `InviteEnrollment.graduatedAt`（講師，以結業證書 courseCatalogLabel 推導）
-- `role = admin | superadmin` → 顯示「系統管理員」Badge
+- 來源：`User.roles`（管理者）+ `InviteEnrollment.graduatedAt`（講師，以結業證書 courseCatalogLabel 推導）
+- `canAccessAdmin(roles)` → 顯示「系統管理員」Badge
 - 有結業證書 → 顯示「{courseCatalogLabel} 講師」Badge（可多標籤）
 
 ### 開課身分驗證
-- `canTeach = isAdmin || certificates.length > 0`（certificates = getMyCompletionCertificates）
-- 精靈 Step 1：卡片資格判斷 = `isAdmin || graduatedCatalogIds.includes(course.id)`（結業該課程本身）
-- `canTeach = false` → 按鈕 disabled + tooltip「需具備講師身分才能開課」
-- Server Action 層仍保留先修驗證（defense-in-depth）
+- 開課（建立 CourseInvite）前置：`canTeach(roles)` = 含 `teacher`/`admin`/`superadmin`；`createCourseSession`/`createInvite` 於 Server Action 層權威驗證，未具資格回傳「需具講師身分方可開課」
+- 首頁「新增開課」入口依 `canTeach(session.user.roles)` 顯示／隱藏
+- Server Action 層另保留先修驗證（defense-in-depth；admin/superadmin 豁免）
 
 ### 新增授課精靈（三步驟）
 1. **Step 1**：卡片式課程選擇（DB 課程列表；顯示先修條件說明）
@@ -416,6 +415,7 @@ createdAt       DateTime
 - `cr-spec-260408-005` — 會員 Excel 匯出：`/api/admin/members/export` Route Handler（依 `?q=` 篩選或全部，非 admin 回 401）；會員管理頁「匯出 N 筆／匯出全部」按鈕；13 欄欄位定義（性別/角色/教會中文化）
 - `cr-spec-260604-001` — 多個教材寄送地址：新增 `ShipMode` enum、`CourseOrder.shipMode`、`MaterialShipment` 寄送批次 model；教材申請可選單一/多地址，多地址依繁/簡本數分配至全部完成；`applyMaterialOrder` 接收 `shipMode`/`shipments` 並權威驗證本數總和；新增 `confirmShipmentBatch`（全部批次寄完自動設 `CourseOrder.shippedAt`）；後台逐批次確認、出貨單列印每批次一份；單一地址流程與講師收件不變
 - `cr-spec-260604-002` — 新增測試授課（僅測試環境）：使用者頁「新增授課」旁新增「新增測試授課」按鈕（`NODE_ENV=development` 才顯示）；`createTestCourseSession` action 一鍵建立啟動靈人 `CourseInvite`（待開課）+ 5 位動態臨時測試 `User` + 5 筆 approved 報名，不建 `CourseOrder`；action 內含 production 守衛
+- `cr-spec-260604-005` — 後台會員管理優化與多重身分：`User.role` 改為 `roles UserRole[]`（新增 `teacher`，身分 user/teacher/admin/superadmin 可並存，user 為基線）；新增 `lib/auth-roles.ts` 集中授權判定（`canAccessAdmin`/`canTeach`/`isSuperadmin`/`hasRole`/`normalizeRoles`），全站守衛改走 helper；JWT/session 由 `role` 改 `roles`；後台「新增會員」（`createMember`：核發 spiritId + 臨時密碼 + 白名單，顯示一次）；詳情頁多重身分編輯（`updateMemberRoles`，禁止移除自身 admin/superadmin）；`resetMemberPassword` 重設後重新顯示臨時密碼；會員列表移除「加入日期」改顯示「身分」badge、匯出身分欄輸出全部；開課（`createCourseSession`/`createInvite`）加 `canTeach` 前置；migration `add_user_multi_roles` backfill 既有 role
 
 ### 進行中 / 待規劃
 - （無）

@@ -35,8 +35,11 @@ export function MemberResetButton({ userId, memberName }: MemberResetButtonProps
   const handleConfirm = () => {
     startTransition(async () => {
       const result = await resetMemberPassword(userId)
-      if (result.success) {
-        toast.success(result.message ?? '密碼已重設')
+      if (result.success && result.data) {
+        toast.success('密碼已重設', {
+          description: `臨時密碼：${result.data.tempPassword}（僅顯示一次，請轉交會員）`,
+          duration: 30000,
+        })
       } else {
         toast.error(result.message ?? '重設失敗，請稍後再試')
       }

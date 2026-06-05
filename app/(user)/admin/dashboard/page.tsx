@@ -9,6 +9,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
+import { canAccessAdmin } from '@/lib/auth-roles'
 import {
   getDashboardStats,
   getCourseStartStats,
@@ -52,8 +53,7 @@ export default async function AdminDashboardPage({
 }) {
   const session = await auth()
   if (!session?.user) redirect('/login')
-  const role = session.user.role
-  if (role !== 'admin' && role !== 'superadmin') redirect('/')
+  if (!canAccessAdmin(session.user.roles)) redirect('/')
 
   const { range: rawRange } = await searchParams
   const range: Range = rawRange === '3m' || rawRange === '7d' ? rawRange : '30d'

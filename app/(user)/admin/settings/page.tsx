@@ -9,6 +9,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
+import { canAccessAdmin, isSuperadmin } from '@/lib/auth-roles'
 import { getAdminSetting } from '@/lib/data/admin-settings'
 import { getAllChurches, getChurchMemberCount } from '@/lib/data/churches'
 import { getAllCourses } from '@/lib/data/course-catalog'
@@ -27,8 +28,7 @@ export default async function AdminSettingsPage({
 }) {
   const session = await auth()
   if (!session?.user) redirect('/login')
-  const role = session.user.role
-  if (role !== 'admin' && role !== 'superadmin') redirect('/')
+  if (!canAccessAdmin(session.user.roles)) redirect('/')
 
   const { tab } = await searchParams
   const activeTab = tab === 'churches' ? 'churches' : tab === 'courses' ? 'courses' : 'basic'
@@ -51,7 +51,7 @@ export default async function AdminSettingsPage({
       <h1 className="text-2xl font-semibold">系統設定</h1>
       <SettingsTabs
         activeTab={activeTab}
-        role={role}
+        isSuperadmin={isSuperadmin(session.user.roles)}
         currentDepth={currentDepth}
         churches={churchesWithCount}
         courses={courses}

@@ -13,6 +13,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { IconArrowLeft, IconPackage } from '@tabler/icons-react'
 import { auth } from '@/lib/auth'
+import { canAccessAdmin } from '@/lib/auth-roles'
 import { getAllCourseOrdersWithInvite } from '@/lib/data/course-order'
 import { MaterialOrderTable } from '@/components/admin/material-order-table'
 
@@ -24,9 +25,7 @@ export default async function AdminMaterialsPage() {
   const session = await auth()
 
   // 僅 admin/superadmin 可存取
-  const isAdmin =
-    session?.user?.role === 'admin' || session?.user?.role === 'superadmin'
-  if (!isAdmin) redirect('/dashboard')
+  if (!canAccessAdmin(session?.user?.roles)) redirect('/dashboard')
 
   const orders = await getAllCourseOrdersWithInvite()
 

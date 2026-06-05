@@ -1,4 +1,4 @@
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: 會員清單搜尋
 管理者 SHALL 能在 `/admin/members` 頁面透過搜尋列篩選會員，搜尋條件涵蓋 `realName`、`name`、`nickname`、`email`、`spiritId` 欄位（OR 邏輯、不分大小寫、部分匹配）。搜尋條件 SHALL 透過 URL query string `?q=` 傳遞，以支援書籤與重新整理保留。表格欄位順序 SHALL 為：啟動編號、姓名、Email、身分、操作（不再顯示「加入日期」欄位）。「身分」欄 SHALL 顯示該會員擁有的所有身分。
@@ -60,50 +60,7 @@
 - **WHEN** URL 中的 id 不存在
 - **THEN** 頁面顯示 404 或重新導向至 `/admin/members`
 
----
-
-### Requirement: 條件式會員刪除
-系統 SHALL 僅在環境變數 `ENABLE_MEMBER_DELETE=true` 時於詳情頁顯示刪除按鈕。刪除前 SHALL 顯示 AlertDialog 二次確認，確認後執行 hard delete。
-
-#### Scenario: 刪除按鈕依環境變數顯示
-- **WHEN** `ENABLE_MEMBER_DELETE` 未設定或不為 `'true'`
-- **THEN** 詳情頁不渲染任何刪除相關 UI
-
-#### Scenario: 刪除確認流程
-- **WHEN** 管理者點擊刪除按鈕並在 AlertDialog 確認
-- **THEN** 系統呼叫 `deleteMember(userId)` Server Action，刪除成功後重新導向至 `/admin/members`
-
-#### Scenario: 取消刪除
-- **WHEN** 管理者在 AlertDialog 點擊取消
-- **THEN** 關閉 dialog，不執行任何刪除動作
-
----
-
-### Requirement: 會員管理列表排序
-會員管理列表 SHALL 依加入日期（新→舊）為主要排序，姓名（A→Z）為次要排序。
-
-#### Scenario: 新加入會員排在前面
-- **WHEN** 管理員開啟會員管理頁，無搜尋條件
-- **THEN** 清單依 `createdAt` 降序排列，最新加入的會員排第一
-
-#### Scenario: 同日加入者依姓名排序
-- **WHEN** 多位會員在同一日加入
-- **THEN** 同日會員依 `realName` 升序排列
-
----
-
-### Requirement: 會員管理欄位標題使用「啟動編號」
-會員管理表格及詳情頁 SHALL 以「啟動編號」顯示 spiritId 欄位。
-
-#### Scenario: 會員列表欄位標題
-- **WHEN** 管理員開啟會員管理列表
-- **THEN** 第三欄標題顯示「啟動編號」
-
-#### Scenario: 會員詳情欄位標籤
-- **WHEN** 管理員開啟個別會員詳情頁
-- **THEN** spiritId 欄位標籤顯示「啟動編號」
-
----
+## ADDED Requirements
 
 ### Requirement: 後台新增會員
 系統 SHALL 在 `/admin/members` 提供「新增會員」入口，僅 `canAccessAdmin` 的使用者可使用。表單 SHALL 可填寫姓名、Email 與身分（可複選）。送出後系統 SHALL：以既有機制核發 `spiritId`、產生隨機臨時密碼並雜湊儲存、建立 `User`（含選定身分、`isTempPassword=true`）、將 Email 寫入白名單（`isActive=true`）。系統 SHALL 於建立成功後將產生的臨時密碼回傳並顯示一次供管理者轉交。
@@ -124,8 +81,6 @@
 - **WHEN** 非 `canAccessAdmin` 的使用者呼叫新增會員 Server Action
 - **THEN** 回傳 `{ success: false, message: '無權限' }`
 
----
-
 ### Requirement: 會員身分編輯
 詳情頁 SHALL 讓 `canAccessAdmin` 的使用者編輯會員的身分集合（加掛或移除 `teacher`／`admin`／`superadmin`），`user` 基線恆保留。系統 SHALL NOT 允許管理者移除「自己」的 `admin` 或 `superadmin` 身分（防止把自己鎖在後台外），UI 與 Server Action 皆需防呆。
 
@@ -140,8 +95,6 @@
 #### Scenario: 非管理者無法編輯身分
 - **WHEN** 非 `canAccessAdmin` 的使用者呼叫身分編輯 Server Action
 - **THEN** 回傳 `{ success: false, message: '無權限' }`
-
----
 
 ### Requirement: 重設臨時密碼並重新顯示
 詳情頁 SHALL 提供「重設臨時密碼」按鈕，僅 `canAccessAdmin` 可使用。點擊後系統 SHALL 產生新臨時密碼、雜湊儲存、設 `isTempPassword=true`，並將新臨時密碼回傳供畫面重新顯示（不僅寄送 Email）。

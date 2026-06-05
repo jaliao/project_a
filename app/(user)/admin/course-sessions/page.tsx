@@ -10,6 +10,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { auth } from '@/lib/auth'
+import { canAccessAdmin } from '@/lib/auth-roles'
 import { getAllCourseSessionsAdmin } from '@/lib/data/course-sessions'
 import { getAllCourses } from '@/lib/data/course-catalog'
 import { CourseSessionCard } from '@/components/course-session/course-session-card'
@@ -36,8 +37,7 @@ export default async function AdminCourseSessionsPage({
 }) {
   const session = await auth()
   if (!session?.user) redirect('/login')
-  const role = session.user.role
-  if (role !== 'admin' && role !== 'superadmin') redirect('/')
+  if (!canAccessAdmin(session.user.roles)) redirect('/')
 
   const { q, catalogId, status, startDate, endDate } = await searchParams
 

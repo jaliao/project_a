@@ -10,12 +10,14 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
 import { auth } from '@/lib/auth'
+import { canAccessAdmin } from '@/lib/auth-roles'
 import { getMemberDetail } from '@/lib/data/members'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { getAdminSetting } from '@/lib/data/admin-settings'
 import { MemberResetButton } from '@/components/admin/member-reset-button'
 import { MemberDeleteButton } from '@/components/admin/member-delete-button'
 import { MemberHierarchyTree } from '@/components/admin/member-hierarchy-tree'
+import { MemberRolesEditor } from '@/components/admin/member-roles-editor'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
@@ -23,12 +25,6 @@ export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: '會員詳情 — 啟動事工',
-}
-
-const ROLE_LABELS: Record<string, string> = {
-  user: '一般會員',
-  admin: '管理員',
-  superadmin: '超級管理員',
 }
 
 export default async function MemberDetailPage({
@@ -39,9 +35,7 @@ export default async function MemberDetailPage({
   const session = await auth()
   if (!session?.user) redirect('/login')
 
-  const isAdmin =
-    session.user.role === 'admin' || session.user.role === 'superadmin'
-  if (!isAdmin) redirect('/')
+  if (!canAccessAdmin(session.user.roles)) redirect('/')
 
   const { id } = await params
   const [member, depthStr] = await Promise.all([
@@ -104,9 +98,15 @@ export default async function MemberDetailPage({
                 <dt className="text-muted-foreground">啟動編號</dt>
                 <dd className="font-mono text-xs">{member.spiritId || '—'}</dd>
               </div>
-              <div>
-                <dt className="text-muted-foreground">角色</dt>
-                <dd>{ROLE_LABELS[member.role] ?? member.role}</dd>
+              <div className="col-span-2 sm:col-span-3">
+                <dt className="text-muted-foreground mb-1">身分</dt>
+                <dd>
+                  <MemberRolesEditor
+                    userId={member.id}
+                    roles={member.roles}
+                    isSelf={session.user.id === member.id}
+                  />
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">加入日期</dt>

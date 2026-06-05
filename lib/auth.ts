@@ -8,7 +8,7 @@
  * - Google OAuth（現有）
  * - Credentials（Email + 密碼）
  * 首次 Google 登入自動建帳並核發 Spirit ID
- * JWT 寫入 isTempPassword、spiritId、role
+ * JWT 寫入 isTempPassword、spiritId、roles（多重身分）
  * ----------------------------------------------
  */
 
@@ -132,7 +132,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }
 
           token.id = dbUser.id
-          token.role = dbUser.role
+          token.roles = dbUser.roles
           token.spiritId = dbUser.spiritId
           token.isTempPassword = dbUser.isTempPassword
           token.isProfileComplete = !!(dbUser.realName && dbUser.phone)
@@ -141,10 +141,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // 後續請求：從 DB 同步動態欄位，確保 role/spiritId 變更立即生效，無需重新登入
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { role: true, spiritId: true, isTempPassword: true, realName: true, phone: true },
+          select: { roles: true, spiritId: true, isTempPassword: true, realName: true, phone: true },
         })
         if (dbUser) {
-          token.role = dbUser.role
+          token.roles = dbUser.roles
           token.spiritId = dbUser.spiritId
           token.isTempPassword = dbUser.isTempPassword
           token.isProfileComplete = !!(dbUser.realName && dbUser.phone)
@@ -157,7 +157,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string
-        session.user.role = token.role as string
+        session.user.roles = (token.roles as string[]) ?? []
         session.user.spiritId = token.spiritId as string | null
         session.user.isTempPassword = token.isTempPassword as boolean
         session.user.isProfileComplete = token.isProfileComplete as boolean ?? false

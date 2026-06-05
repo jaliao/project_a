@@ -9,6 +9,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { auth } from '@/lib/auth'
+import { isSuperadmin } from '@/lib/auth-roles'
 import {
   IconLayoutDashboard,
   IconSchool,
@@ -63,8 +64,8 @@ const ADMIN_FEATURES = [
 
 export default async function AdminPage() {
   const session = await auth()
-  const isSuperadmin = session?.user?.role === 'superadmin'
-  const features = ADMIN_FEATURES.filter((f) => !f.superadminOnly || isSuperadmin)
+  const superadmin = isSuperadmin(session?.user?.roles)
+  const features = ADMIN_FEATURES.filter((f) => !f.superadminOnly || superadmin)
 
   return (
     <div className="space-y-6">

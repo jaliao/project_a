@@ -10,6 +10,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { auth } from '@/lib/auth'
+import { canAccessAdmin } from '@/lib/auth-roles'
 import {
   createChurch,
   updateChurch,
@@ -25,8 +26,7 @@ export type ActionResponse = {
 
 async function requireAdmin(): Promise<boolean> {
   const session = await auth()
-  const role = session?.user?.role
-  return role === 'admin' || role === 'superadmin'
+  return canAccessAdmin(session?.user?.roles)
 }
 
 export async function createChurchAction(

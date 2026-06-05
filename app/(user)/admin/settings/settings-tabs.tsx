@@ -25,13 +25,13 @@ type Church = {
 
 interface SettingsTabsProps {
   activeTab: string
-  role: string
+  isSuperadmin: boolean
   currentDepth: number
   churches: Church[]
   courses: CourseCatalogEntry[]
 }
 
-export function SettingsTabs({ activeTab, role, currentDepth, churches, courses }: SettingsTabsProps) {
+export function SettingsTabs({ activeTab, isSuperadmin, currentDepth, churches, courses }: SettingsTabsProps) {
   const router = useRouter()
 
   return (
@@ -43,7 +43,7 @@ export function SettingsTabs({ activeTab, role, currentDepth, churches, courses 
       </TabsList>
 
       <TabsContent value="basic" className="mt-6">
-        {role === 'superadmin' ? (
+        {isSuperadmin ? (
           <div className="rounded-lg border p-5 space-y-4 max-w-md">
             <div>
               <h2 className="font-medium">學習階層展開深度</h2>

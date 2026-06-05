@@ -38,7 +38,7 @@ export default async function UserLayout({
     <div className="min-h-screen flex flex-col">
       <Topbar
         unreadCount={unreadCount}
-        role={session?.user?.role}
+        roles={session?.user?.roles}
         spiritId={session?.user?.spiritId ?? undefined}
       />
       <main className="flex-1 p-6">
