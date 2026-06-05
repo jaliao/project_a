@@ -1,20 +1,25 @@
 /*
  * ----------------------------------------------
- * 系統初始化腳本 - 建立系統管理員與學員測試帳號
- * 2026-03-24 (Updated: 2026-04-02)
+ * 系統初始化腳本 - 由名冊建立會員、課程、報名與教會
+ * 2026-03-24 (Updated: 2026-06-05)
  * prisma/seed.ts
+ *
+ * 保留 101@iwillshare.org.tw（管理員）與 gordon@test.com（黃國倫）；
+ * 其餘人員、課程、報名、教會皆來自 prisma/seed-data/roster.json
+ * （由 build-roster.mjs 自 doc/啟動事工資料表_updated.xlsx 產生）。
  * ----------------------------------------------
  */
 
 import bcrypt from 'bcryptjs'
 import { PrismaClient } from '../prisma/generated/prisma_client'
 import { PrismaPg } from '@prisma/adapter-pg'
+import roster from './seed-data/roster.json'
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
 const prisma = new PrismaClient({ adapter })
 
 // ==========================================
-// 系統管理員設定
+// 保留帳號設定
 // ==========================================
 const ADMIN_EMAIL = '101@iwillshare.org.tw'
 const ADMIN_NAME = '系統管理員'
@@ -24,262 +29,46 @@ const ADMIN_SPIRIT_ID = 'PA000001'
 const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? 'Admin@1234'
 const usingDefaultAdmin = !process.env.SEED_ADMIN_PASSWORD
 
-// ==========================================
-// 學員測試帳號設定
-// ==========================================
 const STUDENT_PASSWORD = process.env.SEED_STUDENT_PASSWORD ?? 'Student@1234'
 const usingDefaultStudent = !process.env.SEED_STUDENT_PASSWORD
 
-type StudentSeed = {
-  email: string
-  name: string
-  realName: string | null
-  englishName: string | null
-  nickname: string | null
-  gender: 'male' | 'female' | 'unspecified'
-  displayNameMode: 'chinese' | 'english'
-  spiritId: string
-  phone: string
+const GORDON = {
+  email: 'gordon@test.com',
+  name: '黃國倫',
+  realName: '黃國倫',
+  englishName: 'Gordon',
+  nickname: 'Gordon',
+  spiritId: 'PA260001',
+  phone: '0912001001',
 }
 
-const STUDENTS: StudentSeed[] = [
-  // 1. 黃國倫 Gordon
-  {
-    email: 'gordon@test.com',
-    name: '黃國倫',
-    realName: '黃國倫',
-    englishName: 'Gordon',
-    nickname: 'Gordon',
-    gender: 'male',
-    displayNameMode: 'chinese',
-    spiritId: 'PA260001',
-    phone: '0912001001',
-  },
-  // 2. 吳容銘 Romen
-  {
-    email: 'romen@test.com',
-    name: '吳容銘',
-    realName: '吳容銘',
-    englishName: 'Romen',
-    nickname: 'Romen',
-    gender: 'male',
-    displayNameMode: 'chinese',
-    spiritId: 'PA260002',
-    phone: '0912001002',
-  },
-  // 3. Hilo（無中文名）
-  {
-    email: 'hilo@test.com',
-    name: 'Hilo',
-    realName: 'Hilo',
-    englishName: 'Hilo',
-    nickname: 'Hilo',
-    gender: 'male',
-    displayNameMode: 'english',
-    spiritId: 'PA260003',
-    phone: '0912001003',
-  },
-  // 4. Joyce（無中文名）
-  {
-    email: 'joyce@test.com',
-    name: 'Joyce',
-    realName: 'Joyce',
-    englishName: 'Joyce',
-    nickname: 'Joyce',
-    gender: 'female',
-    displayNameMode: 'english',
-    spiritId: 'PA260004',
-    phone: '0912001004',
-  },
-  // 5. 湯尼（無英文名）
-  {
-    email: 'tony@test.com',
-    name: '湯尼',
-    realName: '湯尼',
-    englishName: 'Tony',
-    nickname: '湯尼',
-    gender: 'male',
-    displayNameMode: 'chinese',
-    spiritId: 'PA260005',
-    phone: '0912001005',
-  },
-  // 6. Johni（無中文名）
-  {
-    email: 'johni@test.com',
-    name: 'Johni',
-    realName: null,
-    englishName: 'Johni',
-    nickname: null,
-    gender: 'male',
-    displayNameMode: 'english',
-    spiritId: 'PA260006',
-    phone: '0912001006',
-  },
-  // 7. KT（無中文名）
-  {
-    email: 'kt@test.com',
-    name: 'KT',
-    realName: null,
-    englishName: 'KT',
-    nickname: null,
-    gender: 'male',
-    displayNameMode: 'english',
-    spiritId: 'PA260007',
-    phone: '0912001007',
-  },
-  // 8. 王明台（無英文名）
-  {
-    email: 'wangmt@test.com',
-    name: '王明台',
-    realName: '王明台',
-    englishName: null,
-    nickname: null,
-    gender: 'male',
-    displayNameMode: 'chinese',
-    spiritId: 'PA260008',
-    phone: '0912001008',
-  },
-  // 9–13: 隨機測試帳號
-  {
-    email: 'member9@test.com',
-    name: '李雅玲',
-    realName: '李雅玲',
-    englishName: null,
-    nickname: '雅玲',
-    gender: 'female',
-    displayNameMode: 'chinese',
-    spiritId: 'PA260009',
-    phone: '0912001009',
-  },
-  {
-    email: 'member10@test.com',
-    name: '陳建文',
-    realName: '陳建文',
-    englishName: null,
-    nickname: null,
-    gender: 'male',
-    displayNameMode: 'chinese',
-    spiritId: 'PA260010',
-    phone: '0912001010',
-  },
-  {
-    email: 'member11@test.com',
-    name: '林佳蓉',
-    realName: '林佳蓉',
-    englishName: null,
-    nickname: '小蓉',
-    gender: 'female',
-    displayNameMode: 'chinese',
-    spiritId: 'PA260011',
-    phone: '0912001011',
-  },
-  {
-    email: 'member12@test.com',
-    name: '張家豪',
-    realName: '張家豪',
-    englishName: null,
-    nickname: null,
-    gender: 'male',
-    displayNameMode: 'chinese',
-    spiritId: 'PA260012',
-    phone: '0912001012',
-  },
-  {
-    email: 'member13@test.com',
-    name: '黃淑芬',
-    realName: '黃淑芬',
-    englishName: null,
-    nickname: '芬芬',
-    gender: 'female',
-    displayNameMode: 'chinese',
-    spiritId: 'PA260013',
-    phone: '0912001013',
-  },
-  // 14. Justin
-  {
-    email: 'justin@blockcode.com.tw',
-    name: 'Justin',
-    realName: '廖柏嘉',
-    englishName: 'Justin',
-    nickname: 'Justin',
-    gender: 'male',
-    displayNameMode: 'chinese',
-    spiritId: 'PA260014',
-    phone: '0912001014',
-  },
-  // 15–20: 隨機測試帳號
-  {
-    email: 'member15@test.com',
-    name: '劉宗翰',
-    realName: '劉宗翰',
-    englishName: null,
-    nickname: null,
-    gender: 'male',
-    displayNameMode: 'chinese',
-    spiritId: 'PA260015',
-    phone: '0912001015',
-  },
-  {
-    email: 'member16@test.com',
-    name: '許雅惠',
-    realName: '許雅惠',
-    englishName: null,
-    nickname: '小惠',
-    gender: 'female',
-    displayNameMode: 'chinese',
-    spiritId: 'PA260016',
-    phone: '0912001016',
-  },
-  {
-    email: 'member17@test.com',
-    name: '吳宗育',
-    realName: '吳宗育',
-    englishName: null,
-    nickname: null,
-    gender: 'male',
-    displayNameMode: 'chinese',
-    spiritId: 'PA260017',
-    phone: '0912001017',
-  },
-  {
-    email: 'member18@test.com',
-    name: '蔡佩君',
-    realName: '蔡佩君',
-    englishName: null,
-    nickname: '佩君',
-    gender: 'female',
-    displayNameMode: 'chinese',
-    spiritId: 'PA260018',
-    phone: '0912001018',
-  },
-  {
-    email: 'member19@test.com',
-    name: '林威廷',
-    realName: '林威廷',
-    englishName: null,
-    nickname: null,
-    gender: 'male',
-    displayNameMode: 'chinese',
-    spiritId: 'PA260019',
-    phone: '0912001019',
-  },
-  {
-    email: 'member20@test.com',
-    name: '王彥婷',
-    realName: '王彥婷',
-    englishName: null,
-    nickname: null,
-    gender: 'female',
-    displayNameMode: 'chinese',
-    spiritId: 'PA260020',
-    phone: '0912001020',
-  },
-]
+// 快照日期（課程開始 / 報名時間）
+const SNAPSHOT_DATE = new Date('2026-06-05T00:00:00.000Z')
+const COURSE_DATE = '2026/06/01'
+const STARTER_CATALOG_ID = 1 // 啟動靈人
+
+type RosterPerson = {
+  key: string
+  realName: string
+  email: string
+  spiritId: string
+  roles: string[]
+  teacherNo: string | null
+  phone: string | null
+  churchName: string | null
+  reserved: boolean
+}
+type RosterCourse = {
+  teacherKey: string
+  teacherNo: string
+  classIndex: number
+  title: string
+  studentKeys: string[]
+}
 
 async function main() {
-  // ── 建立系統管理員 ──────────────────────────
+  // ── 1. 系統管理員 ──────────────────────────
   const adminHash = await bcrypt.hash(ADMIN_PASSWORD, 12)
-
   await prisma.user.upsert({
     where: { email: ADMIN_EMAIL },
     create: {
@@ -293,7 +82,6 @@ async function main() {
       isTempPassword: true,
     },
     update: {
-      // 不覆蓋 passwordHash，避免管理員已改密碼後被重置
       roles: ['user', 'superadmin'],
       name: ADMIN_NAME,
       realName: ADMIN_REAL_NAME,
@@ -302,68 +90,46 @@ async function main() {
     },
   })
 
-  console.log('\n✅ 系統管理員帳號初始化完成')
-  console.log('─────────────────────────────────')
-  console.log(`  Email   : ${ADMIN_EMAIL}`)
-  console.log(`  密碼來源 : ${usingDefaultAdmin ? '預設值（Admin@1234）' : '環境變數 SEED_ADMIN_PASSWORD'}`)
-  console.log('  ⚠️  首次登入後請立即變更密碼')
-  console.log('─────────────────────────────────\n')
-
-  // ── 建立學員測試帳號 ────────────────────────
+  // ── 2. 黃國倫（保留帳號）──────────────────────
   const studentHash = await bcrypt.hash(STUDENT_PASSWORD, 12)
-
-  await Promise.all(
-    STUDENTS.map((student) =>
-      prisma.user.upsert({
-        where: { email: student.email },
-        create: {
-          email: student.email,
-          name: student.name,
-          realName: student.realName,
-          englishName: student.englishName,
-          nickname: student.nickname,
-          gender: student.gender,
-          displayNameMode: student.displayNameMode,
-          spiritId: student.spiritId,
-          phone: student.phone,
-          passwordHash: studentHash,
-          roles: ['user'],
-          isTempPassword: true,
-        },
-        update: {
-          // 不覆蓋 passwordHash，避免學員已改密碼後被重置
-          name: student.name,
-          realName: student.realName,
-          englishName: student.englishName,
-          nickname: student.nickname,
-          gender: student.gender,
-          displayNameMode: student.displayNameMode,
-          spiritId: student.spiritId,
-          phone: student.phone,
-        },
-      })
-    )
-  )
-
-  console.log('✅ 學員測試帳號初始化完成')
-  console.log('─────────────────────────────────')
-  STUDENTS.forEach((s) => {
-    const label = s.realName || s.englishName || s.name
-    const nick = s.nickname ? `（${s.nickname}）` : ''
-    console.log(`  ${s.spiritId}  ${label}${nick}  ${s.email}`)
+  const gordon = await prisma.user.upsert({
+    where: { email: GORDON.email },
+    create: {
+      email: GORDON.email,
+      name: GORDON.name,
+      realName: GORDON.realName,
+      englishName: GORDON.englishName,
+      nickname: GORDON.nickname,
+      gender: 'male',
+      displayNameMode: 'chinese',
+      spiritId: GORDON.spiritId,
+      phone: GORDON.phone,
+      passwordHash: studentHash,
+      roles: ['user', 'teacher'],
+      isTempPassword: true,
+    },
+    update: {
+      name: GORDON.name,
+      realName: GORDON.realName,
+      englishName: GORDON.englishName,
+      nickname: GORDON.nickname,
+      spiritId: GORDON.spiritId,
+      roles: ['user', 'teacher'],
+    },
+    select: { id: true },
   })
-  console.log(`  密碼來源 : ${usingDefaultStudent ? '預設值（Student@1234）' : '環境變數 SEED_STUDENT_PASSWORD'}`)
-  console.log('  ⚠️  首次登入後請立即變更密碼')
-  console.log('─────────────────────────────────\n')
 
-  // ── 初始化課程目錄 ──────────────────────────
+  console.log('✅ 保留帳號（管理員 + 黃國倫）初始化完成')
+  console.log(`  管理員密碼來源：${usingDefaultAdmin ? '預設（Admin@1234）' : 'SEED_ADMIN_PASSWORD'}`)
+  console.log(`  學員密碼來源：${usingDefaultStudent ? '預設（Student@1234）' : 'SEED_STUDENT_PASSWORD'}\n`)
+
+  // ── 3. 課程目錄（啟動靈人系列）──────────────────
   const courses = [
     { label: '啟動靈人', isActive: true, sortOrder: 1 },
     { label: '啟動豐盛', isActive: true, sortOrder: 2 },
     { label: '啟動靈人 3', isActive: false, sortOrder: 3 },
     { label: '啟動靈人 4', isActive: false, sortOrder: 4 },
   ]
-
   for (const course of courses) {
     await prisma.courseCatalog.upsert({
       where: { id: course.sortOrder },
@@ -371,134 +137,143 @@ async function main() {
       update: { label: course.label, isActive: course.isActive },
     })
   }
-
-  // 確保入門課程（啟動靈人）先修列表為空
-  await prisma.courseCatalog.update({
-    where: { id: 1 },
-    data: { prerequisites: { set: [] } },
-  })
-
-  // 設定先修關聯（累積式：每個課程需先修所有低編號課程）
-  const prerequisiteMap: { courseId: number; prereqIds: number[] }[] = [
+  await prisma.courseCatalog.update({ where: { id: 1 }, data: { prerequisites: { set: [] } } })
+  const prerequisiteMap = [
     { courseId: 2, prereqIds: [1] },
     { courseId: 3, prereqIds: [1, 2] },
     { courseId: 4, prereqIds: [1, 2, 3] },
   ]
-
   for (const { courseId, prereqIds } of prerequisiteMap) {
     await prisma.courseCatalog.update({
       where: { id: courseId },
+      data: { prerequisites: { set: [], connect: prereqIds.map((id) => ({ id })) } },
+    })
+  }
+  console.log('✅ 課程目錄初始化完成（啟動靈人 / 啟動豐盛 / 啟動靈人 3 / 啟動靈人 4）\n')
+
+  // ── 4. 教會清單（正規化後）──────────────────────
+  const churchMap = new Map<string, number>()
+  for (let i = 0; i < roster.churches.length; i++) {
+    const name = roster.churches[i]
+    const ch = await prisma.church.upsert({
+      where: { name },
+      create: { name, sortOrder: i + 1, isActive: true },
+      update: { sortOrder: i + 1, isActive: true },
+      select: { id: true },
+    })
+    churchMap.set(name, ch.id)
+  }
+  console.log(`✅ 教會清單初始化完成（${roster.churches.length} 間）：${roster.churches.join('、')}\n`)
+
+  // ── 5. 名冊人員（教師 + 學員）批次建立 ──────────────
+  const people = roster.people as RosterPerson[]
+  await prisma.user.createMany({
+    data: people.map((p) => ({
+      email: p.email,
+      name: p.realName,
+      realName: p.realName,
+      nickname: p.realName,
+      spiritId: p.spiritId,
+      phone: p.phone,
+      passwordHash: studentHash,
+      roles: p.roles as ('user' | 'teacher' | 'admin' | 'superadmin')[],
+      teacherNo: p.teacherNo,
+      isTempPassword: true,
+      churchType: p.churchName ? 'church' : 'none',
+      churchId: p.churchName ? churchMap.get(p.churchName) ?? null : null,
+    })),
+    skipDuplicates: true,
+  })
+
+  // 建立 email → id、key → email 對照
+  const dbUsers = await prisma.user.findMany({
+    where: { email: { in: people.map((p) => p.email) } },
+    select: { id: true, email: true },
+  })
+  const emailToId = new Map(dbUsers.map((u) => [u.email, u.id]))
+  const keyToEmail = new Map(people.map((p) => [p.key, p.email]))
+  const keyToId = (key: string): string | undefined => {
+    const email = keyToEmail.get(key)
+    return email ? emailToId.get(email) : undefined
+  }
+
+  const teacherCount = people.filter((p) => p.roles.includes('teacher')).length
+  console.log(`✅ 名冊人員初始化完成：${people.length} 人（教師 ${teacherCount} / 純學員 ${people.length - teacherCount}）\n`)
+
+  // ── 6. 課程與報名（每個班級欄一筆課程）──────────────
+  // 冪等守衛：以收容班為哨兵，已存在則跳過課程/報名建立（避免重跑重複建課）
+  const CATCH_ALL_TITLE = '黃國倫 的 啟動靈人（收容班）'
+  const alreadySeeded = await prisma.courseInvite.findFirst({
+    where: { title: CATCH_ALL_TITLE },
+    select: { id: true },
+  })
+  const enrollmentRows: { inviteId: number; userId: string; status: 'approved'; joinedAt: Date }[] = []
+  let courseCreated = 0
+  for (const c of alreadySeeded ? [] : (roster.courses as RosterCourse[])) {
+    const teacherId = keyToId(c.teacherKey)
+    if (!teacherId) continue
+    const invite = await prisma.courseInvite.create({
       data: {
-        prerequisites: {
-          set: [],  // 先清空，確保幂等
-          connect: prereqIds.map((id) => ({ id })),
-        },
+        title: c.title,
+        courseCatalogId: STARTER_CATALOG_ID,
+        maxCount: Math.max(1, c.studentKeys.length),
+        courseDate: COURSE_DATE,
+        createdById: teacherId,
+        startedAt: SNAPSHOT_DATE,
       },
+      select: { id: true },
     })
-  }
-
-  // ── 同步 spiritIdCounter（避免 generateSpiritId 與 seed 資料衝突）──────
-  const currentYear = new Date().getFullYear()
-  await prisma.spiritIdCounter.upsert({
-    where: { year: currentYear },
-    update: { seq: 20 },
-    create: { year: currentYear, seq: 20 },
-  })
-
-  // ── 初始化教會/單位清單 ──────────────────────
-  const churches = [
-    { name: '101', sortOrder: 1 },
-    { name: '心欣', sortOrder: 2 },
-    { name: 'Kua', sortOrder: 3 },
-    { name: '全福會', sortOrder: 4 },
-  ]
-
-  for (const church of churches) {
-    await prisma.church.upsert({
-      where: { name: church.name },
-      create: { name: church.name, sortOrder: church.sortOrder, isActive: true },
-      update: { sortOrder: church.sortOrder, isActive: true },
-    })
-  }
-
-  console.log('✅ 教會/單位清單初始化完成')
-  console.log('─────────────────────────────────')
-  churches.forEach((c) => {
-    console.log(`  ${c.sortOrder}. ${c.name}`)
-  })
-  console.log('─────────────────────────────────\n')
-
-  console.log('✅ 課程目錄初始化完成')
-  console.log('─────────────────────────────────')
-  courses.forEach((c) => {
-    console.log(`  ${c.label}（${c.isActive ? '開放' : '未開放'}）`)
-  })
-  console.log('─────────────────────────────────\n')
-
-  // ── 示範課程與黃國倫結業資料（快照 2026-04-02）────────────────────
-  const admin = await prisma.user.findUnique({ where: { email: ADMIN_EMAIL }, select: { id: true } })
-  const gordon = await prisma.user.findUnique({ where: { email: 'gordon@test.com' }, select: { id: true } })
-
-  if (admin && gordon) {
-    const adminInviteCount = await prisma.courseInvite.count({ where: { createdById: admin.id } })
-
-    if (adminInviteCount === 0) {
-      const DEMO_DATE = new Date('2026-04-02T00:00:00.000Z')
-      const COURSE_DATE = '2026/06/01'
-
-      // 建立兩筆示範課程邀請
-      const invite1 = await prisma.courseInvite.create({
-        data: {
-          title: '系統管理員 的 啟動靈人',
-          courseCatalogId: 1,
-          maxCount: 1,
-          courseDate: COURSE_DATE,
-          createdById: admin.id,
-          startedAt: DEMO_DATE,
-          completedAt: DEMO_DATE,
-        },
-      })
-
-      const invite2 = await prisma.courseInvite.create({
-        data: {
-          title: '系統管理員 的 啟動豐盛',
-          courseCatalogId: 2,
-          maxCount: 1,
-          courseDate: COURSE_DATE,
-          createdById: admin.id,
-          startedAt: DEMO_DATE,
-          completedAt: DEMO_DATE,
-        },
-      })
-
-      // 建立黃國倫的結業紀錄
-      await prisma.inviteEnrollment.createMany({
-        data: [
-          {
-            inviteId: invite1.id,
-            userId: gordon.id,
-            status: 'approved',
-            joinedAt: DEMO_DATE,
-            graduatedAt: DEMO_DATE,
-          },
-          {
-            inviteId: invite2.id,
-            userId: gordon.id,
-            status: 'approved',
-            joinedAt: DEMO_DATE,
-            graduatedAt: DEMO_DATE,
-          },
-        ],
-      })
-
-      console.log('✅ 示範課程與結業資料初始化完成')
-      console.log('─────────────────────────────────')
-      console.log('  黃國倫（PA260001）已結業：啟動靈人、啟動豐盛')
-      console.log('─────────────────────────────────\n')
-    } else {
-      console.log('⏭️  示範課程已存在，跳過建立')
+    courseCreated++
+    for (const sKey of c.studentKeys) {
+      const sid = keyToId(sKey)
+      if (sid) enrollmentRows.push({ inviteId: invite.id, userId: sid, status: 'approved', joinedAt: SNAPSHOT_DATE })
     }
   }
+
+  // ── 7. 對應不到的教師 → 黃國倫收容課程 ──────────────
+  const unmatched = roster.unmatchedTeacherKeys as string[]
+  if (!alreadySeeded && unmatched.length > 0) {
+    const catchAll = await prisma.courseInvite.create({
+      data: {
+        title: CATCH_ALL_TITLE,
+        courseCatalogId: STARTER_CATALOG_ID,
+        maxCount: unmatched.length,
+        courseDate: COURSE_DATE,
+        createdById: gordon.id,
+        startedAt: SNAPSHOT_DATE,
+      },
+      select: { id: true },
+    })
+    courseCreated++
+    for (const tKey of unmatched) {
+      const tid = keyToId(tKey)
+      if (tid) enrollmentRows.push({ inviteId: catchAll.id, userId: tid, status: 'approved', joinedAt: SNAPSHOT_DATE })
+    }
+  }
+
+  // 批次建立報名（唯一鍵 [inviteId,userId]）
+  await prisma.inviteEnrollment.createMany({ data: enrollmentRows, skipDuplicates: true })
+  console.log(`✅ 課程與報名初始化完成：課程 ${courseCreated} 筆、報名 ${enrollmentRows.length} 筆（含收容班 ${unmatched.length} 位教師）\n`)
+
+  // ── 8. 同步 spiritIdCounter（避免與 generateSpiritId 衝突）──────
+  const currentYear = new Date().getFullYear()
+  const yy = currentYear % 100
+  const prefix = `PA${String(yy).padStart(2, '0')}`
+  let maxSeq = 1
+  for (const p of people) {
+    if (p.spiritId.startsWith(prefix)) {
+      const n = parseInt(p.spiritId.slice(prefix.length), 10)
+      if (!Number.isNaN(n) && n > maxSeq) maxSeq = n
+    }
+  }
+  await prisma.spiritIdCounter.upsert({
+    where: { year: currentYear },
+    update: { seq: maxSeq },
+    create: { year: currentYear, seq: maxSeq },
+  })
+  console.log(`✅ spiritIdCounter（${currentYear}）已設為 ${maxSeq}\n`)
+
+  console.log('🎉 Seed 完成')
 }
 
 main()

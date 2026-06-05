@@ -98,6 +98,10 @@ export default async function MemberDetailPage({
                 <dt className="text-muted-foreground">啟動編號</dt>
                 <dd className="font-mono text-xs">{member.spiritId || '—'}</dd>
               </div>
+              <div>
+                <dt className="text-muted-foreground">授課老師編號</dt>
+                <dd className="font-mono text-xs">{member.teacherNo || '—'}</dd>
+              </div>
               <div className="col-span-2 sm:col-span-3">
                 <dt className="text-muted-foreground mb-1">身分</dt>
                 <dd>

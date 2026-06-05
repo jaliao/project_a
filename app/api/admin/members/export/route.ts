@@ -64,6 +64,7 @@ export async function GET(req: NextRequest) {
     手機: m.phone ?? '',
     性別: formatGender(m.gender),
     身分: formatRoles(m.roles),
+    授課老師編號: m.teacherNo ?? '',
     所屬教會: formatChurch(m.church?.name, m.churchOther, m.churchType),
     學習等級: m.learningLevel,
     加入日期: formatDate(m.createdAt),

@@ -47,6 +47,9 @@ model User {
   // 啟動靈人身分識別
   spiritId String? @unique // 格式：PA + YY + XXXX
 
+  // 授課老師編號（如 A001；學員為 null，非唯一）
+  teacherNo String?
+
   // 密碼管理
   passwordHash   String? // Google-only 用戶為 null
   isTempPassword Boolean @default(false) // 臨時密碼強制變更標記

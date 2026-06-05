@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.69（2026-06-05）
+> 自動產生，版本 0.1.70（2026-06-05）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -171,6 +171,7 @@ email         String（唯一，登入帳號）
 name          String?
 roles         UserRole[] (多重身分；user 基線 + teacher/admin/superadmin，預設 [user])
 spiritId      String?（唯一，格式 PA+YY+XXXX）
+teacherNo     String?（授課老師編號，如 A001；學員為 null）
 passwordHash  String?（Google-only 為 null）
 isTempPassword Boolean（臨時密碼強制變更旗標）
 commEmail     String?（通訊 Email）
@@ -416,6 +417,7 @@ createdAt       DateTime
 - `cr-spec-260604-001` — 多個教材寄送地址：新增 `ShipMode` enum、`CourseOrder.shipMode`、`MaterialShipment` 寄送批次 model；教材申請可選單一/多地址，多地址依繁/簡本數分配至全部完成；`applyMaterialOrder` 接收 `shipMode`/`shipments` 並權威驗證本數總和；新增 `confirmShipmentBatch`（全部批次寄完自動設 `CourseOrder.shippedAt`）；後台逐批次確認、出貨單列印每批次一份；單一地址流程與講師收件不變
 - `cr-spec-260604-002` — 新增測試授課（僅測試環境）：使用者頁「新增授課」旁新增「新增測試授課」按鈕（`NODE_ENV=development` 才顯示）；`createTestCourseSession` action 一鍵建立啟動靈人 `CourseInvite`（待開課）+ 5 位動態臨時測試 `User` + 5 筆 approved 報名，不建 `CourseOrder`；action 內含 production 守衛
 - `cr-spec-260604-005` — 後台會員管理優化與多重身分：`User.role` 改為 `roles UserRole[]`（新增 `teacher`，身分 user/teacher/admin/superadmin 可並存，user 為基線）；新增 `lib/auth-roles.ts` 集中授權判定（`canAccessAdmin`/`canTeach`/`isSuperadmin`/`hasRole`/`normalizeRoles`），全站守衛改走 helper；JWT/session 由 `role` 改 `roles`；後台「新增會員」（`createMember`：核發 spiritId + 臨時密碼 + 白名單，顯示一次）；詳情頁多重身分編輯（`updateMemberRoles`，禁止移除自身 admin/superadmin）；`resetMemberPassword` 重設後重新顯示臨時密碼；會員列表移除「加入日期」改顯示「身分」badge、匯出身分欄輸出全部；開課（`createCourseSession`/`createInvite`）加 `canTeach` 前置；migration `add_user_multi_roles` backfill 既有 role
+- `cr-spec-260605-001` — 名冊 seed：`User` 新增 `teacherNo`（授課老師編號，migration `add_user_teacher_no`）；以 `doc/啟動事工資料表_updated.xlsx` 經產生器 `prisma/seed-data/build-roster.mjs` 產出 `roster.json`（執行期不讀 xlsx）；重寫 `prisma/seed.ts` 保留 admin + 黃國倫，其餘人員（教師 [user,teacher]+真實 Email、學員 [user]+合成 Email `{spiritId}@seed.iwillshare.org.tw`）以姓名去重建立；每個非空班級欄一筆 `CourseInvite`（掛啟動靈人 catalog 1）+ approved 報名；對應不到的教師歸黃國倫收容課程；教會正規化為 10 間；`teacherNo` 顯示於會員詳情頁與 Excel 匯出；冪等守衛（收容班哨兵）
 
 ### 進行中 / 待規劃
 - （無）
