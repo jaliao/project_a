@@ -31,3 +31,14 @@ Topbar SHALL 包含「訊息」圖示按鈕。現階段 Badge 不顯示（未讀
 #### Scenario: 點擊訊息按鈕
 - **WHEN** 使用者點擊訊息按鈕
 - **THEN** 系統執行預留動作（現階段不開啟任何面板）
+
+### Requirement: 媒合布告欄按鈕
+Topbar 右上角按鈕群組 SHALL 包含「媒合布告欄」按鈕（圖示），所有登入會員皆可見，點擊後導向媒合布告欄 `/match-board`。
+
+#### Scenario: 顯示媒合布告欄按鈕
+- **WHEN** 任何登入會員檢視 Topbar
+- **THEN** 右上角顯示「媒合布告欄」按鈕（不需特定身分）
+
+#### Scenario: 點擊前往布告欄
+- **WHEN** 會員點擊「媒合布告欄」按鈕
+- **THEN** 導向 `/match-board`

@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.70（2026-06-05）
+> 自動產生，版本 0.1.71（2026-06-06）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -215,6 +215,8 @@ createdAt     DateTime
 cancelledAt   DateTime?（有值代表已取消）
 cancelReason  String?（取消原因文字）
 completedAt   DateTime?（有值代表已結業）
+isPublicMatch Boolean（是否公開媒合，預設 false）
+matchNote     String?（公開招募備註，選填）
 ```
 
 ### InviteEnrollment
@@ -418,6 +420,7 @@ createdAt       DateTime
 - `cr-spec-260604-002` — 新增測試授課（僅測試環境）：使用者頁「新增授課」旁新增「新增測試授課」按鈕（`NODE_ENV=development` 才顯示）；`createTestCourseSession` action 一鍵建立啟動靈人 `CourseInvite`（待開課）+ 5 位動態臨時測試 `User` + 5 筆 approved 報名，不建 `CourseOrder`；action 內含 production 守衛
 - `cr-spec-260604-005` — 後台會員管理優化與多重身分：`User.role` 改為 `roles UserRole[]`（新增 `teacher`，身分 user/teacher/admin/superadmin 可並存，user 為基線）；新增 `lib/auth-roles.ts` 集中授權判定（`canAccessAdmin`/`canTeach`/`isSuperadmin`/`hasRole`/`normalizeRoles`），全站守衛改走 helper；JWT/session 由 `role` 改 `roles`；後台「新增會員」（`createMember`：核發 spiritId + 臨時密碼 + 白名單，顯示一次）；詳情頁多重身分編輯（`updateMemberRoles`，禁止移除自身 admin/superadmin）；`resetMemberPassword` 重設後重新顯示臨時密碼；會員列表移除「加入日期」改顯示「身分」badge、匯出身分欄輸出全部；開課（`createCourseSession`/`createInvite`）加 `canTeach` 前置；migration `add_user_multi_roles` backfill 既有 role
 - `cr-spec-260605-001` — 名冊 seed：`User` 新增 `teacherNo`（授課老師編號，migration `add_user_teacher_no`）；以 `doc/啟動事工資料表_updated.xlsx` 經產生器 `prisma/seed-data/build-roster.mjs` 產出 `roster.json`（執行期不讀 xlsx）；重寫 `prisma/seed.ts` 保留 admin + 黃國倫，其餘人員（教師 [user,teacher]+真實 Email、學員 [user]+合成 Email `{spiritId}@seed.iwillshare.org.tw`）以姓名去重建立；每個非空班級欄一筆 `CourseInvite`（掛啟動靈人 catalog 1）+ approved 報名；對應不到的教師歸黃國倫收容課程；教會正規化為 10 間；`teacherNo` 顯示於會員詳情頁與 Excel 匯出；冪等守衛（收容班哨兵）
+- `cr-spec-260604-003` — 媒合功能：`CourseInvite` 新增 `isPublicMatch`（預設 false）/`matchNote`（migration `add_course_public_match`）；開課精靈基本資料步驟新增「公開媒合」開關（預設關）+ 招募備註（上限 500）；課程詳情頁講師可切換公開媒合／編輯備註（`updateMatchSettings`，僅講師或管理者，關閉保留 matchNote）；新增媒合布告欄頁面 `/match-board`（所有登入會員，列出公開＋未取消＋未結業＋未過截止日課程，`getPublicMatchingSessions()`）；`CourseSessionCard` 加 `matchNote`/`showMatchBadge`（公開媒合・招募中 badge + 備註）；Topbar 右上角新增「媒合布告欄」入口
 
 ### 進行中 / 待規劃
 - （無）

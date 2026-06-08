@@ -21,6 +21,9 @@ export const courseSessionSchema = z
     expiredAt: z.date({ error: '請選擇邀請截止日期' }),
     courseDate: z.date({ error: '請選擇預計開課日期' }),
     notes: z.string().optional(),
+    // 公開媒合（布告欄招募）
+    isPublicMatch: z.boolean(),
+    matchNote: z.string().trim().max(500, '招募備註最長 500 字').optional(),
   })
   .superRefine((data, ctx) => {
     // 邀請截止日期不可早於今天

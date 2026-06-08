@@ -23,6 +23,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import { DatePicker } from '@/components/ui/date-picker'
 
 const isDev = process.env.NODE_ENV === 'development'
@@ -62,12 +63,16 @@ export function Step2BasicInfo({
             expiredAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
             courseDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
             notes: '',
+            isPublicMatch: false,
+            matchNote: '',
           }
         : {
             courseCatalogId,
             title: buildDefaultTitle(),
             maxCount: '',
             notes: '',
+            isPublicMatch: false,
+            matchNote: '',
           }
     ),
   })
@@ -142,11 +147,37 @@ export function Step2BasicInfo({
           <FormItem>
             <FormLabel>備註</FormLabel>
             <FormControl>
-              <Textarea rows={3} placeholder="選填" {...field} />
+              <Textarea rows={3} placeholder="選填（內部備註）" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
         )} />
+
+        {/* 公開媒合（預設關閉）*/}
+        <FormField control={form.control} name="isPublicMatch" render={({ field }) => (
+          <FormItem className="flex items-center justify-between rounded-lg border p-3">
+            <div className="space-y-0.5">
+              <FormLabel>公開媒合</FormLabel>
+              <p className="text-xs text-muted-foreground">開啟後，此課程會出現在媒合布告欄供會員報名</p>
+            </div>
+            <FormControl>
+              <Switch checked={!!field.value} onCheckedChange={field.onChange} />
+            </FormControl>
+          </FormItem>
+        )} />
+
+        {/* 公開招募備註（僅公開媒合開啟時顯示）*/}
+        {form.watch('isPublicMatch') && (
+          <FormField control={form.control} name="matchNote" render={({ field }) => (
+            <FormItem>
+              <FormLabel>公開招募備註</FormLabel>
+              <FormControl>
+                <Textarea rows={3} placeholder="選填，會顯示在媒合布告欄（最長 500 字）" {...field} value={field.value ?? ''} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        )}
 
         <div className="flex gap-2 pt-1">
           <Button type="button" variant="outline" className="flex-1" onClick={onBack}>

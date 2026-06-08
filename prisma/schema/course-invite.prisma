@@ -36,7 +36,11 @@ model CourseInvite {
 
   expiredAt  DateTime? // 邀請截止日期（選填）
   courseDate String? // 預計開課日期（YYYY/MM/DD 字串，選填）
-  notes      String? // 備註（選填）
+  notes      String? // 內部備註（選填）
+
+  // 公開媒合（布告欄招募）
+  isPublicMatch Boolean @default(false) // 是否公開媒合（預設不公開）
+  matchNote     String? // 公開招募備註（選填）
 
   // 關聯 CourseOrder（選填）
   courseOrderId Int?

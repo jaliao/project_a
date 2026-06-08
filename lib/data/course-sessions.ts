@@ -68,6 +68,60 @@ export async function getMyCourseSessions(
   }))
 }
 
+export type MatchBoardItem = CourseSessionItem & {
+  matchNote: string | null
+  instructorName: string
+}
+
+/**
+ * 取得媒合布告欄課程：公開、未取消、未結業、未過邀請截止日
+ */
+export async function getPublicMatchingSessions(): Promise<MatchBoardItem[]> {
+  const now = new Date()
+  const invites = await prisma.courseInvite.findMany({
+    where: {
+      isPublicMatch: true,
+      cancelledAt: null,
+      completedAt: null,
+      OR: [{ expiredAt: null }, { expiredAt: { gte: now } }],
+    },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      title: true,
+      courseCatalog: { select: { id: true, label: true } },
+      maxCount: true,
+      expiredAt: true,
+      createdAt: true,
+      startedAt: true,
+      cancelledAt: true,
+      completedAt: true,
+      matchNote: true,
+      _count: { select: { enrollments: true } },
+      courseDate: true,
+      courseOrder: { select: { courseDate: true } },
+      createdBy: { select: { name: true, realName: true } },
+    },
+  })
+
+  return invites.map((invite) => ({
+    id: invite.id,
+    title: invite.title,
+    courseCatalogId: invite.courseCatalog.id,
+    courseCatalogLabel: invite.courseCatalog.label,
+    maxCount: invite.maxCount,
+    enrolledCount: invite._count.enrollments,
+    expiredAt: invite.expiredAt,
+    courseDate: invite.courseDate ?? invite.courseOrder?.courseDate ?? null,
+    createdAt: invite.createdAt,
+    startedAt: invite.startedAt,
+    cancelledAt: invite.cancelledAt,
+    completedAt: invite.completedAt,
+    matchNote: invite.matchNote,
+    instructorName: invite.createdBy.realName || invite.createdBy.name || '講師',
+  }))
+}
+
 export type MyEnrollmentItem = {
   enrollmentId: number
   status: 'pending' | 'approved'
@@ -161,6 +215,8 @@ export type CourseSessionDetail = {
   cancelledAt: Date | null
   cancelReason: string | null
   completedAt: Date | null
+  isPublicMatch: boolean
+  matchNote: string | null
   createdBy: {
     id: string
     name: string | null
@@ -220,6 +276,8 @@ export async function getCourseSessionById(
       cancelReason: true,
       completedAt: true,
       courseDate: true,
+      isPublicMatch: true,
+      matchNote: true,
       createdBy: { select: { id: true, name: true, email: true, realName: true } },
       enrollments: {
         select: {
@@ -286,6 +344,8 @@ export async function getCourseSessionById(
     cancelledAt: invite.cancelledAt,
     cancelReason: invite.cancelReason,
     completedAt: invite.completedAt,
+    isPublicMatch: invite.isPublicMatch,
+    matchNote: invite.matchNote,
     createdBy: invite.createdBy,
     approvedEnrollments,
     pendingEnrollments,

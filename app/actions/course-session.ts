@@ -8,6 +8,7 @@
 
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { canAccessAdmin, canTeach } from '@/lib/auth-roles'
@@ -77,6 +78,8 @@ export async function createCourseSession(
       expiredAt: d.expiredAt,
       courseDate: formatDateString(d.courseDate),
       notes: d.notes || null,
+      isPublicMatch: d.isPublicMatch ?? false,
+      matchNote: d.matchNote || null,
       createdById: session.user.id,
     },
   })
@@ -97,4 +100,39 @@ export async function createCourseSession(
     message: '授課已建立！',
     data: { inviteId: invite.id },
   }
+}
+
+// ── 更新公開媒合設定（僅課程講師或管理者）──
+export async function updateMatchSettings(
+  inviteId: number,
+  input: { isPublicMatch: boolean; matchNote?: string }
+): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  const invite = await prisma.courseInvite.findUnique({
+    where: { id: inviteId },
+    select: { createdById: true },
+  })
+  if (!invite) return { success: false, message: '找不到課程' }
+
+  const isOwner = invite.createdById === session.user.id
+  if (!isOwner && !canAccessAdmin(session.user.roles)) {
+    return { success: false, message: '無權限' }
+  }
+
+  const matchNote = (input.matchNote ?? '').trim()
+  if (matchNote.length > 500) {
+    return { success: false, message: '招募備註最長 500 字' }
+  }
+
+  await prisma.courseInvite.update({
+    where: { id: inviteId },
+    // 關閉公開媒合時保留 matchNote（草稿），僅不於布告欄顯示
+    data: { isPublicMatch: input.isPublicMatch, matchNote: matchNote || null },
+  })
+
+  revalidatePath(`/course/${inviteId}`)
+  revalidatePath('/match-board')
+  return { success: true, message: input.isPublicMatch ? '已開啟公開媒合' : '已關閉公開媒合' }
 }

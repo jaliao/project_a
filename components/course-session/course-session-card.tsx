@@ -11,6 +11,7 @@ import { IconCalendar, IconUsers, IconClock } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
 import { CourseStatusBadge, getCourseStatus } from '@/components/course-session/course-status-badge'
 import { CourseCatalogBadge } from '@/components/course-session/course-catalog-badge'
+import { Badge } from '@/components/ui/badge'
 
 type CourseSessionCardProps = {
   title: string
@@ -26,6 +27,8 @@ type CourseSessionCardProps = {
   startedAt?: Date | null
   cancelledAt?: Date | null
   completedAt?: Date | null
+  matchNote?: string | null
+  showMatchBadge?: boolean
 }
 
 function formatDate(date: Date): string {
@@ -49,6 +52,8 @@ export function CourseSessionCard({
   startedAt,
   cancelledAt,
   completedAt,
+  matchNote,
+  showMatchBadge = false,
 }: CourseSessionCardProps) {
   const status = getCourseStatus({ cancelledAt, completedAt, startedAt })
   const progressRatio = maxCount > 0 ? Math.min(enrolledCount / maxCount, 1) : 0
@@ -67,6 +72,9 @@ export function CourseSessionCard({
           {title}
         </p>
         <div className="flex shrink-0 items-center gap-1.5">
+          {showMatchBadge && (
+            <Badge className="bg-emerald-600 text-white hover:bg-emerald-600 text-xs">公開媒合・招募中</Badge>
+          )}
           <CourseCatalogBadge catalogId={courseCatalogId} label={courseCatalogLabel} size="sm" />
           {status && <CourseStatusBadge status={status} size="sm" />}
         </div>
@@ -109,6 +117,13 @@ export function CourseSessionCard({
           </div>
         )}
       </div>
+
+      {/* 公開招募備註 */}
+      {matchNote && (
+        <p className="whitespace-pre-wrap rounded-md bg-emerald-50 border border-emerald-200 px-3 py-2 text-xs text-emerald-900">
+          {matchNote}
+        </p>
+      )}
     </div>
   )
 

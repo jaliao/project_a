@@ -22,6 +22,7 @@ import { auth } from '@/lib/auth'
 import { getCourseSessionById, getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
 import { checkPrerequisites } from '@/lib/data/course-catalog'
 import { CourseDetailActions } from './course-detail-actions'
+import { MatchSettingsEditor } from './match-settings-editor'
 import { CopyInviteLinkButton } from './copy-invite-link-button'
 import { StudentApplySection } from './student-apply-section'
 import { PendingEnrollmentList } from './pending-enrollment-list'
@@ -308,6 +309,15 @@ export default async function CourseDetailPage({
           hasApprovedStudents={courseSession.approvedEnrollments.length > 0}
           courseOrder={courseSession.courseOrder}
           materialSummary={materialSummary}
+        />
+      )}
+
+      {/* 講師：公開媒合設定（未取消／未結業時可調整） */}
+      {isInstructor && !isCancelled && !isCompleted && (
+        <MatchSettingsEditor
+          inviteId={courseSession.id}
+          isPublicMatch={courseSession.isPublicMatch}
+          matchNote={courseSession.matchNote}
         />
       )}
     </div>

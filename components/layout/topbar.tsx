@@ -10,7 +10,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { IconUser, IconBell, IconHome, IconLayoutDashboard } from '@tabler/icons-react'
+import { IconUser, IconBell, IconHome, IconLayoutDashboard, IconClipboardList } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { NotificationDrawer } from '@/components/notification/notification-drawer'
 import { canAccessAdmin } from '@/lib/auth-roles'
@@ -44,6 +44,16 @@ export function Topbar({ unreadCount = 0, roles, spiritId }: TopbarProps) {
           title="回首頁"
         >
           <IconHome className="h-5 w-5" />
+        </Button>
+
+        {/* 媒合布告欄（所有登入會員） */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => router.push('/match-board')}
+          title="媒合布告欄"
+        >
+          <IconClipboardList className="h-5 w-5" />
         </Button>
 
         {/* 後台管理（admin/superadmin only） */}
