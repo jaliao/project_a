@@ -260,6 +260,13 @@ export type ProjectStatus = keyof typeof PROJECT_STATUSES
 - 更新內容須反映最新的版本號、資料模型、路由結構、業務邏輯與當前任務狀態
 - 參照 `.ai-rules.md` 定義的七大章節結構：專案核心目標、技術棧、系統架構、核心資料模型、關鍵業務邏輯、開發規範、當前挑戰與任務
 
+### 9. 操作手冊同步（功能異動）
+- 只要有任何功能異動（新增/修改/移除功能），都必須同步檢查並修正 `doc/` 下三份操作手冊，依異動影響的角色判斷需更新的章節（流程、按鈕、權限、路由）：
+  - `doc/管理者操作手冊.md`
+  - `doc/老師手冊.md`
+  - `doc/學員手冊.md`
+- 修正手冊後須一併更新各檔檔首的版本標註與日期，並比照第 7 點將 `config/version.json` 的 patch 版本號 +1
+
 ## Database Schema Notes
 
 ### User Models (user.prisma)
