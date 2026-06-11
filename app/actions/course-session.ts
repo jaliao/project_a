@@ -136,3 +136,41 @@ export async function updateMatchSettings(
   revalidatePath('/match-board')
   return { success: true, message: input.isPublicMatch ? '已開啟公開媒合' : '已關閉公開媒合' }
 }
+
+// ── 後台變更課程狀態（僅管理者）──
+// target 限招生中／進行中／已取消；不提供已結業（結業仍由講師走逐學員結業頁）
+// 自由任意轉換（含回退），不發送通知（屬行政更正）
+export async function setCourseStatusAdmin(
+  inviteId: number,
+  target: 'recruiting' | 'started' | 'cancelled'
+): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+  if (!canAccessAdmin(session.user.roles)) return { success: false, message: '無權限' }
+
+  if (!['recruiting', 'started', 'cancelled'].includes(target)) {
+    return { success: false, message: '不支援的狀態' }
+  }
+
+  const invite = await prisma.courseInvite.findUnique({
+    where: { id: inviteId },
+    select: { id: true },
+  })
+  if (!invite) return { success: false, message: '找不到課程' }
+
+  // 依目標狀態設定／清除旗標
+  const data =
+    target === 'recruiting'
+      ? { startedAt: null, cancelledAt: null, completedAt: null, cancelReason: null }
+      : target === 'started'
+        ? { startedAt: new Date(), cancelledAt: null, completedAt: null, cancelReason: null }
+        : { cancelledAt: new Date(), cancelReason: '（管理者後台調整）' }
+
+  await prisma.courseInvite.update({ where: { id: inviteId }, data })
+
+  revalidatePath('/admin/course-sessions')
+  revalidatePath(`/course/${inviteId}`)
+
+  const label = target === 'recruiting' ? '招生中' : target === 'started' ? '進行中' : '已取消'
+  return { success: true, message: `已變更為「${label}」` }
+}

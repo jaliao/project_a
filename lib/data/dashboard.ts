@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * Data Layer - 後台儀錶板統計查詢
- * 2026-04-03
+ * 2026-04-03 (Updated: 2026-06-11)
  * lib/data/dashboard.ts
  * ----------------------------------------------
  */
@@ -12,13 +12,9 @@ export type DashboardStats = {
   totalMembers: number
   spiritInstructors: number
   richInstructors: number
+  recruitingCourseSessions: number
   activeCourseSessions: number
-}
-
-export type CourseStatItem = {
-  catalogId: number
-  label: string
-  count: number
+  completedCourseSessions: number
 }
 
 /**
@@ -27,31 +23,47 @@ export type CourseStatItem = {
 export async function getDashboardStats(): Promise<DashboardStats> {
   const [
     totalMembers,
-    spiritRows,
-    richRows,
+    spiritInstructors,
+    richInstructors,
+    recruitingCourseSessions,
     activeCourseSessions,
+    completedCourseSessions,
   ] = await Promise.all([
-    // 總學員數
+    // 總會員數
     prisma.user.count(),
-    // 啟動靈人資格講師（catalogId=1 結業，去重 userId）
-    prisma.inviteEnrollment.findMany({
+    // 啟動靈人講師資格人數（teacher 身分 AND 結業啟動靈人 catalogId=1）
+    prisma.user.count({
       where: {
-        graduatedAt: { not: null },
-        invite: { courseCatalogId: 1 },
+        roles: { has: 'teacher' },
+        inviteEnrollments: {
+          some: {
+            graduatedAt: { not: null },
+            invite: { courseCatalogId: 1 },
+          },
+        },
       },
-      distinct: ['userId'],
-      select: { userId: true },
     }),
-    // 啟動豐盛資格講師（catalogId=2 結業，去重 userId）
-    prisma.inviteEnrollment.findMany({
+    // 啟動豐盛講師資格人數（teacher 身分 AND 結業啟動豐盛 catalogId=2）
+    prisma.user.count({
       where: {
-        graduatedAt: { not: null },
-        invite: { courseCatalogId: 2 },
+        roles: { has: 'teacher' },
+        inviteEnrollments: {
+          some: {
+            graduatedAt: { not: null },
+            invite: { courseCatalogId: 2 },
+          },
+        },
       },
-      distinct: ['userId'],
-      select: { userId: true },
     }),
-    // 目前進行中課程總數
+    // 開課中課程總數（招生中：未開始、未取消、未結業）
+    prisma.courseInvite.count({
+      where: {
+        startedAt: null,
+        cancelledAt: null,
+        completedAt: null,
+      },
+    }),
+    // 進行中課程總數（已開始、未取消、未結業）
     prisma.courseInvite.count({
       where: {
         startedAt: { not: null },
@@ -59,76 +71,18 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         completedAt: null,
       },
     }),
+    // 已結業課程總數
+    prisma.courseInvite.count({
+      where: { completedAt: { not: null } },
+    }),
   ])
 
   return {
     totalMembers,
-    spiritInstructors: spiritRows.length,
-    richInstructors: richRows.length,
+    spiritInstructors,
+    richInstructors,
+    recruitingCourseSessions,
     activeCourseSessions,
+    completedCourseSessions,
   }
-}
-
-/**
- * 取得指定天數內各課程類別的開始上課次數
- */
-export async function getCourseStartStats(days: number): Promise<CourseStatItem[]> {
-  const since = new Date()
-  since.setDate(since.getDate() - days)
-
-  const invites = await prisma.courseInvite.findMany({
-    where: { startedAt: { gte: since } },
-    select: {
-      courseCatalogId: true,
-      courseCatalog: { select: { label: true } },
-    },
-  })
-
-  // 依 catalogId 分組計數
-  const map = new Map<number, { label: string; count: number }>()
-  for (const inv of invites) {
-    const id = inv.courseCatalogId
-    if (!map.has(id)) {
-      map.set(id, { label: inv.courseCatalog.label, count: 0 })
-    }
-    map.get(id)!.count++
-  }
-
-  return Array.from(map.entries())
-    .map(([catalogId, { label, count }]) => ({ catalogId, label, count }))
-    .sort((a, b) => a.catalogId - b.catalogId)
-}
-
-/**
- * 取得指定天數內各課程類別的順利結業人數
- */
-export async function getGraduationStats(days: number): Promise<CourseStatItem[]> {
-  const since = new Date()
-  since.setDate(since.getDate() - days)
-
-  const enrollments = await prisma.inviteEnrollment.findMany({
-    where: { graduatedAt: { gte: since } },
-    select: {
-      invite: {
-        select: {
-          courseCatalogId: true,
-          courseCatalog: { select: { label: true } },
-        },
-      },
-    },
-  })
-
-  // 依 catalogId 分組計數
-  const map = new Map<number, { label: string; count: number }>()
-  for (const e of enrollments) {
-    const id = e.invite.courseCatalogId
-    if (!map.has(id)) {
-      map.set(id, { label: e.invite.courseCatalog.label, count: 0 })
-    }
-    map.get(id)!.count++
-  }
-
-  return Array.from(map.entries())
-    .map(([catalogId, { label, count }]) => ({ catalogId, label, count }))
-    .sort((a, b) => a.catalogId - b.catalogId)
 }

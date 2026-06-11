@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.71（2026-06-06）
+> 自動產生，版本 0.1.74（2026-06-11）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -38,8 +38,8 @@ app/
 │   ├── layout.tsx   # Topbar 包裝層（含未讀通知數 server fetch；profile completion guard；傳遞 roles/spiritId 給 Topbar）
 │   ├── dashboard/       # redirect → /user/{id}（舊書籤相容）
 │   ├── admin/           # 管理後台：功能按鈕網格（儀錶板/課程/授課/教材/會員/教會/系統設定）
-│   │   ├── dashboard/       # 後台儀錶板（統計卡片 4 個；開始上課/結業 BarChart；時間區間切換 ?range=）
-│   │   ├── course-sessions/ # 開課管理（全站所有開課；搜尋 + 篩選；另開視窗；前 30 筆）
+│   │   ├── dashboard/       # 後台儀錶板（統計卡片 6 個：總會員數/靈人講師資格/豐盛講師資格/開課中/進行中/已結業；圖表已移除）
+│   │   ├── course-sessions/ # 開課管理（全站所有開課；搜尋 + 篩選；另開視窗；前 30 筆；每筆 inline 狀態下拉變更狀態）
 │   │   ├── members/         # 會員管理清單（搜尋 + 重設密碼 + 查看詳情）
 │   │   ├── members/[id]/    # 會員詳情（Tabs：基本資料含所屬教會/學習階層）
 │   │   ├── churches/        # redirect → /admin/settings?tab=churches（舊路由相容）
@@ -129,7 +129,8 @@ lib/
 │   ├── hierarchy.ts         # 師生傳承查詢（getMemberHierarchy，BFS，僅限啟動靈人 catalogId=1，graduatedAt IS NOT NULL）
 │   ├── admin-settings.ts    # 後台設定查詢（getAdminSetting, upsertAdminSetting）
 │   ├── churches.ts          # 教會管理查詢（getActiveChurches, getAllChurches, createChurch, updateChurch, toggleChurchActive, deleteChurch）
-│   └── notification.ts      # 通知查詢（getNotifications, getUnreadNotificationCount, getNotificationsPaginated）
+│   ├── notification.ts      # 通知查詢（getNotifications, getUnreadNotificationCount, getNotificationsPaginated）
+│   └── course-message.ts    # 課程 FAQ 留言查詢（getCourseMessages：提問升序＋回覆內嵌）
 ├── ecpay/
 │   └── logistics.ts         # ECPay 物流工具（calcLogisticsCheckMacValue，MD5，物流 CMV-MD5 規格）
 └── utils.ts         # cn() 等工具函數
@@ -140,6 +141,7 @@ prisma/
 │   ├── user.prisma           # User, Account, Session, WhitelistedEmail, Notification
 │   ├── course-order.prisma   # CourseOrder + enums
 │   ├── course-invite.prisma  # CourseInvite + InviteEnrollment
+│   ├── course-message.prisma # CourseMessage（課程 FAQ 留言；parentId 自關聯，提問/回覆同表，cascade）
 │   ├── course-catalog.prisma # CourseCatalog（id, label, description?, isActive, sortOrder, prerequisites 自關聯）
 │   ├── admin-setting.prisma  # AdminSetting（key/value store；hierarchy_depth 預設 3）
 │   └── church.prisma         # Church（id, name @unique, isActive, sortOrder）+ ChurchType enum（church|other|none）
@@ -231,6 +233,18 @@ graduatedAt          DateTime?（結業時間；有值代表通過結業）
 nonGraduateReason    String?（未結業原因：insufficient_time | other）
 @@unique([inviteId, userId])
 ```
+
+### CourseMessage
+```
+id        Int（主鍵，autoincrement）
+inviteId  Int（關聯 CourseInvite，onDelete: Cascade）
+authorId  String（作者 UUID）
+body      String（留言內容，Text）
+parentId  Int?（null = 提問；有值 = 回覆，自關聯 CourseMessageReplies，onDelete: Cascade）
+createdAt DateTime
+@@index([inviteId])
+```
+課程 FAQ 留言：任何登入會員可提問（parentId=null），僅授課老師可回覆（parentId 指向提問）。
 
 ### Church
 ```
@@ -421,6 +435,9 @@ createdAt       DateTime
 - `cr-spec-260604-005` — 後台會員管理優化與多重身分：`User.role` 改為 `roles UserRole[]`（新增 `teacher`，身分 user/teacher/admin/superadmin 可並存，user 為基線）；新增 `lib/auth-roles.ts` 集中授權判定（`canAccessAdmin`/`canTeach`/`isSuperadmin`/`hasRole`/`normalizeRoles`），全站守衛改走 helper；JWT/session 由 `role` 改 `roles`；後台「新增會員」（`createMember`：核發 spiritId + 臨時密碼 + 白名單，顯示一次）；詳情頁多重身分編輯（`updateMemberRoles`，禁止移除自身 admin/superadmin）；`resetMemberPassword` 重設後重新顯示臨時密碼；會員列表移除「加入日期」改顯示「身分」badge、匯出身分欄輸出全部；開課（`createCourseSession`/`createInvite`）加 `canTeach` 前置；migration `add_user_multi_roles` backfill 既有 role
 - `cr-spec-260605-001` — 名冊 seed：`User` 新增 `teacherNo`（授課老師編號，migration `add_user_teacher_no`）；以 `doc/啟動事工資料表_updated.xlsx` 經產生器 `prisma/seed-data/build-roster.mjs` 產出 `roster.json`（執行期不讀 xlsx）；重寫 `prisma/seed.ts` 保留 admin + 黃國倫，其餘人員（教師 [user,teacher]+真實 Email、學員 [user]+合成 Email `{spiritId}@seed.iwillshare.org.tw`）以姓名去重建立；每個非空班級欄一筆 `CourseInvite`（掛啟動靈人 catalog 1）+ approved 報名；對應不到的教師歸黃國倫收容課程；教會正規化為 10 間；`teacherNo` 顯示於會員詳情頁與 Excel 匯出；冪等守衛（收容班哨兵）
 - `cr-spec-260604-003` — 媒合功能：`CourseInvite` 新增 `isPublicMatch`（預設 false）/`matchNote`（migration `add_course_public_match`）；開課精靈基本資料步驟新增「公開媒合」開關（預設關）+ 招募備註（上限 500）；課程詳情頁講師可切換公開媒合／編輯備註（`updateMatchSettings`，僅講師或管理者，關閉保留 matchNote）；新增媒合布告欄頁面 `/match-board`（所有登入會員，列出公開＋未取消＋未結業＋未過截止日課程，`getPublicMatchingSessions()`）；`CourseSessionCard` 加 `matchNote`/`showMatchBadge`（公開媒合・招募中 badge + 備註）；Topbar 右上角新增「媒合布告欄」入口
+- `cr-spec-260611-002` — 課程 FAQ：新增 `CourseMessage` model（提問與回覆同表，`parentId` 自關聯，`invite`/`parent` 皆 `onDelete: Cascade`；migration `add_course_message`）；課程詳情頁底部新增「課程 FAQ」留言區（`CourseFaq` client 元件）；`postCourseQuestion`（任何登入會員提問，通知老師）／`replyCourseMessage`（僅授課老師回覆，通知發問者）／`deleteCourseMessage`（作者本人或授課老師可刪，刪提問 cascade 刪回覆，不發通知）三個 action；`getCourseMessages` data layer；`lib/schemas/course-message.ts`（1–2000 字）；雙向 Inbox 通知
+- `cr-spec-260611-001` — 儀錶板優化：後台儀錶板統計卡片由 4 張改為 6 張（總會員數／啟動靈人講師資格人數／啟動豐盛講師資格人數／開課中課程總數／進行中課程總數／已結業課程總數）；講師資格人數重新定義為「`teacher` 身分 AND 結業該課程」（admin/superadmin 未加掛 teacher 不計入）；移除課程活動統計圖表（上課人次/順利結業 BarChart、`?range=` 時間區間切換），刪除 `dashboard-charts.tsx` 與 `getCourseStartStats`/`getGraduationStats`/`CourseStatItem`；無 DB schema 變更
+- `cr-spec-260611-003` — 後台變更課程狀態：開課管理 `/admin/course-sessions` 每筆課程卡片下方新增 inline 狀態下拉（`CourseStatusSelect`），管理者可直接變更狀態（招生中／進行中／已取消，自由任意轉換）；新增 `setCourseStatusAdmin` action（`canAccessAdmin` 守衛，依目標清/設 startedAt/cancelledAt/completedAt 旗標，不發通知）；不提供設「已結業」（結業仍由講師走逐學員結業頁，已結業課程下拉停用）；狀態篩選功能本已存在；無 DB schema 變更
 
 ### 進行中 / 待規劃
 - （無）

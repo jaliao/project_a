@@ -21,6 +21,8 @@ import {
 import { auth } from '@/lib/auth'
 import { getCourseSessionById, getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
 import { checkPrerequisites } from '@/lib/data/course-catalog'
+import { getCourseMessages } from '@/lib/data/course-message'
+import { CourseFaq } from '@/components/course-faq/course-faq'
 import { CourseDetailActions } from './course-detail-actions'
 import { MatchSettingsEditor } from './match-settings-editor'
 import { CopyInviteLinkButton } from './copy-invite-link-button'
@@ -78,6 +80,9 @@ export default async function CourseDetailPage({
 
   const isInstructor = userSession?.user?.id === courseSession.createdBy.id
   const currentUserId = userSession?.user?.id
+
+  // 課程 FAQ 留言
+  const faqMessages = await getCourseMessages(courseSession.id)
 
   // 多地址寄送所需：應寄繁/簡本數（依 approved 學員 materialChoice 統計）
   const materialSummary = isInstructor
@@ -320,6 +325,14 @@ export default async function CourseDetailPage({
           matchNote={courseSession.matchNote}
         />
       )}
+
+      {/* 課程 FAQ 留言問答 */}
+      <CourseFaq
+        inviteId={courseSession.id}
+        currentUserId={currentUserId}
+        isInstructor={isInstructor}
+        messages={faqMessages}
+      />
     </div>
   )
 }

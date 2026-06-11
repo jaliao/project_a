@@ -14,6 +14,7 @@ import { canAccessAdmin } from '@/lib/auth-roles'
 import { getAllCourseSessionsAdmin } from '@/lib/data/course-sessions'
 import { getAllCourses } from '@/lib/data/course-catalog'
 import { CourseSessionCard } from '@/components/course-session/course-session-card'
+import { CourseStatusSelect } from '@/components/course-session/course-status-select'
 import { CourseSessionsFilter } from './course-sessions-filter'
 
 export const dynamic = 'force-dynamic'
@@ -23,6 +24,18 @@ export const metadata: Metadata = {
 }
 
 const LIMIT = 30
+
+// 由旗標推導課程狀態（已取消 > 已結業 > 進行中 > 招生中）
+function deriveStatus(item: {
+  cancelledAt: Date | null
+  completedAt: Date | null
+  startedAt: Date | null
+}): 'recruiting' | 'started' | 'completed' | 'cancelled' {
+  if (item.cancelledAt) return 'cancelled'
+  if (item.completedAt) return 'completed'
+  if (item.startedAt) return 'started'
+  return 'recruiting'
+}
 
 export default async function AdminCourseSessionsPage({
   searchParams,
@@ -84,22 +97,24 @@ export default async function AdminCourseSessionsPage({
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((item) => (
-              <CourseSessionCard
-                key={item.id}
-                title={item.title}
-                courseCatalogId={item.courseCatalogId}
-                courseCatalogLabel={item.courseCatalogLabel}
-                courseDate={item.courseDate}
-                maxCount={item.maxCount}
-                enrolledCount={item.enrolledCount}
-                expiredAt={item.expiredAt}
-                startedAt={item.startedAt}
-                cancelledAt={item.cancelledAt}
-                completedAt={item.completedAt}
-                variant="full"
-                href={`/course/${item.id}`}
-                newTab
-              />
+              <div key={item.id} className="space-y-2">
+                <CourseSessionCard
+                  title={item.title}
+                  courseCatalogId={item.courseCatalogId}
+                  courseCatalogLabel={item.courseCatalogLabel}
+                  courseDate={item.courseDate}
+                  maxCount={item.maxCount}
+                  enrolledCount={item.enrolledCount}
+                  expiredAt={item.expiredAt}
+                  startedAt={item.startedAt}
+                  cancelledAt={item.cancelledAt}
+                  completedAt={item.completedAt}
+                  variant="full"
+                  href={`/course/${item.id}`}
+                  newTab
+                />
+                <CourseStatusSelect inviteId={item.id} current={deriveStatus(item)} />
+              </div>
             ))}
           </div>
 

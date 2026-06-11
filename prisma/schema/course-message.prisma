@@ -1,0 +1,32 @@
+/**
+ * ----------------------------------------------
+ * Prisma Schema - 課程 FAQ 留言模型
+ * 2026-06-11
+ * prisma/schema/course-message.prisma
+ * ----------------------------------------------
+ */
+
+// ==========================================
+// 課程 FAQ 留言（提問與回覆同表，parentId 自關聯）
+// ==========================================
+model CourseMessage {
+  id Int @id @default(autoincrement())
+
+  inviteId Int
+  invite   CourseInvite @relation(fields: [inviteId], references: [id], onDelete: Cascade)
+
+  authorId String @db.Uuid
+  author   User   @relation(fields: [authorId], references: [id])
+
+  body String @db.Text // 留言內容
+
+  // 自關聯：parentId 為空代表提問；有值代表回覆
+  parentId Int?
+  parent   CourseMessage?  @relation("CourseMessageReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  CourseMessage[] @relation("CourseMessageReplies")
+
+  createdAt DateTime @default(now())
+
+  @@index([inviteId])
+  @@map("course_messages")
+}

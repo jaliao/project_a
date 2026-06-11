@@ -64,6 +64,9 @@ model CourseInvite {
 
   enrollments InviteEnrollment[]
 
+  // 課程 FAQ 留言關聯
+  messages CourseMessage[]
+
   @@map("course_invites")
 }
 
