@@ -345,8 +345,11 @@ make schema-update    # Verify schema changes
 | `make schema-update` | Full schema update (recommended) |
 | `make schema-update name=xxx` | Full schema update with custom migration name |
 | `make schema-quick` | Quick update without migration |
-| `make prisma-seed` | Seed database (local) |
-| `make prisma-studio` | Open Prisma Studio |
 | `make clean` | Clean Docker containers and volumes |
 | `make db-shell` | PostgreSQL CLI |
 | `make prisma-vps3-deploy` | Deploy to remote VPS |
+| `make prisma-dev-status` | 檢查 Dev Migration 狀態（建議先跑） |
+| `make prisma-dev-deploy` | 部署 migrations 到 VPS3（正式/遠端 DB 用） |
+| `make prisma-dev-seed` | Seed database (local dev) |
+| `make prisma-dev-studio` | Open Prisma Studio (local dev) |
+

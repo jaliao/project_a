@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.74（2026-06-11）
+> 自動產生，版本 0.1.76（2026-06-12）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -40,7 +40,7 @@ app/
 │   ├── admin/           # 管理後台：功能按鈕網格（儀錶板/課程/授課/教材/會員/教會/系統設定）
 │   │   ├── dashboard/       # 後台儀錶板（統計卡片 6 個：總會員數/靈人講師資格/豐盛講師資格/開課中/進行中/已結業；圖表已移除）
 │   │   ├── course-sessions/ # 開課管理（全站所有開課；搜尋 + 篩選；另開視窗；前 30 筆；每筆 inline 狀態下拉變更狀態）
-│   │   ├── members/         # 會員管理清單（搜尋 + 重設密碼 + 查看詳情）
+│   │   ├── members/         # 會員管理清單（搜尋 + 性別/身分/教會篩選；無條件不列清單；每頁 30 筆翻頁；重設密碼 + 查看詳情）
 │   │   ├── members/[id]/    # 會員詳情（Tabs：基本資料含所屬教會/學習階層）
 │   │   ├── churches/        # redirect → /admin/settings?tab=churches（舊路由相容）
 │   │   └── settings/        # 系統設定 Tabs（基本設定：hierarchy_depth superadmin only；教會代碼維護：admin+；課程目錄管理：admin+）
@@ -84,7 +84,8 @@ components/
 ├── admin/
 │   ├── material-order-table.tsx    # 教材申請管理表格（狀態 Badge、確認已寄送、展開詳情）
 │   ├── member-reset-button.tsx     # 重設密碼按鈕（AlertDialog 確認）
-│   ├── member-search-input.tsx     # 會員搜尋輸入框（debounce 300ms，更新 ?q= URL param）
+│   ├── members-filter.tsx          # 會員管理篩選列（搜尋 debounce 300ms + 性別/身分/教會下拉；更新 URL，改篩選重置 page）
+│   ├── members-pagination.tsx      # 會員管理翻頁控制（上一頁/下一頁，?page=）
 │   ├── member-delete-button.tsx    # 刪除會員按鈕（AlertDialog 二次確認；ENABLE_MEMBER_DELETE 控制）
 │   ├── member-hierarchy-tree.tsx   # 師生傳承樹（Server Component；老師/本人/學生 N 層縮排）
 │   ├── hierarchy-depth-form.tsx    # 學習階層深度設定表單（Client；1–10 整數）
@@ -125,7 +126,7 @@ lib/
 │   ├── course-sessions.ts   # 開課記錄查詢（getMyCourseSessions, getMyCourseSessionCount, getCourseSessionById, getMyEnrollments, getMyCompletionCertificates）
 │   ├── course-catalog.ts    # 課程目錄查詢（getAllCourses, getActiveCourses, getCourse, checkPrerequisites, getGraduatedCatalogIds）
 │   ├── course-order.ts      # 課程訂購查詢（getCourseOrderByInviteId, getAllCourseOrdersWithInvite）
-│   ├── members.ts           # 會員管理查詢（searchMembers, getMemberDetail）
+│   ├── members.ts           # 會員管理查詢（buildMemberWhere/hasAnyMemberFilter, searchMembers 分頁{total,items,page,pageCount}, getMemberDetail, exportMembers 吃 MemberFilters）
 │   ├── hierarchy.ts         # 師生傳承查詢（getMemberHierarchy，BFS，僅限啟動靈人 catalogId=1，graduatedAt IS NOT NULL）
 │   ├── admin-settings.ts    # 後台設定查詢（getAdminSetting, upsertAdminSetting）
 │   ├── churches.ts          # 教會管理查詢（getActiveChurches, getAllChurches, createChurch, updateChurch, toggleChurchActive, deleteChurch）
@@ -436,8 +437,11 @@ createdAt       DateTime
 - `cr-spec-260605-001` — 名冊 seed：`User` 新增 `teacherNo`（授課老師編號，migration `add_user_teacher_no`）；以 `doc/啟動事工資料表_updated.xlsx` 經產生器 `prisma/seed-data/build-roster.mjs` 產出 `roster.json`（執行期不讀 xlsx）；重寫 `prisma/seed.ts` 保留 admin + 黃國倫，其餘人員（教師 [user,teacher]+真實 Email、學員 [user]+合成 Email `{spiritId}@seed.iwillshare.org.tw`）以姓名去重建立；每個非空班級欄一筆 `CourseInvite`（掛啟動靈人 catalog 1）+ approved 報名；對應不到的教師歸黃國倫收容課程；教會正規化為 10 間；`teacherNo` 顯示於會員詳情頁與 Excel 匯出；冪等守衛（收容班哨兵）
 - `cr-spec-260604-003` — 媒合功能：`CourseInvite` 新增 `isPublicMatch`（預設 false）/`matchNote`（migration `add_course_public_match`）；開課精靈基本資料步驟新增「公開媒合」開關（預設關）+ 招募備註（上限 500）；課程詳情頁講師可切換公開媒合／編輯備註（`updateMatchSettings`，僅講師或管理者，關閉保留 matchNote）；新增媒合布告欄頁面 `/match-board`（所有登入會員，列出公開＋未取消＋未結業＋未過截止日課程，`getPublicMatchingSessions()`）；`CourseSessionCard` 加 `matchNote`/`showMatchBadge`（公開媒合・招募中 badge + 備註）；Topbar 右上角新增「媒合布告欄」入口
 - `cr-spec-260611-002` — 課程 FAQ：新增 `CourseMessage` model（提問與回覆同表，`parentId` 自關聯，`invite`/`parent` 皆 `onDelete: Cascade`；migration `add_course_message`）；課程詳情頁底部新增「課程 FAQ」留言區（`CourseFaq` client 元件）；`postCourseQuestion`（任何登入會員提問，通知老師）／`replyCourseMessage`（僅授課老師回覆，通知發問者）／`deleteCourseMessage`（作者本人或授課老師可刪，刪提問 cascade 刪回覆，不發通知）三個 action；`getCourseMessages` data layer；`lib/schemas/course-message.ts`（1–2000 字）；雙向 Inbox 通知
+- `cr-spec-260611-004` — Seed 資料優化：重寫 `prisma/seed.ts` 課程／報名邏輯（資料源 `roster.json` 不變）——凡報名學員本身為老師則該報名設 `graduatedAt`（啟動靈人結業證書，全教師覆蓋）；整班皆老師的課程設 `completedAt`（已結業，含收容班）；所有報名 `materialChoice='traditional'`（繁體）；黃國倫補一筆啟動靈人結業報名維持開課資格；新 capability `seed-roster-data`，退場過時的 `seed-course-completions`；無 DB schema 變更。實測：232 位教師全數取得證書、5 門全教師班結業、報名全繁體
 - `cr-spec-260611-001` — 儀錶板優化：後台儀錶板統計卡片由 4 張改為 6 張（總會員數／啟動靈人講師資格人數／啟動豐盛講師資格人數／開課中課程總數／進行中課程總數／已結業課程總數）；講師資格人數重新定義為「`teacher` 身分 AND 結業該課程」（admin/superadmin 未加掛 teacher 不計入）；移除課程活動統計圖表（上課人次/順利結業 BarChart、`?range=` 時間區間切換），刪除 `dashboard-charts.tsx` 與 `getCourseStartStats`/`getGraduationStats`/`CourseStatItem`；無 DB schema 變更
 - `cr-spec-260611-003` — 後台變更課程狀態：開課管理 `/admin/course-sessions` 每筆課程卡片下方新增 inline 狀態下拉（`CourseStatusSelect`），管理者可直接變更狀態（招生中／進行中／已取消，自由任意轉換）；新增 `setCourseStatusAdmin` action（`canAccessAdmin` 守衛，依目標清/設 startedAt/cancelledAt/completedAt 旗標，不發通知）；不提供設「已結業」（結業仍由講師走逐學員結業頁，已結業課程下拉停用）；狀態篩選功能本已存在；無 DB schema 變更
+
+- `cr-spec-260612-001` — 會員管理效能優化：`/admin/members` 未下任何條件時不查詢／不列清單（提示輸入搜尋或篩選）；有條件時每頁 30 筆 + 上一頁／下一頁翻頁（`?page=`，越界夾範圍）；新增性別／身分（`roles.has`，包含語意）／所屬教會（churchId/other/none）下拉篩選，與文字搜尋 AND 組合（改篩選重置 page）；`searchMembers(f,page)→{total,items,page,pageCount}`、抽出 `buildMemberWhere`/`hasAnyMemberFilter`；匯出尊重全部篩選（「匯出 N 筆」=符合條件總數）、export route 吃 `gender/role/church`；新增 `MembersFilter`/`MembersPagination` 元件、移除舊 `MemberSearchInput`；無 DB schema 變更
 
 ### 進行中 / 待規劃
 - （無）

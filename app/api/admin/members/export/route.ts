@@ -47,11 +47,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // 讀取搜尋條件
-  const q = req.nextUrl.searchParams.get('q') ?? undefined
-
-  // 查詢資料
-  const members = await exportMembers(q)
+  // 讀取搜尋與篩選條件
+  const sp = req.nextUrl.searchParams
+  const members = await exportMembers({
+    q: sp.get('q') ?? undefined,
+    gender: (sp.get('gender') as 'male' | 'female' | 'unspecified' | null) ?? undefined,
+    role: (sp.get('role') as 'user' | 'teacher' | 'admin' | 'superadmin' | null) ?? undefined,
+    church: sp.get('church') ?? undefined,
+  })
 
   // 組成 xlsx 資料列
   const rows = members.map((m) => ({

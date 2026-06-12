@@ -7,26 +7,68 @@
  */
 
 import { prisma } from '@/lib/prisma'
+import type { Gender, UserRole, Prisma } from '@prisma/client'
+
+// 會員清單每頁筆數
+export const MEMBER_PAGE_SIZE = 30
+
+// 會員篩選條件（church：churchId 數字字串 / 'other' / 'none'）
+export type MemberFilters = {
+  q?: string
+  gender?: Gender
+  role?: UserRole
+  church?: string
+}
+
+// 是否有任何篩選/搜尋條件
+export function hasAnyMemberFilter(f: MemberFilters): boolean {
+  return !!(f.q?.trim() || f.gender || f.role || f.church)
+}
+
+// 由篩選條件組出 Prisma where（AND 組合）
+export function buildMemberWhere(f: MemberFilters): Prisma.UserWhereInput {
+  const and: Prisma.UserWhereInput[] = []
+
+  if (f.q?.trim()) {
+    const q = f.q.trim()
+    and.push({
+      OR: [
+        { realName: { contains: q, mode: 'insensitive' } },
+        { name: { contains: q, mode: 'insensitive' } },
+        { nickname: { contains: q, mode: 'insensitive' } },
+        { email: { contains: q, mode: 'insensitive' } },
+        { spiritId: { contains: q, mode: 'insensitive' } },
+      ],
+    })
+  }
+  if (f.gender) and.push({ gender: f.gender })
+  if (f.role) and.push({ roles: { has: f.role } })
+  if (f.church) {
+    if (f.church === 'other') and.push({ churchType: 'other' })
+    else if (f.church === 'none') and.push({ churchType: 'none' })
+    else {
+      const id = Number(f.church)
+      if (!Number.isNaN(id)) and.push({ churchId: id })
+    }
+  }
+
+  return and.length ? { AND: and } : {}
+}
 
 // ==========================================
-// 搜尋會員清單
+// 搜尋會員清單（分頁）
 // ==========================================
-export async function searchMembers(q?: string) {
-  const where = q
-    ? {
-        OR: [
-          { realName: { contains: q, mode: 'insensitive' as const } },
-          { name: { contains: q, mode: 'insensitive' as const } },
-          { nickname: { contains: q, mode: 'insensitive' as const } },
-          { email: { contains: q, mode: 'insensitive' as const } },
-          { spiritId: { contains: q, mode: 'insensitive' as const } },
-        ],
-      }
-    : {}
+export async function searchMembers(f: MemberFilters, page = 1) {
+  const where = buildMemberWhere(f)
+  const total = await prisma.user.count({ where })
+  const pageCount = Math.max(1, Math.ceil(total / MEMBER_PAGE_SIZE))
+  const safePage = Math.min(Math.max(1, page), pageCount)
 
-  return prisma.user.findMany({
+  const items = await prisma.user.findMany({
     where,
     orderBy: [{ createdAt: 'desc' }, { realName: 'asc' }],
+    skip: (safePage - 1) * MEMBER_PAGE_SIZE,
+    take: MEMBER_PAGE_SIZE,
     select: {
       id: true,
       name: true,
@@ -40,6 +82,8 @@ export async function searchMembers(q?: string) {
       createdAt: true,
     },
   })
+
+  return { total, items, page: safePage, pageCount }
 }
 
 // ==========================================
@@ -100,18 +144,8 @@ export type MemberDetail = NonNullable<Awaited<ReturnType<typeof getMemberDetail
 // ==========================================
 // 匯出會員資料（完整欄位）
 // ==========================================
-export async function exportMembers(q?: string) {
-  const where = q
-    ? {
-        OR: [
-          { realName: { contains: q, mode: 'insensitive' as const } },
-          { name: { contains: q, mode: 'insensitive' as const } },
-          { nickname: { contains: q, mode: 'insensitive' as const } },
-          { email: { contains: q, mode: 'insensitive' as const } },
-          { spiritId: { contains: q, mode: 'insensitive' as const } },
-        ],
-      }
-    : {}
+export async function exportMembers(f: MemberFilters = {}) {
+  const where = buildMemberWhere(f)
 
   return prisma.user.findMany({
     where,

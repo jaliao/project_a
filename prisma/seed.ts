@@ -200,6 +200,27 @@ async function main() {
   const teacherCount = people.filter((p) => p.roles.includes('teacher')).length
   console.log(`✅ 名冊人員初始化完成：${people.length} 人（教師 ${teacherCount} / 純學員 ${people.length - teacherCount}）\n`)
 
+  // 教師 key 集合（用於判定「學員是否為老師」→ 發結業證書 / 全老師班結業）
+  const teacherKeys = new Set(people.filter((p) => p.roles.includes('teacher')).map((p) => p.key))
+
+  // 報名列：教師學員加 graduatedAt（啟動靈人結業證書）；所有報名皆繁體教材
+  type EnrollmentRow = {
+    inviteId: number
+    userId: string
+    status: 'approved'
+    joinedAt: Date
+    materialChoice: 'traditional'
+    graduatedAt?: Date
+  }
+  const buildEnrollment = (inviteId: number, sKey: string, sid: string): EnrollmentRow => ({
+    inviteId,
+    userId: sid,
+    status: 'approved',
+    joinedAt: SNAPSHOT_DATE,
+    materialChoice: 'traditional',
+    ...(teacherKeys.has(sKey) ? { graduatedAt: SNAPSHOT_DATE } : {}),
+  })
+
   // ── 6. 課程與報名（每個班級欄一筆課程）──────────────
   // 冪等守衛：以收容班為哨兵，已存在則跳過課程/報名建立（避免重跑重複建課）
   const CATCH_ALL_TITLE = '黃國倫 的 啟動靈人（收容班）'
@@ -207,11 +228,14 @@ async function main() {
     where: { title: CATCH_ALL_TITLE },
     select: { id: true },
   })
-  const enrollmentRows: { inviteId: number; userId: string; status: 'approved'; joinedAt: Date }[] = []
+  const enrollmentRows: EnrollmentRow[] = []
   let courseCreated = 0
+  let firstInviteId: number | null = null
   for (const c of alreadySeeded ? [] : (roster.courses as RosterCourse[])) {
     const teacherId = keyToId(c.teacherKey)
     if (!teacherId) continue
+    // 全老師班（至少 1 位學員且全為教師）→ 課程已結業
+    const isAllTeacher = c.studentKeys.length > 0 && c.studentKeys.every((s) => teacherKeys.has(s))
     const invite = await prisma.courseInvite.create({
       data: {
         title: c.title,
@@ -220,17 +244,19 @@ async function main() {
         courseDate: COURSE_DATE,
         createdById: teacherId,
         startedAt: SNAPSHOT_DATE,
+        ...(isAllTeacher ? { completedAt: SNAPSHOT_DATE } : {}),
       },
       select: { id: true },
     })
     courseCreated++
+    if (firstInviteId === null) firstInviteId = invite.id
     for (const sKey of c.studentKeys) {
       const sid = keyToId(sKey)
-      if (sid) enrollmentRows.push({ inviteId: invite.id, userId: sid, status: 'approved', joinedAt: SNAPSHOT_DATE })
+      if (sid) enrollmentRows.push(buildEnrollment(invite.id, sKey, sid))
     }
   }
 
-  // ── 7. 對應不到的教師 → 黃國倫收容課程 ──────────────
+  // ── 7. 對應不到的教師 → 黃國倫收容課程（學員皆教師 → 已結業）──────────────
   const unmatched = roster.unmatchedTeacherKeys as string[]
   if (!alreadySeeded && unmatched.length > 0) {
     const catchAll = await prisma.courseInvite.create({
@@ -241,19 +267,35 @@ async function main() {
         courseDate: COURSE_DATE,
         createdById: gordon.id,
         startedAt: SNAPSHOT_DATE,
+        completedAt: SNAPSHOT_DATE,
       },
       select: { id: true },
     })
     courseCreated++
+    if (firstInviteId === null) firstInviteId = catchAll.id
     for (const tKey of unmatched) {
       const tid = keyToId(tKey)
-      if (tid) enrollmentRows.push({ inviteId: catchAll.id, userId: tid, status: 'approved', joinedAt: SNAPSHOT_DATE })
+      if (tid) enrollmentRows.push(buildEnrollment(catchAll.id, tKey, tid))
     }
+  }
+
+  // ── 7b. 黃國倫結業報名（保留帳號不在名冊，另補一筆維持開課資格）──────────────
+  if (!alreadySeeded && firstInviteId !== null) {
+    enrollmentRows.push({
+      inviteId: firstInviteId,
+      userId: gordon.id,
+      status: 'approved',
+      joinedAt: SNAPSHOT_DATE,
+      materialChoice: 'traditional',
+      graduatedAt: SNAPSHOT_DATE,
+    })
   }
 
   // 批次建立報名（唯一鍵 [inviteId,userId]）
   await prisma.inviteEnrollment.createMany({ data: enrollmentRows, skipDuplicates: true })
-  console.log(`✅ 課程與報名初始化完成：課程 ${courseCreated} 筆、報名 ${enrollmentRows.length} 筆（含收容班 ${unmatched.length} 位教師）\n`)
+  const graduatedCount = enrollmentRows.filter((e) => e.graduatedAt).length
+  console.log(`✅ 課程與報名初始化完成：課程 ${courseCreated} 筆、報名 ${enrollmentRows.length} 筆（含收容班 ${unmatched.length} 位教師）`)
+  console.log(`   教材全繁體；結業報名 ${graduatedCount} 筆（教師學員 + 黃國倫）\n`)
 
   // ── 8. 同步 spiritIdCounter（避免與 generateSpiritId 衝突）──────
   const currentYear = new Date().getFullYear()
