@@ -1,4 +1,9 @@
-## MODIFIED Requirements
+# dashboard-function-units Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for dashboard-function-units.
+
+## Requirements
 
 ### Requirement: 學習單元區塊
 Dashboard SHALL 僅對非管理者角色顯示「學習」功能單元，包含「加入學習」與「學習紀錄」兩個入口。`admin` 及 `superadmin` 角色不顯示學習單元。

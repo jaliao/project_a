@@ -1,4 +1,9 @@
-## ADDED Requirements
+# onboarding-wizard Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for onboarding-wizard.
+
+## Requirements
 
 ### Requirement: Onboarding Wizard 三步驟流程
 `/onboarding` 頁面 SHALL 以三步驟 Wizard 引導新會員完成首次登入設定，並在頂部顯示步驟進度指示。

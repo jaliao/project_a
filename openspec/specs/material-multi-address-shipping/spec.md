@@ -1,4 +1,9 @@
-## ADDED Requirements
+# material-multi-address-shipping Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for material-multi-address-shipping.
+
+## Requirements
 
 ### Requirement: 寄送模式選擇
 教材申請時，講師 SHALL 能選擇寄送模式為「單一地址」或「多個地址」。選擇「單一地址」時，系統行為 SHALL 與現行單一地址流程完全相同（不建立任何寄送批次子紀錄）。

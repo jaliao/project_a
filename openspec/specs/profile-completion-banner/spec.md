@@ -1,4 +1,9 @@
-## ADDED Requirements
+# profile-completion-banner Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for profile-completion-banner.
+
+## Requirements
 
 ### Requirement: Dashboard 顯示資料完整度提醒 Banner
 當登入使用者的 realName、commEmail、phone 任一欄位為空白或 null 時，且 `REQUIRE_PROFILE_COMPLETION` 為 `false`，Dashboard 首頁 SHALL 在統計卡片上方顯示提醒 Banner，引導使用者前往填寫個人資料。

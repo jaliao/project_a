@@ -1,4 +1,9 @@
-## ADDED Requirements
+# user-courses Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for user-courses.
+
+## Requirements
 
 ### Requirement: 我的開課頁面路由
 系統 SHALL 提供 `/user/{spiritId}/courses` 路由，顯示該學員所建立的所有開課（CourseInvite）列表。僅本人可存取；存取他人的 `/user/{spiritId}/courses` SHALL 回傳 403 或重定向至本人頁面。

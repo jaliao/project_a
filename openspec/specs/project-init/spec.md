@@ -1,4 +1,9 @@
-## ADDED Requirements
+# project-init Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for project-init.
+
+## Requirements
 
 ### Requirement: 專案識別名稱統一替換
 所有設定檔與說明文件中的舊專案名稱（`bc-erp`、`bc_erp`、`BC-ERP`）SHALL 替換為新名稱（`project_a`、`啟動靈人系統`），確保新開發者 clone 後不會看到任何舊名稱殘留。

@@ -1,4 +1,9 @@
-## ADDED Requirements
+# course-public-matching Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for course-public-matching.
+
+## Requirements
 
 ### Requirement: 公開媒合資料欄位
 `CourseInvite` SHALL 新增 `isPublicMatch Boolean`（預設 `false`，是否公開媒合）與 `matchNote String?`（公開招募備註，選填）。`matchNote` 與內部 `notes` 語意分離、並存。

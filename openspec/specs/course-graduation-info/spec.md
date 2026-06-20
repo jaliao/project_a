@@ -1,4 +1,9 @@
-## ADDED Requirements
+# course-graduation-info Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for course-graduation-info.
+
+## Requirements
 
 ### Requirement: 已結業課程顯示結業資訊區塊
 課程詳情頁 SHALL 在課程已結業（`completedAt` 有值）時顯示「結業資訊」區塊，包含最後一堂課程日期、已結業學員清單、未結業學員清單（含原因）。

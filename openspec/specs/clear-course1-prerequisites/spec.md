@@ -1,4 +1,9 @@
-## ADDED Requirements
+# clear-course1-prerequisites Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for clear-course1-prerequisites.
+
+## Requirements
 
 ### Requirement: 啟動靈人 1 不設先修關聯
 系統 SHALL 確保 `_CoursePrerequisites` join table 中不存在 A 欄位為啟動靈人 1（id=1）的資料列。

@@ -1,4 +1,9 @@
-## ADDED Requirements
+# dev-perf Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for dev-perf.
+
+## Requirements
 
 ### Requirement: 開發環境使用 Turbopack
 開發腳本 SHALL 使用 Next.js Turbopack bundler 以降低 HMR 記憶體用量。

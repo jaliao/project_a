@@ -1,4 +1,9 @@
-## ADDED Requirements
+# course-graduation-page Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for course-graduation-page.
+
+## Requirements
 
 ### Requirement: 結業表單頁面入口
 系統 SHALL 提供 `/course/[id]/graduate` 頁面，僅課程建立者（講師）可存取。

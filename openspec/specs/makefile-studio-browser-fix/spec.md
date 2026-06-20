@@ -1,4 +1,9 @@
-## ADDED Requirements
+# makefile-studio-browser-fix Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for makefile-studio-browser-fix.
+
+## Requirements
 
 ### Requirement: Prisma Studio 不自動開啟瀏覽器
 Makefile 中所有 `npx prisma studio` 指令 SHALL 加上 `--browser none` 旗標。

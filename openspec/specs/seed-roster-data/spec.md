@@ -1,4 +1,9 @@
-## ADDED Requirements
+# seed-roster-data Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for seed-roster-data.
+
+## Requirements
 
 ### Requirement: 名冊式 seed 基礎資料
 `prisma/seed.ts` SHALL 由 `prisma/seed-data/roster.json`（源自 `doc/啟動事工資料表_updated.xlsx`）建立保留帳號（管理員、黃國倫）、課程目錄（啟動靈人系列）、教會清單，以及名冊人員（教師 roles 含 `teacher`、學員 roles 為 `user`）。

@@ -1,4 +1,9 @@
-## ADDED Requirements
+# topbar Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for topbar.
+
+## Requirements
 
 ### Requirement: Topbar 共用元件
 `(user)` layout SHALL 在所有已登入頁面頂部渲染 Topbar 元件，包含：系統標題、右側操作按鈕群組。

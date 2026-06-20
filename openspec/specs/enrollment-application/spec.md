@@ -1,4 +1,9 @@
-## ADDED Requirements
+# enrollment-application Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for enrollment-application.
+
+## Requirements
 
 ### Requirement: 申請 Dialog 顯示課程資訊
 系統 SHALL 在 `EnrollmentApplicationDialog` 頂部顯示課程名稱、預計開課日期（若有）、講師姓名，讓學員在選擇書籍前確認課程資訊。

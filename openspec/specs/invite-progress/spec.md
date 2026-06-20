@@ -1,4 +1,9 @@
-## ADDED Requirements
+# invite-progress Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for invite-progress.
+
+## Requirements
 
 ### Requirement: 邀請進度頁
 系統 SHALL 提供 `/invites` 路由，顯示當前登入教師建立的所有邀請列表，每筆邀請包含：課程名稱、預計人數、已確認人數、建立時間。

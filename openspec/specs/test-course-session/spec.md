@@ -1,4 +1,9 @@
-## ADDED Requirements
+# test-course-session Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for test-course-session.
+
+## Requirements
 
 ### Requirement: 測試授課按鈕僅於測試環境顯示
 系統 SHALL 在使用者個人頁（`/user/[spiritId]`）既有「新增授課」按鈕旁，提供「新增測試授課」按鈕。此按鈕 SHALL 僅於 `process.env.NODE_ENV === 'development'` 時渲染；於 production 環境 SHALL NOT 渲染任何相關 UI。

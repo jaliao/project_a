@@ -1,4 +1,9 @@
-## ADDED Requirements
+# email-registration Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for email-registration.
+
+## Requirements
 
 ### Requirement: 註冊頁 Google OAuth 入口
 `/register` 頁面 SHALL 提供「以 Google 帳號繼續」按鈕，功能與行為和登入頁的 Google 按鈕一致。
@@ -10,8 +15,6 @@
 #### Scenario: 已有帳號的 Google 使用者在註冊頁登入
 - **WHEN** 使用者以已存在帳號的 Google email 完成 OAuth
 - **THEN** 系統正常登入，不重複建立帳號，導向 `/dashboard`
-
-## MODIFIED Requirements
 
 ### Requirement: Google OAuth 首次登入自動建帳
 系統 SHALL 在 Google OAuth 使用者首次登入（含從 `/register` 頁觸發）時自動建立帳號並核發 Spirit ID。`/register` 與 `/login` 兩個入口均支援此流程。

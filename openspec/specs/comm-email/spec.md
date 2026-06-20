@@ -1,4 +1,9 @@
-## ADDED Requirements
+# comm-email Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for comm-email.
+
+## Requirements
 
 ### Requirement: 通訊 Email 獨立於登入帳號
 系統 SHALL 區分「登入帳號 Email」（唯一、不可變）與「通訊 Email」（可修改、需驗證）。

@@ -1,4 +1,9 @@
-## ADDED Requirements
+# completion-certificate Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for completion-certificate.
+
+## Requirements
 
 ### Requirement: 結業證明卡片
 系統 SHALL 提供結業證明卡片元件，顯示課程等級名稱、授課教師姓名及結業日期。

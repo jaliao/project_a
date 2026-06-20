@@ -1,4 +1,9 @@
-## MODIFIED Requirements
+# course-session-detail Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for course-session-detail.
+
+## Requirements
 
 ### Requirement: 課程詳情頁路由
 系統 SHALL 提供 `/course/[id]` 路由，顯示單一開課（CourseInvite）的完整資訊，並依當前使用者角色（講師 / 學員）呈現不同操作區塊。
@@ -79,7 +84,7 @@
 - **THEN** 整個操作區塊不渲染（既有行為不變）
 
 ### Requirement: 講師專屬：取消授課
-沿用 cr-spec-260324-011 實作，僅在課程未取消且未結業時顯示「取消授課」按鈕。
+沿用 cr-spec-260324-011 實作，系統 SHALL 僅在課程未取消且未結業時顯示「取消授課」按鈕。
 
 #### Scenario: 取消授課按鈕可見條件
 - **WHEN** 使用者為講師且課程未取消、未結業

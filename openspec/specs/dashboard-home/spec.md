@@ -1,4 +1,9 @@
-## ADDED Requirements
+# dashboard-home Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for dashboard-home.
+
+## Requirements
 
 ### Requirement: 登入後首頁路由
 系統 SHALL 提供 `/dashboard` 路由作為所有已登入使用者的預設落點。未登入存取時 SHALL 重定向至 `/login`。

@@ -1,4 +1,9 @@
-## ADDED Requirements
+# notification-history Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for notification-history.
+
+## Requirements
 
 ### Requirement: 通知歷史頁面路由
 系統 SHALL 提供 `/notifications` 路由，供已登入使用者瀏覽完整通知歷史。

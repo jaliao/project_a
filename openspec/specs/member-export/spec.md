@@ -1,4 +1,9 @@
-## ADDED Requirements
+# member-export Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for member-export.
+
+## Requirements
 
 ### Requirement: 會員 Excel 匯出（篩選）
 管理者 SHALL 能在 `/admin/members` 頁面點擊「匯出 N 筆」按鈕，依目前**所有篩選條件**（`?q=` 文字搜尋、`?gender=`、`?role=`、`?church=`）匯出會員資料為 `.xlsx` 檔案下載。按鈕上的 N SHALL 反映**符合目前篩選條件的總筆數**（不受每頁 30 筆上限影響）。

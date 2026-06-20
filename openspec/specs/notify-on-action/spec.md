@@ -1,4 +1,9 @@
-## ADDED Requirements
+# notify-on-action Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for notify-on-action.
+
+## Requirements
 
 ### Requirement: createNotification 內部工具函數
 系統 SHALL 提供 `createNotification(userId: string, title: string, body: string)` 函數，供 Server Actions 在操作成功後寫入 Inbox 通知。

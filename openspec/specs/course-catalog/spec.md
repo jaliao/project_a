@@ -1,4 +1,9 @@
-## MODIFIED Requirements
+# course-catalog Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for course-catalog.
+
+## Requirements
 
 ### Requirement: 課程目錄定義
 系統 SHALL 以資料庫（`CourseCatalog` table）管理課程目錄，每門課程含 `id`（int，主鍵）、`label`（顯示名稱，可編輯）、`isActive`（是否開放）、`sortOrder`（顯示排序）、`prerequisites`（先修課程多對多自關聯）。系統 SHALL 移除 `CourseLevel` enum 及 `config/course-catalog.ts`。
@@ -28,9 +33,3 @@
 #### Scenario: 表單不顯示未開放課程
 - **WHEN** 教師開啟建立邀請 Dialog
 - **THEN** 課程選單只顯示 isActive 為 true 的課程，名稱來自 `CourseCatalog.label`，依 `sortOrder` 排序
-
-## REMOVED Requirements
-
-### Requirement: CourseLevel enum 定義
-**Reason**: 課程數量不固定，enum 每次新增課程都需 DB migration；改為純 DB table 更彈性。
-**Migration**: 移除 `CourseLevel` enum 及所有引用（`CourseInvite.courseLevel`、`config/course-catalog.ts`），改用 `CourseCatalog.id` 作關聯。

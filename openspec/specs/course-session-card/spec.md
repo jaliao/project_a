@@ -1,4 +1,9 @@
-## MODIFIED Requirements
+# course-session-card Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for course-session-card.
+
+## Requirements
 
 ### Requirement: 課程卡片元件
 系統 SHALL 提供共用 `CourseSessionCard` 元件，接受課程資料 props 並以卡片方式呈現，供 Dashboard 與開課查詢頁共用。卡片 SHALL 接受可選的 `href` prop，當 `href` 有值時整張卡片為可點擊連結。

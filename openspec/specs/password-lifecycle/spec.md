@@ -1,4 +1,9 @@
-## ADDED Requirements
+# password-lifecycle Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for password-lifecycle.
+
+## Requirements
 
 ### Requirement: 首次登入強制變更密碼
 系統 SHALL 偵測使用者以臨時密碼登入，並強制於完成 Onboarding 流程前阻擋所有受保護路由的存取。守衛 SHALL 在 RSC Layout 層（Node.js runtime）執行，直接讀取 DB 以確保 `isTempPassword` 狀態永遠是最新值，不依賴可能過期的 JWT cache。

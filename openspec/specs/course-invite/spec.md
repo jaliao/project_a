@@ -1,4 +1,9 @@
-## ADDED Requirements
+# course-invite Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for course-invite.
+
+## Requirements
 
 ### Requirement: 透過 Spirit ID 邀請學員
 系統 SHALL 提供 `inviteBySpirtId(courseInviteId, spiritId)` server action，查找對應 User 後發送 Inbox 通知，通知內容包含課程名稱與邀請連結。學員仍需自行點擊連結完成加入流程。

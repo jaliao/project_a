@@ -1,4 +1,9 @@
-## ADDED Requirements
+# admin-seed Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for admin-seed.
+
+## Requirements
 
 ### Requirement: 後台首頁功能導覽按鈕
 `/admin` 首頁 SHALL 以功能按鈕網格呈現所有管理功能入口，取代原有的統計與資料預覽區塊。

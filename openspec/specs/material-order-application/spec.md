@@ -1,4 +1,9 @@
-## ADDED Requirements
+# material-order-application Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for material-order-application.
+
+## Requirements
 
 ### Requirement: 出貨單顯示書本名稱
 出貨單列印頁的「課程資訊」區塊 SHALL 顯示書本名稱（`CourseCatalog.label`）。

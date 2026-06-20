@@ -1,4 +1,9 @@
-## ADDED Requirements
+# cancel-course-session Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for cancel-course-session.
+
+## Requirements
 
 ### Requirement: 取消課程按鈕
 課程詳情頁底部 SHALL 顯示「取消課程」按鈕，僅在課程未取消時顯示。

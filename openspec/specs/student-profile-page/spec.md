@@ -1,4 +1,9 @@
-## MODIFIED Requirements
+# student-profile-page Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for student-profile-page.
+
+## Requirements
 
 ### Requirement: 學員專屬頁面路由
 系統 SHALL 提供 `/user/{spiritId}` 路由，顯示指定學員的個人資料頁面。路由參數使用 Spirit ID **小寫**形式（例：`pa260001`）；系統在查詢資料庫時 SHALL 自動轉換為大寫。所有已登入使用者皆可存取任意學員頁面。
@@ -18,8 +23,6 @@
 #### Scenario: 不存在的 Spirit ID
 - **WHEN** 已登入使用者存取不存在的 Spirit ID
 - **THEN** 系統顯示 404 頁面
-
-## ADDED Requirements
 
 ### Requirement: 本人專屬 — 資料完整度提醒
 學員頁面 SHALL 在使用者查閱自己頁面時顯示 ProfileBanner。ProfileBanner 根據 `realName`、通訊 Email、`phone` 是否填寫完整，顯示歡迎訊息或補填提醒。

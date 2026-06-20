@@ -1,4 +1,9 @@
-## ADDED Requirements
+# print-shipping-order Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for print-shipping-order.
+
+## Requirements
 
 ### Requirement: 出貨單列印頁面
 系統 SHALL 在 `/admin/materials/[id]/print` 提供出貨單列印頁面，僅管理者可存取。頁面以列印友善版面呈現，透過 `window.print()` 觸發瀏覽器列印。

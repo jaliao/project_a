@@ -1,4 +1,9 @@
-## ADDED Requirements
+# course-enrollment-application Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for course-enrollment-application.
+
+## Requirements
 
 ### Requirement: 學員申請參加按鈕
 課程詳情頁 SHALL 在學員視圖（非講師）顯示「申請參加」按鈕。若報名截止日期已過，顯示「報名截止」狀態取代按鈕；若學員已有申請記錄（pending 或 approved），顯示對應狀態而非按鈕。

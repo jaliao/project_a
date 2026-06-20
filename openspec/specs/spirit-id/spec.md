@@ -1,4 +1,9 @@
-## ADDED Requirements
+# spirit-id Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for spirit-id.
+
+## Requirements
 
 ### Requirement: Spirit ID 自動核發
 系統 SHALL 在會員帳號建立成功後，自動核發一個永久唯一的 Spirit ID，格式為 `PA` + 西元年後兩位 + 四位流水號（補零）。

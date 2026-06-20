@@ -1,4 +1,9 @@
-## ADDED Requirements
+# instructor-enrollment-review Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for instructor-enrollment-review.
+
+## Requirements
 
 ### Requirement: 講師待審申請清單
 課程詳情頁 SHALL 在講師視圖顯示所有 `status=pending` 的 InviteEnrollment 學員，包含姓名、Email、書籍選擇，並提供「同意」按鈕。

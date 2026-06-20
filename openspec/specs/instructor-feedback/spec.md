@@ -1,4 +1,9 @@
-## ADDED Requirements
+# instructor-feedback Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for instructor-feedback.
+
+## Requirements
 
 ### Requirement: 講師資格回饋資料模型
 系統 SHALL 於 `InviteEnrollment` 記錄講師資格回饋，欄位包含：`teacherRecommended`（布林，可空：`null`=未填回饋、`true`=推薦、`false`=不推薦）、`teacherFeedbackNote`（選填備註文字）、`teacherFeedbackAt`（填寫/最後更新時間）。回饋為**逐書**語意：對應該 `InviteEnrollment` 所屬課程的 `courseCatalogId`，即「是否推薦成為該書的講師」（書籍對應依 [[member-roles]] 的「講師身分與書籍對應」）。

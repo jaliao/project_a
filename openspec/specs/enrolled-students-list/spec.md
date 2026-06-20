@@ -1,4 +1,9 @@
-## ADDED Requirements
+# enrolled-students-list Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for enrolled-students-list.
+
+## Requirements
 
 ### Requirement: 顯示已接受邀請學員清單
 首頁「新增開課」區塊下方 SHALL 顯示最新一筆 CourseInvite 的已接受邀請學員清單。

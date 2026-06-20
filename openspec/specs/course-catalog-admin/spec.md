@@ -1,4 +1,9 @@
-## ADDED Requirements
+# course-catalog-admin Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for course-catalog-admin.
+
+## Requirements
 
 ### Requirement: Admin 可檢視課程目錄列表
 管理員（role 為 `admin` 或 `superadmin`）SHALL 能在後台頁面 `/admin/course-catalog` 檢視所有課程的名稱、isActive 狀態與先修課程設定。

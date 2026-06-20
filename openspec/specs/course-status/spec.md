@@ -1,4 +1,9 @@
-## MODIFIED Requirements
+# course-status Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for course-status.
+
+## Requirements
 
 ### Requirement: 課程詳情頁「開始上課」按鈕
 課程詳情頁講師操作區 SHALL 在課程為招生中且教材已收件時顯示「開始上課」按鈕，點擊後呼叫 `startCourseSession`。

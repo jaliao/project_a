@@ -1,4 +1,9 @@
-## ADDED Requirements
+# course-graduation Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for course-graduation.
+
+## Requirements
 
 ### Requirement: 結業時選擇通過學員
 講師執行結業操作時，系統 SHALL 顯示 Dialog，列出所有已核准（approved）的學員供講師勾選，講師至少須勾選一位學員方可確認結業。

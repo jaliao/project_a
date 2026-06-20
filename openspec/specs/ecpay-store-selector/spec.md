@@ -1,4 +1,9 @@
-## ADDED Requirements
+# ecpay-store-selector Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for ecpay-store-selector.
+
+## Requirements
 
 ### Requirement: 開啟 ECPay 超商門市選擇器
 系統 SHALL 提供 `EcpayStoreSelector` 元件，依傳入的 `logisticsSubType`（`UNIMART` 或 `FAMI`）開啟對應的 ECPay MapCVS 門市選擇頁面。

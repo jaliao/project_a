@@ -1,4 +1,9 @@
-## ADDED Requirements
+# course-card-grid Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for course-card-grid.
+
+## Requirements
 
 ### Requirement: CourseCardGrid 共用網格元件
 系統 SHALL 提供 `CourseCardGrid` 元件（`components/course-session/course-card-grid.tsx`），作為課程卡片的響應式網格容器，統一管理欄數規則。

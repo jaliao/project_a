@@ -1,41 +1,28 @@
-## 課程簡介欄位（description）
+# course-catalog-description Specification
 
-### 資料模型
+## Purpose
+課程目錄的「課程簡介」（description）欄位：資料模型、編輯與顯示行為。
 
-```prisma
-model CourseCatalog {
-  id          Int     @id @default(autoincrement())
-  label       String
-  description String? // 課程簡介（選填）
-  isActive    Boolean @default(false)
-  sortOrder   Int     @default(0)
-  // ...
-}
-```
+## Requirements
 
-### API 介面
+### Requirement: 課程簡介欄位
+`CourseCatalog` SHALL 提供選填的 `description`（`String?`）欄位。`updateCourse(id, data)` SHALL 接受 `description`，且空字串 SHALL 儲存為 `null`。
 
-`updateCourse(id, data)` 的 `data` 新增：
-```typescript
-description?: string | null
-```
+#### Scenario: 編輯並儲存課程簡介
+- **WHEN** 管理者於 EditCourseDialog 的「課程簡介」Textarea 填入內容並儲存
+- **THEN** 系統將該課程 `description` 更新為所填內容
 
-### UI 行為
+#### Scenario: 清空簡介存為 null
+- **WHEN** 管理者清空「課程簡介」並儲存
+- **THEN** 系統將 `description` 儲存為 `null`
 
-**EditCourseDialog**：
-- 在課程名稱下方新增「課程簡介」Textarea（rows=3）
-- placeholder：「輸入課程簡介（選填）」
-- 空字串送出時存為 `null`
+### Requirement: 課程簡介顯示
+課程目錄管理表格（CourseCatalogTable）SHALL 顯示課程簡介，超過兩行 SHALL 截斷（`line-clamp-2`），無簡介時 SHALL 顯示「—」。
 
-**CourseCatalogTable**：
-- 新增「簡介」欄（或在課程名稱下方顯示灰字簡介）
-- 超過 2 行截斷（`line-clamp-2`）
-- 無簡介時顯示 `—`
+#### Scenario: 有簡介
+- **WHEN** 某課程已填寫簡介
+- **THEN** 表格顯示該簡介（超過兩行截斷）
 
-### 異動範圍
-1. `prisma/schema/course-catalog.prisma`：新增 `description String?`
-2. 新增 migration：`ALTER TABLE course_catalogs ADD COLUMN description TEXT`
-3. `lib/data/course-catalog.ts`：`CourseCatalogEntry` 加 `description: string | null`，所有 select 加 `description: true`
-4. `app/actions/course-catalog.ts`：`updateCourse` data 加 `description`
-5. `components/course-catalog/edit-course-dialog.tsx`：新增 description Textarea
-6. `components/course-catalog/course-catalog-table.tsx`：顯示簡介
+#### Scenario: 無簡介
+- **WHEN** 某課程未填寫簡介
+- **THEN** 表格該欄顯示「—」

@@ -1,4 +1,9 @@
-## ADDED Requirements
+# notification-inbox Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for notification-inbox.
+
+## Requirements
 
 ### Requirement: 訊息 Drawer 面板
 系統 SHALL 在使用者點擊 Topbar 訊息圖示後，從右側滑入 Drawer（Sheet）顯示最新通知列表（最多 20 則），依建立時間倒序排列。

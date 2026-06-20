@@ -1,4 +1,9 @@
-## ADDED Requirements
+# course-order Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for course-order.
+
+## Requirements
 
 ### Requirement: CourseOrder storeId 欄位
 `CourseOrder` model SHALL 新增 `storeId String?` 欄位，儲存 7-11 取貨門市店號。
@@ -21,8 +26,6 @@
 #### Scenario: 非 7-11 取貨時 storeName 為 null
 - **WHEN** `deliveryMethod` 為 `familyMart` 或 `delivery`
 - **THEN** `storeName` 為 null
-
-## MODIFIED Requirements
 
 ### Requirement: applyMaterialOrder Server Action
 系統 SHALL 提供 `applyMaterialOrder(inviteId, data)` Server Action，讓講師建立或更新 CourseOrder 並關聯至 CourseInvite。

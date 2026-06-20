@@ -1,4 +1,9 @@
-## ADDED Requirements
+# course-sessions-list Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for course-sessions-list.
+
+## Requirements
 
 ### Requirement: 開課查詢頁路由
 系統 SHALL 提供 `/course-sessions` 路由，已登入使用者可存取，顯示該使用者所有開課記錄。

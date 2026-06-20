@@ -1,4 +1,9 @@
-## ADDED Requirements
+# learning-records Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for learning-records.
+
+## Requirements
 
 ### Requirement: 學習紀錄頁面
 系統 SHALL 提供 `/learning` 頁面（已登入使用者可存取），分兩區塊顯示當前使用者的學習歷程：

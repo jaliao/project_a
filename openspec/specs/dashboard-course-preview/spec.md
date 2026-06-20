@@ -1,4 +1,9 @@
-## ADDED Requirements
+# dashboard-course-preview Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for dashboard-course-preview.
+
+## Requirements
 
 ### Requirement: Dashboard 開課預覽列表
 Dashboard SHALL 在授課功能卡片上方顯示「已新增的開課」區塊，列出當前教師最近 5 筆開課記錄，使用 CourseSessionCard（variant="compact"）呈現。

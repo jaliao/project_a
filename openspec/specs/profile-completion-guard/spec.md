@@ -1,4 +1,9 @@
-## ADDED Requirements
+# profile-completion-guard Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for profile-completion-guard.
+
+## Requirements
 
 ### Requirement: 環境變數控制強制轉導行為
 系統 SHALL 透過 `REQUIRE_PROFILE_COMPLETION` 環境變數（預設 `true`）決定未填資料時的處理策略。

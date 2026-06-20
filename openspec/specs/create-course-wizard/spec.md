@@ -1,4 +1,9 @@
-## MODIFIED Requirements
+# create-course-wizard Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for create-course-wizard.
+
+## Requirements
 
 ### Requirement: Step 1 — 卡片式課程選擇
 精靈第一步 SHALL 以卡片形式展示所有 `isActive: true` 的課程。有資格開設的卡片可點擊選取；無資格的卡片以灰暗樣式顯示且不可點擊。選中狀態以視覺樣式（border/ring）區分。

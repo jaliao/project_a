@@ -1,4 +1,9 @@
-## ADDED Requirements
+# identity-tags Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for identity-tags.
+
+## Requirements
 
 ### Requirement: 身分標籤計算邏輯
 系統 SHALL 根據使用者的 `role` 與結業證書計算身分標籤陣列，可同時包含多個標籤。

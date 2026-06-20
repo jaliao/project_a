@@ -1,4 +1,9 @@
-## ADDED Requirements
+# display-name Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for display-name.
+
+## Requirements
 
 ### Requirement: 顯示名稱規則
 系統 SHALL 提供單一「顯示名稱」規則：以**暱稱**（`nickname`）為基底，未填則退回**中文名稱**（`realName`），再未填則退回**英文名稱**（`englishName`）；三者皆無則顯示「（未填）」。此退回鏈 SHALL NOT 包含 `email`（Email 不作為名稱）。規則 SHALL 集中於 `lib/utils/member-display.ts` 的 `getMemberDisplayName`，為唯一邏輯出口。

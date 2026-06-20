@@ -1,5 +1,8 @@
-## ADDED Requirements
+# profile-nickname Specification
 
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for profile-nickname.
+## Requirements
 ### Requirement: User 模型支援暱稱欄位
 系統 SHALL 在 User 資料模型中提供 `nickname`（`String?`）欄位，供使用者填寫自訂暱稱。
 
@@ -32,3 +35,4 @@ Profile 頁面 SHALL 提供登出按鈕，讓使用者可直接在個人資料�
 #### Scenario: 登出按鈕視覺獨立
 - **WHEN** 使用者瀏覽 Profile 頁面
 - **THEN** 登出按鈕位於獨立的危險操作區塊（有視覺區隔），避免誤觸
+

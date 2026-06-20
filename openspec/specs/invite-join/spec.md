@@ -1,4 +1,9 @@
-## ADDED Requirements
+# invite-join Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for invite-join.
+
+## Requirements
 
 ### Requirement: 學員透過邀請連結加入課程
 已登入使用者存取 `/invite/[token]` 時，系統 SHALL 驗證 token，建立 `InviteEnrollment` 記錄，並 redirect 至 `/dashboard?enrolled=1`。

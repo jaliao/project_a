@@ -1,4 +1,9 @@
-## ADDED Requirements
+# member-roles Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for member-roles.
+
+## Requirements
 
 ### Requirement: 多重身分資料模型
 會員身分 SHALL 以身分集合表示，取代單一 `role` 欄位。可用身分為七種：一般會員（`user`）、四個書籍講師、管理者（`admin`）、超級管理者（`superadmin`）。四個書籍講師身分各對應一本書：`teacher_1`（啟動靈人）、`teacher_2`（啟動豐盛）、`teacher_3`（啟動得勝）、`teacher_4`（啟動事工 4）。同一會員 SHALL 能同時持有多種身分，包含多個書籍講師身分。

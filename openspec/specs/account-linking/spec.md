@@ -1,4 +1,9 @@
-## MODIFIED Requirements
+# account-linking Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for account-linking.
+
+## Requirements
 
 ### Requirement: Google 帳號連動
 使用者 SHALL 可在 Profile 頁面將 Google 帳號與現有帳號進行綁定或解除綁定。「連結帳號」按鈕 SHALL 為可點擊狀態，點擊後觸發 Google OAuth 流程完成連動。

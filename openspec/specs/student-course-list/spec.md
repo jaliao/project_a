@@ -1,4 +1,9 @@
-## ADDED Requirements
+# student-course-list Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for student-course-list.
+
+## Requirements
 
 ### Requirement: 學員課程三狀態分組顯示
 學員專屬頁面 SHALL 將該學員的所有 enrollments 依課程狀態分為三個區塊顯示：**申請中**、**已開課**、**已結業**。已取消課程的 enrollment SHALL 不顯示。

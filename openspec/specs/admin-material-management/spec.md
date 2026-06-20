@@ -1,4 +1,9 @@
-## MODIFIED Requirements
+# admin-material-management Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for admin-material-management.
+
+## Requirements
 
 ### Requirement: 管理者確認已寄送
 管理頁 SHALL 在狀態為「待寄送」的申請列顯示「確認已寄送」按鈕，點擊後呼叫 `confirmShipment(orderId)` Server Action。
@@ -24,8 +29,6 @@
 #### Scenario: 非管理者無法呼叫 confirmShipment
 - **WHEN** role 非 admin/superadmin 的使用者呼叫 `confirmShipment`
 - **THEN** 回傳 `{ success: false, message: '無權限' }`
-
-## ADDED Requirements
 
 ### Requirement: 後台管理頁列印出貨單按鈕
 管理頁每筆申請 SHALL 提供「列印出貨單」按鈕，點擊後開啟出貨單列印頁。

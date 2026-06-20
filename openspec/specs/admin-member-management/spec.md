@@ -1,4 +1,9 @@
-## ADDED Requirements
+# admin-member-management Specification
+
+## Purpose
+TBD - normalized for archive compatibility. Update Purpose for admin-member-management.
+
+## Requirements
 
 ### Requirement: 會員清單搜尋
 管理者 SHALL 能在 `/admin/members` 頁面透過搜尋列篩選會員，搜尋條件涵蓋 `realName`、`name`、`nickname`、`email`、`spiritId` 欄位（OR 邏輯、不分大小寫、部分匹配）。搜尋條件 SHALL 透過 URL query string `?q=` 傳遞，以支援書籤與重新整理保留。表格欄位順序 SHALL 為：啟動編號、姓名、Email、身分、操作（不再顯示「加入日期」欄位）。「身分」欄 SHALL 顯示該會員擁有的所有身分。
