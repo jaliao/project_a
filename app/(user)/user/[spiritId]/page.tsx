@@ -14,7 +14,14 @@ import Link from 'next/link'
 import { IconUser, IconBook, IconChalkboard, IconShieldCheck, IconAward, IconHistory } from '@tabler/icons-react'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
-import { canAccessAdmin, canTeach as canTeachByRoles } from '@/lib/auth-roles'
+import {
+  canAccessAdmin,
+  canTeachAny,
+  CATALOG_BY_TEACHER_ROLE,
+  TEACHER_ROLES,
+  ROLE_LABELS,
+  type TeacherRole,
+} from '@/lib/auth-roles'
 import { Badge } from '@/components/ui/badge'
 import { ProfileBanner } from '@/components/dashboard/profile-banner'
 import { CourseSessionDialog } from '@/components/course-session/course-session-dialog'
@@ -23,7 +30,7 @@ import { CourseSessionCard } from '@/components/course-session/course-session-ca
 import { CourseCardGrid } from '@/components/course-session/course-card-grid'
 import { CompletionCertificateCard } from '@/components/course-invite/completion-certificate-card'
 import { getMyEnrollments, getMyCourseSessions, getMyCompletionCertificates } from '@/lib/data/course-sessions'
-import { getActiveCourses, getGraduatedCatalogIds } from '@/lib/data/course-catalog'
+import { getActiveCourses } from '@/lib/data/course-catalog'
 
 export const metadata: Metadata = {
   title: '學員資料 — 啟動事工',
@@ -64,23 +71,24 @@ export default async function UserProfilePage({ params }: Props) {
   const myCourseSessions = isOwnPageEarly ? await getMyCourseSessions(user.id, 4) : []
   // 查詢結業證明（所有人可見）
   const certificates = await getMyCompletionCertificates(user.id)
-  // 查詢已結業課程 id 集合（用於開課資格判斷）
-  const graduatedCatalogIdsSet = isOwnPageEarly
-    ? await getGraduatedCatalogIds(user.id)
-    : new Set<number>()
-  const graduatedCatalogIds = [...graduatedCatalogIdsSet]
+  // 可開設課程 id 集合：由本人持有的書籍講師身分推導（admin/superadmin 於精靈內另以 isAdmin 放行）
+  const teachableCatalogIds = isOwnPageEarly
+    ? (session?.user?.roles ?? [])
+        .map((r) => CATALOG_BY_TEACHER_ROLE[r as TeacherRole])
+        .filter((n): n is number => typeof n === 'number')
+    : []
   // 查詢可開設課程（開課精靈使用）
   const activeCourses = isOwnPageEarly ? await getActiveCourses() : []
 
   const displayName = user.realName || user.name || '（未設定姓名）'
 
-  // 計算身分標籤（角色標籤優先，講師標籤依結業紀錄升序排列）
+  // 計算身分標籤（系統管理員優先，講師標籤依書籍講師身分推導）
   const identityTags: string[] = []
   if (canAccessAdmin(user.roles)) {
     identityTags.push('系統管理員')
   }
-  for (const cert of certificates) {
-    identityTags.push(`${cert.courseCatalogLabel} 講師`)
+  for (const role of TEACHER_ROLES) {
+    if (user.roles.includes(role)) identityTags.push(ROLE_LABELS[role])
   }
 
   // 判斷是否為本人頁面
@@ -91,8 +99,8 @@ export default async function UserProfilePage({ params }: Props) {
   const isProfileComplete = !!(user.realName && effectiveCommEmail && user.phone)
   const isAdmin = canAccessAdmin(session?.user?.roles)
 
-  // 開課入口：依講師身分（teacher/admin/superadmin）顯示，與 server action 授權一致
-  const canTeach = canTeachByRoles(session?.user?.roles)
+  // 開課入口：具任一書籍講師身分（或 admin/superadmin）即顯示，與 server action 授權一致
+  const canTeach = canTeachAny(session?.user?.roles)
 
   // 強制轉導停用時才顯示 Banner（啟用時 layout guard 已轉導，無需 Banner）
   const showProfileBanner = process.env.REQUIRE_PROFILE_COMPLETION === 'false'
@@ -270,7 +278,7 @@ export default async function UserProfilePage({ params }: Props) {
               <CourseSessionDialog
                 instructorName={displayName}
                 activeCourses={activeCourses}
-                graduatedCatalogIds={graduatedCatalogIds}
+                teachableCatalogIds={teachableCatalogIds}
                 isAdmin={isAdmin}
               />
             </Suspense>

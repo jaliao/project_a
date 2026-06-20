@@ -52,7 +52,16 @@ export async function GET(req: NextRequest) {
   const members = await exportMembers({
     q: sp.get('q') ?? undefined,
     gender: (sp.get('gender') as 'male' | 'female' | 'unspecified' | null) ?? undefined,
-    role: (sp.get('role') as 'user' | 'teacher' | 'admin' | 'superadmin' | null) ?? undefined,
+    role:
+      (sp.get('role') as
+        | 'user'
+        | 'teacher_1'
+        | 'teacher_2'
+        | 'teacher_3'
+        | 'teacher_4'
+        | 'admin'
+        | 'superadmin'
+        | null) ?? undefined,
     church: sp.get('church') ?? undefined,
   })
 

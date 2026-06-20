@@ -20,8 +20,8 @@ type WizardStep = 1 | 2 | 3 | 'invite'
 interface CreateCourseWizardProps {
   instructorName: string
   activeCourses: CourseCatalogEntry[]
-  // 使用者已結業的課程 id 陣列（由 Server Component 傳入）
-  graduatedCatalogIds: number[]
+  // 使用者可開設的課程 id 陣列（由書籍講師身分推導，Server Component 傳入）
+  teachableCatalogIds: number[]
   isAdmin: boolean
   onClose: () => void
 }
@@ -37,7 +37,7 @@ const STEP_TITLES: Record<WizardStep, string> = {
 export function CreateCourseWizard({
   instructorName,
   activeCourses,
-  graduatedCatalogIds,
+  teachableCatalogIds,
   isAdmin,
   onClose,
 }: CreateCourseWizardProps) {
@@ -81,7 +81,7 @@ export function CreateCourseWizard({
           selected={selectedCatalogId}
           onSelect={setSelectedCatalogId}
           onNext={() => setStep(2)}
-          graduatedCatalogIds={graduatedCatalogIds}
+          teachableCatalogIds={teachableCatalogIds}
           isAdmin={isAdmin}
         />
       )}

@@ -18,8 +18,8 @@ interface Step1CourseCardProps {
   selected: number | null
   onSelect: (id: number) => void
   onNext: () => void
-  // 使用者已結業的課程 id 陣列（由 Server Component 傳入）
-  graduatedCatalogIds: number[]
+  // 使用者可開設的課程 id 陣列（由書籍講師身分推導，Server Component 傳入）
+  teachableCatalogIds: number[]
   isAdmin: boolean
 }
 
@@ -28,7 +28,7 @@ export function Step1CourseCard({
   selected,
   onSelect,
   onNext,
-  graduatedCatalogIds,
+  teachableCatalogIds,
   isAdmin,
 }: Step1CourseCardProps) {
   return (
@@ -39,7 +39,7 @@ export function Step1CourseCard({
         {courses.map((course) => {
           const isSelected = selected === course.id
           const hasQualification =
-            isAdmin || graduatedCatalogIds.includes(course.id)
+            isAdmin || teachableCatalogIds.includes(course.id)
 
           return (
             <button
@@ -69,7 +69,7 @@ export function Step1CourseCard({
               {/* 無授課資格提示 */}
               {!hasQualification && (
                 <p className="mt-1.5 text-xs text-muted-foreground">
-                  須先完成{course.label}才能授課
+                  須具備{course.label}講師身分才能授課
                 </p>
               )}
             </button>

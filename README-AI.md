@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.76（2026-06-12）
+> 自動產生，版本 0.1.77（2026-06-20）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -38,7 +38,7 @@ app/
 │   ├── layout.tsx   # Topbar 包裝層（含未讀通知數 server fetch；profile completion guard；傳遞 roles/spiritId 給 Topbar）
 │   ├── dashboard/       # redirect → /user/{id}（舊書籤相容）
 │   ├── admin/           # 管理後台：功能按鈕網格（儀錶板/課程/授課/教材/會員/教會/系統設定）
-│   │   ├── dashboard/       # 後台儀錶板（統計卡片 6 個：總會員數/靈人講師資格/豐盛講師資格/開課中/進行中/已結業；圖表已移除）
+│   │   ├── dashboard/       # 後台儀錶板（統計卡片 8 個：總會員數/靈人講師資格/豐盛講師資格/得勝講師資格/事工 4 講師資格/開課中/進行中/已結業；圖表已移除）
 │   │   ├── course-sessions/ # 開課管理（全站所有開課；搜尋 + 篩選；另開視窗；前 30 筆；每筆 inline 狀態下拉變更狀態）
 │   │   ├── members/         # 會員管理清單（搜尋 + 性別/身分/教會篩選；無條件不列清單；每頁 30 筆翻頁；重設密碼 + 查看詳情）
 │   │   ├── members/[id]/    # 會員詳情（Tabs：基本資料含所屬教會/學習階層）
@@ -93,7 +93,7 @@ components/
 ├── ecpay-store-selector/
 │   └── store-selector.tsx   # ECPay MapCVS 超商門市選擇器（7-11 UNIMART / 全家 FAMI，postMessage 同源）
 ├── course-session/
-│   ├── course-session-dialog.tsx  # 新增開課 Dialog 入口（含 canTeach disabled gate + tooltip）
+│   ├── course-session-dialog.tsx  # 新增開課 Dialog 入口（teachableCatalogIds 逐書資格 gate）
 │   ├── course-session-form.tsx    # 舊版合併表單（保留，目前精靈流程未使用）
 │   ├── course-session-card.tsx    # 開課卡片共用元件（compact / full variant，支援 href 連結）
 │   ├── course-card-grid.tsx       # 課程卡片響應式網格容器（1→2→3→4 欄 RWD）
@@ -172,7 +172,7 @@ prerequisites CourseCatalog[]（多對多自關聯，_CoursePrerequisites join t
 id            UUID（主鍵）
 email         String（唯一，登入帳號）
 name          String?
-roles         UserRole[] (多重身分；user 基線 + teacher/admin/superadmin，預設 [user])
+roles         UserRole[] (多重身分；user 基線 + teacher_1~teacher_4（四個書籍講師）/admin/superadmin，預設 [user])
 spiritId      String?（唯一，格式 PA+YY+XXXX）
 teacherNo     String?（授課老師編號，如 A001；學員為 null）
 passwordHash  String?（Google-only 為 null）
@@ -306,7 +306,7 @@ createdAt       DateTime
 2. **Email 白名單** — Google OAuth callback 驗證 `WhitelistedEmail.isActive`
 3. **臨時密碼攔截** — `isTempPassword=true` 強制導向 `/onboarding`（Onboarding Wizard）
 4. **Profile Completion Guard** — `(user)/layout.tsx` 讀取 `REQUIRE_PROFILE_COMPLETION` 環境變數（預設 true）；啟用時若 `realName`/`phone` 缺失則導向 `/user/{spiritId}/profile?incomplete=1`；排除 `/profile`、`/onboarding` 路徑
-5. **JWT** — 儲存 `id`, `roles`（多重身分陣列）, `spiritId`, `isTempPassword`（30 天）；授權判定一律走 `lib/auth-roles.ts`（`canAccessAdmin`/`canTeach`/`isSuperadmin`/`hasRole`）
+5. **JWT** — 儲存 `id`, `roles`（多重身分陣列）, `spiritId`, `isTempPassword`（30 天）；授權判定一律走 `lib/auth-roles.ts`（`canAccessAdmin`/`canTeachBook`/`canTeachAny`/`isSuperadmin`/`hasRole`）
 6. **登入後預設導向** — `/user/{currentUserId}`（學員專屬頁面）
 
 ### Spirit ID 核發
@@ -321,14 +321,13 @@ createdAt       DateTime
 - 結業後 `InviteEnrollment.graduatedAt` 有值，`getGraduatedCatalogIds(userId)` 回傳 Set
 
 ### 身分標籤
-- 來源：`User.roles`（管理者）+ `InviteEnrollment.graduatedAt`（講師，以結業證書 courseCatalogLabel 推導）
-- `canAccessAdmin(roles)` → 顯示「系統管理員」Badge
-- 有結業證書 → 顯示「{courseCatalogLabel} 講師」Badge（可多標籤）
+- 來源：`User.roles`：`canAccessAdmin(roles)` → 「系統管理員」；書籍講師身分 `teacher_1`~`teacher_4` → 對應「{書名}講師」Badge（可多標籤）
+- 講師標籤改由 `roles` 推導（不再以結業證書）；書名對應見 `lib/auth-roles.ts`（`BOOK_LABEL_BY_TEACHER_ROLE`）
 
-### 開課身分驗證
-- 開課（建立 CourseInvite）前置：`canTeach(roles)` = 含 `teacher`/`admin`/`superadmin`；`createCourseSession`/`createInvite` 於 Server Action 層權威驗證，未具資格回傳「需具講師身分方可開課」
-- 首頁「新增開課」入口依 `canTeach(session.user.roles)` 顯示／隱藏
-- Server Action 層另保留先修驗證（defense-in-depth；admin/superadmin 豁免）
+### 開課身分驗證（依書籍綁定）
+- 講師資格依書籍區分（`teacher_1`=啟動靈人、`teacher_2`=啟動豐盛、`teacher_3`=啟動得勝、`teacher_4`=啟動事工 4）；「身分↔書籍」對應集中於 `lib/auth-roles.ts`（`TEACHER_ROLE_BY_CATALOG`/`CATALOG_BY_TEACHER_ROLE`）
+- 開課入口：`canTeachAny(roles)`（含任一書籍講師身分或 admin/superadmin）顯示／隱藏
+- 逐書授課資格：`canTeachBook(roles, courseCatalogId)`（持有該書講師身分，admin/superadmin 豁免）；開課精靈 Step 1 與 `createCourseSession`/`createInvite` Server Action 皆以此把關，未具資格回傳「須具備{書名}講師身分才能授課」
 
 ### 新增授課精靈（三步驟）
 1. **Step 1**：卡片式課程選擇（DB 課程列表；顯示先修條件說明）
@@ -442,6 +441,8 @@ createdAt       DateTime
 - `cr-spec-260611-003` — 後台變更課程狀態：開課管理 `/admin/course-sessions` 每筆課程卡片下方新增 inline 狀態下拉（`CourseStatusSelect`），管理者可直接變更狀態（招生中／進行中／已取消，自由任意轉換）；新增 `setCourseStatusAdmin` action（`canAccessAdmin` 守衛，依目標清/設 startedAt/cancelledAt/completedAt 旗標，不發通知）；不提供設「已結業」（結業仍由講師走逐學員結業頁，已結業課程下拉停用）；狀態篩選功能本已存在；無 DB schema 變更
 
 - `cr-spec-260612-001` — 會員管理效能優化：`/admin/members` 未下任何條件時不查詢／不列清單（提示輸入搜尋或篩選）；有條件時每頁 30 筆 + 上一頁／下一頁翻頁（`?page=`，越界夾範圍）；新增性別／身分（`roles.has`，包含語意）／所屬教會（churchId/other/none）下拉篩選，與文字搜尋 AND 組合（改篩選重置 page）；`searchMembers(f,page)→{total,items,page,pageCount}`、抽出 `buildMemberWhere`/`hasAnyMemberFilter`；匯出尊重全部篩選（「匯出 N 筆」=符合條件總數）、export route 吃 `gender/role/church`；新增 `MembersFilter`/`MembersPagination` 元件、移除舊 `MemberSearchInput`；無 DB schema 變更
+
+- `cr-spec-260620-001` — 講師資格依書籍區分：`UserRole` 由單一 `teacher` 拆為四個書籍講師身分 `teacher_1`~`teacher_4`（migration `split_teacher_roles_by_book`，重建 enum）；`lib/auth-roles.ts` 新增「身分↔書籍」對應（`TEACHER_ROLE_BY_CATALOG`/`CATALOG_BY_TEACHER_ROLE`/`BOOK_LABEL_BY_TEACHER_ROLE`）與 `canTeachBook(roles,catalogId)`/`canTeachAny(roles)`，取代布林 `canTeach`；開課（`createInvite`/`createCourseSession`）改 `canTeachBook` 逐書把關、解除「結業=授課資格」耦合；開課精靈 Step 1 由 `graduatedCatalogIds` 改 `teachableCatalogIds`（提示「須具備{書名}講師身分才能授課」）；身分標籤、`/admin/members` 身分篩選與身分編輯改為四個書籍講師身分；儀錶板講師資格人數改以 `roles.has('teacher_N')` 計數並擴為四本書（8 張卡片）；書籍改名：啟動靈人 3→啟動得勝、啟動靈人 4→啟動事工 4；seed 新增測試講師 `teacher@test.com`（四書講師身分）、roster `teacher`→`teacher_1`
 
 ### 進行中 / 待規劃
 - （無）

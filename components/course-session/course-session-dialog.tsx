@@ -24,15 +24,15 @@ import { IconPlus } from '@tabler/icons-react'
 interface CourseSessionDialogProps {
   instructorName?: string
   activeCourses?: CourseCatalogEntry[]
-  // 使用者已結業的課程 id 陣列（由 Server Component 傳入）
-  graduatedCatalogIds?: number[]
+  // 使用者可開設的課程 id 陣列（由書籍講師身分推導，Server Component 傳入）
+  teachableCatalogIds?: number[]
   isAdmin?: boolean
 }
 
 export function CourseSessionDialog({
   instructorName = '',
   activeCourses = [],
-  graduatedCatalogIds = [],
+  teachableCatalogIds = [],
   isAdmin = false,
 }: CourseSessionDialogProps) {
   const [open, setOpen] = useState(false)
@@ -53,7 +53,7 @@ export function CourseSessionDialog({
         <CreateCourseWizard
           instructorName={instructorName}
           activeCourses={activeCourses}
-          graduatedCatalogIds={graduatedCatalogIds}
+          teachableCatalogIds={teachableCatalogIds}
           isAdmin={isAdmin}
           onClose={() => setOpen(false)}
         />

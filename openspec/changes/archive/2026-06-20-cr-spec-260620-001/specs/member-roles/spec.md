@@ -1,4 +1,4 @@
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: 多重身分資料模型
 會員身分 SHALL 以身分集合表示，取代單一 `role` 欄位。可用身分為七種：一般會員（`user`）、四個書籍講師、管理者（`admin`）、超級管理者（`superadmin`）。四個書籍講師身分各對應一本書：`teacher_1`（啟動靈人）、`teacher_2`（啟動豐盛）、`teacher_3`（啟動得勝）、`teacher_4`（啟動事工 4）。同一會員 SHALL 能同時持有多種身分，包含多個書籍講師身分。
@@ -50,6 +50,8 @@
 - **WHEN** 身分集合僅含 `user`
 - **THEN** `canAccessAdmin`、`canTeachAny` 皆為假，且對任一書 `canTeachBook` 為假
 
+## ADDED Requirements
+
 ### Requirement: 講師身分與書籍對應
 系統 SHALL 維護一份「書籍講師身分 ↔ 課程目錄（`CourseCatalog`）」的對應，作為授權判定與標籤顯示的單一真實來源。對應關係為：`teacher_1` ↔ `courseCatalogId = 1`（啟動靈人）、`teacher_2` ↔ `courseCatalogId = 2`（啟動豐盛）、`teacher_3` ↔ `courseCatalogId = 3`（啟動得勝）、`teacher_4` ↔ `courseCatalogId = 4`（啟動事工 4）。授權與顯示邏輯 SHALL NOT 自行硬編碼書籍與身分的對應，皆須引用此單一來源。
 
@@ -64,14 +66,3 @@
 #### Scenario: 非講師對應的課程目錄無對應身分
 - **WHEN** 查詢一個不在對應表內的 `courseCatalogId`
 - **THEN** 對應結果為空，`canTeachBook` 對該書僅對 `admin`／`superadmin` 為真
-
-### Requirement: 既有身分資料遷移
-系統升級時 SHALL 將既有單一 `role` 轉換為身分集合，對應規則為：`user → {user}`、`admin → {user, admin}`、`superadmin → {user, superadmin}`。
-
-#### Scenario: 既有管理者遷移
-- **WHEN** 升級前某會員 `role = admin`
-- **THEN** 升級後其身分集合為 `{user, admin}`
-
-#### Scenario: 既有超級管理者遷移
-- **WHEN** 升級前某會員 `role = superadmin`
-- **THEN** 升級後其身分集合為 `{user, superadmin}`

@@ -11,9 +11,8 @@
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
-import { canAccessAdmin, canTeach } from '@/lib/auth-roles'
+import { canAccessAdmin, canTeachAny, canTeachBook } from '@/lib/auth-roles'
 import { courseSessionSchema } from '@/lib/schemas/course-session'
-import { checkPrerequisites } from '@/lib/data/course-catalog'
 import { createNotification } from '@/app/actions/notification'
 
 type ActionResponse = {
@@ -38,8 +37,8 @@ export async function createCourseSession(
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
 
-  // 開課前置：須具講師身分（管理者／超級管理者視同具開課權限）
-  if (!canTeach(session.user.roles)) {
+  // 開課前置：須具任一書籍講師身分（管理者／超級管理者視同具開課權限）
+  if (!canTeachAny(session.user.roles)) {
     return { success: false, message: '需具講師身分方可開課' }
   }
 
@@ -58,16 +57,9 @@ export async function createCourseSession(
   if (!course) return { success: false, message: '找不到課程' }
   if (!course.isActive) return { success: false, message: '此課程目前未開放' }
 
-  // 驗證教師先修資格（管理者略過）
-  const isAdmin = canAccessAdmin(session.user.roles)
-  if (!isAdmin) {
-    const missingPrereqs = await checkPrerequisites(session.user.id, d.courseCatalogId)
-    if (missingPrereqs.length > 0) {
-      return {
-        success: false,
-        message: `開授${course.label}須先完成${missingPrereqs.map((p) => p.label).join('、')}`,
-      }
-    }
+  // 開課資格：須具該書對應的講師身分（admin／superadmin 不受限）
+  if (!canTeachBook(session.user.roles, d.courseCatalogId)) {
+    return { success: false, message: `須具備${course.label}講師身分才能授課` }
   }
 
   const invite = await prisma.courseInvite.create({

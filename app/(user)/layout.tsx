@@ -7,6 +7,7 @@
  */
 
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { Topbar } from '@/components/layout/topbar'
 import { getUnreadNotificationCount } from '@/lib/data/notification'
@@ -26,9 +27,12 @@ export default async function UserLayout({
   if (session.user?.isTempPassword) redirect('/onboarding')
 
   // Profile 完整度：realName / phone 未填時導向個人資料頁
+  // ⚠️ 排除 Profile 頁本身，避免在該頁又被導回 → 無限迴圈（profile-completion-guard spec）
+  const pathname = (await headers()).get('x-pathname') ?? ''
+  const onProfilePage = pathname.includes('/profile')
   const requireCompletion = process.env.REQUIRE_PROFILE_COMPLETION !== 'false'
   const spiritId = session.user?.spiritId
-  if (requireCompletion && !session.user?.isProfileComplete && spiritId) {
+  if (requireCompletion && !session.user?.isProfileComplete && spiritId && !onProfilePage) {
     redirect(`/user/${spiritId.toLowerCase()}/profile?incomplete=1`)
   }
 

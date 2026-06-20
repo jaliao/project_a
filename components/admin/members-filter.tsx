@@ -24,7 +24,10 @@ const GENDER_OPTIONS = [
 const ROLE_OPTIONS = [
   { value: '', label: '全部身分' },
   { value: 'user', label: '一般會員' },
-  { value: 'teacher', label: '講師' },
+  { value: 'teacher_1', label: '啟動靈人講師' },
+  { value: 'teacher_2', label: '啟動豐盛講師' },
+  { value: 'teacher_3', label: '啟動得勝講師' },
+  { value: 'teacher_4', label: '啟動事工 4 講師' },
   { value: 'admin', label: '管理者' },
   { value: 'superadmin', label: '超級管理者' },
 ]

@@ -40,8 +40,13 @@ function isPublic(pathname: string): boolean {
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
+  // 以 header 傳遞目前路徑，供 RSC layout 判斷（避免 Profile 完成度守衛無限迴圈）
+  const requestHeaders = new Headers(req.headers)
+  requestHeaders.set('x-pathname', pathname)
+  const pass = () => NextResponse.next({ request: { headers: requestHeaders } })
+
   // 公開路由直接放行
-  if (isPublic(pathname)) return NextResponse.next()
+  if (isPublic(pathname)) return pass()
 
   // 檢查 NextAuth session cookie（HTTPS 環境名稱不同）
   const sessionCookie =
@@ -54,7 +59,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  return NextResponse.next()
+  return pass()
 }
 
 export const config = {

@@ -11,7 +11,10 @@
 // ==========================================
 enum UserRole {
   user // 一般會員（基線身分，恆存在）
-  teacher // 講師（具開課權限）
+  teacher_1 // 啟動靈人講師（courseCatalogId=1）
+  teacher_2 // 啟動豐盛講師（courseCatalogId=2）
+  teacher_3 // 啟動得勝講師（courseCatalogId=3）
+  teacher_4 // 啟動事工 4 講師（courseCatalogId=4）
   admin // 管理者（可存取後台）
   superadmin // 超級管理者（最高權限）
 }

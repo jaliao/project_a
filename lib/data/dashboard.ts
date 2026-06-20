@@ -12,6 +12,8 @@ export type DashboardStats = {
   totalMembers: number
   spiritInstructors: number
   richInstructors: number
+  victoryInstructors: number
+  ministryInstructors: number
   recruitingCourseSessions: number
   activeCourseSessions: number
   completedCourseSessions: number
@@ -25,36 +27,22 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     totalMembers,
     spiritInstructors,
     richInstructors,
+    victoryInstructors,
+    ministryInstructors,
     recruitingCourseSessions,
     activeCourseSessions,
     completedCourseSessions,
   ] = await Promise.all([
     // 總會員數
     prisma.user.count(),
-    // 啟動靈人講師資格人數（teacher 身分 AND 結業啟動靈人 catalogId=1）
-    prisma.user.count({
-      where: {
-        roles: { has: 'teacher' },
-        inviteEnrollments: {
-          some: {
-            graduatedAt: { not: null },
-            invite: { courseCatalogId: 1 },
-          },
-        },
-      },
-    }),
-    // 啟動豐盛講師資格人數（teacher 身分 AND 結業啟動豐盛 catalogId=2）
-    prisma.user.count({
-      where: {
-        roles: { has: 'teacher' },
-        inviteEnrollments: {
-          some: {
-            graduatedAt: { not: null },
-            invite: { courseCatalogId: 2 },
-          },
-        },
-      },
-    }),
+    // 啟動靈人講師資格人數（持有 teacher_1 身分）
+    prisma.user.count({ where: { roles: { has: 'teacher_1' } } }),
+    // 啟動豐盛講師資格人數（持有 teacher_2 身分）
+    prisma.user.count({ where: { roles: { has: 'teacher_2' } } }),
+    // 啟動得勝講師資格人數（持有 teacher_3 身分）
+    prisma.user.count({ where: { roles: { has: 'teacher_3' } } }),
+    // 啟動事工 4 講師資格人數（持有 teacher_4 身分）
+    prisma.user.count({ where: { roles: { has: 'teacher_4' } } }),
     // 開課中課程總數（招生中：未開始、未取消、未結業）
     prisma.courseInvite.count({
       where: {
@@ -81,6 +69,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     totalMembers,
     spiritInstructors,
     richInstructors,
+    victoryInstructors,
+    ministryInstructors,
     recruitingCourseSessions,
     activeCourseSessions,
     completedCourseSessions,
