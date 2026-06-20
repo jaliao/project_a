@@ -7,6 +7,18 @@
  */
 
 import { prisma } from '@/lib/prisma'
+import type { DisplayNameMode } from '@/lib/utils/member-display'
+
+// 顯示名稱所需的使用者欄位（系統標準）
+const displayNameUserSelect = {
+  id: true,
+  name: true,
+  email: true,
+  realName: true,
+  englishName: true,
+  nickname: true,
+  displayNameMode: true,
+} as const
 
 export type CourseSessionItem = {
   id: number
@@ -203,6 +215,10 @@ type EnrollmentRecord = {
     id: string
     name: string | null
     email: string | null
+    realName: string | null
+    englishName: string | null
+    nickname: string | null
+    displayNameMode: DisplayNameMode
   }
 }
 
@@ -225,6 +241,9 @@ export type CourseSessionDetail = {
     name: string | null
     email: string | null
     realName: string | null
+    englishName: string | null
+    nickname: string | null
+    displayNameMode: DisplayNameMode
   }
   approvedEnrollments: EnrollmentRecord[]
   pendingEnrollments: EnrollmentRecord[]
@@ -281,7 +300,7 @@ export async function getCourseSessionById(
       courseDate: true,
       isPublicMatch: true,
       matchNote: true,
-      createdBy: { select: { id: true, name: true, email: true, realName: true } },
+      createdBy: { select: displayNameUserSelect },
       enrollments: {
         select: {
           id: true,
@@ -293,7 +312,7 @@ export async function getCourseSessionById(
           teacherRecommended: true,
           teacherFeedbackNote: true,
           teacherFeedbackAt: true,
-          user: { select: { id: true, name: true, email: true } },
+          user: { select: displayNameUserSelect },
         },
         orderBy: { joinedAt: 'asc' },
       },

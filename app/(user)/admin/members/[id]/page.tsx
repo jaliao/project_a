@@ -169,8 +169,7 @@ export default async function MemberDetailPage({
                     const bookLabel = teacherRole
                       ? BOOK_LABEL_BY_TEACHER_ROLE[teacherRole]
                       : enrollment.invite.courseCatalog.label
-                    const teacherName =
-                      enrollment.invite.createdBy.realName ?? enrollment.invite.createdBy.name ?? '—'
+                    const teacherName = getMemberDisplayName(enrollment.invite.createdBy)
                     return (
                     <tr
                       key={enrollment.invite.id}

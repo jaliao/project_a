@@ -29,6 +29,7 @@ import { CopyInviteLinkButton } from './copy-invite-link-button'
 import { StudentApplySection } from './student-apply-section'
 import { PendingEnrollmentList } from './pending-enrollment-list'
 import { InstructorFeedbackButton } from './instructor-feedback-button'
+import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { CourseStatusBadge, getCourseStatus } from '@/components/course-session/course-status-badge'
 import { CourseCatalogBadge } from '@/components/course-session/course-catalog-badge'
 
@@ -73,11 +74,7 @@ export default async function CourseDetailPage({
 
   const levelLabel = courseSession.courseCatalogLabel
 
-  const teacherName =
-    courseSession.createdBy.realName ??
-    courseSession.createdBy.name ??
-    courseSession.createdBy.email ??
-    '—'
+  const teacherName = getMemberDisplayName(courseSession.createdBy)
 
   const isInstructor = userSession?.user?.id === courseSession.createdBy.id
   const currentUserId = userSession?.user?.id
@@ -172,12 +169,12 @@ export default async function CourseDetailPage({
                   {graduated.map((e) => (
                     <li key={e.id} className="text-sm text-green-900 flex items-center gap-1.5 flex-wrap">
                       <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
-                      {e.user.name ?? e.user.email ?? '—'}
+                      {getMemberDisplayName(e.user)}
                       {/* 講師資格回饋：僅課程建立者（原老師）可填寫 */}
                       {isInstructor && (
                         <InstructorFeedbackButton
                           enrollmentId={e.id}
-                          studentName={e.user.name ?? e.user.email ?? '學員'}
+                          studentName={getMemberDisplayName(e.user)}
                           bookLabel={courseSession.courseCatalogLabel}
                           initialRecommended={e.teacherRecommended}
                           initialNote={e.teacherFeedbackNote}
@@ -198,7 +195,7 @@ export default async function CourseDetailPage({
                   {nonGraduated.map((e) => (
                     <li key={e.id} className="text-sm text-orange-900 flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0" />
-                      {e.user.name ?? e.user.email ?? '—'}
+                      {getMemberDisplayName(e.user)}
                       <span className="text-xs text-orange-600">
                         — {e.nonGraduateReason
                           ? (NON_GRADUATE_REASON_LABELS[e.nonGraduateReason] ?? e.nonGraduateReason)
@@ -277,7 +274,7 @@ export default async function CourseDetailPage({
               <li key={enrollment.id} className="flex items-center justify-between py-3">
                 <div>
                   <p className="text-sm font-medium">
-                    {enrollment.user.name ?? enrollment.user.email ?? '—'}
+                    {getMemberDisplayName(enrollment.user)}
                   </p>
                   {enrollment.user.email && (
                     <p className="text-xs text-muted-foreground">{enrollment.user.email}</p>

@@ -8,11 +8,16 @@
 
 import { formatDistanceToNow } from 'date-fns'
 import { zhTW } from 'date-fns/locale'
+import { getMemberDisplayName, type DisplayNameMode } from '@/lib/utils/member-display'
 
 interface Member {
   id: string
   name: string | null
   email: string
+  realName: string | null
+  englishName: string | null
+  nickname: string | null
+  displayNameMode: DisplayNameMode
   createdAt: Date
 }
 
@@ -40,7 +45,7 @@ export function RecentMembers({ members }: RecentMembersProps) {
           <div key={member.id} className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium leading-none">
-                {member.name ?? '（未設定）'}
+                {getMemberDisplayName(member)}
               </p>
               <p className="text-sm text-muted-foreground mt-1">{member.email}</p>
             </div>

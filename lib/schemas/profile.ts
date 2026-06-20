@@ -21,7 +21,7 @@ export const updateProfileSchema = z
     // 英文名稱、性別、顯示名稱模式
     englishName: z.string().optional(),
     gender: z.enum(['male', 'female', 'unspecified']),
-    displayNameMode: z.enum(['chinese', 'english']),
+    displayNameMode: z.enum(['nickname', 'nickname_zh', 'nickname_en']),
     // 所屬教會
     churchType: z.enum(['church', 'other', 'none']),
     churchId: z.number().int().positive().optional().nullable(),

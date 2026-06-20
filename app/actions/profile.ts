@@ -28,6 +28,7 @@ export async function updateProfile(
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
 
+  const churchIdRaw = formData.get('churchId')
   const parsed = updateProfileSchema.safeParse({
     realName: formData.get('realName'),
     nickname: formData.get('nickname'),
@@ -35,14 +36,19 @@ export async function updateProfile(
     address: formData.get('address'),
     englishName: formData.get('englishName'),
     gender: formData.get('gender') || 'unspecified',
-    displayNameMode: formData.get('displayNameMode') || 'chinese',
+    displayNameMode: formData.get('displayNameMode') || 'nickname',
     churchType: formData.get('churchType') || 'none',
-    churchId: formData.get('churchId') || null,
+    // FormData 取出為字串，需轉為數字（schema 期望 number）
+    churchId: churchIdRaw ? Number(churchIdRaw) : null,
     churchOther: formData.get('churchOther'),
   })
 
   if (!parsed.success) {
-    return { success: false, errors: parsed.error.flatten().fieldErrors }
+    return {
+      success: false,
+      message: '部分欄位填寫有誤，請檢查後再試',
+      errors: parsed.error.flatten().fieldErrors,
+    }
   }
 
   const { churchType, churchId, churchOther } = parsed.data

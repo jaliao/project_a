@@ -16,6 +16,7 @@ import { auth } from '@/lib/auth'
 import { getMyLearningRecords } from '@/app/actions/course-invite'
 import { getMyCompletionCertificates } from '@/lib/data/course-sessions'
 import { getAllCourses, getGraduatedCatalogIds } from '@/lib/data/course-catalog'
+import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { LevelProgress } from '@/components/learning/level-progress'
 
 export const metadata: Metadata = {
@@ -60,7 +61,7 @@ export default async function LearningPage() {
                   <tr key={e.id}>
                     <td className="px-4 py-3 font-medium">{e.invite.title}</td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {e.invite.createdBy.realName ?? e.invite.createdBy.name ?? '—'}
+                      {getMemberDisplayName(e.invite.createdBy)}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                       {formatDistanceToNow(e.joinedAt, { addSuffix: true, locale: zhTW })}

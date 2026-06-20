@@ -28,7 +28,7 @@ type ProfileFormProps = {
     phone: string
     address: string
     gender: 'male' | 'female' | 'unspecified'
-    displayNameMode: 'chinese' | 'english'
+    displayNameMode: 'nickname' | 'nickname_zh' | 'nickname_en'
     commEmail: string
     isCommVerified: boolean
     churchType: 'church' | 'other' | 'none'
@@ -218,8 +218,9 @@ export default function ProfileForm({ user, activeChurches, linkedProviders }: P
                 className="w-full rounded-md border px-3 py-2 text-sm bg-background"
                 disabled={isPending}
               >
-                <option value="chinese">匿名（中文名稱）</option>
-                <option value="english">匿名（英文名稱）</option>
+                <option value="nickname">暱稱</option>
+                <option value="nickname_zh">暱稱（中文名稱）</option>
+                <option value="nickname_en">暱稱（英文名稱）</option>
               </select>
             </div>
           </div>

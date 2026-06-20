@@ -14,6 +14,7 @@ import { toast } from 'sonner'
 import { IconUserPlus } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { approveEnrollment } from '@/app/actions/course-invite'
+import { getMemberDisplayName, type DisplayNameMode } from '@/lib/utils/member-display'
 
 const MATERIAL_LABELS: Record<string, string> = {
   none: '無須購買',
@@ -24,7 +25,15 @@ const MATERIAL_LABELS: Record<string, string> = {
 type Enrollment = {
   id: number
   materialChoice: string
-  user: { id: string; name: string | null; email: string | null }
+  user: {
+    id: string
+    name: string | null
+    email: string | null
+    realName: string | null
+    englishName: string | null
+    nickname: string | null
+    displayNameMode: DisplayNameMode
+  }
 }
 
 type Props = {
@@ -58,7 +67,7 @@ export function PendingEnrollmentList({ enrollments }: Props) {
           <li key={enrollment.id} className="flex items-center justify-between py-3">
             <div>
               <p className="text-sm font-medium">
-                {enrollment.user.name ?? enrollment.user.email ?? '—'}
+                {getMemberDisplayName(enrollment.user)}
               </p>
               {enrollment.user.email && (
                 <p className="text-xs text-muted-foreground">{enrollment.user.email}</p>

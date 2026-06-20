@@ -6,14 +6,13 @@
  * ----------------------------------------------
  */
 
-import { getMemberDisplayName } from '@/lib/utils/member-display'
+import { getMemberDisplayName, type DisplayNameMode } from '@/lib/utils/member-display'
 
 type Props = {
   realName?: string | null
   englishName?: string | null
   nickname?: string | null
-  name?: string | null
-  displayNameMode?: 'chinese' | 'english' | null
+  displayNameMode?: DisplayNameMode | null
   className?: string
 }
 

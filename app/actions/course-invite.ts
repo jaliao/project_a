@@ -122,7 +122,17 @@ export async function getMyInvites() {
       courseOrder: { select: { id: true, buyerNameZh: true, courseDate: true } },
       enrollments: {
         include: {
-          user: { select: { id: true, name: true, email: true } },
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              realName: true,
+              englishName: true,
+              nickname: true,
+              displayNameMode: true,
+            },
+          },
         },
         orderBy: { joinedAt: 'asc' },
       },
@@ -200,7 +210,15 @@ export async function getMyLearningRecords() {
             id: true,
             title: true,
             courseCatalog: { select: { id: true, label: true } },
-            createdBy: { select: { realName: true, name: true } },
+            createdBy: {
+              select: {
+                realName: true,
+                name: true,
+                englishName: true,
+                nickname: true,
+                displayNameMode: true,
+              },
+            },
           },
         },
       },

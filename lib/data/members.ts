@@ -124,7 +124,15 @@ export async function getMemberDetail(id: string) {
               startedAt: true,
               courseCatalogId: true,
               courseCatalog: { select: { label: true } },
-              createdBy: { select: { realName: true, name: true } },
+              createdBy: {
+                select: {
+                  realName: true,
+                  name: true,
+                  englishName: true,
+                  nickname: true,
+                  displayNameMode: true,
+                },
+              },
             },
           },
         },

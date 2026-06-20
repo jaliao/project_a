@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.78（2026-06-20）
+> 自動產生，版本 0.1.79（2026-06-20）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -119,7 +119,7 @@ lib/
 ├── spirit-id.ts     # Spirit ID 產生器
 ├── schemas/         # Zod 驗證 schema
 ├── utils/
-│   └── member-display.ts    # getMemberDisplayName(user) 純函式（displayNameMode 括號省略規則）
+│   └── member-display.ts    # getMemberDisplayName(user) 純函式（系統標準：暱稱→中文名稱→英文名稱，三模式括號省略；名稱不含 name/email）
 ├── data/
 │   ├── user.ts              # 使用者資料查詢
 │   ├── password-reset.ts    # 密碼重設查詢
@@ -182,7 +182,7 @@ realName      String?
 englishName   String?（英文名稱）
 nickname      String?（自訂暱稱，最多 20 字）
 gender        Gender（male | female | unspecified，預設 unspecified）
-displayNameMode DisplayNameMode（chinese | english，預設 chinese）
+displayNameMode DisplayNameMode（nickname | nickname_zh | nickname_en，預設 nickname）
 phone         String?
 address       String?
 createdAt / updatedAt / lastLoginAt
@@ -448,6 +448,8 @@ createdAt       DateTime
 - `cr-spec-260620-001` — 講師資格依書籍區分：`UserRole` 由單一 `teacher` 拆為四個書籍講師身分 `teacher_1`~`teacher_4`（migration `split_teacher_roles_by_book`，重建 enum）；`lib/auth-roles.ts` 新增「身分↔書籍」對應（`TEACHER_ROLE_BY_CATALOG`/`CATALOG_BY_TEACHER_ROLE`/`BOOK_LABEL_BY_TEACHER_ROLE`）與 `canTeachBook(roles,catalogId)`/`canTeachAny(roles)`，取代布林 `canTeach`；開課（`createInvite`/`createCourseSession`）改 `canTeachBook` 逐書把關、解除「結業=授課資格」耦合；開課精靈 Step 1 由 `graduatedCatalogIds` 改 `teachableCatalogIds`（提示「須具備{書名}講師身分才能授課」）；身分標籤、`/admin/members` 身分篩選與身分編輯改為四個書籍講師身分；儀錶板講師資格人數改以 `roles.has('teacher_N')` 計數並擴為四本書（8 張卡片）；書籍改名：啟動靈人 3→啟動得勝、啟動靈人 4→啟動事工 4；seed 新增測試講師 `teacher@test.com`（四書講師身分）、roster `teacher`→`teacher_1`
 
 - `cr-spec-260620-002` — 講師資格回饋單：`InviteEnrollment` 新增 `teacherRecommended Boolean?`/`teacherFeedbackNote`/`teacherFeedbackAt`（migration `add_instructor_feedback`）；新增 `upsertInstructorFeedback` action（守衛 `invite.createdById===當前使用者` 且 `graduatedAt!=null`，可重複覆蓋）；課程詳情頁「結業資訊」已結業學員旁新增「填寫講師資格回饋」（`InstructorFeedbackButton`，是/否 + 選填備註，僅課程建立者可見）；`/admin/members/[id]` 學習紀錄新增「講師資格回饋」欄（以 `BOOK_LABEL_BY_TEACHER_ROLE` 組「推薦成為{書名}講師」+ 備註 + 推薦老師），回饋為參考、不自動授予身分；`getCourseSessionById`/`getMemberDetail` 補回饋欄位 select
+
+- `cr-spec-260620-003` — 顯示名稱統一（系統標準/資安）：`DisplayNameMode` enum 由 `chinese`/`english` 改為 `nickname`(預設)/`nickname_zh`/`nickname_en`（migration `display_name_modes`，重建 enum、既有 chinese→nickname_zh、english→nickname_en）；重寫 `getMemberDisplayName`（基底 暱稱→中文名稱→英文名稱、模式加註括號、空或同基底省略、全空「（未填）」、名稱不含 `name`/`email`）；`MemberDisplayName` 型別更新；個人資料「顯示名稱方式」三選項、文案「匿名」改「暱稱」、`lib/schemas/profile.ts` enum 更新；全站人名顯示一律改用 `getMemberDisplayName`（課程詳情/結業/待審/邀請/學習紀錄/後台會員與師生樹/儀錶板），移除 `name ?? email`、`realName ?? name` 拼接，Email 作聯繫用途保留；相關資料層 select 補 `realName`/`englishName`/`nickname`/`displayNameMode`
 
 ### 進行中 / 待規劃
 - （無）

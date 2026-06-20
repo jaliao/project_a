@@ -12,6 +12,7 @@
  */
 
 import { prisma } from '@/lib/prisma'
+import type { DisplayNameMode } from '@/lib/utils/member-display'
 
 const SPIRIT_COURSE_ID = 1 // 啟動靈人
 
@@ -21,7 +22,7 @@ export type HierarchyNode = {
   englishName: string | null
   nickname: string | null
   name: string | null
-  displayNameMode: 'chinese' | 'english' | null
+  displayNameMode: DisplayNameMode | null
   spiritId: string | null
   children: HierarchyNode[]
 }
@@ -32,7 +33,7 @@ type MemberRef = {
   englishName: string | null
   nickname: string | null
   name: string | null
-  displayNameMode: 'chinese' | 'english' | null
+  displayNameMode: DisplayNameMode | null
   spiritId: string | null
 }
 

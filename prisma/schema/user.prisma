@@ -32,8 +32,9 @@ enum Gender {
 // 顯示名稱模式枚舉
 // ==========================================
 enum DisplayNameMode {
-  chinese // 使用中文名稱（nickname → realName）
-  english // 使用英文名稱（englishName → name）
+  nickname // 僅暱稱（預設）
+  nickname_zh // 暱稱（中文名稱）
+  nickname_en // 暱稱（英文名稱）
 }
 
 // ==========================================
@@ -69,7 +70,7 @@ model User {
   isPhoneVerified Boolean         @default(false)
   address         String?
   gender          Gender          @default(unspecified)
-  displayNameMode DisplayNameMode @default(chinese)
+  displayNameMode DisplayNameMode @default(nickname)
 
   // 學習等級（0=未完成任何課程；1~4=已完成啟動靈人對應等級）
   learningLevel Int @default(0)

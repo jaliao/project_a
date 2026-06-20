@@ -13,6 +13,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { zhTW } from 'date-fns/locale'
 import { getMyInvites } from '@/app/actions/course-invite'
 import { InviteCopyButton } from '@/components/course-invite/invite-copy-button'
+import { getMemberDisplayName } from '@/lib/utils/member-display'
 
 export const metadata: Metadata = {
   title: '邀請進度 — 啟動事工',
@@ -69,7 +70,7 @@ export default async function InvitesPage() {
                   <tbody className="divide-y">
                     {invite.enrollments.map((e) => (
                       <tr key={e.id}>
-                        <td className="py-1.5">{e.user.name ?? '（未設定）'}</td>
+                        <td className="py-1.5">{getMemberDisplayName(e.user)}</td>
                         <td className="py-1.5 text-muted-foreground">{e.user.email}</td>
                         <td className="py-1.5 text-muted-foreground whitespace-nowrap">
                           {formatDistanceToNow(e.joinedAt, {

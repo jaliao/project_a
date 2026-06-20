@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { graduateCourse } from '@/app/actions/course-invite'
+import { getMemberDisplayName, type DisplayNameMode } from '@/lib/utils/member-display'
 
 // ── 型別定義 ──────────────────────────────────
 type Student = {
@@ -29,6 +30,10 @@ type Student = {
   userId: string
   name: string | null
   email: string | null
+  realName: string | null
+  englishName: string | null
+  nickname: string | null
+  displayNameMode: DisplayNameMode
 }
 
 type StudentState = {
@@ -202,7 +207,7 @@ export function GraduationForm({ inviteId, students }: Props) {
                         onCheckedChange={() => toggleGraduated(s.userId)}
                       />
                       <Label htmlFor={`grad-${s.userId}`} className="flex flex-col cursor-pointer">
-                        <span className="text-sm font-medium">{s.name ?? '（未設定姓名）'}</span>
+                        <span className="text-sm font-medium">{getMemberDisplayName(s)}</span>
                         {s.email && (
                           <span className="text-xs text-muted-foreground">{s.email}</span>
                         )}
@@ -285,7 +290,7 @@ export function GraduationForm({ inviteId, students }: Props) {
               {graduatedStudents.map((s) => (
                 <li key={s.userId} className="text-sm flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
-                  {s.name ?? '（未設定姓名）'}
+                  {getMemberDisplayName(s)}
                   {s.email && (
                     <span className="text-xs text-muted-foreground">{s.email}</span>
                   )}
@@ -305,7 +310,7 @@ export function GraduationForm({ inviteId, students }: Props) {
               {nonGraduatedStudents.map((s) => (
                 <li key={s.userId} className="text-sm flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0" />
-                  {s.name ?? '（未設定姓名）'}
+                  {getMemberDisplayName(s)}
                   {s.email && (
                     <span className="text-xs text-muted-foreground">{s.email}</span>
                   )}

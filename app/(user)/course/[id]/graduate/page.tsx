@@ -48,6 +48,10 @@ export default async function GraduatePage({
     userId: e.user.id,
     name: e.user.name,
     email: e.user.email,
+    realName: e.user.realName,
+    englishName: e.user.englishName,
+    nickname: e.user.nickname,
+    displayNameMode: e.user.displayNameMode,
   }))
 
   return (

@@ -22,6 +22,7 @@ import {
   ROLE_LABELS,
   type TeacherRole,
 } from '@/lib/auth-roles'
+import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { Badge } from '@/components/ui/badge'
 import { ProfileBanner } from '@/components/dashboard/profile-banner'
 import { CourseSessionDialog } from '@/components/course-session/course-session-dialog'
@@ -50,6 +51,9 @@ export default async function UserProfilePage({ params }: Props) {
     select: {
       id: true,
       realName: true,
+      englishName: true,
+      nickname: true,
+      displayNameMode: true,
       name: true,
       email: true,
       commEmail: true,
@@ -80,7 +84,7 @@ export default async function UserProfilePage({ params }: Props) {
   // 查詢可開設課程（開課精靈使用）
   const activeCourses = isOwnPageEarly ? await getActiveCourses() : []
 
-  const displayName = user.realName || user.name || '（未設定姓名）'
+  const displayName = getMemberDisplayName(user)
 
   // 計算身分標籤（系統管理員優先，講師標籤依書籍講師身分推導）
   const identityTags: string[] = []

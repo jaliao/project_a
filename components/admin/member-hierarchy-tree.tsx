@@ -8,7 +8,7 @@
 
 import Link from 'next/link'
 import { getMemberHierarchy, type HierarchyNode } from '@/lib/data/hierarchy'
-import { getMemberDisplayName } from '@/lib/utils/member-display'
+import { getMemberDisplayName, type DisplayNameMode } from '@/lib/utils/member-display'
 
 type Props = {
   userId: string
@@ -19,7 +19,7 @@ function NodeLink({
   node,
   isRoot = false,
 }: {
-  node: { id: string; realName: string | null; englishName?: string | null; nickname?: string | null; name: string | null; displayNameMode?: 'chinese' | 'english' | null; spiritId: string | null }
+  node: { id: string; realName: string | null; englishName?: string | null; nickname?: string | null; displayNameMode?: DisplayNameMode | null; spiritId: string | null }
   isRoot?: boolean
 }) {
   return (
