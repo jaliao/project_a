@@ -11,7 +11,7 @@
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { canTeachAny, canTeachBook } from '@/lib/auth-roles'
-import { createInviteSchema } from '@/lib/schemas/course-invite'
+import { createInviteSchema, instructorFeedbackSchema } from '@/lib/schemas/course-invite'
 import { checkPrerequisites } from '@/lib/data/course-catalog'
 import { createNotification } from '@/app/actions/notification'
 
@@ -410,4 +410,51 @@ export async function graduateCourse(
   }
 
   return { success: true, message: '課程已結業' }
+}
+
+// ── 講師資格回饋（由課程建立者對已結業學員填寫，可重複編輯）──
+export async function upsertInstructorFeedback(
+  input: { enrollmentId: number; recommended: boolean; note?: string }
+): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  const parsed = instructorFeedbackSchema.safeParse(input)
+  if (!parsed.success) {
+    return { success: false, errors: parsed.error.flatten().fieldErrors }
+  }
+  const { enrollmentId, recommended, note } = parsed.data
+
+  // 載入 enrollment 與所屬課程，權威驗證權限與對象
+  const enrollment = await prisma.inviteEnrollment.findUnique({
+    where: { id: enrollmentId },
+    select: {
+      graduatedAt: true,
+      invite: { select: { id: true, createdById: true } },
+    },
+  })
+  if (!enrollment) return { success: false, message: '找不到報名記錄' }
+
+  // 僅該課程建立者（原老師）可填寫
+  if (enrollment.invite.createdById !== session.user.id) {
+    return { success: false, message: '無權限' }
+  }
+  // 僅可對已結業學員填寫
+  if (!enrollment.graduatedAt) {
+    return { success: false, message: '僅可對已結業學員填寫回饋' }
+  }
+
+  await prisma.inviteEnrollment.update({
+    where: { id: enrollmentId },
+    data: {
+      teacherRecommended: recommended,
+      teacherFeedbackNote: note || null,
+      teacherFeedbackAt: new Date(),
+    },
+  })
+
+  const { revalidatePath } = await import('next/cache')
+  revalidatePath(`/course/${enrollment.invite.id}`)
+
+  return { success: true, message: '已儲存講師資格回饋' }
 }

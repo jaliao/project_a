@@ -26,3 +26,12 @@ export const createInviteSchema = z.object({
 })
 
 export type CreateInviteValues = z.infer<typeof createInviteSchema>
+
+// 講師資格回饋（由課程建立者對已結業學員填寫）
+export const instructorFeedbackSchema = z.object({
+  enrollmentId: z.number().int().positive(),
+  recommended: z.boolean(),
+  note: z.string().trim().max(500, '備註最多 500 字').optional(),
+})
+
+export type InstructorFeedbackValues = z.infer<typeof instructorFeedbackSchema>

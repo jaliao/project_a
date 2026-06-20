@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.77（2026-06-20）
+> 自動產生，版本 0.1.78（2026-06-20）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -232,6 +232,9 @@ materialChoice MaterialChoice（none | traditional | simplified，預設 none）
 joinedAt       DateTime
 graduatedAt          DateTime?（結業時間；有值代表通過結業）
 nonGraduateReason    String?（未結業原因：insufficient_time | other）
+teacherRecommended   Boolean?（講師資格回饋：null=未填、true=推薦、false=不推薦）
+teacherFeedbackNote  String?（回饋選填備註）
+teacherFeedbackAt    DateTime?（回饋填寫/更新時間）
 @@unique([inviteId, userId])
 ```
 
@@ -443,6 +446,8 @@ createdAt       DateTime
 - `cr-spec-260612-001` — 會員管理效能優化：`/admin/members` 未下任何條件時不查詢／不列清單（提示輸入搜尋或篩選）；有條件時每頁 30 筆 + 上一頁／下一頁翻頁（`?page=`，越界夾範圍）；新增性別／身分（`roles.has`，包含語意）／所屬教會（churchId/other/none）下拉篩選，與文字搜尋 AND 組合（改篩選重置 page）；`searchMembers(f,page)→{total,items,page,pageCount}`、抽出 `buildMemberWhere`/`hasAnyMemberFilter`；匯出尊重全部篩選（「匯出 N 筆」=符合條件總數）、export route 吃 `gender/role/church`；新增 `MembersFilter`/`MembersPagination` 元件、移除舊 `MemberSearchInput`；無 DB schema 變更
 
 - `cr-spec-260620-001` — 講師資格依書籍區分：`UserRole` 由單一 `teacher` 拆為四個書籍講師身分 `teacher_1`~`teacher_4`（migration `split_teacher_roles_by_book`，重建 enum）；`lib/auth-roles.ts` 新增「身分↔書籍」對應（`TEACHER_ROLE_BY_CATALOG`/`CATALOG_BY_TEACHER_ROLE`/`BOOK_LABEL_BY_TEACHER_ROLE`）與 `canTeachBook(roles,catalogId)`/`canTeachAny(roles)`，取代布林 `canTeach`；開課（`createInvite`/`createCourseSession`）改 `canTeachBook` 逐書把關、解除「結業=授課資格」耦合；開課精靈 Step 1 由 `graduatedCatalogIds` 改 `teachableCatalogIds`（提示「須具備{書名}講師身分才能授課」）；身分標籤、`/admin/members` 身分篩選與身分編輯改為四個書籍講師身分；儀錶板講師資格人數改以 `roles.has('teacher_N')` 計數並擴為四本書（8 張卡片）；書籍改名：啟動靈人 3→啟動得勝、啟動靈人 4→啟動事工 4；seed 新增測試講師 `teacher@test.com`（四書講師身分）、roster `teacher`→`teacher_1`
+
+- `cr-spec-260620-002` — 講師資格回饋單：`InviteEnrollment` 新增 `teacherRecommended Boolean?`/`teacherFeedbackNote`/`teacherFeedbackAt`（migration `add_instructor_feedback`）；新增 `upsertInstructorFeedback` action（守衛 `invite.createdById===當前使用者` 且 `graduatedAt!=null`，可重複覆蓋）；課程詳情頁「結業資訊」已結業學員旁新增「填寫講師資格回饋」（`InstructorFeedbackButton`，是/否 + 選填備註，僅課程建立者可見）；`/admin/members/[id]` 學習紀錄新增「講師資格回饋」欄（以 `BOOK_LABEL_BY_TEACHER_ROLE` 組「推薦成為{書名}講師」+ 備註 + 推薦老師），回饋為參考、不自動授予身分；`getCourseSessionById`/`getMemberDetail` 補回饋欄位 select
 
 ### 進行中 / 待規劃
 - （無）

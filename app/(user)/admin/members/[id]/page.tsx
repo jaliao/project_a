@@ -10,7 +10,11 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
 import { auth } from '@/lib/auth'
-import { canAccessAdmin } from '@/lib/auth-roles'
+import {
+  canAccessAdmin,
+  TEACHER_ROLE_BY_CATALOG,
+  BOOK_LABEL_BY_TEACHER_ROLE,
+} from '@/lib/auth-roles'
 import { getMemberDetail } from '@/lib/data/members'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { getAdminSetting } from '@/lib/data/admin-settings'
@@ -155,10 +159,19 @@ export default async function MemberDetailPage({
                     <th className="px-4 py-2 text-left font-medium text-muted-foreground">課程名稱</th>
                     <th className="px-4 py-2 text-left font-medium text-muted-foreground">課程目錄</th>
                     <th className="px-4 py-2 text-left font-medium text-muted-foreground">開始授課日期</th>
+                    <th className="px-4 py-2 text-left font-medium text-muted-foreground">講師資格回饋</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {member.inviteEnrollments.map((enrollment, i) => (
+                  {member.inviteEnrollments.map((enrollment, i) => {
+                    // 講師資格回饋（僅已結業學員適用）：組「推薦成為{書名}講師」
+                    const teacherRole = TEACHER_ROLE_BY_CATALOG[enrollment.invite.courseCatalogId]
+                    const bookLabel = teacherRole
+                      ? BOOK_LABEL_BY_TEACHER_ROLE[teacherRole]
+                      : enrollment.invite.courseCatalog.label
+                    const teacherName =
+                      enrollment.invite.createdBy.realName ?? enrollment.invite.createdBy.name ?? '—'
+                    return (
                     <tr
                       key={enrollment.invite.id}
                       className={i < member.inviteEnrollments.length - 1 ? 'border-b' : ''}
@@ -176,8 +189,36 @@ export default async function MemberDetailPage({
                             })
                           : '—'}
                       </td>
+                      <td className="px-4 py-2">
+                        {!enrollment.graduatedAt ? (
+                          <span className="text-muted-foreground">—</span>
+                        ) : enrollment.teacherRecommended === null ? (
+                          <span className="text-muted-foreground">未填回饋</span>
+                        ) : enrollment.teacherRecommended ? (
+                          <div className="space-y-0.5">
+                            <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                              推薦成為{bookLabel}講師
+                            </span>
+                            {enrollment.teacherFeedbackNote && (
+                              <p className="text-xs text-muted-foreground">{enrollment.teacherFeedbackNote}</p>
+                            )}
+                            <p className="text-xs text-muted-foreground">推薦老師：{teacherName}</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-0.5">
+                            <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                              不推薦
+                            </span>
+                            {enrollment.teacherFeedbackNote && (
+                              <p className="text-xs text-muted-foreground">{enrollment.teacherFeedbackNote}</p>
+                            )}
+                            <p className="text-xs text-muted-foreground">老師：{teacherName}</p>
+                          </div>
+                        )}
+                      </td>
                     </tr>
-                  ))}
+                    )
+                  })}
                 </tbody>
               </table>
             ) : (

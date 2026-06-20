@@ -28,6 +28,7 @@ import { MatchSettingsEditor } from './match-settings-editor'
 import { CopyInviteLinkButton } from './copy-invite-link-button'
 import { StudentApplySection } from './student-apply-section'
 import { PendingEnrollmentList } from './pending-enrollment-list'
+import { InstructorFeedbackButton } from './instructor-feedback-button'
 import { CourseStatusBadge, getCourseStatus } from '@/components/course-session/course-status-badge'
 import { CourseCatalogBadge } from '@/components/course-session/course-catalog-badge'
 
@@ -167,11 +168,21 @@ export default async function CourseDetailPage({
               {graduated.length === 0 ? (
                 <p className="text-sm text-green-600">無</p>
               ) : (
-                <ul className="space-y-0.5">
+                <ul className="space-y-1">
                   {graduated.map((e) => (
-                    <li key={e.id} className="text-sm text-green-900 flex items-center gap-1.5">
+                    <li key={e.id} className="text-sm text-green-900 flex items-center gap-1.5 flex-wrap">
                       <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
                       {e.user.name ?? e.user.email ?? '—'}
+                      {/* 講師資格回饋：僅課程建立者（原老師）可填寫 */}
+                      {isInstructor && (
+                        <InstructorFeedbackButton
+                          enrollmentId={e.id}
+                          studentName={e.user.name ?? e.user.email ?? '學員'}
+                          bookLabel={courseSession.courseCatalogLabel}
+                          initialRecommended={e.teacherRecommended}
+                          initialNote={e.teacherFeedbackNote}
+                        />
+                      )}
                     </li>
                   ))}
                 </ul>

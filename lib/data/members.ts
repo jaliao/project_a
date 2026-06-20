@@ -114,12 +114,17 @@ export async function getMemberDetail(id: string) {
           invite: { startedAt: { not: null } },
         },
         select: {
+          graduatedAt: true,
+          teacherRecommended: true,
+          teacherFeedbackNote: true,
           invite: {
             select: {
               id: true,
               title: true,
               startedAt: true,
+              courseCatalogId: true,
               courseCatalog: { select: { label: true } },
+              createdBy: { select: { realName: true, name: true } },
             },
           },
         },
