@@ -32,6 +32,7 @@ import { InstructorFeedbackButton } from './instructor-feedback-button'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { CourseStatusBadge, getCourseStatus } from '@/components/course-session/course-status-badge'
 import { CourseCatalogBadge } from '@/components/course-session/course-catalog-badge'
+import { CourseLoginPrompt } from '@/components/course-session/course-login-prompt'
 
 export const metadata: Metadata = {
   title: '課程詳情 — 啟動事工',
@@ -65,11 +66,13 @@ export default async function CourseDetailPage({
   const numId = parseInt(id, 10)
   if (isNaN(numId)) notFound()
 
-  const [userSession, courseSession] = await Promise.all([
-    auth(),
-    getCourseSessionById(numId),
-  ])
+  // 未登入訪客：顯示登入提示卡片，不查詢任何課程內容
+  const userSession = await auth()
+  if (!userSession?.user?.id) {
+    return <CourseLoginPrompt courseId={numId} />
+  }
 
+  const courseSession = await getCourseSessionById(numId)
   if (!courseSession) notFound()
 
   const levelLabel = courseSession.courseCatalogLabel

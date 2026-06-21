@@ -16,6 +16,7 @@
 
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { isGuestCoursePath } from '@/lib/utils/guest-paths'
 
 // 不需要登入的路徑
 const PUBLIC_PATHS = [
@@ -47,6 +48,9 @@ export function middleware(req: NextRequest) {
 
   // 公開路由直接放行
   if (isPublic(pathname)) return pass()
+
+  // 課程詳情頁：未登入也放行，由頁面顯示登入提示卡片（子路徑仍受保護）
+  if (isGuestCoursePath(pathname)) return pass()
 
   // 檢查 NextAuth session cookie（HTTPS 環境名稱不同）
   const sessionCookie =

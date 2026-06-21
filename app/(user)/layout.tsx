@@ -11,6 +11,7 @@ import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { Topbar } from '@/components/layout/topbar'
 import { getUnreadNotificationCount } from '@/lib/data/notification'
+import { isGuestCoursePath } from '@/lib/utils/guest-paths'
 
 export default async function UserLayout({
   children,
@@ -21,14 +22,25 @@ export default async function UserLayout({
   const session = await auth()
   const userId = session?.user?.id
 
-  if (!userId) redirect('/login')
+  const pathname = (await headers()).get('x-pathname') ?? ''
+
+  // 未登入訪客存取課程詳情頁：不轉導，渲染精簡版面（無 Topbar），由頁面顯示登入提示卡片
+  if (!userId) {
+    if (isGuestCoursePath(pathname)) {
+      return (
+        <div className="min-h-screen flex flex-col">
+          <main className="flex-1 p-6">{children}</main>
+        </div>
+      )
+    }
+    redirect('/login')
+  }
 
   // 臨時密碼：強制完成 onboarding wizard
   if (session.user?.isTempPassword) redirect('/onboarding')
 
   // Profile 完整度：realName / phone 未填時導向個人資料頁
   // ⚠️ 排除 Profile 頁本身，避免在該頁又被導回 → 無限迴圈（profile-completion-guard spec）
-  const pathname = (await headers()).get('x-pathname') ?? ''
   const onProfilePage = pathname.includes('/profile')
   const requireCompletion = process.env.REQUIRE_PROFILE_COMPLETION !== 'false'
   const spiritId = session.user?.spiritId
