@@ -27,6 +27,8 @@ const PUBLIC_PATHS = [
   '/change-password',
   '/onboarding',
   '/api/auth',
+  // ECPay 門市選擇 callback：ECPay 跨站 POST 回傳不帶 session cookie，須免登入放行
+  '/api/ecpay/store-callback',
   '/terms',
   '/privacy',
   '/',

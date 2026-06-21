@@ -10,7 +10,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { canAccessAdmin, isSuperadmin } from '@/lib/auth-roles'
-import { getAdminSetting } from '@/lib/data/admin-settings'
+import { getAdminSetting, REMITTANCE_ACCOUNT_KEY, REMITTANCE_ACCOUNT_DEFAULT } from '@/lib/data/admin-settings'
 import { getAllChurches, getChurchMemberCount } from '@/lib/data/churches'
 import { getAllCourses } from '@/lib/data/course-catalog'
 import { SettingsTabs } from './settings-tabs'
@@ -33,8 +33,9 @@ export default async function AdminSettingsPage({
   const { tab } = await searchParams
   const activeTab = tab === 'churches' ? 'churches' : tab === 'courses' ? 'courses' : 'basic'
 
-  const [depthStr, churches, courses] = await Promise.all([
+  const [depthStr, remittanceAccount, churches, courses] = await Promise.all([
     getAdminSetting('hierarchy_depth', '3'),
+    getAdminSetting(REMITTANCE_ACCOUNT_KEY, REMITTANCE_ACCOUNT_DEFAULT),
     getAllChurches(),
     getAllCourses(),
   ])
@@ -53,6 +54,7 @@ export default async function AdminSettingsPage({
         activeTab={activeTab}
         isSuperadmin={isSuperadmin(session.user.roles)}
         currentDepth={currentDepth}
+        remittanceAccount={remittanceAccount}
         churches={churchesWithCount}
         courses={courses}
       />

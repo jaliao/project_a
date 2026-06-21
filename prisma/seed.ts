@@ -33,6 +33,9 @@ const usingDefaultAdmin = !process.env.SEED_ADMIN_PASSWORD
 const STUDENT_PASSWORD = process.env.SEED_STUDENT_PASSWORD ?? 'Student@1234'
 const usingDefaultStudent = !process.env.SEED_STUDENT_PASSWORD
 
+// 測試帳號通訊 Email：統一設為已驗證，使外寄信集中收取（resolveContactEmail 規則）
+const TEST_COMM_EMAIL = 'justin@blockcode.com.tw'
+
 const GORDON = {
   email: 'gordon@test.com',
   name: '黃國倫',
@@ -81,6 +84,8 @@ async function main() {
       displayNameMode: 'nickname_zh',
       spiritId: ADMIN_SPIRIT_ID,
       phone: ADMIN_PHONE,
+      commEmail: TEST_COMM_EMAIL,
+      isCommVerified: true,
       passwordHash: adminHash,
       roles: ['user', 'superadmin'],
       isTempPassword: false, // 已完成補填（realName/phone 齊備），跳過 onboarding 與 profile guard
@@ -93,6 +98,8 @@ async function main() {
       nickname: ADMIN_NICKNAME,
       spiritId: ADMIN_SPIRIT_ID,
       phone: ADMIN_PHONE,
+      commEmail: TEST_COMM_EMAIL,
+      isCommVerified: true,
     },
   })
 
@@ -110,6 +117,8 @@ async function main() {
       displayNameMode: 'nickname_zh',
       spiritId: GORDON.spiritId,
       phone: GORDON.phone,
+      commEmail: TEST_COMM_EMAIL,
+      isCommVerified: true,
       passwordHash: studentHash,
       roles: ['user', 'teacher_1'],
       isTempPassword: true,
@@ -121,6 +130,8 @@ async function main() {
       nickname: GORDON.nickname,
       spiritId: GORDON.spiritId,
       roles: ['user', 'teacher_1'],
+      commEmail: TEST_COMM_EMAIL,
+      isCommVerified: true,
     },
     select: { id: true },
   })
@@ -141,6 +152,8 @@ async function main() {
       displayNameMode: 'nickname_zh',
       spiritId: 'PA269999',
       phone: '0912009999',
+      commEmail: TEST_COMM_EMAIL,
+      isCommVerified: true,
       passwordHash: studentHash,
       roles: ['user', 'teacher_1', 'teacher_2', 'teacher_3', 'teacher_4'],
       isTempPassword: false, // 已完成補填（realName/phone 齊備），跳過 onboarding 與 profile guard
@@ -151,6 +164,8 @@ async function main() {
       nickname: '測試講師',
       spiritId: 'PA269999',
       roles: ['user', 'teacher_1', 'teacher_2', 'teacher_3', 'teacher_4'],
+      commEmail: TEST_COMM_EMAIL,
+      isCommVerified: true,
     },
   })
   console.log('✅ 測試講師帳號（teacher@test.com，四書講師身分）初始化完成\n')
@@ -180,6 +195,8 @@ async function main() {
         displayNameMode: 'nickname_zh',
         spiritId: s.spiritId,
         phone: s.phone,
+        commEmail: TEST_COMM_EMAIL,
+        isCommVerified: true,
         passwordHash: studentHash,
         roles: ['user'],
         isTempPassword: false, // 已完成補填，登入後直接進 /dashboard
@@ -191,6 +208,8 @@ async function main() {
         nickname: s.nickname,
         spiritId: s.spiritId,
         roles: ['user'],
+        commEmail: TEST_COMM_EMAIL,
+        isCommVerified: true,
       },
     })
   }

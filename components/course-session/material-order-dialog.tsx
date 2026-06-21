@@ -72,6 +72,7 @@ interface MaterialOrderDialogProps {
     deliveryAddress: string | null
     storeId: string | null
     storeName: string | null
+    quotedAt: Date | null
     shippedAt: Date | null
     shipMode: string
     shipments: Shipment[]
@@ -93,8 +94,9 @@ export function MaterialOrderDialog({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
-  // 已寄送（整張或任一批次）後設為唯讀
+  // 已批價或已寄送（整張或任一批次）後設為唯讀
   const isReadonly =
+    !!existingOrder?.quotedAt ||
     !!existingOrder?.shippedAt ||
     !!existingOrder?.shipments.some((s) => s.shippedAt)
 
@@ -196,7 +198,7 @@ export function MaterialOrderDialog({
 
         {isReadonly && (
           <div className="rounded-md bg-blue-50 border border-blue-200 px-4 py-2 text-sm text-blue-700">
-            教材已寄出，申請資料不可修改。
+            {existingOrder?.shippedAt ? '教材已寄出，申請資料不可修改。' : '已批價，申請資料不可修改。'}
           </div>
         )}
 

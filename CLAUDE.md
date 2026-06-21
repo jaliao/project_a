@@ -267,6 +267,11 @@ export type ProjectStatus = keyof typeof PROJECT_STATUSES
   - `doc/學員手冊.md`
 - 修正手冊後須一併更新各檔檔首的版本標註與日期，並比照第 7 點將 `config/version.json` 的 patch 版本號 +1
 
+### 10. 外寄信件收件人解析（通用規則）
+- 所有對使用者的外寄信（臨時密碼、密碼重設等）一律透過 `resolveContactEmail(user)`（`lib/utils/contact-email.ts`）決定收件地址：**優先使用已驗證的通訊 Email（`isCommVerified && commEmail`），否則退回帳號 `email`**。
+- 呼叫端查詢 `User` 時須 select `email`、`commEmail`、`isCommVerified`，再傳解析結果給 mailer。
+- **例外**：通訊 Email 驗證信（`sendCommEmailVerification`）仍寄至「待驗證的 `commEmail`」，不套用此規則（否則無法完成驗證）。
+
 ## Database Schema Notes
 
 ### User Models (user.prisma)
@@ -353,3 +358,10 @@ make schema-update    # Verify schema changes
 | `make prisma-dev-seed` | Seed database (local dev) |
 | `make prisma-dev-studio` | Open Prisma Studio (local dev) |
 
+## 重置開發環境資料庫步驟
+
+`make dev-clean`
+`make dev`
+`make prisma-dev-status`
+`make prisma-dev-deploy`
+`make prisma-dev-seed`

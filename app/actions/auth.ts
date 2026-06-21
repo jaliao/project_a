@@ -17,6 +17,7 @@ import {
   sendTempPasswordEmail,
   sendPasswordResetEmail,
 } from '@/lib/mailer'
+import { resolveContactEmail } from '@/lib/utils/contact-email'
 import {
   registerSchema,
   changePasswordSchema,
@@ -77,7 +78,9 @@ export async function registerWithEmail(
   })
 
   // 寄送臨時密碼通知信（不阻塞主流程）
-  sendTempPasswordEmail(email, spiritId, tempPassword).catch((err) => {
+  // 新帳號尚無已驗證通訊 Email → 收件地址依規則退回帳號 Email
+  const to = resolveContactEmail({ email })
+  sendTempPasswordEmail(to, spiritId, tempPassword).catch((err) => {
     console.error('[registerWithEmail] 寄信失敗：', err)
   })
 
@@ -207,7 +210,10 @@ export async function requestPasswordReset(
   const { email } = parsed.data
 
   // 不洩漏帳號是否存在
-  const user = await prisma.user.findUnique({ where: { email } })
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { email: true, commEmail: true, isCommVerified: true },
+  })
   if (user) {
     const token = randomBytes(32).toString('hex')
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000) // 1 小時
@@ -217,7 +223,8 @@ export async function requestPasswordReset(
     })
 
     const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`
-    sendPasswordResetEmail(email, resetUrl).catch((err) => {
+    // 收件地址依規則：優先已驗證通訊 Email，否則帳號 Email
+    sendPasswordResetEmail(resolveContactEmail(user), resetUrl).catch((err) => {
       console.error('[requestPasswordReset] 寄信失敗：', err)
     })
   }

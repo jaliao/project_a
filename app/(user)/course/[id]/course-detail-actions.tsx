@@ -13,10 +13,12 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { CancelCourseDialog } from '@/components/course-session/cancel-course-dialog'
 import { MaterialOrderDialog } from '@/components/course-session/material-order-dialog'
 import { startCourseSession } from '@/app/actions/course-invite'
-import { confirmReceipt } from '@/app/actions/course-order'
+import { confirmReceipt, reportMaterialPayment } from '@/app/actions/course-order'
+import { getMaterialOrderStatusKey } from '@/lib/utils/material-order-status'
 
 type Shipment = {
   id: number
@@ -40,6 +42,12 @@ type CourseOrder = {
   deliveryAddress: string | null
   storeId: string | null
   storeName: string | null
+  quotedAmount: number | null
+  remittanceAccount: string | null
+  quotedAt: Date | null
+  paymentLast5: string | null
+  paymentReportedAt: Date | null
+  paymentConfirmedAt: Date | null
   shippedAt: Date | null
   receivedAt: Date | null
   shipMode: string
@@ -73,13 +81,29 @@ export function CourseDetailActions({
   const [materialOpen, setMaterialOpen] = useState(false)
   const [startLoading, setStartLoading] = useState(false)
   const [receiptPending, startReceiptTransition] = useTransition()
+  const [last5, setLast5] = useState('')
+  const [paymentPending, startPaymentTransition] = useTransition()
 
   const canAct = !isCancelled && !isCompleted
 
   // 教材流程狀態
   const hasOrder = !!courseOrder
-  const hasShipped = !!courseOrder?.shippedAt
   const hasReceived = !!courseOrder?.receivedAt
+  // 付款＋寄送狀態（單一真相）
+  const orderStatus = courseOrder ? getMaterialOrderStatusKey(courseOrder) : null
+
+  function handleReportPayment() {
+    startPaymentTransition(async () => {
+      const result = await reportMaterialPayment(inviteId, last5)
+      if (result.success) {
+        toast.success(result.message ?? '已回填匯款資訊')
+        setLast5('')
+        router.refresh()
+      } else {
+        toast.error(result.errors?.last5?.[0] ?? result.message ?? '操作失敗，請稍後再試')
+      }
+    })
+  }
 
   async function handleStart() {
     setStartLoading(true)
@@ -115,23 +139,54 @@ export function CourseDetailActions({
         <div className="rounded-lg border p-4 space-y-3">
           <p className="text-sm font-medium text-muted-foreground">教材申請</p>
 
-          {/* 狀態提示 */}
+          {/* 狀態提示（依付款＋寄送階段） */}
           {!hasOrder && (
             <p className="text-sm text-muted-foreground">尚未申請教材，請在開始上課前完成申請。</p>
           )}
-          {hasOrder && !hasShipped && (
-            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
-              教材申請中，等待管理者寄送
+          {orderStatus === 'pending_quote' && (
+            <p className="text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-md px-3 py-2">
+              教材申請已送出，等待管理者批價
             </p>
           )}
-          {hasShipped && !hasReceived && (
+          {orderStatus === 'pending_payment' && courseOrder && (
+            <div className="text-sm bg-amber-50 border border-amber-200 rounded-md px-3 py-2 space-y-2">
+              <p className="text-amber-800">
+                教材費用 <strong>NT${courseOrder.quotedAmount}</strong>，請匯款至：
+                <strong>{courseOrder.remittanceAccount}</strong>
+              </p>
+              <p className="text-amber-700 text-xs">完成 ATM 轉帳後，請回填匯款帳號後五碼：</p>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={last5}
+                  onChange={(e) => setLast5(e.target.value)}
+                  placeholder="後五碼"
+                  maxLength={5}
+                  className="w-28"
+                />
+                <Button size="sm" onClick={handleReportPayment} disabled={paymentPending}>
+                  {paymentPending ? '送出中...' : '回填'}
+                </Button>
+              </div>
+            </div>
+          )}
+          {orderStatus === 'pending_confirm' && (
+            <p className="text-sm text-orange-700 bg-orange-50 border border-orange-200 rounded-md px-3 py-2">
+              已回填匯款後五碼，等待管理者確認收款
+            </p>
+          )}
+          {orderStatus === 'pending_ship' && (
+            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+              款項已確認，等待管理者寄送教材
+            </p>
+          )}
+          {orderStatus === 'shipped' && (
             <p className="text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-md px-3 py-2">
               教材已寄出，請確認收件後開始上課
             </p>
           )}
 
           <div className="flex items-center gap-2 flex-wrap">
-            {/* 申請教材 / 查看申請 按鈕 */}
+            {/* 申請教材 / 查看申請 按鈕（批價後僅供查看，編輯由 server 鎖定） */}
             <Button
               variant="outline"
               size="sm"
@@ -141,7 +196,7 @@ export function CourseDetailActions({
             </Button>
 
             {/* 確認收件按鈕（已寄送但未收件時顯示） */}
-            {hasShipped && !hasReceived && (
+            {orderStatus === 'shipped' && (
               <Button
                 size="sm"
                 onClick={handleConfirmReceipt}

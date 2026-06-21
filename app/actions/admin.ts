@@ -18,6 +18,7 @@ import { auth } from '@/lib/auth'
 import { canAccessAdmin, normalizeRoles } from '@/lib/auth-roles'
 import { generateSpiritId } from '@/lib/spirit-id'
 import { sendTempPasswordEmail } from '@/lib/mailer'
+import { resolveContactEmail } from '@/lib/utils/contact-email'
 
 type ActionResponse<T = undefined> = {
   success: boolean
@@ -47,7 +48,7 @@ export async function resetMemberPassword(
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, spiritId: true },
+    select: { id: true, email: true, commEmail: true, isCommVerified: true, spiritId: true },
   })
   if (!user) return { success: false, message: '找不到此會員' }
 
@@ -60,7 +61,9 @@ export async function resetMemberPassword(
   })
 
   // 寄送臨時密碼通知信（不阻塞主流程）
-  sendTempPasswordEmail(user.email!, user.spiritId ?? '', tempPassword).catch((err) => {
+  // 收件地址依規則：優先已驗證通訊 Email，否則帳號 Email
+  const to = resolveContactEmail({ email: user.email!, commEmail: user.commEmail, isCommVerified: user.isCommVerified })
+  sendTempPasswordEmail(to, user.spiritId ?? '', tempPassword).catch((err) => {
     console.error('[resetMemberPassword] 寄信失敗：', err)
   })
 

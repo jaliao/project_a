@@ -265,6 +265,12 @@ export type CourseSessionDetail = {
     deliveryAddress: string | null
     storeId: string | null
     storeName: string | null
+    quotedAmount: number | null
+    remittanceAccount: string | null
+    quotedAt: Date | null
+    paymentLast5: string | null
+    paymentReportedAt: Date | null
+    paymentConfirmedAt: Date | null
     shippedAt: Date | null
     receivedAt: Date | null
     shipMode: string
@@ -338,6 +344,12 @@ export async function getCourseSessionById(
           deliveryAddress: true,
           storeId: true,
           storeName: true,
+          quotedAmount: true,
+          remittanceAccount: true,
+          quotedAt: true,
+          paymentLast5: true,
+          paymentReportedAt: true,
+          paymentConfirmedAt: true,
           shippedAt: true,
           receivedAt: true,
           shipMode: true,

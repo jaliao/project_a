@@ -86,6 +86,14 @@ model CourseOrder {
 
   createdAt DateTime @default(now())
 
+  // 金流繳費追蹤（批價 → 付款 → 確認收款）
+  quotedAmount       Int? // 批價金額（新台幣元，整數）
+  remittanceAccount  String? // 批價時的匯款帳號快照
+  quotedAt           DateTime? // 管理者批價時間
+  paymentLast5       String? // 老師回填的匯款後五碼
+  paymentReportedAt  DateTime? // 老師回填時間
+  paymentConfirmedAt DateTime? // 管理者確認收款時間
+
   // 教材寄送追蹤
   shippedAt  DateTime? // 管理者確認寄送時間
   receivedAt DateTime? // 講師確認收件時間

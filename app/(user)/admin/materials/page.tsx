@@ -15,6 +15,7 @@ import { IconArrowLeft, IconPackage } from '@tabler/icons-react'
 import { auth } from '@/lib/auth'
 import { canAccessAdmin } from '@/lib/auth-roles'
 import { getAllCourseOrdersWithInvite } from '@/lib/data/course-order'
+import { getAdminSetting, REMITTANCE_ACCOUNT_KEY, REMITTANCE_ACCOUNT_DEFAULT } from '@/lib/data/admin-settings'
 import { MaterialOrderTable } from '@/components/admin/material-order-table'
 
 export const metadata: Metadata = {
@@ -27,7 +28,10 @@ export default async function AdminMaterialsPage() {
   // 僅 admin/superadmin 可存取
   if (!canAccessAdmin(session?.user?.roles)) redirect('/dashboard')
 
-  const orders = await getAllCourseOrdersWithInvite()
+  const [orders, remittanceAccount] = await Promise.all([
+    getAllCourseOrdersWithInvite(),
+    getAdminSetting(REMITTANCE_ACCOUNT_KEY, REMITTANCE_ACCOUNT_DEFAULT),
+  ])
 
   return (
     <div className="space-y-6">
@@ -49,7 +53,7 @@ export default async function AdminMaterialsPage() {
         </div>
       </div>
 
-      <MaterialOrderTable orders={orders} />
+      <MaterialOrderTable orders={orders} defaultRemittanceAccount={remittanceAccount} />
     </div>
   )
 }

@@ -11,6 +11,7 @@
 import { useRouter } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { HierarchyDepthForm } from '@/components/admin/hierarchy-depth-form'
+import { RemittanceAccountForm } from '@/components/admin/remittance-account-form'
 import { ChurchList } from '@/components/admin/church-list'
 import { CourseCatalogTable } from '@/components/course-catalog/course-catalog-table'
 import type { CourseCatalogEntry } from '@/lib/data/course-catalog'
@@ -27,11 +28,12 @@ interface SettingsTabsProps {
   activeTab: string
   isSuperadmin: boolean
   currentDepth: number
+  remittanceAccount: string
   churches: Church[]
   courses: CourseCatalogEntry[]
 }
 
-export function SettingsTabs({ activeTab, isSuperadmin, currentDepth, churches, courses }: SettingsTabsProps) {
+export function SettingsTabs({ activeTab, isSuperadmin, currentDepth, remittanceAccount, churches, courses }: SettingsTabsProps) {
   const router = useRouter()
 
   return (
@@ -52,6 +54,14 @@ export function SettingsTabs({ activeTab, isSuperadmin, currentDepth, churches, 
               </p>
             </div>
             <HierarchyDepthForm currentDepth={currentDepth} />
+
+            <div className="border-t pt-4">
+              <h2 className="font-medium">教材匯款帳號</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                教材繳費批價時提供給老師的匯款帳號，批價表單會預設帶入此值。
+              </p>
+            </div>
+            <RemittanceAccountForm currentAccount={remittanceAccount} />
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">此設定需 superadmin 權限。</p>

@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.79（2026-06-20）
+> 自動產生，版本 0.1.83（2026-06-21）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -347,6 +347,7 @@ createdAt       DateTime
 - **資料查詢**：`lib/data/`（多處複用）或 Server Action 直接 Prisma（單一用途）
 - **表單**：Zod schema → React Hook Form → Server Action → ActionResponse → Sonner toast
 - **通知整合**：關鍵操作（開課完成、取消課程、學員核准、課程結業）成功後以 fire-and-forget 呼叫 `createNotification`，同步寫入 Inbox；toast 呈現不變
+- **外寄信件收件人**：對使用者的外寄信一律以 `resolveContactEmail(user)`（`lib/utils/contact-email.ts`）決定收件地址 —— 優先已驗證通訊 Email（`isCommVerified && commEmail`），否則帳號 `email`；通訊 Email 驗證信本身為例外，仍寄至待驗證地址
 - **版本**：`config/version.json` 為唯一來源（patch +1 per `/opsx:apply`）
 - **Prisma import**：`@prisma/client`（tsconfig paths 已設定）
 

@@ -13,9 +13,11 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { IconChevronDown, IconChevronRight, IconPrinter, IconEdit } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
-import { confirmShipment, confirmShipmentBatch } from '@/app/actions/course-order'
+import { confirmShipment, confirmShipmentBatch, confirmMaterialPayment } from '@/app/actions/course-order'
 import type { CourseOrderWithInvite } from '@/lib/data/course-order'
+import { getMaterialOrderStatus, getMaterialOrderStatusKey } from '@/lib/utils/material-order-status'
 import { MaterialOrderEditDialog } from './material-order-edit-dialog'
+import { MaterialQuoteDialog } from './material-quote-dialog'
 
 // ── 教材版本標籤 ──────────────────────────
 const MATERIAL_VERSION_LABELS: Record<string, string> = {
@@ -38,34 +40,7 @@ const DELIVERY_METHOD_LABELS: Record<string, string> = {
   delivery: '郵寄/宅配',
 }
 
-// ── 狀態標籤元件 ──────────────────────────
-function ShipmentStatusBadge({
-  shippedAt,
-  receivedAt,
-}: {
-  shippedAt: Date | null
-  receivedAt: Date | null
-}) {
-  if (receivedAt) {
-    return (
-      <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
-        已收件
-      </span>
-    )
-  }
-  if (shippedAt) {
-    return (
-      <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-        已寄送
-      </span>
-    )
-  }
-  return (
-    <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
-      待寄送
-    </span>
-  )
-}
+// 狀態標籤已改由 lib/utils/material-order-status.ts 的 getMaterialOrderStatus 推導
 
 // ── 詳情展開列 ───────────────────────────
 function OrderDetail({
@@ -126,6 +101,36 @@ function OrderDetail({
           </div>
         )}
       </div>
+      {order.quotedAt && (
+        <div className="pt-2 border-t grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+          <div>
+            <span className="text-muted-foreground">批價金額：</span>
+            NT${order.quotedAmount}
+          </div>
+          <div>
+            <span className="text-muted-foreground">匯款帳號：</span>
+            {order.remittanceAccount ?? '—'}
+          </div>
+          {order.paymentLast5 && (
+            <div>
+              <span className="text-muted-foreground">匯款後五碼：</span>
+              {order.paymentLast5}
+            </div>
+          )}
+          {order.paymentReportedAt && (
+            <div>
+              <span className="text-muted-foreground">回填時間：</span>
+              {order.paymentReportedAt.toLocaleString('zh-TW')}
+            </div>
+          )}
+          {order.paymentConfirmedAt && (
+            <div>
+              <span className="text-muted-foreground">確認收款：</span>
+              {order.paymentConfirmedAt.toLocaleString('zh-TW')}
+            </div>
+          )}
+        </div>
+      )}
       {order.shipMode === 'multiple' ? (
         /* 多地址：逐批次列出與確認 */
         <div className="pt-2 border-t space-y-2">
@@ -148,7 +153,7 @@ function OrderDetail({
                 </div>
                 {s.shippedAt ? (
                   <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700 shrink-0">已寄送</span>
-                ) : (
+                ) : order.paymentConfirmedAt ? (
                   <Button
                     size="sm"
                     variant="outline"
@@ -158,6 +163,8 @@ function OrderDetail({
                   >
                     {pending && busyShipmentId === s.id ? '處理中...' : '確認已寄送'}
                   </Button>
+                ) : (
+                  <span className="text-xs text-muted-foreground shrink-0">待確認收款</span>
                 )}
               </div>
             )
@@ -206,17 +213,33 @@ function OrderDetail({
 // ── 主元件 ────────────────────────────────
 interface MaterialOrderTableProps {
   orders: CourseOrderWithInvite[]
+  defaultRemittanceAccount: string
 }
 
-export function MaterialOrderTable({ orders }: MaterialOrderTableProps) {
+export function MaterialOrderTable({ orders, defaultRemittanceAccount }: MaterialOrderTableProps) {
   const router = useRouter()
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [editOrderId, setEditOrderId] = useState<number | null>(null)
+  const [quoteOrderId, setQuoteOrderId] = useState<number | null>(null)
   const [pending, startTransition] = useTransition()
   const [loadingId, setLoadingId] = useState<number | null>(null)
   const [busyShipmentId, setBusyShipmentId] = useState<number | null>(null)
 
   const editingOrder = editOrderId !== null ? orders.find((o) => o.id === editOrderId) ?? null : null
+
+  function handleConfirmPayment(orderId: number) {
+    setLoadingId(orderId)
+    startTransition(async () => {
+      const result = await confirmMaterialPayment(orderId)
+      setLoadingId(null)
+      if (result.success) {
+        toast.success(result.message ?? '已確認收款')
+        router.refresh()
+      } else {
+        toast.error(result.message ?? '操作失敗，請稍後再試')
+      }
+    })
+  }
 
   function handleConfirmShipment(orderId: number) {
     setLoadingId(orderId)
@@ -312,39 +335,56 @@ export function MaterialOrderTable({ orders }: MaterialOrderTableProps) {
                   {order.createdAt.toLocaleDateString('zh-TW')}
                 </td>
                 <td className="px-4 py-3">
-                  {order.shipMode === 'multiple' && !order.shippedAt && !order.receivedAt && order.shipments.some((s) => s.shippedAt) ? (
+                  {order.shipMode === 'multiple' && order.paymentConfirmedAt && !order.shippedAt && !order.receivedAt && order.shipments.some((s) => s.shippedAt) ? (
                     <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
                       部分已寄送（{order.shipments.filter((s) => s.shippedAt).length}/{order.shipments.length}）
                     </span>
                   ) : (
-                    <ShipmentStatusBadge
-                      shippedAt={order.shippedAt}
-                      receivedAt={order.receivedAt}
-                    />
+                    (() => {
+                      const st = getMaterialOrderStatus(order)
+                      return (
+                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${st.tone}`}>
+                          {st.label}
+                        </span>
+                      )
+                    })()
                   )}
                 </td>
                 <td
                   className="px-4 py-3"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {order.shipMode === 'multiple' ? (
-                    !order.shippedAt && (
-                      <span className="text-xs text-muted-foreground">展開逐批確認</span>
-                    )
-                  ) : (
-                    !order.shippedAt && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={pending && loadingId === order.id}
-                        onClick={() => handleConfirmShipment(order.id)}
-                      >
-                        {pending && loadingId === order.id
-                          ? '處理中...'
-                          : '確認已寄送'}
-                      </Button>
-                    )
-                  )}
+                  {(() => {
+                    const key = getMaterialOrderStatusKey(order)
+                    const busy = pending && loadingId === order.id
+                    if (key === 'pending_quote') {
+                      return (
+                        <Button size="sm" variant="outline" onClick={() => setQuoteOrderId(order.id)}>
+                          批價
+                        </Button>
+                      )
+                    }
+                    if (key === 'pending_payment') {
+                      return <span className="text-xs text-muted-foreground">等待老師付款</span>
+                    }
+                    if (key === 'pending_confirm') {
+                      return (
+                        <Button size="sm" variant="outline" disabled={busy} onClick={() => handleConfirmPayment(order.id)}>
+                          {busy ? '處理中...' : '確認收款'}
+                        </Button>
+                      )
+                    }
+                    if (key === 'pending_ship') {
+                      return order.shipMode === 'multiple' ? (
+                        <span className="text-xs text-muted-foreground">展開逐批確認</span>
+                      ) : (
+                        <Button size="sm" variant="outline" disabled={busy} onClick={() => handleConfirmShipment(order.id)}>
+                          {busy ? '處理中...' : '確認已寄送'}
+                        </Button>
+                      )
+                    }
+                    return null
+                  })()}
                 </td>
                 <td
                   className="px-4 py-3"
@@ -401,6 +441,15 @@ export function MaterialOrderTable({ orders }: MaterialOrderTableProps) {
             courseDate: editingOrder.courseDate,
             taxId: editingOrder.taxId,
           }}
+        />
+      )}
+
+      {quoteOrderId !== null && (
+        <MaterialQuoteDialog
+          open={quoteOrderId !== null}
+          onOpenChange={(open) => { if (!open) setQuoteOrderId(null) }}
+          orderId={quoteOrderId}
+          defaultAccount={defaultRemittanceAccount}
         />
       )}
     </div>

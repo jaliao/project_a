@@ -11,7 +11,7 @@
 import { revalidatePath } from 'next/cache'
 import { auth } from '@/lib/auth'
 import { isSuperadmin } from '@/lib/auth-roles'
-import { upsertAdminSetting } from '@/lib/data/admin-settings'
+import { upsertAdminSetting, REMITTANCE_ACCOUNT_KEY } from '@/lib/data/admin-settings'
 
 export type ActionResponse = {
   success: boolean
@@ -36,4 +36,21 @@ export async function updateHierarchyDepth(depth: number): Promise<ActionRespons
   revalidatePath('/admin/settings')
 
   return { success: true, message: '設定已儲存' }
+}
+
+export async function updateRemittanceAccount(account: string): Promise<ActionResponse> {
+  const session = await auth()
+  if (!isSuperadmin(session?.user?.roles)) {
+    return { success: false, message: '權限不足' }
+  }
+
+  const trimmed = account.trim()
+  if (!trimmed) {
+    return { success: false, errors: { account: ['匯款帳號為必填'] } }
+  }
+
+  await upsertAdminSetting(REMITTANCE_ACCOUNT_KEY, trimmed)
+  revalidatePath('/admin/settings')
+
+  return { success: true, message: '匯款帳號已儲存' }
 }
