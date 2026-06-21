@@ -22,9 +22,10 @@ const prisma = new PrismaClient({ adapter })
 // 保留帳號設定
 // ==========================================
 const ADMIN_EMAIL = '101@iwillshare.org.tw'
-const ADMIN_NAME = '系統管理員'
-const ADMIN_REAL_NAME = '系統管理員'
-const ADMIN_NICKNAME = '管理員'
+const ADMIN_NAME = '系統管理者'
+const ADMIN_REAL_NAME = '系統管理者'
+const ADMIN_NICKNAME = '系統管理者'
+const ADMIN_PHONE = '0939123456'
 const ADMIN_SPIRIT_ID = 'PA000001'
 const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? 'Admin@1234'
 const usingDefaultAdmin = !process.env.SEED_ADMIN_PASSWORD
@@ -76,17 +77,22 @@ async function main() {
       name: ADMIN_NAME,
       realName: ADMIN_REAL_NAME,
       nickname: ADMIN_NICKNAME,
+      gender: 'unspecified',
+      displayNameMode: 'nickname_zh',
       spiritId: ADMIN_SPIRIT_ID,
+      phone: ADMIN_PHONE,
       passwordHash: adminHash,
       roles: ['user', 'superadmin'],
-      isTempPassword: true,
+      isTempPassword: false, // 已完成補填（realName/phone 齊備），跳過 onboarding 與 profile guard
     },
+    // update 不覆寫 passwordHash 與 isTempPassword（維持冪等、不重置密碼）
     update: {
       roles: ['user', 'superadmin'],
       name: ADMIN_NAME,
       realName: ADMIN_REAL_NAME,
       nickname: ADMIN_NICKNAME,
       spiritId: ADMIN_SPIRIT_ID,
+      phone: ADMIN_PHONE,
     },
   })
 
@@ -137,7 +143,7 @@ async function main() {
       phone: '0912009999',
       passwordHash: studentHash,
       roles: ['user', 'teacher_1', 'teacher_2', 'teacher_3', 'teacher_4'],
-      isTempPassword: true,
+      isTempPassword: false, // 已完成補填（realName/phone 齊備），跳過 onboarding 與 profile guard
     },
     update: {
       name: '測試講師',
@@ -148,6 +154,47 @@ async function main() {
     },
   })
   console.log('✅ 測試講師帳號（teacher@test.com，四書講師身分）初始化完成\n')
+
+  // ── 2c. 測試學員帳號（student1~4@test.com，已完成第一次登入補填，供 QA）──
+  // 補填完成判定 = isTempPassword=false + realName + phone（見 onboarding-wizard / profile-completion-guard）
+  // spiritId 採固定高位測試號段 PA26900X，與真實名冊號段隔開，且不納入 spiritIdCounter 計算
+  const testStudents = Array.from({ length: 4 }, (_, idx) => {
+    const i = idx + 1
+    return {
+      email: `student${i}@test.com`,
+      name: `測試學員${i}`,
+      nickname: `測試學員${i}`,
+      spiritId: `PA26900${i}`,
+      phone: `091200900${i}`,
+    }
+  })
+  for (const s of testStudents) {
+    await prisma.user.upsert({
+      where: { email: s.email },
+      create: {
+        email: s.email,
+        name: s.name,
+        realName: s.name,
+        nickname: s.nickname,
+        gender: 'unspecified',
+        displayNameMode: 'nickname_zh',
+        spiritId: s.spiritId,
+        phone: s.phone,
+        passwordHash: studentHash,
+        roles: ['user'],
+        isTempPassword: false, // 已完成補填，登入後直接進 /dashboard
+      },
+      // update 不覆寫 passwordHash 與 isTempPassword（維持冪等、不重置密碼）
+      update: {
+        name: s.name,
+        realName: s.name,
+        nickname: s.nickname,
+        spiritId: s.spiritId,
+        roles: ['user'],
+      },
+    })
+  }
+  console.log('✅ 測試學員帳號（student1~4@test.com，已完成補填）初始化完成\n')
 
   // ── 3. 課程目錄（啟動靈人系列）──────────────────
   const courses = [
@@ -339,6 +386,7 @@ async function main() {
   const yy = currentYear % 100
   const prefix = `PA${String(yy).padStart(2, '0')}`
   let maxSeq = 1
+  // 僅掃描名冊 people；測試帳號（PA269xxx 高位號段）刻意排除，避免計數器跳到 9999
   for (const p of people) {
     if (p.spiritId.startsWith(prefix)) {
       const n = parseInt(p.spiritId.slice(prefix.length), 10)

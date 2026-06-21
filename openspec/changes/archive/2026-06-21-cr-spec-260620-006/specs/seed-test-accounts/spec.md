@@ -1,9 +1,4 @@
-# seed-test-accounts Specification
-
-## Purpose
-TBD - normalized for archive compatibility. Update Purpose for seed-test-accounts.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Seed 腳本建立學員測試帳號
 `make prisma-seed` 執行後，系統 SHALL 在資料庫中存在 4 位學員測試帳號，資料完整且密碼可用於登入，且帳號狀態為「已完成第一次登入補填」（`isTempPassword=false` 且 `realName`、`phone` 均已填寫），使測試者重置資料庫後可直接登入，無需手動走 onboarding 補填流程。
