@@ -244,6 +244,7 @@ export type CourseSessionDetail = {
     englishName: string | null
     nickname: string | null
     displayNameMode: DisplayNameMode
+    phone: string | null
   }
   approvedEnrollments: EnrollmentRecord[]
   pendingEnrollments: EnrollmentRecord[]
@@ -258,6 +259,8 @@ export type CourseSessionDetail = {
     phone: string
     courseDate: string
     taxId: string | null
+    recipientName: string | null
+    recipientPhone: string | null
     deliveryMethod: string
     deliveryAddress: string | null
     storeId: string | null
@@ -267,6 +270,8 @@ export type CourseSessionDetail = {
     shipMode: string
     shipments: {
       id: number
+      recipientName: string | null
+      recipientPhone: string | null
       deliveryMethod: string
       deliveryAddress: string | null
       storeId: string | null
@@ -300,7 +305,7 @@ export async function getCourseSessionById(
       courseDate: true,
       isPublicMatch: true,
       matchNote: true,
-      createdBy: { select: displayNameUserSelect },
+      createdBy: { select: { ...displayNameUserSelect, phone: true } },
       enrollments: {
         select: {
           id: true,
@@ -327,6 +332,8 @@ export async function getCourseSessionById(
           phone: true,
           courseDate: true,
           taxId: true,
+          recipientName: true,
+          recipientPhone: true,
           deliveryMethod: true,
           deliveryAddress: true,
           storeId: true,
@@ -337,6 +344,8 @@ export async function getCourseSessionById(
           shipments: {
             select: {
               id: true,
+              recipientName: true,
+              recipientPhone: true,
               deliveryMethod: true,
               deliveryAddress: true,
               storeId: true,

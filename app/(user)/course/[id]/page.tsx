@@ -322,6 +322,10 @@ export default async function CourseDetailPage({
           hasApprovedStudents={courseSession.approvedEnrollments.length > 0}
           courseOrder={courseSession.courseOrder}
           materialSummary={materialSummary}
+          defaultRecipient={{
+            name: courseSession.createdBy.realName || courseSession.createdBy.name || '',
+            phone: courseSession.createdBy.phone || '',
+          }}
         />
       )}
 

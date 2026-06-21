@@ -89,9 +89,9 @@ model InviteEnrollment {
   nonGraduateReason String? // 未結業原因（insufficient_time / other）
 
   // 講師資格回饋（由該課程建立者對已結業學員填寫；逐書語意依 invite.courseCatalogId）
-  teacherRecommended Boolean?  // null=未填、true=推薦、false=不推薦
-  teacherFeedbackNote String?  // 選填備註
-  teacherFeedbackAt  DateTime? // 填寫/最後更新時間（亦作「已填」判斷依據）
+  teacherRecommended  Boolean? // null=未填、true=推薦、false=不推薦
+  teacherFeedbackNote String? // 選填備註
+  teacherFeedbackAt   DateTime? // 填寫/最後更新時間（亦作「已填」判斷依據）
 
   @@unique([inviteId, userId])
   @@map("invite_enrollments")

@@ -186,6 +186,8 @@ export async function applyMaterialOrder(
       await tx.materialShipment.createMany({
         data: shipments.map((s) => ({
           courseOrderId: oid!,
+          recipientName: s.recipientName,
+          recipientPhone: s.recipientPhone,
           deliveryMethod: s.deliveryMethod as DeliveryMethod,
           deliveryAddress: s.deliveryMethod === 'delivery' ? (s.deliveryAddress || null) : null,
           storeId: s.deliveryMethod !== 'delivery' ? (s.storeId || null) : null,
@@ -202,9 +204,12 @@ export async function applyMaterialOrder(
   }
 
   // ── 單一地址模式（現行流程）────────────────────────────
+  // 收件人預設帶入申請講師（姓名 + 個人資料電話），講師可於表單修改
   const orderData = {
     ...snapshot,
     shipMode: 'single' as ShipMode,
+    recipientName: d.recipientName?.trim() || invite.createdBy.realName || invite.createdBy.name || '',
+    recipientPhone: d.recipientPhone?.trim() || user.phone || '',
     deliveryMethod: d.deliveryMethod as DeliveryMethod,
     deliveryAddress: d.deliveryMethod === 'delivery' ? (d.deliveryAddress || null) : null,
     storeId: (d.deliveryMethod === 'sevenEleven' || d.deliveryMethod === 'familyMart') ? (d.storeId || null) : null,

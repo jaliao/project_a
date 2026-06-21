@@ -49,6 +49,8 @@ const DELIVERY_OPTIONS = [
 
 interface Shipment {
   id: number
+  recipientName: string | null
+  recipientPhone: string | null
   deliveryMethod: string
   deliveryAddress: string | null
   storeId: string | null
@@ -64,6 +66,8 @@ interface MaterialOrderDialogProps {
   inviteId: number
   existingOrder?: {
     taxId: string | null
+    recipientName: string | null
+    recipientPhone: string | null
     deliveryMethod: string
     deliveryAddress: string | null
     storeId: string | null
@@ -74,6 +78,8 @@ interface MaterialOrderDialogProps {
   } | null
   // 應寄本數（依 approved 學員 materialChoice 統計）
   materialSummary: { traditional: number; simplified: number }
+  // 單一地址收件人預設值（申請講師姓名 + 個人資料電話）
+  defaultRecipient: { name: string; phone: string }
 }
 
 export function MaterialOrderDialog({
@@ -82,6 +88,7 @@ export function MaterialOrderDialog({
   inviteId,
   existingOrder,
   materialSummary,
+  defaultRecipient,
 }: MaterialOrderDialogProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -99,6 +106,8 @@ export function MaterialOrderDialog({
       ? {
           taxId: existingOrder.taxId ?? '',
           shipMode: isExistingMultiple ? 'multiple' : 'single',
+          recipientName: existingOrder.recipientName ?? defaultRecipient.name,
+          recipientPhone: existingOrder.recipientPhone ?? defaultRecipient.phone,
           deliveryMethod: isExistingMultiple
             ? undefined
             : (existingOrder.deliveryMethod as MaterialOrderFormValues['deliveryMethod']),
@@ -106,6 +115,8 @@ export function MaterialOrderDialog({
           storeId: existingOrder.storeId ?? '',
           storeName: existingOrder.storeName ?? '',
           shipments: existingOrder.shipments.map((s) => ({
+            recipientName: s.recipientName ?? '',
+            recipientPhone: s.recipientPhone ?? '',
             deliveryMethod: s.deliveryMethod as 'sevenEleven' | 'familyMart' | 'delivery',
             deliveryAddress: s.deliveryAddress ?? '',
             storeId: s.storeId ?? '',
@@ -117,6 +128,8 @@ export function MaterialOrderDialog({
       : {
           taxId: '',
           shipMode: 'single',
+          recipientName: defaultRecipient.name,
+          recipientPhone: defaultRecipient.phone,
           deliveryAddress: '',
           storeId: '',
           storeName: '',
@@ -227,6 +240,24 @@ export function MaterialOrderDialog({
             {/* ════════ 單一地址 ════════ */}
             {!isMultiple && (
               <>
+                {/* 收件人（預設帶入申請講師，可修改） */}
+                <div className="flex gap-3">
+                  <FormField control={form.control} name="recipientName" render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel>收件人 *</FormLabel>
+                      <FormControl><Input {...field} value={field.value ?? ''} disabled={isReadonly} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="recipientPhone" render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel>連絡電話 *</FormLabel>
+                      <FormControl><Input {...field} value={field.value ?? ''} disabled={isReadonly} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </div>
+
                 <FormField control={form.control} name="deliveryMethod" render={({ field }) => (
                   <FormItem>
                     <FormLabel>取貨方式 *</FormLabel>
@@ -314,6 +345,8 @@ export function MaterialOrderDialog({
                     size="sm"
                     onClick={() =>
                       append({
+                        recipientName: '',
+                        recipientPhone: '',
                         deliveryMethod: 'delivery',
                         deliveryAddress: '',
                         storeId: '',
@@ -374,6 +407,22 @@ function MultiAddressRow({
             <IconTrash className="h-4 w-4" />
           </Button>
         )}
+      </div>
+
+      {/* 收件人 / 連絡電話 */}
+      <div className="flex gap-3">
+        <FormField control={form.control} name={`shipments.${index}.recipientName`} render={({ field }) => (
+          <FormItem className="flex-1">
+            <FormControl><Input {...field} value={field.value ?? ''} placeholder="收件人 *" disabled={disabled} /></FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+        <FormField control={form.control} name={`shipments.${index}.recipientPhone`} render={({ field }) => (
+          <FormItem className="flex-1">
+            <FormControl><Input {...field} value={field.value ?? ''} placeholder="連絡電話 *" disabled={disabled} /></FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
       </div>
 
       {/* 取貨方式 */}

@@ -1,31 +1,4 @@
-# course-order Specification
-
-## Purpose
-TBD - normalized for archive compatibility. Update Purpose for course-order.
-
-## Requirements
-
-### Requirement: CourseOrder storeId 欄位
-`CourseOrder` model SHALL 新增 `storeId String?` 欄位，儲存 7-11 取貨門市店號。
-
-#### Scenario: 選擇 7-11 取貨時設定 storeId
-- **WHEN** 建立或更新 `CourseOrder` 且 `deliveryMethod == sevenEleven`
-- **THEN** `storeId` 儲存使用者透過門市選擇器選取的店號
-
-#### Scenario: 非 7-11 取貨時 storeId 為 null
-- **WHEN** `deliveryMethod` 為 `familyMart` 或 `delivery`
-- **THEN** `storeId` 為 null
-
-### Requirement: CourseOrder storeName 欄位
-`CourseOrder` model SHALL 新增 `storeName String?` 欄位，儲存 7-11 取貨門市店名。
-
-#### Scenario: 選擇 7-11 取貨時設定 storeName
-- **WHEN** 建立或更新 `CourseOrder` 且 `deliveryMethod == sevenEleven`
-- **THEN** `storeName` 儲存使用者透過門市選擇器選取的店名
-
-#### Scenario: 非 7-11 取貨時 storeName 為 null
-- **WHEN** `deliveryMethod` 為 `familyMart` 或 `delivery`
-- **THEN** `storeName` 為 null
+## ADDED Requirements
 
 ### Requirement: CourseOrder 收件人與連絡電話欄位
 `CourseOrder` model SHALL 新增 `recipientName String?` 與 `recipientPhone String?` 欄位，記錄單一地址模式的收件人姓名與連絡電話。
@@ -44,6 +17,8 @@ TBD - normalized for archive compatibility. Update Purpose for course-order.
 #### Scenario: 多地址批次儲存收件人
 - **WHEN** `shipMode == multiple` 送出申請，每筆寄送批次含收件人與連絡電話
 - **THEN** 各 `MaterialShipment` 儲存對應的 `recipientName` 與 `recipientPhone`
+
+## MODIFIED Requirements
 
 ### Requirement: applyMaterialOrder Server Action
 系統 SHALL 提供 `applyMaterialOrder(inviteId, data)` Server Action，讓講師建立或更新 CourseOrder 並關聯至 CourseInvite。

@@ -76,6 +76,10 @@ model CourseOrder {
   storeId         String? // 7-11 門市店號（透過門市選擇器取得）
   storeName       String? // 7-11 門市名稱（透過門市選擇器取得）
 
+  // 單一地址收件人（預設帶入申請講師，可修改）
+  recipientName  String? // 收件人姓名
+  recipientPhone String? // 收件人連絡電話
+
   // 提交者（選填關聯）
   submittedById String? @db.Uuid
   submittedBy   User?   @relation(fields: [submittedById], references: [id])
@@ -100,6 +104,10 @@ model MaterialShipment {
 
   courseOrderId Int
   courseOrder   CourseOrder @relation(fields: [courseOrderId], references: [id], onDelete: Cascade)
+
+  // 收件人（每個地址各自填寫）
+  recipientName  String? // 收件人姓名
+  recipientPhone String? // 收件人連絡電話
 
   // 寄件資訊（沿用 CourseOrder 欄位語意）
   deliveryMethod  DeliveryMethod

@@ -1,9 +1,4 @@
-# print-shipping-order Specification
-
-## Purpose
-TBD - normalized for archive compatibility. Update Purpose for print-shipping-order.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: 出貨單列印頁面
 系統 SHALL 在 `/admin/materials/[id]/print` 提供出貨單列印頁面，僅管理者可存取。頁面以列印友善版面呈現，透過 `window.print()` 觸發瀏覽器列印。
@@ -47,10 +42,3 @@ TBD - normalized for archive compatibility. Update Purpose for print-shipping-or
 #### Scenario: deliveryAddress 為空時顯示未填
 - **WHEN** 對應地址欄位（訂單或批次）為 null 或空白
 - **THEN** 該欄位顯示「（未填）」
-
-### Requirement: 後台管理頁新增列印出貨單按鈕
-後台 `/admin/materials` 列表 SHALL 在每筆申請列新增「列印出貨單」按鈕，點擊後開啟列印頁。
-
-#### Scenario: 點擊列印出貨單
-- **WHEN** 管理者點擊某筆申請的「列印出貨單」按鈕
-- **THEN** 以新分頁或同分頁導覽至 `/admin/materials/[id]/print`

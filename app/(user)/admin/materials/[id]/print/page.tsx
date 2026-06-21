@@ -47,6 +47,8 @@ export default async function PrintShippingOrderPage({
       ? order.shipments.map((s, i) => ({
           key: `s-${s.id}`,
           label: `（地址 ${i + 1} / ${order.shipments.length}）`,
+          recipientName: s.recipientName,
+          recipientPhone: s.recipientPhone,
           deliveryMethod: s.deliveryMethod,
           storeName: s.storeName,
           storeId: s.storeId,
@@ -58,6 +60,8 @@ export default async function PrintShippingOrderPage({
           {
             key: 'single',
             label: '',
+            recipientName: order.recipientName,
+            recipientPhone: order.recipientPhone,
             deliveryMethod: order.deliveryMethod,
             storeName: order.storeName,
             storeId: order.storeId,
@@ -114,8 +118,10 @@ export default async function PrintShippingOrderPage({
             <section className="space-y-1">
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">收件資訊</h2>
               <div className="grid grid-cols-[120px_1fr] gap-y-2 text-sm">
-                <span className="text-muted-foreground">收件者</span>
-                <span>{order.buyerNameZh}</span>
+                <span className="text-muted-foreground">收件人</span>
+                <span>{slip.recipientName || '（未填）'}</span>
+                <span className="text-muted-foreground">連絡電話</span>
+                <span>{slip.recipientPhone || '（未填）'}</span>
                 <span className="text-muted-foreground">寄件方式</span>
                 <span>{DELIVERY_METHOD_LABELS[slip.deliveryMethod] ?? slip.deliveryMethod}</span>
                 {isCVS ? (

@@ -34,6 +34,8 @@ export type CourseOrderDetail = {
 
 export type ShipmentInfo = {
   id: number
+  recipientName: string | null
+  recipientPhone: string | null
   deliveryMethod: string
   deliveryAddress: string | null
   storeId: string | null
@@ -56,6 +58,8 @@ export type CourseOrderForPrint = {
   id: number
   buyerNameZh: string
   teacherName: string
+  recipientName: string | null
+  recipientPhone: string | null
   deliveryMethod: string
   deliveryAddress: string | null
   storeId: string | null
@@ -73,6 +77,8 @@ export type CourseOrderForPrint = {
 // 共用 Prisma select：寄送批次欄位
 const shipmentSelect = {
   id: true,
+  recipientName: true,
+  recipientPhone: true,
   deliveryMethod: true,
   deliveryAddress: true,
   storeId: true,
@@ -213,6 +219,8 @@ export async function getCourseOrderForPrint(
       id: true,
       buyerNameZh: true,
       teacherName: true,
+      recipientName: true,
+      recipientPhone: true,
       deliveryMethod: true,
       deliveryAddress: true,
       storeId: true,
@@ -240,6 +248,8 @@ export async function getCourseOrderForPrint(
     id: order.id,
     buyerNameZh: order.buyerNameZh,
     teacherName: order.teacherName,
+    recipientName: order.recipientName,
+    recipientPhone: order.recipientPhone,
     deliveryMethod: order.deliveryMethod,
     deliveryAddress: order.deliveryAddress,
     storeId: order.storeId,

@@ -66,6 +66,8 @@ export type CourseOrderFormValues = z.infer<typeof courseOrderSchema>
 // ── 單筆寄送地址（多地址模式用）──────────────────────────────────────
 export const shipmentItemSchema = z
   .object({
+    recipientName: z.string().min(1, '請填寫收件人'),
+    recipientPhone: z.string().min(1, '請填寫連絡電話'),
     deliveryMethod: z.enum(['sevenEleven', 'familyMart', 'delivery'], {
       error: '請選擇取貨方式',
     }),
@@ -93,6 +95,9 @@ export const materialOrderSchema = z
   .object({
     taxId: z.string().optional(),
     shipMode: z.enum(['single', 'multiple']),
+    // 單一地址收件人（可空，Server Action 以申請講師資料回填）
+    recipientName: z.string().optional(),
+    recipientPhone: z.string().optional(),
     // 單一地址欄位
     deliveryMethod: z.enum(['sevenEleven', 'familyMart', 'delivery']).optional(),
     deliveryAddress: z.string().optional(),

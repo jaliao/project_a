@@ -20,6 +20,8 @@ import { confirmReceipt } from '@/app/actions/course-order'
 
 type Shipment = {
   id: number
+  recipientName: string | null
+  recipientPhone: string | null
   deliveryMethod: string
   deliveryAddress: string | null
   storeId: string | null
@@ -32,6 +34,8 @@ type Shipment = {
 type CourseOrder = {
   id: number
   taxId: string | null
+  recipientName: string | null
+  recipientPhone: string | null
   deliveryMethod: string
   deliveryAddress: string | null
   storeId: string | null
@@ -50,6 +54,8 @@ type Props = {
   hasApprovedStudents: boolean
   courseOrder: CourseOrder | null
   materialSummary: { traditional: number; simplified: number }
+  // 單一地址收件人預設值（申請講師姓名 + 個人資料電話）
+  defaultRecipient: { name: string; phone: string }
 }
 
 export function CourseDetailActions({
@@ -60,6 +66,7 @@ export function CourseDetailActions({
   hasApprovedStudents,
   courseOrder,
   materialSummary,
+  defaultRecipient,
 }: Props) {
   const router = useRouter()
   const [cancelOpen, setCancelOpen] = useState(false)
@@ -204,6 +211,7 @@ export function CourseDetailActions({
         inviteId={inviteId}
         existingOrder={courseOrder}
         materialSummary={materialSummary}
+        defaultRecipient={defaultRecipient}
       />
     </div>
   )
