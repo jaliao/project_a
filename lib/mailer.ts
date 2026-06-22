@@ -93,3 +93,20 @@ export async function sendGraduationEmail(
     html,
   })
 }
+
+// ── 講師身分授權通知信 ────────────────────────
+export async function sendTeacherRoleGrantedEmail(
+  to: string,
+  bookLabel: string
+) {
+  await transporter.sendMail({
+    from: FROM_ADDRESS,
+    to,
+    subject: `【啟動事工】您已獲授權為「${bookLabel}」講師`,
+    html: `
+      <p>您好，</p>
+      <p>您已被授權為「<strong>${bookLabel}</strong>」課程講師，現在可於系統開設該課程。</p>
+      <p>請登入系統查看「新增授課」相關功能。</p>
+    `,
+  })
+}

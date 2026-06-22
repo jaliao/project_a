@@ -81,6 +81,18 @@ export function isSuperadmin(roles: Roles): boolean {
 }
 
 /**
+ * 身分授權權限分級：操作者是否可授予/移除某目標身分
+ * - superadmin：可操作所有身分
+ * - admin：可操作書籍講師身分與 admin，但不可操作 superadmin
+ * - 其他：不可操作
+ */
+export function canAssignRole(actorRoles: Roles, targetRole: UserRole): boolean {
+  if (isSuperadmin(actorRoles)) return true
+  if (targetRole === 'superadmin') return false
+  return canAccessAdmin(actorRoles)
+}
+
+/**
  * 是否具「某本書」的開課權限
  * 持有該書對應的講師身分，或為 admin／superadmin（不受書籍限制）
  */

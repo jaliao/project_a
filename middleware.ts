@@ -29,6 +29,10 @@ const PUBLIC_PATHS = [
   '/api/auth',
   // ECPay 門市選擇 callback：ECPay 跨站 POST 回傳不帶 session cookie，須免登入放行
   '/api/ecpay/store-callback',
+  // 被暫停會員登出轉址（清 session 後導向 /account-suspended）
+  '/api/suspended-logout',
+  // 帳號已暫停獨立頁（免登入可見）
+  '/account-suspended',
   '/terms',
   '/privacy',
   '/',

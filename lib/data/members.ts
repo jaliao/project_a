@@ -108,6 +108,11 @@ export async function getMemberDetail(id: string) {
       churchType: true,
       churchOther: true,
       church: { select: { name: true } },
+      // 暫停狀態
+      suspendedAt: true,
+      suspendedById: true,
+      suspendReason: true,
+      suspendReasonNote: true,
       // 學習紀錄：參加的課程（已開始）
       inviteEnrollments: {
         where: {
@@ -117,6 +122,7 @@ export async function getMemberDetail(id: string) {
           graduatedAt: true,
           teacherRecommended: true,
           teacherFeedbackNote: true,
+          teacherFeedbackAt: true,
           invite: {
             select: {
               id: true,
@@ -153,6 +159,14 @@ export async function getMemberDetail(id: string) {
 }
 
 export type MemberDetail = NonNullable<Awaited<ReturnType<typeof getMemberDetail>>>
+
+/** 取得指定使用者的顯示名稱所需欄位（用於顯示暫停操作人等） */
+export async function getUserDisplayById(id: string) {
+  return prisma.user.findUnique({
+    where: { id },
+    select: { realName: true, name: true, englishName: true, nickname: true, displayNameMode: true },
+  })
+}
 
 // ==========================================
 // 匯出會員資料（完整欄位）

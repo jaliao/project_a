@@ -2,9 +2,7 @@
 
 ## Purpose
 TBD - normalized for archive compatibility. Update Purpose for admin-member-management.
-
 ## Requirements
-
 ### Requirement: 會員清單搜尋
 管理者 SHALL 能在 `/admin/members` 頁面透過搜尋列篩選會員，搜尋條件涵蓋 `realName`、`name`、`nickname`、`email`、`spiritId` 欄位（OR 邏輯、不分大小寫、部分匹配）。搜尋條件 SHALL 透過 URL query string `?q=` 傳遞，以支援書籤與重新整理保留。表格欄位順序 SHALL 為：啟動編號、姓名、Email、身分、操作（不再顯示「加入日期」欄位）。「身分」欄 SHALL 顯示該會員擁有的所有身分。
 
@@ -39,33 +37,19 @@ TBD - normalized for archive compatibility. Update Purpose for admin-member-mana
 ---
 
 ### Requirement: 會員詳情頁
-系統 SHALL 提供 `/admin/members/[id]` 頁面，顯示個別會員的基本資料、學習紀錄與授課紀錄。非管理者存取 SHALL 被重新導向至 `/`。
+系統 SHALL 提供 `/admin/members/[id]` 頁面，以四個分頁呈現：**基本資料**、**學習階層**、**講師身分**、**特殊設定**。非管理者存取 SHALL 被重新導向至 `/`。
 
-#### Scenario: 顯示基本資料
+#### Scenario: 顯示基本資料分頁
 - **WHEN** 管理者進入 `/admin/members/[id]`
-- **THEN** 頁面顯示：姓名（`realName`）、暱稱（`nickname`）、Email、靈人編號（`spiritId`）、身分（所有 `roles`）、加入日期（`createdAt`）
+- **THEN** 基本資料分頁顯示：姓名（`realName`）、暱稱（`nickname`）、Email、靈人編號（`spiritId`）、身分（所有 `roles`）、加入日期（`createdAt`）、學習紀錄（作為學員、`startedAt IS NOT NULL` 的課程）
 
-#### Scenario: 顯示學習紀錄
-- **WHEN** 管理者進入 `/admin/members/[id]`
-- **THEN** 頁面顯示該會員作為學員的課程清單，僅包含 `CourseInvite.startedAt IS NOT NULL` 的場次，欄位包含：課程名稱（`CourseInvite.title`）、課程目錄（`courseCatalog.label`）、開始授課日期（`startedAt`）
-
-#### Scenario: 學習紀錄為空
-- **WHEN** 該會員尚未參加任何已開始的課程
-- **THEN** 學習紀錄區塊顯示「尚無學習紀錄」
-
-#### Scenario: 顯示授課紀錄
-- **WHEN** 管理者進入 `/admin/members/[id]`
-- **THEN** 頁面顯示該會員作為建立者（`CourseInvite.createdById = userId`）的課程清單，僅包含 `startedAt IS NOT NULL` 的場次，欄位包含：課程名稱、課程目錄、開始授課日期
-
-#### Scenario: 授課紀錄為空
-- **WHEN** 該會員尚未建立任何已開始的課程
-- **THEN** 授課紀錄區塊顯示「尚無授課紀錄」
+#### Scenario: 四個分頁可切換
+- **WHEN** 管理者於詳情頁切換分頁
+- **THEN** 可在基本資料／學習階層／講師身分／特殊設定間切換，各自顯示對應內容
 
 #### Scenario: 找不到會員
 - **WHEN** URL 中的 id 不存在
 - **THEN** 頁面顯示 404 或重新導向至 `/admin/members`
-
----
 
 ### Requirement: 條件式會員刪除
 系統 SHALL 僅在環境變數 `ENABLE_MEMBER_DELETE=true` 時於詳情頁顯示刪除按鈕。刪除前 SHALL 顯示 AlertDialog 二次確認，確認後執行 hard delete。
@@ -218,3 +202,45 @@ TBD - normalized for archive compatibility. Update Purpose for admin-member-mana
 #### Scenario: 身分篩選為包含語意
 - **WHEN** 管理者選擇身分「管理者」
 - **THEN** 同時具備 admin 與其他身分的會員也會被列出
+
+### Requirement: 講師身分分頁 — 推薦歷程
+講師身分分頁 SHALL 唯讀顯示「推薦歷程」：他人（各課程老師）推薦此會員成為講師的回饋紀錄，來源為 `InviteEnrollment.teacherRecommended = true`（此會員為學員），欄位包含推薦書別（依課程 `courseCatalogId`）、備註（`teacherFeedbackNote`）、推薦老師（`CourseInvite.createdBy` 顯示名稱）、時間（`teacherFeedbackAt`）。
+
+#### Scenario: 顯示推薦歷程
+- **WHEN** 管理者開啟某會員的講師身分分頁，且該會員曾被推薦
+- **THEN** 列出每筆推薦的書別、備註、推薦老師與時間
+
+#### Scenario: 無推薦時顯示佔位
+- **WHEN** 該會員未曾被任何老師推薦
+- **THEN** 推薦歷程區顯示「尚無推薦紀錄」
+
+### Requirement: 講師身分分頁 — 卡片式授權與確認
+講師身分分頁 SHALL 以卡片呈現三本書講師身分（`teacher_1`～`teacher_3`），顯示是否已授權。點擊卡片授予/移除 SHALL 先顯示確認對話框，確認後始執行。授予講師身分成功後，系統 SHALL 寄送「{書名}講師資格授權通知」信給該會員（收件依 `resolveContactEmail`）；移除不寄信。
+
+#### Scenario: 授予講師身分並發信
+- **WHEN** 管理者點擊某書講師卡片授予並於確認對話框確認
+- **THEN** 該會員 `roles` 加入對應 `teacher_N`，並寄送授權通知信至其收件地址
+
+#### Scenario: 移除講師身分不發信
+- **WHEN** 管理者移除某書講師身分並確認
+- **THEN** 該會員 `roles` 移除對應 `teacher_N`，不寄信
+
+#### Scenario: 未確認不執行
+- **WHEN** 管理者於確認對話框取消
+- **THEN** 身分不變更
+
+### Requirement: 特殊設定分頁
+特殊設定分頁 SHALL 提供：**暫停會員／恢復會員**（見 member-suspension）、**補發密碼**（重設臨時密碼並重新顯示）、**特殊身分授權**（授予/移除 `admin`、`superadmin`，依 member-roles 權限分級）。
+
+#### Scenario: 補發密碼
+- **WHEN** 管理者於特殊設定點「補發密碼」並確認
+- **THEN** 重設臨時密碼並重新顯示一次，會員下次登入須重設
+
+#### Scenario: 特殊身分授權依權限分級
+- **WHEN** 管理者於特殊設定授予/移除 `admin`／`superadmin`
+- **THEN** 依 member-roles「身分授權權限分級」判定是否允許（`admin` 不可授 `superadmin`）
+
+#### Scenario: 暫停與恢復入口
+- **WHEN** 管理者檢視特殊設定分頁
+- **THEN** 未暫停者顯示「暫停會員」（原因下拉＋自填），暫停中者顯示暫停資訊與「恢復會員」
+

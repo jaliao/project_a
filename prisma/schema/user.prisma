@@ -28,6 +28,15 @@ enum Gender {
 }
 
 // ==========================================
+// 會員暫停原因枚舉
+// ==========================================
+enum SuspendReason {
+  password_leak // 密碼外洩
+  user_request // 使用者要求
+  other // 其他原因（需填補充說明）
+}
+
+// ==========================================
 // 顯示名稱模式枚舉
 // ==========================================
 enum DisplayNameMode {
@@ -82,6 +91,12 @@ model User {
 
   // 第三方帳號（保留欄位）
   lineId String? @unique
+
+  // 會員暫停（封鎖登入；null = 未暫停）
+  suspendedAt       DateTime?
+  suspendedById     String?        @db.Uuid // 執行暫停的管理者
+  suspendReason     SuspendReason?
+  suspendReasonNote String? // 自填補充（other 必填）
 
   // 時間戳記
   createdAt   DateTime  @default(now())

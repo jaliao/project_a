@@ -86,6 +86,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
 
   callbacks: {
+    // ── 登入守衛：被暫停會員禁止登入（Credentials 與 Google 皆適用）──
+    async signIn({ user }) {
+      const where = user?.id
+        ? { id: user.id as string }
+        : user?.email
+          ? { email: user.email }
+          : null
+      if (where) {
+        const u = await prisma.user.findUnique({ where, select: { suspendedAt: true } })
+        if (u?.suspendedAt) return '/account-suspended'
+      }
+      return true
+    },
+
     // ── JWT：寫入自定義欄位，並補核 Google 首次登入所需資料 ──
     async jwt({ token, user, account }) {
       if (user) {

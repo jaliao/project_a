@@ -9,6 +9,7 @@
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 import { Topbar } from '@/components/layout/topbar'
 import { getUnreadNotificationCount } from '@/lib/data/notification'
 import { isGuestCoursePath } from '@/lib/utils/guest-paths'
@@ -35,6 +36,13 @@ export default async function UserLayout({
     }
     redirect('/login')
   }
+
+  // 被暫停會員：即時擋下（不等 token 過期）；經 route 清除 session 後導向暫停提示
+  const suspendCheck = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { suspendedAt: true },
+  })
+  if (suspendCheck?.suspendedAt) redirect('/api/suspended-logout')
 
   // 臨時密碼：強制完成 onboarding wizard
   if (session.user?.isTempPassword) redirect('/onboarding')

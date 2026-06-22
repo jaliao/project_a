@@ -12,12 +12,12 @@ import { randomBytes } from 'crypto'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
-import type { UserRole } from '@prisma/client'
+import type { UserRole, SuspendReason } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
-import { canAccessAdmin, normalizeRoles } from '@/lib/auth-roles'
+import { canAccessAdmin, normalizeRoles, canAssignRole, isSuperadmin, BOOK_LABEL_BY_TEACHER_ROLE, type TeacherRole } from '@/lib/auth-roles'
 import { generateSpiritId } from '@/lib/spirit-id'
-import { sendTempPasswordEmail } from '@/lib/mailer'
+import { sendTempPasswordEmail, sendTeacherRoleGrantedEmail } from '@/lib/mailer'
 import { resolveContactEmail } from '@/lib/utils/contact-email'
 
 type ActionResponse<T = undefined> = {
@@ -167,8 +167,20 @@ export async function updateMemberRoles(
     }
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } })
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, roles: true } })
   if (!user) return { success: false, message: '找不到此會員' }
+
+  // 權限分級：操作者對「有變動」的身分皆須具授權權限（admin 不可碰 superadmin）
+  const before = new Set(user.roles as UserRole[])
+  const after = new Set(finalRoles as UserRole[])
+  const changed = [...new Set([...before, ...after])].filter(
+    (r) => before.has(r) !== after.has(r)
+  )
+  for (const r of changed) {
+    if (!canAssignRole(session.user.roles, r)) {
+      return { success: false, message: '無權限' }
+    }
+  }
 
   await prisma.user.update({
     where: { id: userId },
@@ -178,6 +190,123 @@ export async function updateMemberRoles(
   revalidatePath(`/admin/members/${userId}`)
   revalidatePath('/admin/members')
   return { success: true, message: '身分已更新' }
+}
+
+/**
+ * 授予書籍講師身分（teacher_1~3）並寄通知信
+ */
+export async function grantTeacherRole(userId: string, role: TeacherRole): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+  if (!canAssignRole(session.user.roles, role)) return { success: false, message: '無權限' }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { roles: true, email: true, commEmail: true, isCommVerified: true },
+  })
+  if (!user) return { success: false, message: '找不到此會員' }
+
+  if (!(user.roles as UserRole[]).includes(role)) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { roles: { push: role } },
+    })
+    // 授予成功 → 寄通知信（已寫入；失敗僅 log，不影響授權）
+    const to = resolveContactEmail(user)
+    try {
+      await sendTeacherRoleGrantedEmail(to, BOOK_LABEL_BY_TEACHER_ROLE[role])
+    } catch (err) {
+      console.error(`[grantTeacherRole] 通知信寄送失敗 (${to})：`, err)
+    }
+  }
+
+  revalidatePath(`/admin/members/${userId}`)
+  revalidatePath('/admin/members')
+  return { success: true, message: `已授予${BOOK_LABEL_BY_TEACHER_ROLE[role]}講師身分` }
+}
+
+/**
+ * 移除書籍講師身分（不寄信）
+ */
+export async function revokeTeacherRole(userId: string, role: TeacherRole): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+  if (!canAssignRole(session.user.roles, role)) return { success: false, message: '無權限' }
+
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { roles: true } })
+  if (!user) return { success: false, message: '找不到此會員' }
+
+  const next = (user.roles as UserRole[]).filter((r) => r !== role)
+  await prisma.user.update({ where: { id: userId }, data: { roles: next } })
+
+  revalidatePath(`/admin/members/${userId}`)
+  revalidatePath('/admin/members')
+  return { success: true, message: `已移除${BOOK_LABEL_BY_TEACHER_ROLE[role]}講師身分` }
+}
+
+/**
+ * 暫停會員（封鎖登入；記錄時間／操作人／原因）
+ */
+export async function suspendMember(
+  userId: string,
+  input: { reason: SuspendReason; note?: string }
+): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+  if (!canAccessAdmin(session.user.roles)) return { success: false, message: '無權限' }
+  if (userId === session.user.id) return { success: false, message: '無法暫停自己的帳號' }
+
+  const validReasons: SuspendReason[] = ['password_leak', 'user_request', 'other']
+  if (!validReasons.includes(input.reason)) {
+    return { success: false, errors: { reason: ['請選擇暫停原因'] } }
+  }
+  const note = (input.note ?? '').trim()
+  if (input.reason === 'other' && !note) {
+    return { success: false, errors: { note: ['「其他原因」需填寫補充說明'] } }
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } })
+  if (!user) return { success: false, message: '找不到此會員' }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      suspendedAt: new Date(),
+      suspendedById: session.user.id,
+      suspendReason: input.reason,
+      suspendReasonNote: note || null,
+    },
+  })
+
+  revalidatePath(`/admin/members/${userId}`)
+  revalidatePath('/admin/members')
+  return { success: true, message: '已暫停會員' }
+}
+
+/**
+ * 恢復會員（清空暫停欄位）
+ */
+export async function unsuspendMember(userId: string): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+  if (!canAccessAdmin(session.user.roles)) return { success: false, message: '無權限' }
+
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } })
+  if (!user) return { success: false, message: '找不到此會員' }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      suspendedAt: null,
+      suspendedById: null,
+      suspendReason: null,
+      suspendReasonNote: null,
+    },
+  })
+
+  revalidatePath(`/admin/members/${userId}`)
+  revalidatePath('/admin/members')
+  return { success: true, message: '已恢復會員' }
 }
 
 /**
