@@ -44,7 +44,6 @@ export default async function AdminDashboardPage() {
         <StatCard label="啟動靈人講師資格人數" value={stats.spiritInstructors} />
         <StatCard label="啟動豐盛講師資格人數" value={stats.richInstructors} />
         <StatCard label="啟動得勝講師資格人數" value={stats.victoryInstructors} />
-        <StatCard label="啟動事工 4 講師資格人數" value={stats.ministryInstructors} />
         <StatCard label="開課中課程總數" value={stats.recruitingCourseSessions} />
         <StatCard label="進行中課程總數" value={stats.activeCourseSessions} />
         <StatCard label="已結業課程總數" value={stats.completedCourseSessions} />

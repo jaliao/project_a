@@ -5,7 +5,7 @@
  * lib/auth-roles.ts
  *
  * 身分集合（roles）授權判定的單一真實來源。
- * 身分：user（一般會員，基線）/ teacher_1~teacher_4（四個書籍講師）/
+ * 身分：user（一般會員，基線）/ teacher_1~teacher_3（三個書籍講師）/
  *       admin（管理者）/ superadmin（超級管理者）
  * 講師資格依書籍區分，「身分↔書籍」對應亦集中於此（單一真實來源）。
  * ----------------------------------------------
@@ -14,7 +14,7 @@
 import type { UserRole } from '@prisma/client'
 
 // 書籍講師身分清單（依 courseCatalogId 順序）
-export const TEACHER_ROLES = ['teacher_1', 'teacher_2', 'teacher_3', 'teacher_4'] as const
+export const TEACHER_ROLES = ['teacher_1', 'teacher_2', 'teacher_3'] as const
 export type TeacherRole = (typeof TEACHER_ROLES)[number]
 
 // 書籍講師身分 ↔ 課程目錄（CourseCatalog.id）對應（單一真實來源）
@@ -22,7 +22,6 @@ export const TEACHER_ROLE_BY_CATALOG: Record<number, TeacherRole> = {
   1: 'teacher_1', // 啟動靈人
   2: 'teacher_2', // 啟動豐盛
   3: 'teacher_3', // 啟動得勝
-  4: 'teacher_4', // 啟動事工 4
 }
 
 // 反向對應：講師身分 → 課程目錄 id
@@ -30,7 +29,6 @@ export const CATALOG_BY_TEACHER_ROLE: Record<TeacherRole, number> = {
   teacher_1: 1,
   teacher_2: 2,
   teacher_3: 3,
-  teacher_4: 4,
 }
 
 // 書籍講師身分 → 書名（繁體中文）
@@ -38,7 +36,6 @@ export const BOOK_LABEL_BY_TEACHER_ROLE: Record<TeacherRole, string> = {
   teacher_1: '啟動靈人',
   teacher_2: '啟動豐盛',
   teacher_3: '啟動得勝',
-  teacher_4: '啟動事工 4',
 }
 
 // 身分顯示名稱對應（繁體中文）
@@ -47,7 +44,6 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   teacher_1: '啟動靈人講師',
   teacher_2: '啟動豐盛講師',
   teacher_3: '啟動得勝講師',
-  teacher_4: '啟動事工 4 講師',
   admin: '管理者',
   superadmin: '超級管理者',
 }
@@ -57,7 +53,6 @@ export const ASSIGNABLE_ROLES: UserRole[] = [
   'teacher_1',
   'teacher_2',
   'teacher_3',
-  'teacher_4',
   'admin',
   'superadmin',
 ]
@@ -113,7 +108,6 @@ export function normalizeRoles(roles: Roles): UserRole[] {
     'teacher_1',
     'teacher_2',
     'teacher_3',
-    'teacher_4',
     'admin',
     'superadmin',
   ]

@@ -10,7 +10,15 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { canAccessAdmin, isSuperadmin } from '@/lib/auth-roles'
-import { getAdminSetting, REMITTANCE_ACCOUNT_KEY, REMITTANCE_ACCOUNT_DEFAULT } from '@/lib/data/admin-settings'
+import {
+  getAdminSetting,
+  REMITTANCE_ACCOUNT_KEY,
+  REMITTANCE_ACCOUNT_DEFAULT,
+  GRADUATION_EMAIL_SUBJECT_KEY,
+  GRADUATION_EMAIL_BODY_KEY,
+  GRADUATION_EMAIL_SUBJECT_DEFAULT,
+  GRADUATION_EMAIL_BODY_DEFAULT,
+} from '@/lib/data/admin-settings'
 import { getAllChurches, getChurchMemberCount } from '@/lib/data/churches'
 import { getAllCourses } from '@/lib/data/course-catalog'
 import { SettingsTabs } from './settings-tabs'
@@ -33,9 +41,11 @@ export default async function AdminSettingsPage({
   const { tab } = await searchParams
   const activeTab = tab === 'churches' ? 'churches' : tab === 'courses' ? 'courses' : 'basic'
 
-  const [depthStr, remittanceAccount, churches, courses] = await Promise.all([
+  const [depthStr, remittanceAccount, graduationSubject, graduationBody, churches, courses] = await Promise.all([
     getAdminSetting('hierarchy_depth', '3'),
     getAdminSetting(REMITTANCE_ACCOUNT_KEY, REMITTANCE_ACCOUNT_DEFAULT),
+    getAdminSetting(GRADUATION_EMAIL_SUBJECT_KEY, GRADUATION_EMAIL_SUBJECT_DEFAULT),
+    getAdminSetting(GRADUATION_EMAIL_BODY_KEY, GRADUATION_EMAIL_BODY_DEFAULT),
     getAllChurches(),
     getAllCourses(),
   ])
@@ -55,6 +65,8 @@ export default async function AdminSettingsPage({
         isSuperadmin={isSuperadmin(session.user.roles)}
         currentDepth={currentDepth}
         remittanceAccount={remittanceAccount}
+        graduationSubject={graduationSubject}
+        graduationBody={graduationBody}
         churches={churchesWithCount}
         courses={courses}
       />

@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { HierarchyDepthForm } from '@/components/admin/hierarchy-depth-form'
 import { RemittanceAccountForm } from '@/components/admin/remittance-account-form'
+import { GraduationEmailForm } from '@/components/admin/graduation-email-form'
 import { ChurchList } from '@/components/admin/church-list'
 import { CourseCatalogTable } from '@/components/course-catalog/course-catalog-table'
 import type { CourseCatalogEntry } from '@/lib/data/course-catalog'
@@ -29,11 +30,13 @@ interface SettingsTabsProps {
   isSuperadmin: boolean
   currentDepth: number
   remittanceAccount: string
+  graduationSubject: string
+  graduationBody: string
   churches: Church[]
   courses: CourseCatalogEntry[]
 }
 
-export function SettingsTabs({ activeTab, isSuperadmin, currentDepth, remittanceAccount, churches, courses }: SettingsTabsProps) {
+export function SettingsTabs({ activeTab, isSuperadmin, currentDepth, remittanceAccount, graduationSubject, graduationBody, churches, courses }: SettingsTabsProps) {
   const router = useRouter()
 
   return (
@@ -62,6 +65,14 @@ export function SettingsTabs({ activeTab, isSuperadmin, currentDepth, remittance
               </p>
             </div>
             <RemittanceAccountForm currentAccount={remittanceAccount} />
+
+            <div className="border-t pt-4">
+              <h2 className="font-medium">結業信範本</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                老師確認結業時，自動寄給結業學員的信件主旨與內文。
+              </p>
+            </div>
+            <GraduationEmailForm currentSubject={graduationSubject} currentBody={graduationBody} />
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">此設定需 superadmin 權限。</p>

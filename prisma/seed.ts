@@ -140,7 +140,7 @@ async function main() {
   console.log(`  管理員密碼來源：${usingDefaultAdmin ? '預設（Admin@1234）' : 'SEED_ADMIN_PASSWORD'}`)
   console.log(`  學員密碼來源：${usingDefaultStudent ? '預設（Student@1234）' : 'SEED_STUDENT_PASSWORD'}\n`)
 
-  // ── 2b. 測試講師帳號（持有全部四個書籍講師身分，供 QA）──
+  // ── 2b. 測試講師帳號（持有全部三個書籍講師身分，供 QA）──
   await prisma.user.upsert({
     where: { email: 'teacher@test.com' },
     create: {
@@ -155,7 +155,7 @@ async function main() {
       commEmail: TEST_COMM_EMAIL,
       isCommVerified: true,
       passwordHash: studentHash,
-      roles: ['user', 'teacher_1', 'teacher_2', 'teacher_3', 'teacher_4'],
+      roles: ['user', 'teacher_1', 'teacher_2', 'teacher_3'],
       isTempPassword: false, // 已完成補填（realName/phone 齊備），跳過 onboarding 與 profile guard
     },
     update: {
@@ -163,12 +163,12 @@ async function main() {
       realName: '測試講師',
       nickname: '測試講師',
       spiritId: 'PA269999',
-      roles: ['user', 'teacher_1', 'teacher_2', 'teacher_3', 'teacher_4'],
+      roles: ['user', 'teacher_1', 'teacher_2', 'teacher_3'],
       commEmail: TEST_COMM_EMAIL,
       isCommVerified: true,
     },
   })
-  console.log('✅ 測試講師帳號（teacher@test.com，四書講師身分）初始化完成\n')
+  console.log('✅ 測試講師帳號（teacher@test.com，三書講師身分）初始化完成\n')
 
   // ── 2c. 測試學員帳號（student1~4@test.com，已完成第一次登入補填，供 QA）──
   // 補填完成判定 = isTempPassword=false + realName + phone（見 onboarding-wizard / profile-completion-guard）
@@ -220,7 +220,6 @@ async function main() {
     { label: '啟動靈人', isActive: true, sortOrder: 1 },
     { label: '啟動豐盛', isActive: true, sortOrder: 2 },
     { label: '啟動得勝', isActive: false, sortOrder: 3 },
-    { label: '啟動事工 4', isActive: false, sortOrder: 4 },
   ]
   for (const course of courses) {
     await prisma.courseCatalog.upsert({
@@ -233,7 +232,6 @@ async function main() {
   const prerequisiteMap = [
     { courseId: 2, prereqIds: [1] },
     { courseId: 3, prereqIds: [1, 2] },
-    { courseId: 4, prereqIds: [1, 2, 3] },
   ]
   for (const { courseId, prereqIds } of prerequisiteMap) {
     await prisma.courseCatalog.update({
@@ -241,7 +239,7 @@ async function main() {
       data: { prerequisites: { set: [], connect: prereqIds.map((id) => ({ id })) } },
     })
   }
-  console.log('✅ 課程目錄初始化完成（啟動靈人 / 啟動豐盛 / 啟動得勝 / 啟動事工 4）\n')
+  console.log('✅ 課程目錄初始化完成（啟動靈人 / 啟動豐盛 / 啟動得勝）\n')
 
   // ── 4. 教會清單（正規化後）──────────────────────
   const churchMap = new Map<string, number>()
@@ -266,7 +264,6 @@ async function main() {
       | 'teacher_1'
       | 'teacher_2'
       | 'teacher_3'
-      | 'teacher_4'
       | 'admin'
       | 'superadmin'
     )[]

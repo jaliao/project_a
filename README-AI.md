@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.83（2026-06-21）
+> 自動產生，版本 0.1.87（2026-06-21）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -38,7 +38,7 @@ app/
 │   ├── layout.tsx   # Topbar 包裝層（含未讀通知數 server fetch；profile completion guard；傳遞 roles/spiritId 給 Topbar）
 │   ├── dashboard/       # redirect → /user/{id}（舊書籤相容）
 │   ├── admin/           # 管理後台：功能按鈕網格（儀錶板/課程/授課/教材/會員/教會/系統設定）
-│   │   ├── dashboard/       # 後台儀錶板（統計卡片 8 個：總會員數/靈人講師資格/豐盛講師資格/得勝講師資格/事工 4 講師資格/開課中/進行中/已結業；圖表已移除）
+│   │   ├── dashboard/       # 後台儀錶板（統計卡片 7 個：總會員數/靈人講師資格/豐盛講師資格/得勝講師資格/開課中/進行中/已結業；圖表已移除）
 │   │   ├── course-sessions/ # 開課管理（全站所有開課；搜尋 + 篩選；另開視窗；前 30 筆；每筆 inline 狀態下拉變更狀態）
 │   │   ├── members/         # 會員管理清單（搜尋 + 性別/身分/教會篩選；無條件不列清單；每頁 30 筆翻頁；重設密碼 + 查看詳情）
 │   │   ├── members/[id]/    # 會員詳情（Tabs：基本資料含所屬教會/學習階層）
@@ -172,7 +172,7 @@ prerequisites CourseCatalog[]（多對多自關聯，_CoursePrerequisites join t
 id            UUID（主鍵）
 email         String（唯一，登入帳號）
 name          String?
-roles         UserRole[] (多重身分；user 基線 + teacher_1~teacher_4（四個書籍講師）/admin/superadmin，預設 [user])
+roles         UserRole[] (多重身分；user 基線 + teacher_1~teacher_3（三個書籍講師）/admin/superadmin，預設 [user])
 spiritId      String?（唯一，格式 PA+YY+XXXX）
 teacherNo     String?（授課老師編號，如 A001；學員為 null）
 passwordHash  String?（Google-only 為 null）
@@ -324,11 +324,11 @@ createdAt       DateTime
 - 結業後 `InviteEnrollment.graduatedAt` 有值，`getGraduatedCatalogIds(userId)` 回傳 Set
 
 ### 身分標籤
-- 來源：`User.roles`：`canAccessAdmin(roles)` → 「系統管理員」；書籍講師身分 `teacher_1`~`teacher_4` → 對應「{書名}講師」Badge（可多標籤）
+- 來源：`User.roles`：`canAccessAdmin(roles)` → 「系統管理員」；書籍講師身分 `teacher_1`~`teacher_3` → 對應「{書名}講師」Badge（可多標籤）
 - 講師標籤改由 `roles` 推導（不再以結業證書）；書名對應見 `lib/auth-roles.ts`（`BOOK_LABEL_BY_TEACHER_ROLE`）
 
 ### 開課身分驗證（依書籍綁定）
-- 講師資格依書籍區分（`teacher_1`=啟動靈人、`teacher_2`=啟動豐盛、`teacher_3`=啟動得勝、`teacher_4`=啟動事工 4）；「身分↔書籍」對應集中於 `lib/auth-roles.ts`（`TEACHER_ROLE_BY_CATALOG`/`CATALOG_BY_TEACHER_ROLE`）
+- 講師資格依書籍區分（`teacher_1`=啟動靈人、`teacher_2`=啟動豐盛、`teacher_3`=啟動得勝）；「身分↔書籍」對應集中於 `lib/auth-roles.ts`（`TEACHER_ROLE_BY_CATALOG`/`CATALOG_BY_TEACHER_ROLE`）
 - 開課入口：`canTeachAny(roles)`（含任一書籍講師身分或 admin/superadmin）顯示／隱藏
 - 逐書授課資格：`canTeachBook(roles, courseCatalogId)`（持有該書講師身分，admin/superadmin 豁免）；開課精靈 Step 1 與 `createCourseSession`/`createInvite` Server Action 皆以此把關，未具資格回傳「須具備{書名}講師身分才能授課」
 

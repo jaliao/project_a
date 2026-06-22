@@ -14,6 +14,17 @@ import { canTeachAny, canTeachBook } from '@/lib/auth-roles'
 import { createInviteSchema, instructorFeedbackSchema } from '@/lib/schemas/course-invite'
 import { checkPrerequisites } from '@/lib/data/course-catalog'
 import { createNotification } from '@/app/actions/notification'
+import { sendGraduationEmail } from '@/lib/mailer'
+import { resolveContactEmail } from '@/lib/utils/contact-email'
+import { renderTemplate } from '@/lib/utils/render-template'
+import { getMemberDisplayName } from '@/lib/utils/member-display'
+import {
+  getAdminSetting,
+  GRADUATION_EMAIL_SUBJECT_KEY,
+  GRADUATION_EMAIL_BODY_KEY,
+  GRADUATION_EMAIL_SUBJECT_DEFAULT,
+  GRADUATION_EMAIL_BODY_DEFAULT,
+} from '@/lib/data/admin-settings'
 
 type ActionResponse<T = undefined> = {
   success: boolean
@@ -425,6 +436,55 @@ export async function graduateCourse(
     )
   } catch (e) {
     console.error('結業通知寫入失敗', e)
+  }
+
+  // 寄送結業信給本次結業學員（結業已 commit；await 確保送出，失敗僅記錄不影響結業）
+  if (graduatedIds.length > 0) {
+    try {
+      const [subjectTpl, bodyTpl, students] = await Promise.all([
+        getAdminSetting(GRADUATION_EMAIL_SUBJECT_KEY, GRADUATION_EMAIL_SUBJECT_DEFAULT),
+        getAdminSetting(GRADUATION_EMAIL_BODY_KEY, GRADUATION_EMAIL_BODY_DEFAULT),
+        prisma.user.findMany({
+          where: { id: { in: graduatedIds } },
+          select: {
+            email: true,
+            commEmail: true,
+            isCommVerified: true,
+            realName: true,
+            englishName: true,
+            nickname: true,
+            displayNameMode: true,
+            spiritId: true,
+          },
+        }),
+      ])
+      const y = lastCourseDate.getFullYear()
+      const m = String(lastCourseDate.getMonth() + 1).padStart(2, '0')
+      const d = String(lastCourseDate.getDate()).padStart(2, '0')
+      const graduationDate = `${y}/${m}/${d}`
+
+      for (const s of students) {
+        const vars = {
+          studentName: getMemberDisplayName(s),
+          courseName: invite.title,
+          graduationDate,
+          spiritId: s.spiritId ?? '',
+        }
+        const subject = renderTemplate(subjectTpl, vars)
+        const html = renderTemplate(bodyTpl, vars)
+          .split('\n')
+          .map((line) => (line.trim() ? `<p>${line}</p>` : '<br>'))
+          .join('')
+        const to = resolveContactEmail(s)
+        try {
+          await sendGraduationEmail(to, subject, html)
+        } catch (err) {
+          console.error(`[graduateCourse] 結業信寄送失敗 (${to})：`, err)
+        }
+      }
+    } catch (err) {
+      console.error('[graduateCourse] 結業信處理失敗：', err)
+    }
   }
 
   return { success: true, message: '課程已結業' }

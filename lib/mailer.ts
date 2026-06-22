@@ -79,3 +79,17 @@ export async function sendPasswordResetEmail(
     `,
   })
 }
+
+// ── 結業信（主旨與內文由後台範本提供）────────────
+export async function sendGraduationEmail(
+  to: string,
+  subject: string,
+  html: string
+) {
+  await transporter.sendMail({
+    from: FROM_ADDRESS,
+    to,
+    subject,
+    html,
+  })
+}

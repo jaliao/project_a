@@ -11,7 +11,12 @@
 import { revalidatePath } from 'next/cache'
 import { auth } from '@/lib/auth'
 import { isSuperadmin } from '@/lib/auth-roles'
-import { upsertAdminSetting, REMITTANCE_ACCOUNT_KEY } from '@/lib/data/admin-settings'
+import {
+  upsertAdminSetting,
+  REMITTANCE_ACCOUNT_KEY,
+  GRADUATION_EMAIL_SUBJECT_KEY,
+  GRADUATION_EMAIL_BODY_KEY,
+} from '@/lib/data/admin-settings'
 
 export type ActionResponse = {
   success: boolean
@@ -53,4 +58,25 @@ export async function updateRemittanceAccount(account: string): Promise<ActionRe
   revalidatePath('/admin/settings')
 
   return { success: true, message: '匯款帳號已儲存' }
+}
+
+export async function updateGraduationEmailTemplate(
+  subject: string,
+  body: string
+): Promise<ActionResponse> {
+  const session = await auth()
+  if (!isSuperadmin(session?.user?.roles)) {
+    return { success: false, message: '權限不足' }
+  }
+
+  const s = subject.trim()
+  const b = body.trim()
+  if (!s) return { success: false, errors: { subject: ['主旨為必填'] } }
+  if (!b) return { success: false, errors: { body: ['內文為必填'] } }
+
+  await upsertAdminSetting(GRADUATION_EMAIL_SUBJECT_KEY, s)
+  await upsertAdminSetting(GRADUATION_EMAIL_BODY_KEY, b)
+  revalidatePath('/admin/settings')
+
+  return { success: true, message: '結業信範本已儲存' }
 }

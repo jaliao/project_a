@@ -58,7 +58,6 @@ export async function GET(req: NextRequest) {
         | 'teacher_1'
         | 'teacher_2'
         | 'teacher_3'
-        | 'teacher_4'
         | 'admin'
         | 'superadmin'
         | null) ?? undefined,

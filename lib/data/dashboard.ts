@@ -13,7 +13,6 @@ export type DashboardStats = {
   spiritInstructors: number
   richInstructors: number
   victoryInstructors: number
-  ministryInstructors: number
   recruitingCourseSessions: number
   activeCourseSessions: number
   completedCourseSessions: number
@@ -28,7 +27,6 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     spiritInstructors,
     richInstructors,
     victoryInstructors,
-    ministryInstructors,
     recruitingCourseSessions,
     activeCourseSessions,
     completedCourseSessions,
@@ -41,8 +39,6 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     prisma.user.count({ where: { roles: { has: 'teacher_2' } } }),
     // 啟動得勝講師資格人數（持有 teacher_3 身分）
     prisma.user.count({ where: { roles: { has: 'teacher_3' } } }),
-    // 啟動事工 4 講師資格人數（持有 teacher_4 身分）
-    prisma.user.count({ where: { roles: { has: 'teacher_4' } } }),
     // 開課中課程總數（招生中：未開始、未取消、未結業）
     prisma.courseInvite.count({
       where: {
@@ -70,7 +66,6 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     spiritInstructors,
     richInstructors,
     victoryInstructors,
-    ministryInstructors,
     recruitingCourseSessions,
     activeCourseSessions,
     completedCourseSessions,

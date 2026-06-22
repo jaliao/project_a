@@ -365,3 +365,14 @@ make schema-update    # Verify schema changes
 `make prisma-dev-status`
 `make prisma-dev-deploy`
 `make prisma-dev-seed`
+
+### 破壞性 schema 變更（移除 enum 值等）的重置
+
+移除 enum 值（例如自 `UserRole` 移除 `teacher_4`）屬破壞性變更：若現有 DB 仍有資料使用該值，`prisma migrate dev` / `make schema-update` 會卡住要求 reset，於非互動環境直接中止。正確程序是**先清空 DB 再建立 migration**：
+
+1. `make dev-clean`（`down -v` 清空 volume，DB 全空 → 無資料使用待移除的值）
+2. `make dev`（前台啟動容器，於專屬終端執行；含 cloudflared tunnel）
+3. `make schema-update name=<描述>`（於空 DB 上 `migrate dev`：套用既有 migrations + 建立移除 enum 的新 migration，因無資料使用該值故不卡）
+4. `make prisma-dev-seed`
+
+> ⚠️ `make dev` / `make dev-clean` 為前台 `up --build` 並啟動 cloudflared tunnel，請於你自己的終端執行（不適合背景／自動執行）。

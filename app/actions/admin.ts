@@ -78,7 +78,7 @@ const createMemberSchema = z.object({
   realName: z.string().trim().min(1, '請輸入姓名'),
   email: z.string().trim().toLowerCase().email('Email 格式不正確'),
   roles: z
-    .array(z.enum(['teacher_1', 'teacher_2', 'teacher_3', 'teacher_4', 'admin', 'superadmin']))
+    .array(z.enum(['teacher_1', 'teacher_2', 'teacher_3', 'admin', 'superadmin']))
     .default([]),
 })
 
