@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.90（2026-06-23）
+> 自動產生，版本 0.1.91（2026-06-23）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -357,6 +357,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260623-004` — lint 基線修正：`CourseSessionForm` dev 預設日期改以 lazy `useState` 初始化器於 mount 計算一次，移除 render 期間 `Date.now()` 呼叫，消除 `react-hooks/purity` 2 errors（行為不變、無資料模型/路由變更）
 - `cr-spec-260622-002` — 會員活躍度追蹤：`User` 新增 `previousLoginAt`（migration `add_previous_login_at`）；`lib/auth.ts` `signIn` callback 於登入成功時以原子 SQL 平移登入時間（try/catch 不阻斷）；`getMemberDetail`／`exportMembers` 補 `previousLoginAt`/`isTempPassword`/`hasPassword`（由 `passwordHash` 推導布林、不外流雜湊）；會員詳情頁新增「活躍度」區（最後/上次登入、首次登入、首次補填、臨時密碼狀態），Excel 匯出補對應四欄
 - `cr-spec-260323-001` — 基礎架構建立
 - `cr-spec-260323-004` — 會員系統模組（認證、白名單、個人資料）

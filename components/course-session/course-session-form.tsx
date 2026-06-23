@@ -8,7 +8,7 @@
 
 'use client'
 
-import { useRef, useTransition } from 'react'
+import { useRef, useState, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -50,6 +50,14 @@ export function CourseSessionForm({ activeCourses, instructorName = '', onSucces
   }
 
   const firstCourse = activeCourses[0]
+  // dev 預設日期：於 mount 計算一次，避免在 render 期間呼叫 Date.now()（react-hooks/purity）
+  const [devDefaultDates] = useState(() => {
+    const now = Date.now()
+    return {
+      expiredAt: new Date(now + 30 * 24 * 60 * 60 * 1000),
+      courseDate: new Date(now + 60 * 24 * 60 * 60 * 1000),
+    }
+  })
   const form = useForm<CourseSessionFormValues>({
     resolver: zodResolver(courseSessionSchema),
     defaultValues: isDev && firstCourse
@@ -57,8 +65,8 @@ export function CourseSessionForm({ activeCourses, instructorName = '', onSucces
           courseCatalogId: firstCourse.id,
           title: buildDefaultTitle(firstCourse.id),
           maxCount: '5',
-          expiredAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          courseDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+          expiredAt: devDefaultDates.expiredAt,
+          courseDate: devDefaultDates.courseDate,
           notes: '',
         }
       : {
@@ -94,7 +102,8 @@ export function CourseSessionForm({ activeCourses, instructorName = '', onSucces
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+      {/* handleSubmit 於提交時才呼叫，避免 render 期間將讀取 ref 的 onSubmit 傳入（react-hooks/refs）*/}
+      <form onSubmit={(e) => form.handleSubmit(onSubmit)(e)} className="space-y-5">
         <ScrollArea className="h-[60vh] pr-4">
           <div className="space-y-4 pb-2">
 
