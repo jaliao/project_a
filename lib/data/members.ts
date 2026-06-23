@@ -90,7 +90,7 @@ export async function searchMembers(f: MemberFilters, page = 1) {
 // 取得單一會員詳情（含學習與授課紀錄）
 // ==========================================
 export async function getMemberDetail(id: string) {
-  return prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id },
     select: {
       id: true,
@@ -99,12 +99,18 @@ export async function getMemberDetail(id: string) {
       englishName: true,
       nickname: true,
       email: true,
+      phone: true,
       spiritId: true,
       roles: true,
       teacherNo: true,
       gender: true,
       displayNameMode: true,
       createdAt: true,
+      // 活躍度指標
+      lastLoginAt: true,
+      previousLoginAt: true,
+      isTempPassword: true,
+      passwordHash: true, // 僅用於推導 hasPassword，不外流雜湊值
       churchType: true,
       churchOther: true,
       church: { select: { name: true } },
@@ -156,6 +162,12 @@ export async function getMemberDetail(id: string) {
       },
     },
   })
+
+  if (!user) return null
+
+  // 以布林帶出密碼存在性，移除雜湊值避免外流
+  const { passwordHash, ...rest } = user
+  return { ...rest, hasPassword: passwordHash != null }
 }
 
 export type MemberDetail = NonNullable<Awaited<ReturnType<typeof getMemberDetail>>>
@@ -174,7 +186,7 @@ export async function getUserDisplayById(id: string) {
 export async function exportMembers(f: MemberFilters = {}) {
   const where = buildMemberWhere(f)
 
-  return prisma.user.findMany({
+  const rows = await prisma.user.findMany({
     where,
     orderBy: [{ createdAt: 'desc' }, { realName: 'asc' }],
     select: {
@@ -194,6 +206,16 @@ export async function exportMembers(f: MemberFilters = {}) {
       learningLevel: true,
       createdAt: true,
       lastLoginAt: true,
+      // 活躍度指標
+      previousLoginAt: true,
+      isTempPassword: true,
+      passwordHash: true, // 僅用於推導 hasPassword，不外流雜湊值
     },
   })
+
+  // 以布林帶出密碼存在性，移除雜湊值避免外流
+  return rows.map(({ passwordHash, ...rest }) => ({
+    ...rest,
+    hasPassword: passwordHash != null,
+  }))
 }

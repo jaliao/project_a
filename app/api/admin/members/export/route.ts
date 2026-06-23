@@ -80,6 +80,10 @@ export async function GET(req: NextRequest) {
     學習等級: m.learningLevel,
     加入日期: formatDate(m.createdAt),
     最後登入: formatDate(m.lastLoginAt),
+    上次登入: formatDate(m.previousLoginAt),
+    已完成首次登入: m.lastLoginAt ? '是' : '否',
+    已完成首次補填: m.realName && m.phone ? '是' : '否',
+    已更改臨時密碼: !m.hasPassword ? '不適用' : m.isTempPassword ? '否' : '是',
   }))
 
   // 生成 xlsx Buffer

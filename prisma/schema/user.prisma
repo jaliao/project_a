@@ -99,9 +99,10 @@ model User {
   suspendReasonNote String? // 自填補充（other 必填）
 
   // 時間戳記
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  lastLoginAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  lastLoginAt     DateTime?
+  previousLoginAt DateTime? // 上一次登入時間（登入時由 lastLoginAt 平移而來）
 
   // NextAuth 關聯
   accounts Account[]

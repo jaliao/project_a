@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.89（2026-06-22）
+> 自動產生，版本 0.1.90（2026-06-23）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -185,8 +185,9 @@ gender        Gender（male | female | unspecified，預設 unspecified）
 displayNameMode DisplayNameMode（nickname | nickname_zh | nickname_en，預設 nickname）
 phone         String?
 address       String?
-createdAt / updatedAt / lastLoginAt
+createdAt / updatedAt / lastLoginAt / previousLoginAt
 ```
+> `lastLoginAt`／`previousLoginAt`：每次登入成功於 `signIn` callback 以原子 SQL 平移記錄（舊 `lastLoginAt` → `previousLoginAt`，`lastLoginAt` → NOW()），失敗不阻斷登入。會員詳情頁「活躍度」區與 Excel 匯出據此推導「首次登入／首次補填（`realName && phone`）／臨時密碼狀態（`isTempPassword`，無密碼帳號為不適用）」。
 
 ### WhitelistedEmail
 ```
@@ -356,6 +357,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260622-002` — 會員活躍度追蹤：`User` 新增 `previousLoginAt`（migration `add_previous_login_at`）；`lib/auth.ts` `signIn` callback 於登入成功時以原子 SQL 平移登入時間（try/catch 不阻斷）；`getMemberDetail`／`exportMembers` 補 `previousLoginAt`/`isTempPassword`/`hasPassword`（由 `passwordHash` 推導布林、不外流雜湊）；會員詳情頁新增「活躍度」區（最後/上次登入、首次登入、首次補填、臨時密碼狀態），Excel 匯出補對應四欄
 - `cr-spec-260323-001` — 基礎架構建立
 - `cr-spec-260323-004` — 會員系統模組（認證、白名單、個人資料）
 - `cr-spec-260323-005` — 登入後首頁（Dashboard）+ Topbar

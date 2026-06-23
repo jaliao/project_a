@@ -94,8 +94,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           ? { email: user.email }
           : null
       if (where) {
-        const u = await prisma.user.findUnique({ where, select: { suspendedAt: true } })
+        const u = await prisma.user.findUnique({
+          where,
+          select: { id: true, suspendedAt: true },
+        })
         if (u?.suspendedAt) return '/account-suspended'
+
+        // 記錄登入時間：先把舊的 lastLoginAt 平移至 previousLoginAt，再更新為當下時間。
+        // 以原子 SQL 做欄位對欄位賦值，避免同帳號併發登入的競態；
+        // 失敗僅記錄、不阻斷登入（活躍度紀錄非登入關鍵路徑）。
+        if (u?.id) {
+          try {
+            await prisma.$executeRaw`
+              UPDATE "users"
+              SET "previousLoginAt" = "lastLoginAt", "lastLoginAt" = NOW()
+              WHERE id = ${u.id}::uuid
+            `
+          } catch (e) {
+            console.error('[auth] 更新登入時間失敗（不阻斷登入）:', e)
+          }
+        }
       }
       return true
     },

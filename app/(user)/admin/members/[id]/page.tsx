@@ -41,6 +41,21 @@ function fmtDate(d: Date): string {
   return d.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' })
 }
 
+// 登入時間需含時分
+function fmtDateTime(d: Date | null): string {
+  if (!d) return '—'
+  return d.toLocaleString('zh-TW', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit',
+  })
+}
+
+// 是否已更改臨時密碼：無密碼帳號顯示「不適用」
+function tempPasswordLabel(hasPassword: boolean, isTempPassword: boolean): string {
+  if (!hasPassword) return '不適用'
+  return isTempPassword ? '尚未更改' : '已更改'
+}
+
 export default async function MemberDetailPage({
   params,
 }: {
@@ -124,6 +139,18 @@ export default async function MemberDetailPage({
                       : '—'}
                 </dd>
               </div>
+            </dl>
+          </div>
+
+          {/* ── 活躍度 ── */}
+          <div className="rounded-lg border p-5 space-y-3">
+            <h2 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">活躍度</h2>
+            <dl className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm sm:grid-cols-3">
+              <div><dt className="text-muted-foreground">最後登入時間</dt><dd>{fmtDateTime(member.lastLoginAt)}</dd></div>
+              <div><dt className="text-muted-foreground">上次登入時間</dt><dd>{fmtDateTime(member.previousLoginAt)}</dd></div>
+              <div><dt className="text-muted-foreground">首次登入</dt><dd>{member.lastLoginAt ? '已完成' : '尚未登入'}</dd></div>
+              <div><dt className="text-muted-foreground">首次補填基本資料</dt><dd>{member.realName && member.phone ? '已補填' : '尚未補填'}</dd></div>
+              <div><dt className="text-muted-foreground">臨時密碼</dt><dd>{tempPasswordLabel(member.hasPassword, member.isTempPassword)}</dd></div>
             </dl>
           </div>
 
