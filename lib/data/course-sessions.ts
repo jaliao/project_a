@@ -249,6 +249,7 @@ export type CourseSessionDetail = {
   approvedEnrollments: EnrollmentRecord[]
   pendingEnrollments: EnrollmentRecord[]
   courseDate: string | null
+  notes: string | null
   // 一門課可有多筆教材訂單（依建立時間升序）
   orders: CourseSessionOrder[]
 }
@@ -314,6 +315,7 @@ export async function getCourseSessionById(
       cancelReason: true,
       completedAt: true,
       courseDate: true,
+      notes: true,
       isPublicMatch: true,
       matchNote: true,
       createdBy: { select: { ...displayNameUserSelect, phone: true } },
@@ -404,6 +406,7 @@ export async function getCourseSessionById(
     approvedEnrollments,
     pendingEnrollments,
     courseDate: invite.courseDate ?? invite.orders[0]?.courseDate ?? null,
+    notes: invite.notes,
     orders: invite.orders,
   }
 }

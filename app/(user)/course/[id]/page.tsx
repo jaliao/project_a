@@ -27,6 +27,7 @@ import { getCourseMessages } from '@/lib/data/course-message'
 import { CourseFaq } from '@/components/course-faq/course-faq'
 import { CourseDetailActions } from './course-detail-actions'
 import { MatchSettingsEditor } from './match-settings-editor'
+import { EditCourseInfoDialog } from '@/components/course-session/edit-course-info-dialog'
 import { CopyInviteLinkButton } from './copy-invite-link-button'
 import { StudentApplySection } from './student-apply-section'
 import { PendingEnrollmentList } from './pending-enrollment-list'
@@ -142,7 +143,20 @@ export default async function CourseDetailPage({
           {courseStatus && <CourseStatusBadge status={courseStatus} size="sm" />}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {/* 分享按鈕（講師專屬，置於右上） */}
+          {/* 講師功能：編輯課程資訊（招生中）＋ 分享按鈕，置於右上 */}
+          {isInstructor && !courseSession.startedAt && !isCancelled && !isCompleted && (
+            <EditCourseInfoDialog
+              inviteId={courseSession.id}
+              approvedCount={courseSession.approvedEnrollments.length}
+              initial={{
+                title: courseSession.title,
+                maxCount: courseSession.maxCount,
+                expiredAt: courseSession.expiredAt,
+                courseDate: courseSession.courseDate,
+                notes: courseSession.notes,
+              }}
+            />
+          )}
           {isInstructor && (
             <CopyInviteLinkButton courseId={courseSession.id} />
           )}

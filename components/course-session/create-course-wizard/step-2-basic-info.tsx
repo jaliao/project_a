@@ -111,11 +111,13 @@ export function Step2BasicInfo({
               <Input
                 type="number"
                 min={1}
+                max={7}
                 {...field}
                 value={field.value ?? ''}
                 onChange={(e) => field.onChange(e.target.value)}
               />
             </FormControl>
+            <p className="text-xs text-muted-foreground">每班最多 7 人</p>
             <FormMessage />
           </FormItem>
         )} />

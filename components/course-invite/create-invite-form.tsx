@@ -36,7 +36,12 @@ import {
 // 前端表單 schema（courseCatalogId 以字串傳入後由 server action 轉換）
 const formSchema = z.object({
   courseCatalogId: z.string().min(1, '請選擇課程'),
-  maxCount: z.string().min(1, '預計人數為必填'),
+  maxCount: z
+    .string()
+    .min(1, '預計人數為必填')
+    .refine((v) => Number.isInteger(Number(v)) && Number(v) >= 1 && Number(v) <= 7, {
+      message: '預計人數須為 1–7（每班最多 7 人）',
+    }),
   courseOrderId: z.string().optional(),
 })
 
@@ -145,7 +150,8 @@ export function CreateInviteForm({ activeCourses, orders, onSuccess }: CreateInv
         <FormField control={form.control} name="maxCount" render={({ field }) => (
           <FormItem>
             <FormLabel>預計人數 *</FormLabel>
-            <FormControl><Input type="number" min={1} placeholder="例：12" {...field} /></FormControl>
+            <FormControl><Input type="number" min={1} max={7} placeholder="例：5" {...field} /></FormControl>
+            <p className="text-xs text-muted-foreground">每班最多 7 人</p>
             <FormMessage />
           </FormItem>
         )} />

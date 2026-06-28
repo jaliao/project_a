@@ -12,7 +12,7 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { canAccessAdmin, canTeachAny, canTeachBook } from '@/lib/auth-roles'
-import { courseSessionSchema } from '@/lib/schemas/course-session'
+import { courseSessionSchema, editCourseInfoSchema } from '@/lib/schemas/course-session'
 import { createNotification } from '@/app/actions/notification'
 
 type ActionResponse = {
@@ -127,6 +127,71 @@ export async function updateMatchSettings(
   revalidatePath(`/course/${inviteId}`)
   revalidatePath('/match-board')
   return { success: true, message: input.isPublicMatch ? '已開啟公開媒合' : '已關閉公開媒合' }
+}
+
+// ── 招生階段編輯課程資訊（擁有者或管理者；僅招生中）──
+// 可改：名稱／預計人數／截止日／開課日／備註；不可改書本（courseCatalogId）
+export async function updateCourseInfo(
+  inviteId: number,
+  input: {
+    title: string
+    maxCount: number | string
+    expiredAt: Date | string
+    courseDate: Date | string
+    notes?: string
+  }
+): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  const invite = await prisma.courseInvite.findUnique({
+    where: { id: inviteId },
+    select: {
+      createdById: true,
+      startedAt: true,
+      cancelledAt: true,
+      completedAt: true,
+      _count: { select: { enrollments: { where: { status: 'approved' } } } },
+    },
+  })
+  if (!invite) return { success: false, message: '找不到課程' }
+
+  const isOwner = invite.createdById === session.user.id
+  if (!isOwner && !canAccessAdmin(session.user.roles)) {
+    return { success: false, message: '無權限' }
+  }
+
+  // 僅招生中可編輯
+  if (invite.startedAt || invite.cancelledAt || invite.completedAt) {
+    return { success: false, message: '課程非招生中，無法編輯' }
+  }
+
+  const parsed = editCourseInfoSchema.safeParse(input)
+  if (!parsed.success) {
+    return { success: false, errors: parsed.error.flatten().fieldErrors }
+  }
+  const d = parsed.data
+
+  // 預計人數不得低於已核准學員數（以當下資料為準）
+  const approvedCount = invite._count.enrollments
+  if (d.maxCount < approvedCount) {
+    return { success: false, message: `預計人數不可低於已核准學員數（${approvedCount}）` }
+  }
+
+  await prisma.courseInvite.update({
+    where: { id: inviteId },
+    data: {
+      title: d.title,
+      maxCount: d.maxCount,
+      expiredAt: d.expiredAt,
+      courseDate: formatDateString(d.courseDate),
+      notes: d.notes?.trim() || null,
+    },
+  })
+
+  revalidatePath(`/course/${inviteId}`)
+  revalidatePath('/match-board')
+  return { success: true, message: '已更新課程資訊' }
 }
 
 // ── 後台變更課程狀態（僅管理者）──
