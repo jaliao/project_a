@@ -13,7 +13,6 @@ import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { canAccessAdmin } from '@/lib/auth-roles'
 import { courseOrderSchema, materialOrderSchema, adminMaterialOrderEditSchema } from '@/lib/schemas/course-order'
-import { getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
 import { createNotification } from '@/app/actions/notification'
 import type { MaterialVersion, PurchaseType, DeliveryMethod, ShipMode } from '@prisma/client'
 
@@ -69,7 +68,7 @@ export async function createCourseOrder(
 }
 
 /**
- * 講師申請教材 — 建立或更新 CourseOrder 並關聯至 CourseInvite
+ * 講師申請教材 — 每次建立一筆「新的」CourseOrder 並關聯至 CourseInvite（支援一門課多筆訂單）
  */
 export async function applyMaterialOrder(
   inviteId: number,
@@ -84,7 +83,6 @@ export async function applyMaterialOrder(
       where: { id: inviteId },
       select: {
         createdById: true,
-        courseOrderId: true,
         courseDate: true,
         createdBy: { select: { realName: true, name: true } },
       },
@@ -109,20 +107,6 @@ export async function applyMaterialOrder(
     return { success: false, message: '無權限' }
   }
   if (!user) return { success: false, message: '找不到會員資料' }
-
-  // 若已有 CourseOrder：已批價即鎖定；已寄送（單一）或任一批次已寄送（多地址）亦禁止修改
-  if (invite.courseOrderId) {
-    const existing = await prisma.courseOrder.findUnique({
-      where: { id: invite.courseOrderId },
-      select: { quotedAt: true, shippedAt: true, shipments: { select: { shippedAt: true } } },
-    })
-    if (existing?.quotedAt) {
-      return { success: false, message: '已批價，無法修改申請' }
-    }
-    if (existing?.shippedAt || existing?.shipments.some((s) => s.shippedAt)) {
-      return { success: false, message: '教材已寄出，無法修改申請' }
-    }
-  }
 
   const parsed = materialOrderSchema.safeParse(formData)
   if (!parsed.success) {
@@ -155,20 +139,20 @@ export async function applyMaterialOrder(
   // ── 多地址模式 ──────────────────────────────────────────
   if (d.shipMode === 'multiple') {
     const shipments = d.shipments ?? []
+    if (shipments.length === 0) {
+      return { success: false, message: '請至少新增一個寄送地址' }
+    }
 
-    // 應寄本數以 server 端統計為權威，驗證各版本本數總和相等
-    const summary = await getEnrollmentMaterialSummary(inviteId)
+    // 多訂單下每筆訂單自填本數（放寬「總和需等於課程總計」驗證）：至少分配 1 本
     const sumTrad = shipments.reduce((a, s) => a + s.traditionalQty, 0)
     const sumSimp = shipments.reduce((a, s) => a + s.simplifiedQty, 0)
-    if (sumTrad !== summary.traditional || sumSimp !== summary.simplified) {
-      return {
-        success: false,
-        message: `尚未分配完所有書籍（繁體 ${sumTrad}/${summary.traditional}、簡體 ${sumSimp}/${summary.simplified}）`,
-      }
+    if (sumTrad + sumSimp < 1) {
+      return { success: false, message: '請至少分配 1 本教材' }
     }
 
     const orderData = {
       ...snapshot,
+      courseInviteId: inviteId,
       shipMode: 'multiple' as ShipMode,
       // 多地址下訂單自身寄件欄位以第一筆為代表（deliveryMethod 為非空必填）
       deliveryMethod: shipments[0].deliveryMethod as DeliveryMethod,
@@ -178,18 +162,10 @@ export async function applyMaterialOrder(
     }
 
     const orderId = await prisma.$transaction(async (tx) => {
-      let oid = invite.courseOrderId
-      if (oid) {
-        await tx.courseOrder.update({ where: { id: oid }, data: orderData })
-        await tx.materialShipment.deleteMany({ where: { courseOrderId: oid } })
-      } else {
-        const created = await tx.courseOrder.create({ data: orderData })
-        oid = created.id
-        await tx.courseInvite.update({ where: { id: inviteId }, data: { courseOrderId: oid } })
-      }
+      const created = await tx.courseOrder.create({ data: orderData })
       await tx.materialShipment.createMany({
         data: shipments.map((s) => ({
-          courseOrderId: oid!,
+          courseOrderId: created.id,
           recipientName: s.recipientName,
           recipientPhone: s.recipientPhone,
           deliveryMethod: s.deliveryMethod as DeliveryMethod,
@@ -200,7 +176,7 @@ export async function applyMaterialOrder(
           simplifiedQty: s.simplifiedQty,
         })),
       })
-      return oid!
+      return created.id
     })
 
     revalidatePath(`/course/${inviteId}`)
@@ -220,25 +196,12 @@ export async function applyMaterialOrder(
     storeName: (d.deliveryMethod === 'sevenEleven' || d.deliveryMethod === 'familyMart') ? (d.storeName || null) : null,
   }
 
-  if (invite.courseOrderId) {
-    // 更新現有 CourseOrder（若由多地址切回單一，清除殘留批次）
-    const oid = invite.courseOrderId
-    await prisma.$transaction(async (tx) => {
-      await tx.courseOrder.update({ where: { id: oid }, data: orderData })
-      await tx.materialShipment.deleteMany({ where: { courseOrderId: oid } })
-    })
-    revalidatePath(`/course/${inviteId}`)
-    return { success: true, message: '教材申請已更新' }
-  } else {
-    // 建立新 CourseOrder 並關聯
-    const order = await prisma.courseOrder.create({ data: orderData })
-    await prisma.courseInvite.update({
-      where: { id: inviteId },
-      data: { courseOrderId: order.id },
-    })
-    revalidatePath(`/course/${inviteId}`)
-    return { success: true, message: '教材申請已送出', data: { id: order.id } }
-  }
+  // 每次申請建立一筆新的 CourseOrder 並關聯至課程
+  const order = await prisma.courseOrder.create({
+    data: { ...orderData, courseInviteId: inviteId },
+  })
+  revalidatePath(`/course/${inviteId}`)
+  return { success: true, message: '教材申請已送出', data: { id: order.id } }
 }
 
 /**
@@ -305,38 +268,35 @@ export async function confirmShipmentBatch(shipmentId: number): Promise<ActionRe
 }
 
 /**
- * 講師確認收件
+ * 講師確認收件（針對單一教材訂單）
  */
-export async function confirmReceipt(inviteId: number): Promise<ActionResponse> {
+export async function confirmReceipt(orderId: number): Promise<ActionResponse> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
 
-  const invite = await prisma.courseInvite.findUnique({
-    where: { id: inviteId },
+  const order = await prisma.courseOrder.findUnique({
+    where: { id: orderId },
     select: {
-      createdById: true,
-      courseOrderId: true,
-      courseOrder: { select: { shippedAt: true, receivedAt: true } },
+      shippedAt: true,
+      receivedAt: true,
+      courseInvite: { select: { id: true, createdById: true } },
     },
   })
-  if (!invite) return { success: false, message: '找不到課程' }
-  if (invite.createdById !== session.user.id) {
+  if (!order) return { success: false, message: '找不到教材訂單' }
+  if (!order.courseInvite || order.courseInvite.createdById !== session.user.id) {
     return { success: false, message: '無權限' }
   }
-  if (!invite.courseOrderId || !invite.courseOrder) {
-    return { success: false, message: '尚未申請教材' }
-  }
-  if (!invite.courseOrder.shippedAt) {
+  if (!order.shippedAt) {
     return { success: false, message: '教材尚未寄出' }
   }
 
   await prisma.courseOrder.update({
-    where: { id: invite.courseOrderId },
+    where: { id: orderId },
     data: { receivedAt: new Date() },
   })
 
-  revalidatePath(`/course/${inviteId}`)
-  return { success: true, message: '已確認收件，可以開始上課了！' }
+  revalidatePath(`/course/${order.courseInvite.id}`)
+  return { success: true, message: '已確認收件' }
 }
 
 /**
@@ -406,7 +366,7 @@ export async function quoteMaterialOrder(
     select: {
       id: true,
       submittedById: true,
-      courseInvites: { take: 1, select: { createdById: true, title: true } },
+      courseInvite: { select: { createdById: true, title: true } },
     },
   })
   if (!order) return { success: false, message: '找不到申請記錄' }
@@ -417,9 +377,9 @@ export async function quoteMaterialOrder(
   })
 
   // 通知老師（提交者；fallback 課程建立者）
-  const teacherId = order.submittedById ?? order.courseInvites[0]?.createdById
+  const teacherId = order.submittedById ?? order.courseInvite?.createdById
   if (teacherId) {
-    const courseTitle = order.courseInvites[0]?.title ?? '教材申請'
+    const courseTitle = order.courseInvite?.title ?? '教材申請'
     await createNotification(
       teacherId,
       '教材批價完成，請繳費',
@@ -435,26 +395,24 @@ export async function quoteMaterialOrder(
  * 老師回填匯款後五碼
  */
 export async function reportMaterialPayment(
-  inviteId: number,
+  orderId: number,
   last5: string
 ): Promise<ActionResponse> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
 
-  const invite = await prisma.courseInvite.findUnique({
-    where: { id: inviteId },
+  const order = await prisma.courseOrder.findUnique({
+    where: { id: orderId },
     select: {
-      createdById: true,
-      courseOrderId: true,
-      courseOrder: { select: { quotedAt: true } },
+      quotedAt: true,
+      courseInvite: { select: { id: true, createdById: true } },
     },
   })
-  if (!invite) return { success: false, message: '找不到課程' }
-  if (invite.createdById !== session.user.id) return { success: false, message: '無權限' }
-  if (!invite.courseOrderId || !invite.courseOrder) {
-    return { success: false, message: '尚未申請教材' }
+  if (!order) return { success: false, message: '找不到教材訂單' }
+  if (!order.courseInvite || order.courseInvite.createdById !== session.user.id) {
+    return { success: false, message: '無權限' }
   }
-  if (!invite.courseOrder.quotedAt) return { success: false, message: '尚未批價' }
+  if (!order.quotedAt) return { success: false, message: '尚未批價' }
 
   const digits = (last5 ?? '').trim()
   if (!/^\d{5}$/.test(digits)) {
@@ -462,11 +420,11 @@ export async function reportMaterialPayment(
   }
 
   await prisma.courseOrder.update({
-    where: { id: invite.courseOrderId },
+    where: { id: orderId },
     data: { paymentLast5: digits, paymentReportedAt: new Date() },
   })
 
-  revalidatePath(`/course/${inviteId}`)
+  revalidatePath(`/course/${order.courseInvite.id}`)
   return { success: true, message: '已回填匯款資訊，等待管理者確認收款' }
 }
 
@@ -484,7 +442,7 @@ export async function confirmMaterialPayment(orderId: number): Promise<ActionRes
       paymentReportedAt: true,
       paymentConfirmedAt: true,
       submittedById: true,
-      courseInvites: { take: 1, select: { createdById: true, title: true } },
+      courseInvite: { select: { createdById: true, title: true } },
     },
   })
   if (!order) return { success: false, message: '找不到申請記錄' }
@@ -496,9 +454,9 @@ export async function confirmMaterialPayment(orderId: number): Promise<ActionRes
     data: { paymentConfirmedAt: new Date() },
   })
 
-  const teacherId = order.submittedById ?? order.courseInvites[0]?.createdById
+  const teacherId = order.submittedById ?? order.courseInvite?.createdById
   if (teacherId) {
-    const courseTitle = order.courseInvites[0]?.title ?? '教材申請'
+    const courseTitle = order.courseInvite?.title ?? '教材申請'
     await createNotification(
       teacherId,
       '款項已確認',

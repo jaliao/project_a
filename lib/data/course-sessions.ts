@@ -60,7 +60,7 @@ export async function getMyCourseSessions(
       completedAt: true,
       _count: { select: { enrollments: true } },
       courseDate: true,
-      courseOrder: { select: { courseDate: true } },
+      orders: { select: { courseDate: true }, orderBy: { createdAt: 'asc' }, take: 1 },
     },
   })
 
@@ -72,7 +72,7 @@ export async function getMyCourseSessions(
     maxCount: invite.maxCount,
     enrolledCount: invite._count.enrollments,
     expiredAt: invite.expiredAt,
-    courseDate: invite.courseDate ?? invite.courseOrder?.courseDate ?? null,
+    courseDate: invite.courseDate ?? invite.orders[0]?.courseDate ?? null,
     createdAt: invite.createdAt,
     startedAt: invite.startedAt,
     cancelledAt: invite.cancelledAt,
@@ -111,7 +111,7 @@ export async function getPublicMatchingSessions(): Promise<MatchBoardItem[]> {
       matchNote: true,
       _count: { select: { enrollments: true } },
       courseDate: true,
-      courseOrder: { select: { courseDate: true } },
+      orders: { select: { courseDate: true }, orderBy: { createdAt: 'asc' }, take: 1 },
       createdBy: { select: { name: true, realName: true } },
     },
   })
@@ -124,7 +124,7 @@ export async function getPublicMatchingSessions(): Promise<MatchBoardItem[]> {
     maxCount: invite.maxCount,
     enrolledCount: invite._count.enrollments,
     expiredAt: invite.expiredAt,
-    courseDate: invite.courseDate ?? invite.courseOrder?.courseDate ?? null,
+    courseDate: invite.courseDate ?? invite.orders[0]?.courseDate ?? null,
     createdAt: invite.createdAt,
     startedAt: invite.startedAt,
     cancelledAt: invite.cancelledAt,
@@ -171,7 +171,7 @@ export async function getMyEnrollments(userId: string): Promise<MyEnrollmentItem
           completedAt: true,
           cancelledAt: true,
           _count: { select: { enrollments: true } },
-          courseOrder: { select: { courseDate: true } },
+          orders: { select: { courseDate: true }, orderBy: { createdAt: 'asc' }, take: 1 },
         },
       },
     },
@@ -186,7 +186,7 @@ export async function getMyEnrollments(userId: string): Promise<MyEnrollmentItem
     courseCatalogLabel: e.invite.courseCatalog.label,
     maxCount: e.invite.maxCount,
     enrolledCount: e.invite._count.enrollments,
-    courseDate: e.invite.courseOrder?.courseDate ?? null,
+    courseDate: e.invite.orders[0]?.courseDate ?? null,
     expiredAt: e.invite.expiredAt,
     startedAt: e.invite.startedAt,
     completedAt: e.invite.completedAt,
@@ -249,44 +249,47 @@ export type CourseSessionDetail = {
   approvedEnrollments: EnrollmentRecord[]
   pendingEnrollments: EnrollmentRecord[]
   courseDate: string | null
-  courseOrder: {
+  // 一門課可有多筆教材訂單（依建立時間升序）
+  orders: CourseSessionOrder[]
+}
+
+export type CourseSessionOrder = {
+  id: number
+  buyerNameZh: string
+  buyerNameEn: string
+  teacherName: string
+  churchOrg: string
+  email: string
+  phone: string
+  courseDate: string
+  taxId: string | null
+  recipientName: string | null
+  recipientPhone: string | null
+  deliveryMethod: string
+  deliveryAddress: string | null
+  storeId: string | null
+  storeName: string | null
+  quotedAmount: number | null
+  remittanceAccount: string | null
+  quotedAt: Date | null
+  paymentLast5: string | null
+  paymentReportedAt: Date | null
+  paymentConfirmedAt: Date | null
+  shippedAt: Date | null
+  receivedAt: Date | null
+  shipMode: string
+  shipments: {
     id: number
-    buyerNameZh: string
-    buyerNameEn: string
-    teacherName: string
-    churchOrg: string
-    email: string
-    phone: string
-    courseDate: string
-    taxId: string | null
     recipientName: string | null
     recipientPhone: string | null
     deliveryMethod: string
     deliveryAddress: string | null
     storeId: string | null
     storeName: string | null
-    quotedAmount: number | null
-    remittanceAccount: string | null
-    quotedAt: Date | null
-    paymentLast5: string | null
-    paymentReportedAt: Date | null
-    paymentConfirmedAt: Date | null
+    traditionalQty: number
+    simplifiedQty: number
     shippedAt: Date | null
-    receivedAt: Date | null
-    shipMode: string
-    shipments: {
-      id: number
-      recipientName: string | null
-      recipientPhone: string | null
-      deliveryMethod: string
-      deliveryAddress: string | null
-      storeId: string | null
-      storeName: string | null
-      traditionalQty: number
-      simplifiedQty: number
-      shippedAt: Date | null
-    }[]
-  } | null
+  }[]
 }
 
 /**
@@ -327,7 +330,8 @@ export async function getCourseSessionById(
         },
         orderBy: { joinedAt: 'asc' },
       },
-      courseOrder: {
+      orders: {
+        orderBy: { createdAt: 'asc' },
         select: {
           id: true,
           buyerNameZh: true,
@@ -395,8 +399,8 @@ export async function getCourseSessionById(
     createdBy: invite.createdBy,
     approvedEnrollments,
     pendingEnrollments,
-    courseDate: invite.courseDate ?? invite.courseOrder?.courseDate ?? null,
-    courseOrder: invite.courseOrder ?? null,
+    courseDate: invite.courseDate ?? invite.orders[0]?.courseDate ?? null,
+    orders: invite.orders,
   }
 }
 
@@ -531,7 +535,7 @@ export async function getAllCourseSessionsAdmin(
     completedAt: true,
     _count: { select: { enrollments: true } },
     courseDate: true,
-    courseOrder: { select: { courseDate: true } },
+    orders: { select: { courseDate: true }, orderBy: { createdAt: 'asc' as const }, take: 1 },
   }
 
   const [total, invites] = await Promise.all([
@@ -552,7 +556,7 @@ export async function getAllCourseSessionsAdmin(
     maxCount: invite.maxCount,
     enrolledCount: invite._count.enrollments,
     expiredAt: invite.expiredAt,
-    courseDate: invite.courseDate ?? invite.courseOrder?.courseDate ?? null,
+    courseDate: invite.courseDate ?? invite.orders[0]?.courseDate ?? null,
     createdAt: invite.createdAt,
     startedAt: invite.startedAt,
     cancelledAt: invite.cancelledAt,

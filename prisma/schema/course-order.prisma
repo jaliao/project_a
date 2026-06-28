@@ -98,9 +98,11 @@ model CourseOrder {
   shippedAt  DateTime? // 管理者確認寄送時間
   receivedAt DateTime? // 講師確認收件時間
 
-  // 課程邀請關聯
-  courseInvites CourseInvite[]
+  // 課程邀請關聯（一門課對多筆訂單；獨立訂單為 null）
+  courseInviteId Int?
+  courseInvite   CourseInvite? @relation(fields: [courseInviteId], references: [id])
 
+  @@index([courseInviteId])
   @@map("course_orders")
 }
 

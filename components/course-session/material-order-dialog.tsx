@@ -94,11 +94,8 @@ export function MaterialOrderDialog({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
-  // 已批價或已寄送（整張或任一批次）後設為唯讀
-  const isReadonly =
-    !!existingOrder?.quotedAt ||
-    !!existingOrder?.shippedAt ||
-    !!existingOrder?.shipments.some((s) => s.shippedAt)
+  // 多訂單模式：既有訂單一律唯讀（不再編輯舊訂單，欲變更請「再申請一筆教材」建立新訂單）
+  const isReadonly = !!existingOrder
 
   const isExistingMultiple = existingOrder?.shipMode === 'multiple'
 

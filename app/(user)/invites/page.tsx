@@ -38,9 +38,9 @@ export default async function InvitesPage() {
                   <p className="font-semibold">{invite.title}</p>
                   <p className="text-sm text-muted-foreground mt-0.5">
                     預計 {invite.maxCount} 人・已確認 {invite.enrollments.length} 人
-                    {invite.courseOrder && (
+                    {invite.orders.length > 0 && (
                       <span className="ml-2">
-                        ・訂單 #{invite.courseOrder.id}（{invite.courseOrder.buyerNameZh}）
+                        ・教材訂單 {invite.orders.length} 筆
                       </span>
                     )}
                   </p>

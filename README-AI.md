@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.92（2026-06-28）
+> 自動產生，版本 0.1.93（2026-06-28）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -125,7 +125,7 @@ lib/
 │   ├── password-reset.ts    # 密碼重設查詢
 │   ├── course-sessions.ts   # 開課記錄查詢（getMyCourseSessions, getMyCourseSessionCount, getCourseSessionById, getMyEnrollments, getMyCompletionCertificates）
 │   ├── course-catalog.ts    # 課程目錄查詢（getAllCourses, getActiveCourses, getCourse, checkPrerequisites, getGraduatedCatalogIds）
-│   ├── course-order.ts      # 課程訂購查詢（getCourseOrderByInviteId, getAllCourseOrdersWithInvite）
+│   ├── course-order.ts      # 課程訂購查詢（getAllCourseOrdersWithInvite, getCourseOrderForPrint）
 │   ├── members.ts           # 會員管理查詢（buildMemberWhere/hasAnyMemberFilter, searchMembers 分頁{total,items,page,pageCount}, getMemberDetail, exportMembers 吃 MemberFilters）
 │   ├── hierarchy.ts         # 師生傳承查詢（getMemberHierarchy，BFS，僅限啟動靈人 catalogId=1，graduatedAt IS NOT NULL）
 │   ├── admin-settings.ts    # 後台設定查詢（getAdminSetting, upsertAdminSetting）
@@ -213,7 +213,7 @@ title         String（課程名稱，由 courseCatalog.label 自動填入）
 courseCatalogId Int（關聯 CourseCatalog）
 maxCount      Int（預計人數）
 expiredAt     DateTime?（邀請截止日期，選填）
-courseOrderId Int?（選填關聯 CourseOrder）
+orders        CourseOrder[]（一對多：一門課可多筆教材訂單）
 createdById   String（建立者 UUID）
 createdAt     DateTime
 cancelledAt   DateTime?（有值代表已取消）
@@ -298,8 +298,10 @@ storeName       String?（超商門市名稱，透過 ECPay MapCVS 選擇器取�
 submittedById   String?（提交者 UUID，選填關聯 User）
 shippedAt       DateTime?（管理者確認寄送時間）
 receivedAt      DateTime?（講師確認收件時間）
+courseInviteId  Int?（一對多：關聯 CourseInvite；獨立訂單為 null）
 createdAt       DateTime
 ```
+> 開課門檻（`lib/utils/course-start-gate.ts`）：≥1 已核准學員 + 該課程至少一筆教材訂單且**全部 `receivedAt != null`**；`startCourseSession` 與課程詳情頁「開始上課」按鈕共用此判定，未達門檻按鈕停用並列出原因。
 
 ---
 
@@ -442,6 +444,7 @@ createdAt       DateTime
 - `cr-spec-260604-005` — 後台會員管理優化與多重身分：`User.role` 改為 `roles UserRole[]`（新增 `teacher`，身分 user/teacher/admin/superadmin 可並存，user 為基線）；新增 `lib/auth-roles.ts` 集中授權判定（`canAccessAdmin`/`canTeach`/`isSuperadmin`/`hasRole`/`normalizeRoles`），全站守衛改走 helper；JWT/session 由 `role` 改 `roles`；後台「新增會員」（`createMember`：核發 spiritId + 臨時密碼 + 白名單，顯示一次）；詳情頁多重身分編輯（`updateMemberRoles`，禁止移除自身 admin/superadmin）；`resetMemberPassword` 重設後重新顯示臨時密碼；會員列表移除「加入日期」改顯示「身分」badge、匯出身分欄輸出全部；開課（`createCourseSession`/`createInvite`）加 `canTeach` 前置；migration `add_user_multi_roles` backfill 既有 role
 - `cr-spec-260605-001` — 名冊 seed：`User` 新增 `teacherNo`（授課老師編號，migration `add_user_teacher_no`）；以 `doc/啟動事工資料表_updated.xlsx` 經產生器 `prisma/seed-data/build-roster.mjs` 產出 `roster.json`（執行期不讀 xlsx）；重寫 `prisma/seed.ts` 保留 admin + 黃國倫，其餘人員（教師 [user,teacher]+真實 Email、學員 [user]+合成 Email `{spiritId}@seed.iwillshare.org.tw`）以姓名去重建立；每個非空班級欄一筆 `CourseInvite`（掛啟動靈人 catalog 1）+ approved 報名；對應不到的教師歸黃國倫收容課程；教會正規化為 10 間；`teacherNo` 顯示於會員詳情頁與 Excel 匯出；冪等守衛（收容班哨兵）
 - `cr-spec-260604-003` — 媒合功能：`CourseInvite` 新增 `isPublicMatch`（預設 false）/`matchNote`（migration `add_course_public_match`）；開課精靈基本資料步驟新增「公開媒合」開關（預設關）+ 招募備註（上限 500）；課程詳情頁講師可切換公開媒合／編輯備註（`updateMatchSettings`，僅講師或管理者，關閉保留 matchNote）；新增媒合布告欄頁面 `/match-board`（所有登入會員，列出公開＋未取消＋未結業＋未過截止日課程，`getPublicMatchingSessions()`）；`CourseSessionCard` 加 `matchNote`/`showMatchBadge`（公開媒合・招募中 badge + 備註）；Topbar 右上角新增「媒合布告欄」入口
+- `cr-spec-260628-002` — 教材多筆訂單＋開課門檻：`CourseInvite`↔`CourseOrder` 由一對一翻轉為**一對多**（`CourseOrder.courseInviteId`，migration `multi_material_order` 含資料回填）；`applyMaterialOrder` 改為每次建立新訂單、`reportMaterialPayment`/`confirmReceipt` 改以 `orderId` 操作；多地址放寬「總和=課程總計」改為各訂單自填（≥1 本）；課程詳情頁教材區塊改逐筆訂單清單＋「再申請一筆教材」、既有訂單唯讀；新增 `lib/utils/course-start-gate.ts` 開課門檻判定（≥1 已核准學員 + 教材全部收件），「開始上課」按鈕招生中常駐顯示、未達門檻停用並列出原因，`startCourseSession` server 端同步驗證；新增 capability `course-multi-material-order`、修改 `course-status`
 - `cr-spec-260628-001` — 課程 FAQ 改 1 對 1 可見性：FAQ 留言由「課程內公開」改為每則提問串僅發問者本人與授課老師可見；`getCourseMessages` 新增 `viewer` 參數（老師見全部、其他會員 `where.authorId` 僅見自己的串），`/course/[id]` 傳入 `currentUserId`/`isInstructor`；`CourseFaq` 空狀態文案改為依身分顯示；提問／回覆／刪除權限與 Inbox 通知不變；無 DB schema 變更
 - `cr-spec-260611-002` — 課程 FAQ：新增 `CourseMessage` model（提問與回覆同表，`parentId` 自關聯，`invite`/`parent` 皆 `onDelete: Cascade`；migration `add_course_message`）；課程詳情頁底部新增「課程 FAQ」留言區（`CourseFaq` client 元件）；`postCourseQuestion`（任何登入會員提問，通知老師）／`replyCourseMessage`（僅授課老師回覆，通知發問者）／`deleteCourseMessage`（作者本人或授課老師可刪，刪提問 cascade 刪回覆，不發通知）三個 action；`getCourseMessages` data layer；`lib/schemas/course-message.ts`（1–2000 字）；雙向 Inbox 通知
 - `cr-spec-260611-004` — Seed 資料優化：重寫 `prisma/seed.ts` 課程／報名邏輯（資料源 `roster.json` 不變）——凡報名學員本身為老師則該報名設 `graduatedAt`（啟動靈人結業證書，全教師覆蓋）；整班皆老師的課程設 `completedAt`（已結業，含收容班）；所有報名 `materialChoice='traditional'`（繁體）；黃國倫補一筆啟動靈人結業報名維持開課資格；新 capability `seed-roster-data`，退場過時的 `seed-course-completions`；無 DB schema 變更。實測：232 位教師全數取得證書、5 門全教師班結業、報名全繁體

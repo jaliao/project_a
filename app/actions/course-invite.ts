@@ -18,6 +18,7 @@ import { sendGraduationEmail } from '@/lib/mailer'
 import { resolveContactEmail } from '@/lib/utils/contact-email'
 import { renderTemplate } from '@/lib/utils/render-template'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
+import { evaluateCourseStartGate } from '@/lib/utils/course-start-gate'
 import {
   getAdminSetting,
   GRADUATION_EMAIL_SUBJECT_KEY,
@@ -70,10 +71,17 @@ export async function createInvite(
       title: course.label,
       courseCatalogId,
       maxCount,
-      courseOrderId: courseOrderId ?? null,
       createdById: session.user.id,
     },
   })
+
+  // 若建立時選擇沿用既有教材訂單，將該訂單關聯至此課程（一對多：order → invite）
+  if (courseOrderId) {
+    await prisma.courseOrder.update({
+      where: { id: courseOrderId },
+      data: { courseInviteId: invite.id },
+    })
+  }
 
   return {
     success: true,
@@ -130,7 +138,7 @@ export async function getMyInvites() {
     orderBy: { createdAt: 'desc' },
     include: {
       courseCatalog: { select: { id: true, label: true } },
-      courseOrder: { select: { id: true, buyerNameZh: true, courseDate: true } },
+      orders: { select: { id: true, buyerNameZh: true, courseDate: true }, orderBy: { createdAt: 'asc' } },
       enrollments: {
         include: {
           user: {
@@ -312,7 +320,17 @@ export async function startCourseSession(inviteId: number): Promise<ActionRespon
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
 
-  const invite = await prisma.courseInvite.findUnique({ where: { id: inviteId } })
+  const invite = await prisma.courseInvite.findUnique({
+    where: { id: inviteId },
+    select: {
+      createdById: true,
+      cancelledAt: true,
+      completedAt: true,
+      startedAt: true,
+      orders: { select: { receivedAt: true } },
+      _count: { select: { enrollments: { where: { status: 'approved' } } } },
+    },
+  })
   if (!invite) return { success: false, message: '找不到課程' }
   if (invite.createdById !== session.user.id) {
     return { success: false, message: '無權限執行此操作' }
@@ -320,6 +338,15 @@ export async function startCourseSession(inviteId: number): Promise<ActionRespon
   if (invite.cancelledAt) return { success: false, message: '課程已取消' }
   if (invite.completedAt) return { success: false, message: '課程已結業' }
   if (invite.startedAt) return { success: false, message: '課程已在進行中' }
+
+  // 開課門檻：≥1 已核准學員 + 至少一筆教材訂單且全部已收件（與 UI 共用判定）
+  const gate = evaluateCourseStartGate({
+    approvedCount: invite._count.enrollments,
+    orders: invite.orders,
+  })
+  if (!gate.canStart) {
+    return { success: false, message: `尚不能開始上課：${gate.reasons.join('、')}` }
+  }
 
   await prisma.courseInvite.update({
     where: { id: inviteId },

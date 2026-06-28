@@ -20,6 +20,7 @@ import {
 } from '@tabler/icons-react'
 import { auth } from '@/lib/auth'
 import { getCourseSessionById, getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
+import { evaluateCourseStartGate } from '@/lib/utils/course-start-gate'
 import { checkPrerequisites } from '@/lib/data/course-catalog'
 import { getCourseMessages } from '@/lib/data/course-message'
 import { CourseFaq } from '@/components/course-faq/course-faq'
@@ -92,6 +93,12 @@ export default async function CourseDetailPage({
   const materialSummary = isInstructor
     ? await getEnrollmentMaterialSummary(courseSession.id)
     : { traditional: 0, simplified: 0 }
+
+  // 開課門檻判定（≥1 已核准學員 + 教材全部收件）
+  const startGate = evaluateCourseStartGate({
+    approvedCount: courseSession.approvedEnrollments.length,
+    orders: courseSession.orders,
+  })
 
   // 當前使用者的申請記錄
   const myEnrollment = currentUserId
@@ -326,7 +333,9 @@ export default async function CourseDetailPage({
           isCompleted={isCompleted}
           isStarted={!!courseSession.startedAt}
           hasApprovedStudents={courseSession.approvedEnrollments.length > 0}
-          courseOrder={courseSession.courseOrder}
+          orders={courseSession.orders}
+          canStart={startGate.canStart}
+          startReasons={startGate.reasons}
           materialSummary={materialSummary}
           defaultRecipient={{
             name: courseSession.createdBy.realName || courseSession.createdBy.name || '',

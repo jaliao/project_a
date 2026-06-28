@@ -95,47 +95,6 @@ const shipmentSelect = {
 } as const
 
 /**
- * 取得指定 CourseInvite 的 CourseOrder（含寄送狀態）
- */
-export async function getCourseOrderByInviteId(
-  inviteId: number
-): Promise<CourseOrderDetail | null> {
-  const invite = await prisma.courseInvite.findUnique({
-    where: { id: inviteId },
-    select: {
-      courseOrder: {
-        select: {
-          id: true,
-          buyerNameZh: true,
-          buyerNameEn: true,
-          teacherName: true,
-          churchOrg: true,
-          email: true,
-          phone: true,
-          materialVersion: true,
-          purchaseType: true,
-          studentNames: true,
-          quantity: true,
-          quantityNote: true,
-          courseDate: true,
-          taxId: true,
-          deliveryMethod: true,
-          deliveryAddress: true,
-          storeId: true,
-          storeName: true,
-          shippedAt: true,
-          receivedAt: true,
-          createdAt: true,
-        },
-      },
-    },
-  })
-
-  if (!invite?.courseOrder) return null
-  return invite.courseOrder as CourseOrderDetail
-}
-
-/**
  * 取得所有 CourseOrder 及關聯的 CourseInvite 資訊（後台管理列表用）
  */
 export async function getAllCourseOrdersWithInvite(): Promise<
@@ -173,8 +132,7 @@ export async function getAllCourseOrdersWithInvite(): Promise<
       createdAt: true,
       shipMode: true,
       shipments: { select: shipmentSelect, orderBy: { id: 'asc' } },
-      courseInvites: {
-        take: 1,
+      courseInvite: {
         select: {
           id: true,
           title: true,
@@ -185,7 +143,7 @@ export async function getAllCourseOrdersWithInvite(): Promise<
   })
 
   return orders.map((order) => {
-    const invite = order.courseInvites[0]
+    const invite = order.courseInvite
     return {
       id: order.id,
       buyerNameZh: order.buyerNameZh,
@@ -248,8 +206,7 @@ export async function getCourseOrderForPrint(
       shippedAt: true,
       shipMode: true,
       shipments: { select: shipmentSelect, orderBy: { id: 'asc' } },
-      courseInvites: {
-        take: 1,
+      courseInvite: {
         select: {
           id: true,
           title: true,
@@ -261,7 +218,7 @@ export async function getCourseOrderForPrint(
 
   if (!order) return null
 
-  const invite = order.courseInvites[0]
+  const invite = order.courseInvite
   return {
     id: order.id,
     buyerNameZh: order.buyerNameZh,
