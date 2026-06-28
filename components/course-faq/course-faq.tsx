@@ -189,7 +189,11 @@ export function CourseFaq({ inviteId, currentUserId, isInstructor, messages }: C
 
       {/* 留言串列 */}
       {messages.length === 0 ? (
-        <p className="text-sm text-muted-foreground">目前還沒有提問，成為第一個提問的人吧！</p>
+        <p className="text-sm text-muted-foreground">
+          {isInstructor
+            ? '目前還沒有學員提問。'
+            : '您目前還沒有提問，在上方輸入框送出後，僅您與授課老師看得到。'}
+        </p>
       ) : (
         <ul className="space-y-4">
           {messages.map((q) => (

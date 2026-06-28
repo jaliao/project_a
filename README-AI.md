@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.91（2026-06-23）
+> 自動產生，版本 0.1.92（2026-06-28）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -131,7 +131,7 @@ lib/
 │   ├── admin-settings.ts    # 後台設定查詢（getAdminSetting, upsertAdminSetting）
 │   ├── churches.ts          # 教會管理查詢（getActiveChurches, getAllChurches, createChurch, updateChurch, toggleChurchActive, deleteChurch）
 │   ├── notification.ts      # 通知查詢（getNotifications, getUnreadNotificationCount, getNotificationsPaginated）
-│   └── course-message.ts    # 課程 FAQ 留言查詢（getCourseMessages：提問升序＋回覆內嵌）
+│   └── course-message.ts    # 課程 FAQ 留言查詢（getCourseMessages(inviteId, viewer)：1 對 1 可見性—老師見全部、會員僅見自己的串；提問升序＋回覆內嵌）
 ├── ecpay/
 │   └── logistics.ts         # ECPay 物流工具（calcLogisticsCheckMacValue，MD5，物流 CMV-MD5 規格）
 └── utils.ts         # cn() 等工具函數
@@ -249,7 +249,7 @@ parentId  Int?（null = 提問；有值 = 回覆，自關聯 CourseMessageReplie
 createdAt DateTime
 @@index([inviteId])
 ```
-課程 FAQ 留言：任何登入會員可提問（parentId=null），僅授課老師可回覆（parentId 指向提問）。
+課程 FAQ 留言：任何登入會員可提問（parentId=null），僅授課老師可回覆（parentId 指向提問）。**可見性為 1 對 1**：每則提問串僅發問者本人與授課老師可見（`getCourseMessages` 依 viewer 過濾，老師見全部、其他會員僅見 `authorId === 自己` 的串）。
 
 ### Church
 ```
@@ -442,6 +442,7 @@ createdAt       DateTime
 - `cr-spec-260604-005` — 後台會員管理優化與多重身分：`User.role` 改為 `roles UserRole[]`（新增 `teacher`，身分 user/teacher/admin/superadmin 可並存，user 為基線）；新增 `lib/auth-roles.ts` 集中授權判定（`canAccessAdmin`/`canTeach`/`isSuperadmin`/`hasRole`/`normalizeRoles`），全站守衛改走 helper；JWT/session 由 `role` 改 `roles`；後台「新增會員」（`createMember`：核發 spiritId + 臨時密碼 + 白名單，顯示一次）；詳情頁多重身分編輯（`updateMemberRoles`，禁止移除自身 admin/superadmin）；`resetMemberPassword` 重設後重新顯示臨時密碼；會員列表移除「加入日期」改顯示「身分」badge、匯出身分欄輸出全部；開課（`createCourseSession`/`createInvite`）加 `canTeach` 前置；migration `add_user_multi_roles` backfill 既有 role
 - `cr-spec-260605-001` — 名冊 seed：`User` 新增 `teacherNo`（授課老師編號，migration `add_user_teacher_no`）；以 `doc/啟動事工資料表_updated.xlsx` 經產生器 `prisma/seed-data/build-roster.mjs` 產出 `roster.json`（執行期不讀 xlsx）；重寫 `prisma/seed.ts` 保留 admin + 黃國倫，其餘人員（教師 [user,teacher]+真實 Email、學員 [user]+合成 Email `{spiritId}@seed.iwillshare.org.tw`）以姓名去重建立；每個非空班級欄一筆 `CourseInvite`（掛啟動靈人 catalog 1）+ approved 報名；對應不到的教師歸黃國倫收容課程；教會正規化為 10 間；`teacherNo` 顯示於會員詳情頁與 Excel 匯出；冪等守衛（收容班哨兵）
 - `cr-spec-260604-003` — 媒合功能：`CourseInvite` 新增 `isPublicMatch`（預設 false）/`matchNote`（migration `add_course_public_match`）；開課精靈基本資料步驟新增「公開媒合」開關（預設關）+ 招募備註（上限 500）；課程詳情頁講師可切換公開媒合／編輯備註（`updateMatchSettings`，僅講師或管理者，關閉保留 matchNote）；新增媒合布告欄頁面 `/match-board`（所有登入會員，列出公開＋未取消＋未結業＋未過截止日課程，`getPublicMatchingSessions()`）；`CourseSessionCard` 加 `matchNote`/`showMatchBadge`（公開媒合・招募中 badge + 備註）；Topbar 右上角新增「媒合布告欄」入口
+- `cr-spec-260628-001` — 課程 FAQ 改 1 對 1 可見性：FAQ 留言由「課程內公開」改為每則提問串僅發問者本人與授課老師可見；`getCourseMessages` 新增 `viewer` 參數（老師見全部、其他會員 `where.authorId` 僅見自己的串），`/course/[id]` 傳入 `currentUserId`/`isInstructor`；`CourseFaq` 空狀態文案改為依身分顯示；提問／回覆／刪除權限與 Inbox 通知不變；無 DB schema 變更
 - `cr-spec-260611-002` — 課程 FAQ：新增 `CourseMessage` model（提問與回覆同表，`parentId` 自關聯，`invite`/`parent` 皆 `onDelete: Cascade`；migration `add_course_message`）；課程詳情頁底部新增「課程 FAQ」留言區（`CourseFaq` client 元件）；`postCourseQuestion`（任何登入會員提問，通知老師）／`replyCourseMessage`（僅授課老師回覆，通知發問者）／`deleteCourseMessage`（作者本人或授課老師可刪，刪提問 cascade 刪回覆，不發通知）三個 action；`getCourseMessages` data layer；`lib/schemas/course-message.ts`（1–2000 字）；雙向 Inbox 通知
 - `cr-spec-260611-004` — Seed 資料優化：重寫 `prisma/seed.ts` 課程／報名邏輯（資料源 `roster.json` 不變）——凡報名學員本身為老師則該報名設 `graduatedAt`（啟動靈人結業證書，全教師覆蓋）；整班皆老師的課程設 `completedAt`（已結業，含收容班）；所有報名 `materialChoice='traditional'`（繁體）；黃國倫補一筆啟動靈人結業報名維持開課資格；新 capability `seed-roster-data`，退場過時的 `seed-course-completions`；無 DB schema 變更。實測：232 位教師全數取得證書、5 門全教師班結業、報名全繁體
 - `cr-spec-260611-001` — 儀錶板優化：後台儀錶板統計卡片由 4 張改為 6 張（總會員數／啟動靈人講師資格人數／啟動豐盛講師資格人數／開課中課程總數／進行中課程總數／已結業課程總數）；講師資格人數重新定義為「`teacher` 身分 AND 結業該課程」（admin/superadmin 未加掛 teacher 不計入）；移除課程活動統計圖表（上課人次/順利結業 BarChart、`?range=` 時間區間切換），刪除 `dashboard-charts.tsx` 與 `getCourseStartStats`/`getGraduationStats`/`CourseStatItem`；無 DB schema 變更

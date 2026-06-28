@@ -82,8 +82,11 @@ export default async function CourseDetailPage({
   const isInstructor = userSession?.user?.id === courseSession.createdBy.id
   const currentUserId = userSession?.user?.id
 
-  // 課程 FAQ 留言
-  const faqMessages = await getCourseMessages(courseSession.id)
+  // 課程 FAQ 留言（1 對 1 可見性：老師見全部、其他會員僅見自己的提問串）
+  const faqMessages = await getCourseMessages(courseSession.id, {
+    userId: currentUserId,
+    isInstructor,
+  })
 
   // 多地址寄送所需：應寄繁/簡本數（依 approved 學員 materialChoice 統計）
   const materialSummary = isInstructor

@@ -31,11 +31,17 @@ const authorSelect = {
 } as const
 
 /**
- * 取得課程所有 FAQ 留言（提問升序，回覆內嵌升序）
+ * 取得課程 FAQ 留言（提問升序，回覆內嵌升序）
+ * 1 對 1 可見性：授課老師見全部；其他會員僅見自己張貼的提問串
  */
-export async function getCourseMessages(inviteId: number): Promise<CourseMessageThread[]> {
+export async function getCourseMessages(
+  inviteId: number,
+  viewer: { userId: string; isInstructor: boolean }
+): Promise<CourseMessageThread[]> {
   const messages = await prisma.courseMessage.findMany({
-    where: { inviteId, parentId: null },
+    where: viewer.isInstructor
+      ? { inviteId, parentId: null }
+      : { inviteId, parentId: null, authorId: viewer.userId },
     orderBy: { createdAt: 'asc' },
     select: {
       id: true,
