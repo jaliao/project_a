@@ -323,7 +323,7 @@ async function main() {
 
   // ── 6. 課程與報名（每個班級欄一筆課程）──────────────
   // 冪等守衛：以收容班為哨兵，已存在則跳過課程/報名建立（避免重跑重複建課）
-  const CATCH_ALL_TITLE = '黃國倫 的 啟動靈人（收容班）'
+  const CATCH_ALL_TITLE = '啟動靈人種子講師班'
   const alreadySeeded = await prisma.courseInvite.findFirst({
     where: { title: CATCH_ALL_TITLE },
     select: { id: true },

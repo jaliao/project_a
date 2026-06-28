@@ -419,7 +419,7 @@ format: ## ✨ 格式化程式碼
 #  Prisma 透過 tunnel deploy remote vps
 # ==================================================
 
-.PHONY: tunnel-vps3 prisma-vps3-status prisma-vps3-deploy prisma-vps3-studio
+.PHONY: tunnel-vps3 prisma-vps3-status prisma-vps3-deploy prisma-vps3-seed prisma-vps3-reset prisma-vps3-studio
 
 tunnel-vps3: ## 開啟 VPS3 Postgres SSH Tunnel（localhost:15432）
 	@/home/psyduck/devops-toolkit/remote-admin/tunnel/pg-tunnel-vps3.sh
@@ -444,11 +444,21 @@ prisma-vps3-seed: ## 部署 migrations 到 VPS3（正式/遠端 DB 用）
 		echo "❌ 找不到 prisma/seed.ts"; \
 	fi
 
+prisma-vps3-reset: ## ⚠️ 重置 VPS3 資料庫（刪除所有資料→重跑 migrations→seed；需先開 tunnel）
+	@echo "⚠️  危險：將【刪除 VPS3 遠端資料庫的所有資料】後重新 migrate + seed！"
+	@echo "    目標 DB：$(DATABASE_URL_VPS3)"
+	@echo "    請確認此為 staging/testing 而非正式環境，且 tunnel（make tunnel-vps3）已開啟。"
+	@read -p "確定要重置？請輸入 reset-vps3 以繼續：" confirm; \
+	if [ "$$confirm" = "reset-vps3" ]; then \
+		$(PRISMA_VPS3_DB) npx prisma migrate reset --force; \
+		echo "✅ VPS3 資料庫已重置並 seed（reset 會依 prisma.config.ts 自動執行 seed）"; \
+	else \
+		echo "❌ 已取消"; \
+	fi
+
 prisma-vps3-studio: ## 連 VPS3 開 Prisma Studio（需先開 tunnel）
 	@echo "🌐 Prisma Studio (VPS3) <http://localhost:5555>"
 	@$(PRISMA_VPS3_DB) npx prisma studio --browser none
-
-
 
 prisma-dev-status: ## 檢查 Dev Migration 狀態（建議先跑）
 	@echo "Prisma migrate status (DEV)... $(PRISMA_DEV_DB)"
@@ -458,6 +468,11 @@ prisma-dev-deploy: ## 部署 migrations 到 VPS3（正式/遠端 DB 用）
 	@echo "Prisma migrate deploy (DEV)..."	
 	@$(DEV_COMPOSE) exec web npx prisma migrate deploy
 
+prisma-dev-migrate: ## 建立 Migration（保留歷史）
+	@echo "📝 建立 Migration (名稱: $(SCHEMA_NAME))..."
+	@$(DEV_COMPOSE) exec web npx prisma migrate dev   --name $(SCHEMA_NAME) && \
+	echo "✅ Migration 建立完成" || \
+	echo "❌ Migration 建立失敗"
 
 prisma-dev-seed: ## 部署 migrations 到 VPS3（正式/遠端 DB 用）
 	@echo "初始化 DEV 種子資料..."

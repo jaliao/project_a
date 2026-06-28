@@ -121,11 +121,11 @@ export default async function CourseDetailPage({
     <div className="space-y-6">
       {/* 返回連結 */}
       <Link
-        href="/course-sessions"
+        href="/"
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <IconArrowLeft className="h-4 w-4" />
-        返回開課查詢
+        返回首頁
       </Link>
 
       {/* 頁首：標題 + 狀態標籤 + 分享按鈕 */}
