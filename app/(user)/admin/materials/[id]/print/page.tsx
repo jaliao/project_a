@@ -10,7 +10,6 @@ import { notFound, redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { canAccessAdmin } from '@/lib/auth-roles'
 import { getCourseOrderForPrint } from '@/lib/data/course-order'
-import { getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
 import { PrintButton } from './print-button'
 
 const DELIVERY_METHOD_LABELS: Record<string, string> = {
@@ -35,11 +34,6 @@ export default async function PrintShippingOrderPage({
 
   const order = await getCourseOrderForPrint(orderId)
   if (!order) notFound()
-
-  // 統計學員書本選擇（單一地址用）
-  const materialSummary = order.inviteId
-    ? await getEnrollmentMaterialSummary(order.inviteId)
-    : { traditional: 0, simplified: 0 }
 
   // 組出待列印的出貨單清單：多地址 → 每批次一份；單一 → 一份
   const slips =
@@ -66,8 +60,8 @@ export default async function PrintShippingOrderPage({
             storeName: order.storeName,
             storeId: order.storeId,
             deliveryAddress: order.deliveryAddress,
-            traditional: materialSummary.traditional,
-            simplified: materialSummary.simplified,
+            traditional: order.traditionalQty,
+            simplified: order.simplifiedQty,
           },
         ]
 

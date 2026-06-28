@@ -4,16 +4,27 @@
 TBD - created by archiving change cr-spec-260611-002. Update Purpose after archive.
 ## Requirements
 ### Requirement: 課程 FAQ 留言區塊
-課程詳情頁 `/course/[id]` SHALL 顯示「課程 FAQ」留言問答區塊，呈現該課程所有提問與回覆。
+課程詳情頁 `/course/[id]` SHALL 顯示「課程 FAQ」留言問答區塊。
 提問 SHALL 依時間排列，每則回覆 SHALL 顯示於對應提問之下。
-FAQ 內容 SHALL 對所有可瀏覽該課程頁的登入會員公開可見。
+FAQ 留言可見性 SHALL 為 **1 對 1**：每則提問串（top-level 提問及其下所有回覆）僅「該提問的發問者本人」與「該課程授課老師（開課者本人）」可見。
+一般會員（非該串發問者、非授課老師）SHALL NOT 看到他人的提問串。
+授課老師 SHALL 看到該課程所有提問串。
 
-#### Scenario: 顯示既有問答
-- **WHEN** 任一登入會員開啟課程詳情頁
-- **THEN** 頁面顯示課程 FAQ 區塊與既有提問／回覆
+#### Scenario: 發問者檢視自己的提問串
+- **WHEN** 登入會員開啟課程詳情頁，且該課程存在由其本人張貼的提問
+- **THEN** FAQ 區塊顯示其本人的提問串（含老師對該串的回覆）
+- **AND** 不顯示其他會員張貼的提問串
 
-#### Scenario: 尚無留言
-- **WHEN** 課程尚無任何留言
+#### Scenario: 授課老師檢視全部提問串
+- **WHEN** 授課老師開啟其開設課程的詳情頁
+- **THEN** FAQ 區塊顯示該課程所有會員的提問串與回覆
+
+#### Scenario: 一般會員尚無提問
+- **WHEN** 登入會員開啟課程詳情頁，且其本人在該課程尚無任何提問
+- **THEN** FAQ 區塊顯示空狀態提示，且不顯示他人提問串
+
+#### Scenario: 課程尚無任何留言
+- **WHEN** 課程尚無任何留言且檢視者為授課老師
 - **THEN** FAQ 區塊顯示空狀態提示
 
 ### Requirement: 會員提問

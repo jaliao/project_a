@@ -77,8 +77,8 @@ interface MaterialOrderDialogProps {
     shipMode: string
     shipments: Shipment[]
   } | null
-  // 應寄本數（依 approved 學員 materialChoice 統計）
-  materialSummary: { traditional: number; simplified: number }
+  // 尚未申請之剩餘本數（本次申請上限；單一地址自動帶入此值）
+  remaining: { traditional: number; simplified: number }
   // 單一地址收件人預設值（申請講師姓名 + 個人資料電話）
   defaultRecipient: { name: string; phone: string }
 }
@@ -88,7 +88,7 @@ export function MaterialOrderDialog({
   onOpenChange,
   inviteId,
   existingOrder,
-  materialSummary,
+  remaining,
   defaultRecipient,
 }: MaterialOrderDialogProps) {
   const router = useRouter()
@@ -156,16 +156,17 @@ export function MaterialOrderDialog({
     form.setValue('deliveryAddress', '')
   }
 
-  // ── 多地址：即時剩餘本數 ──
+  // ── 多地址：本次申請可分配的剩餘本數（上限＝尚未申請的 remaining）──
   const watchedShipments = form.watch('shipments') ?? []
   const allocTrad = watchedShipments.reduce((a, s) => a + (Number(s?.traditionalQty) || 0), 0)
   const allocSimp = watchedShipments.reduce((a, s) => a + (Number(s?.simplifiedQty) || 0), 0)
-  const remainTrad = materialSummary.traditional - allocTrad
-  const remainSimp = materialSummary.simplified - allocSimp
-  const fullyAllocated = remainTrad === 0 && remainSimp === 0
+  const remainTrad = remaining.traditional - allocTrad
+  const remainSimp = remaining.simplified - allocSimp
+  const overAllocated = remainTrad < 0 || remainSimp < 0
 
+  // 多地址：至少 1 本、不可超過剩餘量（不要求全部分配完）
   const multipleSubmitDisabled =
-    isMultiple && (fields.length === 0 || !fullyAllocated)
+    isMultiple && (fields.length === 0 || allocTrad + allocSimp < 1 || overAllocated)
 
   const onSubmit = (values: MaterialOrderFormValues) => {
     if (isReadonly) return
@@ -239,6 +240,13 @@ export function MaterialOrderDialog({
             {/* ════════ 單一地址 ════════ */}
             {!isMultiple && (
               <>
+                {/* 單一地址自動帶入尚未申請的全部本數 */}
+                {!existingOrder && (
+                  <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">
+                    本次將申請（系統自動帶入尚未申請的全部）：繁體 {remaining.traditional} 本、簡體 {remaining.simplified} 本
+                  </div>
+                )}
+
                 {/* 收件人（預設帶入申請講師，可修改） */}
                 <div className="flex gap-3">
                   <FormField control={form.control} name="recipientName" render={({ field }) => (
@@ -292,6 +300,13 @@ export function MaterialOrderDialog({
                               : null
                           }
                           onChange={(store) => {
+                            // 以實際選取門市的通路校正取貨方式，避免方式與門市不一致
+                            if (store?.logisticsSubType) {
+                              form.setValue(
+                                'deliveryMethod',
+                                store.logisticsSubType === 'UNIMART' ? 'sevenEleven' : 'familyMart',
+                              )
+                            }
                             form.setValue('storeId', store?.storeId ?? '')
                             form.setValue('storeName', store?.storeName ?? '')
                           }}
@@ -318,12 +333,12 @@ export function MaterialOrderDialog({
             {/* ════════ 多地址 ════════ */}
             {isMultiple && (
               <div className="space-y-4">
-                {/* 剩餘本數提示 */}
+                {/* 本次可申請（尚未申請）本數提示 */}
                 <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm space-y-0.5">
-                  <p className="font-medium">應寄本數：繁體 {materialSummary.traditional} 本、簡體 {materialSummary.simplified} 本</p>
-                  <p className={fullyAllocated ? 'text-green-700' : 'text-amber-700'}>
-                    尚待分配：繁體 {remainTrad} 本、簡體 {remainSimp} 本
-                    {fullyAllocated && '（已分配完畢）'}
+                  <p className="font-medium">本次可申請（尚未申請）：繁體 {remaining.traditional} 本、簡體 {remaining.simplified} 本</p>
+                  <p className={overAllocated ? 'text-red-600' : 'text-amber-700'}>
+                    尚可分配：繁體 {remainTrad} 本、簡體 {remainSimp} 本
+                    {overAllocated && '（已超過可申請數量）'}
                   </p>
                 </div>
 
@@ -462,6 +477,13 @@ function MultiAddressRow({
                     : null
                 }
                 onChange={(store) => {
+                  // 以實際選取門市的通路校正取貨方式，避免方式與門市不一致
+                  if (store?.logisticsSubType) {
+                    form.setValue(
+                      `shipments.${index}.deliveryMethod`,
+                      store.logisticsSubType === 'UNIMART' ? 'sevenEleven' : 'familyMart',
+                    )
+                  }
                   form.setValue(`shipments.${index}.storeId`, store?.storeId ?? '')
                   form.setValue(`shipments.${index}.storeName`, store?.storeName ?? '')
                 }}

@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.93（2026-06-28）
+> 自動產生，版本 0.1.95（2026-06-28）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -298,10 +298,13 @@ storeName       String?（超商門市名稱，透過 ECPay MapCVS 選擇器取�
 submittedById   String?（提交者 UUID，選填關聯 User）
 shippedAt       DateTime?（管理者確認寄送時間）
 receivedAt      DateTime?（講師確認收件時間）
+traditionalQty  Int（本筆申請繁體本數；單一地址自動帶尚未申請剩餘、多地址為批次加總）
+simplifiedQty   Int（本筆申請簡體本數）
 courseInviteId  Int?（一對多：關聯 CourseInvite；獨立訂單為 null）
 createdAt       DateTime
 ```
-> 開課門檻（`lib/utils/course-start-gate.ts`）：≥1 已核准學員 + 該課程至少一筆教材訂單且**全部 `receivedAt != null`**；`startCourseSession` 與課程詳情頁「開始上課」按鈕共用此判定，未達門檻按鈕停用並列出原因。
+> 開課門檻（`lib/utils/course-start-gate.ts`）：≥1 已核准學員 + **尚未申請教材需求為 0**（`remaining` 繁/簡皆 0）+ 所有教材訂單 `receivedAt != null`；全班不需教材（總需求 0、無訂單）時後兩項自動成立。`startCourseSession` 與課程詳情頁「開始上課」按鈕共用此判定（server 端以 `getEnrollmentMaterialSummary`＋訂單繁/簡加總重算 remaining），未達門檻按鈕停用並列出原因。
+> 教材申請進度（`lib/utils/material-progress.ts`）：總需求＝已核准學員 materialChoice 統計、已申請＝訂單繁/簡加總、尚未申請＝差值；單一地址申請自動帶剩餘全部、多地址手動分配且不可超額；講師操作區為三區塊（教材申請／開始上課／取消上課）。
 
 ---
 
@@ -444,6 +447,8 @@ createdAt       DateTime
 - `cr-spec-260604-005` — 後台會員管理優化與多重身分：`User.role` 改為 `roles UserRole[]`（新增 `teacher`，身分 user/teacher/admin/superadmin 可並存，user 為基線）；新增 `lib/auth-roles.ts` 集中授權判定（`canAccessAdmin`/`canTeach`/`isSuperadmin`/`hasRole`/`normalizeRoles`），全站守衛改走 helper；JWT/session 由 `role` 改 `roles`；後台「新增會員」（`createMember`：核發 spiritId + 臨時密碼 + 白名單，顯示一次）；詳情頁多重身分編輯（`updateMemberRoles`，禁止移除自身 admin/superadmin）；`resetMemberPassword` 重設後重新顯示臨時密碼；會員列表移除「加入日期」改顯示「身分」badge、匯出身分欄輸出全部；開課（`createCourseSession`/`createInvite`）加 `canTeach` 前置；migration `add_user_multi_roles` backfill 既有 role
 - `cr-spec-260605-001` — 名冊 seed：`User` 新增 `teacherNo`（授課老師編號，migration `add_user_teacher_no`）；以 `doc/啟動事工資料表_updated.xlsx` 經產生器 `prisma/seed-data/build-roster.mjs` 產出 `roster.json`（執行期不讀 xlsx）；重寫 `prisma/seed.ts` 保留 admin + 黃國倫，其餘人員（教師 [user,teacher]+真實 Email、學員 [user]+合成 Email `{spiritId}@seed.iwillshare.org.tw`）以姓名去重建立；每個非空班級欄一筆 `CourseInvite`（掛啟動靈人 catalog 1）+ approved 報名；對應不到的教師歸黃國倫收容課程；教會正規化為 10 間；`teacherNo` 顯示於會員詳情頁與 Excel 匯出；冪等守衛（收容班哨兵）
 - `cr-spec-260604-003` — 媒合功能：`CourseInvite` 新增 `isPublicMatch`（預設 false）/`matchNote`（migration `add_course_public_match`）；開課精靈基本資料步驟新增「公開媒合」開關（預設關）+ 招募備註（上限 500）；課程詳情頁講師可切換公開媒合／編輯備註（`updateMatchSettings`，僅講師或管理者，關閉保留 matchNote）；新增媒合布告欄頁面 `/match-board`（所有登入會員，列出公開＋未取消＋未結業＋未過截止日課程，`getPublicMatchingSessions()`）；`CourseSessionCard` 加 `matchNote`/`showMatchBadge`（公開媒合・招募中 badge + 備註）；Topbar 右上角新增「媒合布告欄」入口
+- `cr-spec-260628-006` — 開課門檻納入「尚未申請=0」：修正教材收件後新增選書學員仍可開課的 BUG；`evaluateCourseStartGate` 改以 `remaining`（尚未申請繁/簡）判定並移除「至少一筆訂單」硬擋（有需求未申請由 remaining 擋、全班不需教材則可開課）；`page.tsx` 傳入 `materialProgress.remaining`、`startCourseSession` 以當下資料重算 remaining 後驗證；修改 capability `course-status`
+- `cr-spec-260628-005` — 多筆教材申請優化：`CourseOrder` 新增 `traditionalQty`/`simplifiedQty`（migration `add_course_order_book_qty`，多地址既有訂單由 shipments 回填）；新增 `lib/utils/material-progress.ts`（總需求／已申請／尚未申請）；`applyMaterialOrder` 單一地址自動帶剩餘全部、多地址各批次加總且不可超過剩餘（server 以當下 DB 重算驗證）；講師操作區 `course-detail-actions.tsx` 重整為三區塊（教材申請／開始上課／取消上課），教材區顯示申請進度與每筆訂單繁/簡數量，「申請教材」按鈕僅在尚未申請>0 可按；`material-order-dialog` 單一地址唯讀顯示自動帶入數量、多地址改以剩餘量為上限（不再要求全數分配）；後台 `material-order-table`／出貨單列印頁顯示每筆訂單繁/簡本數；修改 capability `course-multi-material-order`
 - `cr-spec-260628-002` — 教材多筆訂單＋開課門檻：`CourseInvite`↔`CourseOrder` 由一對一翻轉為**一對多**（`CourseOrder.courseInviteId`，migration `multi_material_order` 含資料回填）；`applyMaterialOrder` 改為每次建立新訂單、`reportMaterialPayment`/`confirmReceipt` 改以 `orderId` 操作；多地址放寬「總和=課程總計」改為各訂單自填（≥1 本）；課程詳情頁教材區塊改逐筆訂單清單＋「再申請一筆教材」、既有訂單唯讀；新增 `lib/utils/course-start-gate.ts` 開課門檻判定（≥1 已核准學員 + 教材全部收件），「開始上課」按鈕招生中常駐顯示、未達門檻停用並列出原因，`startCourseSession` server 端同步驗證；新增 capability `course-multi-material-order`、修改 `course-status`
 - `cr-spec-260628-001` — 課程 FAQ 改 1 對 1 可見性：FAQ 留言由「課程內公開」改為每則提問串僅發問者本人與授課老師可見；`getCourseMessages` 新增 `viewer` 參數（老師見全部、其他會員 `where.authorId` 僅見自己的串），`/course/[id]` 傳入 `currentUserId`/`isInstructor`；`CourseFaq` 空狀態文案改為依身分顯示；提問／回覆／刪除權限與 Inbox 通知不變；無 DB schema 變更
 - `cr-spec-260611-002` — 課程 FAQ：新增 `CourseMessage` model（提問與回覆同表，`parentId` 自關聯，`invite`/`parent` 皆 `onDelete: Cascade`；migration `add_course_message`）；課程詳情頁底部新增「課程 FAQ」留言區（`CourseFaq` client 元件）；`postCourseQuestion`（任何登入會員提問，通知老師）／`replyCourseMessage`（僅授課老師回覆，通知發問者）／`deleteCourseMessage`（作者本人或授課老師可刪，刪提問 cascade 刪回覆，不發通知）三個 action；`getCourseMessages` data layer；`lib/schemas/course-message.ts`（1–2000 字）；雙向 Inbox 通知

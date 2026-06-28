@@ -19,6 +19,8 @@ import { resolveContactEmail } from '@/lib/utils/contact-email'
 import { renderTemplate } from '@/lib/utils/render-template'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { evaluateCourseStartGate } from '@/lib/utils/course-start-gate'
+import { computeMaterialProgress } from '@/lib/utils/material-progress'
+import { getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
 import {
   getAdminSetting,
   GRADUATION_EMAIL_SUBJECT_KEY,
@@ -327,7 +329,7 @@ export async function startCourseSession(inviteId: number): Promise<ActionRespon
       cancelledAt: true,
       completedAt: true,
       startedAt: true,
-      orders: { select: { receivedAt: true } },
+      orders: { select: { receivedAt: true, traditionalQty: true, simplifiedQty: true } },
       _count: { select: { enrollments: { where: { status: 'approved' } } } },
     },
   })
@@ -339,9 +341,12 @@ export async function startCourseSession(inviteId: number): Promise<ActionRespon
   if (invite.completedAt) return { success: false, message: '課程已結業' }
   if (invite.startedAt) return { success: false, message: '課程已在進行中' }
 
-  // 開課門檻：≥1 已核准學員 + 至少一筆教材訂單且全部已收件（與 UI 共用判定）
+  // 開課門檻：≥1 已核准學員 + 尚未申請=0 + 所有訂單已收件（以當下資料重算，與 UI 共用判定）
+  const total = await getEnrollmentMaterialSummary(inviteId)
+  const { remaining } = computeMaterialProgress(total, invite.orders)
   const gate = evaluateCourseStartGate({
     approvedCount: invite._count.enrollments,
+    remaining,
     orders: invite.orders,
   })
   if (!gate.canStart) {

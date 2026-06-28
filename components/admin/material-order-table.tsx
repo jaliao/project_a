@@ -179,6 +179,10 @@ function OrderDetail({
       ) : (
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm pt-2 border-t">
           <div>
+            <span className="text-muted-foreground">書本數量：</span>
+            繁 {order.traditionalQty} / 簡 {order.simplifiedQty}
+          </div>
+          <div>
             <span className="text-muted-foreground">取貨方式：</span>
             {DELIVERY_METHOD_LABELS[order.deliveryMethod] ?? order.deliveryMethod}
             {order.deliveryMethod === 'sevenEleven' && (

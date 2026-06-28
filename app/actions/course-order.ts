@@ -13,6 +13,8 @@ import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { canAccessAdmin } from '@/lib/auth-roles'
 import { courseOrderSchema, materialOrderSchema, adminMaterialOrderEditSchema } from '@/lib/schemas/course-order'
+import { getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
+import { computeMaterialProgress } from '@/lib/utils/material-progress'
 import { createNotification } from '@/app/actions/notification'
 import type { MaterialVersion, PurchaseType, DeliveryMethod, ShipMode } from '@prisma/client'
 
@@ -115,6 +117,19 @@ export async function applyMaterialOrder(
 
   const d = parsed.data
 
+  // 以當下資料重算「尚未申請」剩餘量（總需求 − 已申請），作為本筆申請上限（防並發超額）
+  const [total, existingOrders] = await Promise.all([
+    getEnrollmentMaterialSummary(inviteId),
+    prisma.courseOrder.findMany({
+      where: { courseInviteId: inviteId },
+      select: { traditionalQty: true, simplifiedQty: true },
+    }),
+  ])
+  const { remaining } = computeMaterialProgress(total, existingOrders)
+  if (remaining.traditional + remaining.simplified < 1) {
+    return { success: false, message: '教材已全部申請，無需再申請' }
+  }
+
   // 快照：從會員與課程資料自動帶入
   const churchOrg =
     user.churchType === 'church' ? (user.church?.name ?? '') :
@@ -143,16 +158,24 @@ export async function applyMaterialOrder(
       return { success: false, message: '請至少新增一個寄送地址' }
     }
 
-    // 多訂單下每筆訂單自填本數（放寬「總和需等於課程總計」驗證）：至少分配 1 本
+    // 各批次繁/簡加總即為本筆訂單數量；至少 1 本，且不可超過尚未申請之剩餘量
     const sumTrad = shipments.reduce((a, s) => a + s.traditionalQty, 0)
     const sumSimp = shipments.reduce((a, s) => a + s.simplifiedQty, 0)
     if (sumTrad + sumSimp < 1) {
       return { success: false, message: '請至少分配 1 本教材' }
     }
+    if (sumTrad > remaining.traditional || sumSimp > remaining.simplified) {
+      return {
+        success: false,
+        message: `超過尚未申請數量（剩餘：繁 ${remaining.traditional}、簡 ${remaining.simplified}）`,
+      }
+    }
 
     const orderData = {
       ...snapshot,
       courseInviteId: inviteId,
+      traditionalQty: sumTrad,
+      simplifiedQty: sumSimp,
       shipMode: 'multiple' as ShipMode,
       // 多地址下訂單自身寄件欄位以第一筆為代表（deliveryMethod 為非空必填）
       deliveryMethod: shipments[0].deliveryMethod as DeliveryMethod,
@@ -183,10 +206,12 @@ export async function applyMaterialOrder(
     return { success: true, message: '教材申請已送出（多地址）', data: { id: orderId } }
   }
 
-  // ── 單一地址模式（現行流程）────────────────────────────
-  // 收件人預設帶入申請講師（姓名 + 個人資料電話），講師可於表單修改
+  // ── 單一地址模式 ────────────────────────────
+  // 單一地址自動帶入「尚未申請」的全部剩餘繁/簡（等同剩餘全部寄一處），講師不需手動填數量
   const orderData = {
     ...snapshot,
+    traditionalQty: remaining.traditional,
+    simplifiedQty: remaining.simplified,
     shipMode: 'single' as ShipMode,
     recipientName: d.recipientName?.trim() || invite.createdBy.realName || invite.createdBy.name || '',
     recipientPhone: d.recipientPhone?.trim() || user.phone || '',

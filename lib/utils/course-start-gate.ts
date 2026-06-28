@@ -4,7 +4,8 @@
  * 2026-06-28
  * lib/utils/course-start-gate.ts
  *
- * 開課條件：≥1 已核准學員 + 至少一筆教材訂單且全部已收件。
+ * 開課條件：≥1 已核准學員 + 尚未申請教材需求為 0 + 所有教材訂單已收件。
+ * 全班皆不需教材（總需求=0、無訂單）時，後兩項視為成立。
  * 回傳 canStart 與未達成原因清單（供按鈕停用提示與 server 拒絕共用）。
  * ----------------------------------------------
  */
@@ -20,6 +21,7 @@ export type CourseStartGate = {
 
 export function evaluateCourseStartGate(input: {
   approvedCount: number
+  remaining: { traditional: number; simplified: number }
   orders: CourseStartGateOrder[]
 }): CourseStartGate {
   const reasons: string[] = []
@@ -28,9 +30,14 @@ export function evaluateCourseStartGate(input: {
     reasons.push('尚無已核准學員')
   }
 
-  if (input.orders.length === 0) {
-    reasons.push('尚未申請任何教材')
-  } else {
+  // 尚有教材需求未申請（有需求卻無訂單，或訂單涵蓋不足）
+  const { traditional, simplified } = input.remaining
+  if (traditional + simplified > 0) {
+    reasons.push(`尚有教材未申請（繁 ${traditional}、簡 ${simplified}）`)
+  }
+
+  // 所有教材訂單需皆已收件（無訂單時不檢查 → 全班不需教材可開課）
+  if (input.orders.length > 0) {
     const received = input.orders.filter((o) => o.receivedAt != null).length
     if (received < input.orders.length) {
       reasons.push(`教材訂單尚未全部收件（${received}／${input.orders.length} 已收件）`)

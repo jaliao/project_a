@@ -21,6 +21,7 @@ import {
 import { auth } from '@/lib/auth'
 import { getCourseSessionById, getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
 import { evaluateCourseStartGate } from '@/lib/utils/course-start-gate'
+import { computeMaterialProgress } from '@/lib/utils/material-progress'
 import { checkPrerequisites } from '@/lib/data/course-catalog'
 import { getCourseMessages } from '@/lib/data/course-message'
 import { CourseFaq } from '@/components/course-faq/course-faq'
@@ -94,9 +95,13 @@ export default async function CourseDetailPage({
     ? await getEnrollmentMaterialSummary(courseSession.id)
     : { traditional: 0, simplified: 0 }
 
-  // 開課門檻判定（≥1 已核准學員 + 教材全部收件）
+  // 教材申請進度（總需求／已申請／尚未申請）
+  const materialProgress = computeMaterialProgress(materialSummary, courseSession.orders)
+
+  // 開課門檻判定（≥1 已核准學員 + 尚未申請=0 + 教材全部收件）
   const startGate = evaluateCourseStartGate({
     approvedCount: courseSession.approvedEnrollments.length,
+    remaining: materialProgress.remaining,
     orders: courseSession.orders,
   })
 
@@ -334,9 +339,9 @@ export default async function CourseDetailPage({
           isStarted={!!courseSession.startedAt}
           hasApprovedStudents={courseSession.approvedEnrollments.length > 0}
           orders={courseSession.orders}
+          progress={materialProgress}
           canStart={startGate.canStart}
           startReasons={startGate.reasons}
-          materialSummary={materialSummary}
           defaultRecipient={{
             name: courseSession.createdBy.realName || courseSession.createdBy.name || '',
             phone: courseSession.createdBy.phone || '',

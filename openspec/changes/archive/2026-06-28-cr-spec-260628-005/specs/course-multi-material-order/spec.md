@@ -1,33 +1,4 @@
-# course-multi-material-order Specification
-
-## Purpose
-定義一門課程支援多筆教材訂單（一對多）的行為：開課前可持續分批申請教材，每筆訂單各自獨立完成金流與寄送流程，並以訂單清單於講師端呈現。
-
-## Requirements
-
-### Requirement: 一門課支援多筆教材訂單
-一門課程（`CourseInvite`）SHALL 能關聯**多筆**教材訂單（`CourseOrder`），資料模型為一對多（`CourseOrder.courseInviteId` 指向 `CourseInvite`，`CourseInvite.orders` 為訂單清單）。
-每一筆教材訂單 SHALL 各自獨立進行「申請 → 批價 → 付款 → 寄送 → 收件」流程，互不影響。
-
-#### Scenario: 課程關聯多筆教材訂單
-- **WHEN** 講師對同一門課送出第二筆教材申請
-- **THEN** 系統建立一筆**新的** `CourseOrder` 並關聯至該課程，原有訂單保留不變
-
-#### Scenario: 各訂單獨立進行金流流程
-- **WHEN** 某課程同時有一筆「待批價」與一筆「已收件」的教材訂單
-- **THEN** 兩筆訂單各自顯示與推進自身階段，互不干擾
-
-### Requirement: 開課前可持續申請教材
-在課程開始上課前（`startedAt == null`、`cancelledAt == null`、`completedAt == null`），講師 SHALL 能持續新增教材訂單；招生（學員報名與講師核准）SHALL 同時維持開放。
-教材申請與招生 SHALL NOT 因「已申請過教材」或「部分訂單已收件」而被關閉。
-
-#### Scenario: 收件前可再新增教材訂單
-- **WHEN** 課程已有一筆已收件的教材訂單，但課程尚未開始上課
-- **THEN** 講師仍可透過「再申請一筆教材」建立新的教材訂單
-
-#### Scenario: 教材申請期間招生維持開放
-- **WHEN** 課程處於教材申請/收件階段且尚未開始上課
-- **THEN** 學員仍可報名、講師仍可核准報名
+## MODIFIED Requirements
 
 ### Requirement: 講師端多訂單清單呈現
 課程詳情頁講師操作區 SHALL 以**三個上下堆疊的區塊**呈現，固定順序為：①教材申請作業 ②開始上課作業 ③取消上課作業。每個區塊 SHALL 採「**標題 → 說明 → 動作按鈕**」結構。
@@ -60,6 +31,8 @@
 #### Scenario: 超過剩餘量被拒
 - **WHEN** 講師送出的繁/簡數量超過當下尚未申請的剩餘量
 - **THEN** 系統拒絕並提示不可超額
+
+## ADDED Requirements
 
 ### Requirement: 教材申請進度與申請按鈕限制
 課程詳情頁 SHALL 計算並顯示教材申請進度：**總需求**＝已核准學員 `materialChoice` 之繁/簡統計；**已申請**＝該課程所有教材訂單繁/簡數量加總；**尚未申請**＝`max(0, 總需求 − 已申請)`（繁、簡各自計算）。

@@ -35,6 +35,8 @@ export type CourseOrderDetail = {
   paymentConfirmedAt: Date | null
   shippedAt: Date | null
   receivedAt: Date | null
+  traditionalQty: number
+  simplifiedQty: number
   createdAt: Date
 }
 
@@ -73,6 +75,8 @@ export type CourseOrderForPrint = {
   courseDate: string
   taxId: string | null
   shippedAt: Date | null
+  traditionalQty: number
+  simplifiedQty: number
   inviteId: number | null
   inviteTitle: string | null
   catalogLabel: string | null
@@ -129,6 +133,8 @@ export async function getAllCourseOrdersWithInvite(): Promise<
       paymentConfirmedAt: true,
       shippedAt: true,
       receivedAt: true,
+      traditionalQty: true,
+      simplifiedQty: true,
       createdAt: true,
       shipMode: true,
       shipments: { select: shipmentSelect, orderBy: { id: 'asc' } },
@@ -171,6 +177,8 @@ export async function getAllCourseOrdersWithInvite(): Promise<
       paymentConfirmedAt: order.paymentConfirmedAt,
       shippedAt: order.shippedAt,
       receivedAt: order.receivedAt,
+      traditionalQty: order.traditionalQty,
+      simplifiedQty: order.simplifiedQty,
       createdAt: order.createdAt,
       shipMode: order.shipMode,
       shipments: order.shipments,
@@ -204,6 +212,8 @@ export async function getCourseOrderForPrint(
       courseDate: true,
       taxId: true,
       shippedAt: true,
+      traditionalQty: true,
+      simplifiedQty: true,
       shipMode: true,
       shipments: { select: shipmentSelect, orderBy: { id: 'asc' } },
       courseInvite: {
@@ -232,6 +242,8 @@ export async function getCourseOrderForPrint(
     courseDate: order.courseDate,
     taxId: order.taxId,
     shippedAt: order.shippedAt,
+    traditionalQty: order.traditionalQty,
+    simplifiedQty: order.simplifiedQty,
     shipMode: order.shipMode,
     shipments: order.shipments,
     inviteId: invite?.id ?? null,

@@ -68,6 +68,10 @@ model CourseOrder {
   quantity     Int // 1–8；選「其他」時為 0
   quantityNote String? // 自填數量說明
 
+  // 本筆申請的書籍本數（單一地址自動帶當下尚未申請的剩餘；多地址為各批次加總）
+  traditionalQty Int @default(0) // 繁體本數
+  simplifiedQty  Int @default(0) // 簡體本數
+
   // 其他
   courseDate      String // 預計開課日期（可填「無」）
   taxId           String? // 統一編號（選填）

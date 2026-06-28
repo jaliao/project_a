@@ -277,6 +277,8 @@ export type CourseSessionOrder = {
   paymentConfirmedAt: Date | null
   shippedAt: Date | null
   receivedAt: Date | null
+  traditionalQty: number
+  simplifiedQty: number
   shipMode: string
   shipments: {
     id: number
@@ -356,6 +358,8 @@ export async function getCourseSessionById(
           paymentConfirmedAt: true,
           shippedAt: true,
           receivedAt: true,
+          traditionalQty: true,
+          simplifiedQty: true,
           shipMode: true,
           shipments: {
             select: {
