@@ -20,6 +20,8 @@ const ECPAY_MAP_URL =
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const type = searchParams.get('type')
+  // 呼叫端 token：原樣帶回前端，用以辨識是哪一個門市選擇器開啟的回傳
+  const token = searchParams.get('token') ?? ''
 
   // 驗證 type 參數
   if (!VALID_TYPES.includes(type as LogisticsSubType)) {
@@ -43,7 +45,7 @@ export async function GET(request: NextRequest) {
 <script>
   try {
     window.opener?.postMessage(
-      { storeId: ${JSON.stringify(mockStoreId)}, storeName: ${JSON.stringify(mockStoreName)} },
+      { storeId: ${JSON.stringify(mockStoreId)}, storeName: ${JSON.stringify(mockStoreName)}, logisticsSubType: ${JSON.stringify(type)}, token: ${JSON.stringify(token)} },
       window.location.origin
     );
   } catch(e) {}
@@ -68,7 +70,10 @@ export async function GET(request: NextRequest) {
 
   // MerchantTradeNo 最長 20 碼，使用時間戳確保唯一
   const merchantTradeNo = `MAP${Date.now().toString().slice(-17)}`
-  const serverReplyURL = `${serverUrl}/api/ecpay/store-callback`
+  // 帶上 token，ECPay 會 POST 至此 URL（含 query），callback 再原樣回傳前端
+  const serverReplyURL = token
+    ? `${serverUrl}/api/ecpay/store-callback?token=${encodeURIComponent(token)}`
+    : `${serverUrl}/api/ecpay/store-callback`
 
   const params: Record<string, string> = {
     MerchantID: merchantId,

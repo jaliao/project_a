@@ -13,6 +13,10 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData()
   const storeId = formData.get('CVSStoreID')?.toString() ?? ''
   const storeName = formData.get('CVSStoreName')?.toString() ?? ''
+  // ECPay 回傳實際選取門市所屬通路（UNIMART=7-11、FAMI=全家）；用來校正取貨方式，避免方式與門市不一致
+  const logisticsSubType = formData.get('LogisticsSubType')?.toString() ?? ''
+  // 呼叫端 token（自 ServerReplyURL query 帶入）：原樣回傳前端，辨識是哪一個門市選擇器的回傳
+  const token = new URL(request.url).searchParams.get('token') ?? ''
 
   // 安全：避免 XSS，對 HTML 特殊字元做轉義
   const safeStoreName = storeName
@@ -29,10 +33,12 @@ export async function POST(request: NextRequest) {
   (function() {
     var storeId = ${JSON.stringify(storeId)};
     var storeName = ${JSON.stringify(storeName)};
+    var logisticsSubType = ${JSON.stringify(logisticsSubType)};
+    var token = ${JSON.stringify(token)};
     if (window.opener) {
       try {
         window.opener.postMessage(
-          { storeId: storeId, storeName: storeName },
+          { storeId: storeId, storeName: storeName, logisticsSubType: logisticsSubType, token: token },
           window.location.origin
         );
         window.close();
