@@ -19,6 +19,7 @@ import {
   IconClock,
 } from '@tabler/icons-react'
 import { auth } from '@/lib/auth'
+import { canTeachAny } from '@/lib/auth-roles'
 import { getCourseSessionById, getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
 import { evaluateCourseStartGate } from '@/lib/utils/course-start-gate'
 import { computeMaterialProgress } from '@/lib/utils/material-progress'
@@ -84,6 +85,9 @@ export default async function CourseDetailPage({
 
   const isInstructor = userSession?.user?.id === courseSession.createdBy.id
   const currentUserId = userSession?.user?.id
+
+  // 結業資訊區塊可見性：僅管理者或講師可查閱（一般會員／學員不顯示）
+  const canViewGraduation = canTeachAny(userSession?.user?.roles)
 
   // 課程 FAQ 留言（1 對 1 可見性：老師見全部、其他會員僅見自己的提問串）
   const faqMessages = await getCourseMessages(courseSession.id, {
@@ -171,8 +175,8 @@ export default async function CourseDetailPage({
         </div>
       )}
 
-      {/* 結業資訊區塊 */}
-      {isCompleted && courseSession.completedAt && (() => {
+      {/* 結業資訊區塊（僅管理者／講師可見） */}
+      {isCompleted && courseSession.completedAt && canViewGraduation && (() => {
         const NON_GRADUATE_REASON_LABELS: Record<string, string> = {
           insufficient_time: '時間不足',
           other: '其他',

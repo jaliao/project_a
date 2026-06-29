@@ -13,6 +13,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getActiveChurches } from '@/lib/data/churches'
 import { OnboardingWizard } from './onboarding-wizard'
 
 export const metadata: Metadata = {
@@ -38,10 +39,14 @@ export default async function OnboardingPage() {
   // 若密碼已設定但資料未填，從 Step 2 開始
   const initialStep = user.isTempPassword ? 1 : 2
 
+  // 所屬教會清單供 Step 2 選擇
+  const churches = await getActiveChurches()
+
   return (
     <OnboardingWizard
       initialStep={initialStep}
       initialSpiritId={user.spiritId ?? ''}
+      churches={churches.map((c) => ({ id: c.id, name: c.name }))}
     />
   )
 }

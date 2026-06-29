@@ -40,7 +40,8 @@ type ProfileFormProps = {
   linkedProviders: string[]
 }
 
-type ProfileData = z.infer<typeof updateProfileSchema>
+type ProfileInput = z.input<typeof updateProfileSchema>
+type ProfileData = z.output<typeof updateProfileSchema>
 type CommEmailData = z.infer<typeof commEmailSchema>
 
 // 選單的 value 格式：'none' | 'other' | 'church:<id>'
@@ -60,7 +61,7 @@ export default function ProfileForm({ user, activeChurches, linkedProviders }: P
     ...(user.currentChurch && !user.currentChurch.isActive ? [user.currentChurch] : []),
   ]
 
-  const profileForm = useForm<ProfileData>({
+  const profileForm = useForm<ProfileInput, unknown, ProfileData>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
       realName: user.realName,

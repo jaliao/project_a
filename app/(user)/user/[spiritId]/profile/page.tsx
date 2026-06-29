@@ -73,6 +73,7 @@ export default async function ProfilePage({ searchParams }: Props) {
           phone: user.phone ?? '',
           address: user.address ?? '',
           gender: user.gender,
+          birthYear: user.birthYear,
           displayNameMode: user.displayNameMode,
           commEmail: user.commEmail ?? user.email,
           isCommVerified: user.isCommVerified,

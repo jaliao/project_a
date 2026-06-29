@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.96（2026-06-28）
+> 自動產生，版本 0.1.99（2026-06-29）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -33,7 +33,7 @@
 
 ```
 app/
-├── (auth)/          # 公開路由：login, register, forgot/reset-password
+├── (auth)/          # 公開路由：login, register, forgot/reset-password, recover-account（找回帳號）
 ├── (user)/          # 已登入路由群組（共用 Topbar layout）
 │   ├── layout.tsx   # Topbar 包裝層（含未讀通知數 server fetch；profile completion guard；傳遞 roles/spiritId 給 Topbar）
 │   ├── dashboard/       # redirect → /user/{id}（舊書籤相容）
@@ -42,6 +42,7 @@ app/
 │   │   ├── course-sessions/ # 開課管理（全站所有開課；搜尋 + 篩選；另開視窗；前 30 筆；每筆 inline 狀態下拉變更狀態）
 │   │   ├── members/         # 會員管理清單（搜尋 + 性別/身分/教會篩選；無條件不列清單；每頁 30 筆翻頁；重設密碼 + 查看詳情）
 │   │   ├── members/[id]/    # 會員詳情（Tabs：基本資料含所屬教會/學習階層）
+│   │   ├── members/inactive/ # 未啟用會員清單（lastLoginAt 為 null；管理者限定）
 │   │   ├── churches/        # redirect → /admin/settings?tab=churches（舊路由相容）
 │   │   └── settings/        # 系統設定 Tabs（基本設定：hierarchy_depth superadmin only；教會代碼維護：admin+；課程目錄管理：admin+）
 │   ├── user/[id]/       # 學員專屬頁面：基本資料（姓名、身分標籤、已完成課程）+ 本人功能單元
@@ -182,6 +183,7 @@ realName      String?
 englishName   String?（英文名稱）
 nickname      String?（自訂暱稱，最多 20 字）
 gender        Gender（male | female | unspecified，預設 unspecified）
+birthYear     Int?（出生年，西元 4 位數；onboarding 必填、可於個人資料維護）
 displayNameMode DisplayNameMode（nickname | nickname_zh | nickname_en，預設 nickname）
 phone         String?
 address       String?
@@ -362,6 +364,9 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260629-002` — 找回帳號（灌檔/未登入會員自助）：公開 `/recover-account` 流程——中文名字查未啟用帳號（`lastLoginAt=null` 且 `isTempPassword`）→ 課程選擇題驗證身分（老師/同學，正解取自 `InviteEnrollment`，誘答取無關會員，4 選 1、限 3 次，HMAC 簽章 token 跨步驟防竄改）→ 確認/修改 email（唯一性檢查）→ `$transaction` 更新 email + 重產臨時密碼 + 白名單 upsert → `sendTempPasswordEmail`；首頁/登入頁加入口；後台 `/admin/members/inactive` 列出未登入過會員；同名多筆/查無/無題料一律導向管理員；新增 `lib/data/account-recovery.ts`、`lib/utils/recovery-token.ts`、`app/actions/account-recovery.ts`；無 DB schema 變更
+- `cr-spec-260629-001` — 首次登入新增必填會員資訊：`User` 新增 `birthYear Int?`（西元年，migration `add_user_birth_year`）；onboarding Step 2 改用 react-hook-form + `onboardingProfileSchema`，新增性別／出生年／所屬教會三項必填（性別須男/女、教會須清單或其他、出生年 1900~當年）；`completeOnboardingProfile` 一併寫入；個人資料頁新增出生年維護（`updateProfileSchema` 加 `birthYear`、可空）；放行條件維持 `realName && phone` 不強制既有會員回填
+- `cr-spec-260628-007` — 結業資訊權限收斂：課程詳情頁「結業資訊」區塊顯示條件加入身分判定（`canTeachAny`），改為僅管理者（admin/superadmin）與講師（teacher_1~3）可見，一般會員/已報名學員不再顯示（純前端條件、無資料模型/路由變更）
 - `cr-spec-260623-004` — lint 基線修正：`CourseSessionForm` dev 預設日期改以 lazy `useState` 初始化器於 mount 計算一次，移除 render 期間 `Date.now()` 呼叫，消除 `react-hooks/purity` 2 errors（行為不變、無資料模型/路由變更）
 - `cr-spec-260622-002` — 會員活躍度追蹤：`User` 新增 `previousLoginAt`（migration `add_previous_login_at`）；`lib/auth.ts` `signIn` callback 於登入成功時以原子 SQL 平移登入時間（try/catch 不阻斷）；`getMemberDetail`／`exportMembers` 補 `previousLoginAt`/`isTempPassword`/`hasPassword`（由 `passwordHash` 推導布林、不外流雜湊）；會員詳情頁新增「活躍度」區（最後/上次登入、首次登入、首次補填、臨時密碼狀態），Excel 匯出補對應四欄
 - `cr-spec-260323-001` — 基礎架構建立

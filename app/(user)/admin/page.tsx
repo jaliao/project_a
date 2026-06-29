@@ -15,6 +15,7 @@ import {
   IconSchool,
   IconPackage,
   IconUsers,
+  IconUserExclamation,
   IconSettings,
 } from '@tabler/icons-react'
 
@@ -51,6 +52,13 @@ const ADMIN_FEATURES = [
     description: '查看會員資料與重設密碼',
     icon: IconUsers,
     href: '/admin/members',
+    superadminOnly: false,
+  },
+  {
+    title: '未啟用會員',
+    description: '查詢從未登入過的會員',
+    icon: IconUserExclamation,
+    href: '/admin/members/inactive',
     superadminOnly: false,
   },
   {

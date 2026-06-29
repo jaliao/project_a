@@ -25,6 +25,8 @@ const PUBLIC_PATHS = [
   '/forgot-password',
   '/reset-password',
   '/change-password',
+  // 找回帳號（灌檔且未登入過的會員自助）：免登入可見
+  '/recover-account',
   '/onboarding',
   '/api/auth',
   // ECPay 門市選擇 callback：ECPay 跨站 POST 回傳不帶 session cookie，須免登入放行

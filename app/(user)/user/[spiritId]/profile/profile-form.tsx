@@ -28,6 +28,7 @@ type ProfileFormProps = {
     phone: string
     address: string
     gender: 'male' | 'female' | 'unspecified'
+    birthYear: number | null
     displayNameMode: 'nickname' | 'nickname_zh' | 'nickname_en'
     commEmail: string
     isCommVerified: boolean
@@ -41,7 +42,9 @@ type ProfileFormProps = {
   spiritId: string
 }
 
-type ProfileData = z.infer<typeof updateProfileSchema>
+// 表單輸入型別（birthYear 經 zod 轉換，輸入與輸出型別不同）
+type ProfileInput = z.input<typeof updateProfileSchema>
+type ProfileData = z.output<typeof updateProfileSchema>
 type CommEmailData = z.infer<typeof commEmailSchema>
 
 // 選單的 value 格式：'none' | 'other' | 'church:<id>'
@@ -61,7 +64,7 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
     ...(user.currentChurch && !user.currentChurch.isActive ? [user.currentChurch] : []),
   ]
 
-  const profileForm = useForm<ProfileData>({
+  const profileForm = useForm<ProfileInput, unknown, ProfileData>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
       realName: user.realName,
@@ -70,6 +73,7 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
       phone: user.phone,
       address: user.address,
       gender: user.gender,
+      birthYear: user.birthYear,
       displayNameMode: user.displayNameMode,
       churchType: user.churchType,
       churchId: user.churchId ?? undefined,
@@ -108,6 +112,7 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
       fd.set('phone', data.phone ?? '')
       fd.set('address', data.address ?? '')
       fd.set('gender', data.gender)
+      fd.set('birthYear', data.birthYear != null ? String(data.birthYear) : '')
       fd.set('displayNameMode', data.displayNameMode)
       fd.set('churchType', data.churchType)
       fd.set('churchId', data.churchId ? String(data.churchId) : '')
@@ -228,6 +233,22 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
           <div className="rounded-md bg-muted px-3 py-2 text-sm">
             <span className="text-muted-foreground">顯示名稱預覽：</span>
             <span className="font-medium ml-1">{displayNamePreview}</span>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">出生年（西元）</label>
+            <input
+              {...profileForm.register('birthYear')}
+              type="number"
+              inputMode="numeric"
+              min={1900}
+              max={new Date().getFullYear()}
+              placeholder={`例：1990（選填）`}
+              className="w-full rounded-md border px-3 py-2"
+              disabled={isPending}
+            />
+            {profileForm.formState.errors.birthYear && (
+              <p className="text-sm text-red-500 mt-1">{profileForm.formState.errors.birthYear.message}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">手機號碼</label>

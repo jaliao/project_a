@@ -20,9 +20,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { changePasswordSchema } from '@/lib/schemas/auth'
+import { onboardingProfileSchema } from '@/lib/schemas/profile'
 import { changeTempPassword, completeOnboardingProfile } from '@/app/actions/auth'
 
 type PasswordForm = z.infer<typeof changePasswordSchema>
+// 表單輸入型別（birthYear 經 zod 轉換，輸入與輸出型別不同）
+type OnboardingProfileInput = z.input<typeof onboardingProfileSchema>
+type OnboardingProfileForm = z.output<typeof onboardingProfileSchema>
+
+export type OnboardingChurch = { id: number; name: string }
 
 // ── 步驟進度指示 ───────────────────────────────
 function StepIndicator({ current, total }: { current: number; total: number }) {
@@ -160,31 +166,59 @@ function Step1Password({ onSuccess }: { onSuccess: (spiritId: string) => void })
 }
 
 // ── Step 2：填寫基本資料 ───────────────────────
-function Step2Profile({ onSuccess }: { onSuccess: () => void }) {
+// 性別、出生年、所屬教會皆必填（首次登入）
+function Step2Profile({ churches, onSuccess }: { churches: OnboardingChurch[]; onSuccess: () => void }) {
   const [isPending, startTransition] = useTransition()
-  const [realName, setRealName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [errors, setErrors] = useState<{ realName?: string; phone?: string }>({})
+  // 教會選單 value 格式：'' | 'other' | 'church:<id>'
+  const [churchSelect, setChurchSelect] = useState('')
 
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const errs: typeof errors = {}
-    if (!realName.trim()) errs.realName = '請輸入真實姓名'
-    if (!phone.trim()) errs.phone = '請輸入手機號碼'
-    if (Object.keys(errs).length) { setErrors(errs); return }
-    setErrors({})
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<OnboardingProfileInput, unknown, OnboardingProfileForm>({
+    resolver: zodResolver(onboardingProfileSchema),
+  })
 
+  function handleChurchSelectChange(val: string) {
+    setChurchSelect(val)
+    if (val === 'other') {
+      setValue('churchType', 'other')
+      setValue('churchId', null)
+    } else if (val.startsWith('church:')) {
+      setValue('churchType', 'church')
+      setValue('churchId', parseInt(val.replace('church:', ''), 10))
+      setValue('churchOther', '')
+    } else {
+      // 空值：清掉 churchType 讓必填驗證攔截
+      setValue('churchType', undefined as unknown as 'church')
+      setValue('churchId', null)
+    }
+  }
+
+  const onSubmit = (data: OnboardingProfileForm) => {
     startTransition(async () => {
-      const formData = new FormData()
-      formData.set('realName', realName.trim())
-      formData.set('phone', phone.trim())
-      const result = await completeOnboardingProfile(formData)
+      const fd = new FormData()
+      fd.set('realName', data.realName.trim())
+      fd.set('phone', data.phone.trim())
+      fd.set('gender', data.gender)
+      fd.set('birthYear', String(data.birthYear))
+      fd.set('churchType', data.churchType)
+      fd.set('churchId', data.churchId ? String(data.churchId) : '')
+      fd.set('churchOther', data.churchOther ?? '')
+      const result = await completeOnboardingProfile(fd)
       if (result.success) {
         onSuccess()
       } else {
         const errMsg =
           result.errors?.realName?.[0] ??
           result.errors?.phone?.[0] ??
+          result.errors?.gender?.[0] ??
+          result.errors?.birthYear?.[0] ??
+          result.errors?.churchType?.[0] ??
+          result.errors?.churchId?.[0] ??
+          result.errors?.churchOther?.[0] ??
           result.message ??
           '儲存失敗'
         toast.error(errMsg)
@@ -192,8 +226,11 @@ function Step2Profile({ onSuccess }: { onSuccess: () => void }) {
     })
   }
 
+  const currentYear = new Date().getFullYear()
+  const showOther = churchSelect === 'other'
+
   return (
-    <form onSubmit={onSubmit} className="grid gap-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
       <div className="grid gap-1.5">
         <Label htmlFor="ob-realName">真實姓名</Label>
         <Input
@@ -201,10 +238,9 @@ function Step2Profile({ onSuccess }: { onSuccess: () => void }) {
           placeholder="請輸入您的真實姓名"
           autoComplete="name"
           disabled={isPending}
-          value={realName}
-          onChange={e => setRealName(e.target.value)}
+          {...register('realName')}
         />
-        {errors.realName && <p className="text-xs text-destructive">{errors.realName}</p>}
+        {errors.realName && <p className="text-xs text-destructive">{errors.realName.message}</p>}
       </div>
 
       <div className="grid gap-1.5">
@@ -215,10 +251,72 @@ function Step2Profile({ onSuccess }: { onSuccess: () => void }) {
           placeholder="例：0912345678"
           autoComplete="tel"
           disabled={isPending}
-          value={phone}
-          onChange={e => setPhone(e.target.value)}
+          {...register('phone')}
         />
-        {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+        {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        {/* 性別（必填） */}
+        <div className="grid gap-1.5">
+          <Label htmlFor="ob-gender">性別</Label>
+          <select
+            id="ob-gender"
+            disabled={isPending}
+            defaultValue=""
+            className="h-9 rounded-md border px-3 py-1 text-sm bg-background"
+            {...register('gender')}
+          >
+            <option value="" disabled>請選擇</option>
+            <option value="male">男</option>
+            <option value="female">女</option>
+          </select>
+          {errors.gender && <p className="text-xs text-destructive">{errors.gender.message}</p>}
+        </div>
+
+        {/* 出生年（必填，西元） */}
+        <div className="grid gap-1.5">
+          <Label htmlFor="ob-birthYear">出生年（西元）</Label>
+          <Input
+            id="ob-birthYear"
+            type="number"
+            inputMode="numeric"
+            placeholder={`例：1990（1900~${currentYear}）`}
+            min={1900}
+            max={currentYear}
+            disabled={isPending}
+            {...register('birthYear')}
+          />
+          {errors.birthYear && <p className="text-xs text-destructive">{errors.birthYear.message}</p>}
+        </div>
+      </div>
+
+      {/* 所屬教會/單位（必填） */}
+      <div className="grid gap-1.5">
+        <Label htmlFor="ob-church">所屬教會/單位</Label>
+        <select
+          id="ob-church"
+          disabled={isPending}
+          value={churchSelect}
+          onChange={(e) => handleChurchSelectChange(e.target.value)}
+          className="h-9 rounded-md border px-3 py-1 text-sm bg-background"
+        >
+          <option value="" disabled>請選擇</option>
+          {churches.map((c) => (
+            <option key={c.id} value={`church:${c.id}`}>{c.name}</option>
+          ))}
+          <option value="other">其他</option>
+        </select>
+        {showOther && (
+          <Input
+            placeholder="請填寫教會/單位名稱"
+            disabled={isPending}
+            {...register('churchOther')}
+          />
+        )}
+        {errors.churchType && <p className="text-xs text-destructive">{errors.churchType.message}</p>}
+        {errors.churchId && <p className="text-xs text-destructive">{errors.churchId.message}</p>}
+        {errors.churchOther && <p className="text-xs text-destructive">{errors.churchOther.message}</p>}
       </div>
 
       <p className="text-xs text-muted-foreground">其餘資料可於個人資料頁補填。</p>
@@ -261,9 +359,10 @@ function Step3Welcome({ spiritId }: { spiritId: string }) {
 interface OnboardingWizardProps {
   initialStep: number
   initialSpiritId: string
+  churches: OnboardingChurch[]
 }
 
-export function OnboardingWizard({ initialStep, initialSpiritId }: OnboardingWizardProps) {
+export function OnboardingWizard({ initialStep, initialSpiritId, churches }: OnboardingWizardProps) {
   const [step, setStep] = useState(initialStep)
   const [spiritId, setSpiritId] = useState(initialSpiritId)
 
@@ -333,7 +432,7 @@ export function OnboardingWizard({ initialStep, initialSpiritId }: OnboardingWiz
               />
             )}
             {step === 2 && (
-              <Step2Profile onSuccess={() => setStep(3)} />
+              <Step2Profile churches={churches} onSuccess={() => setStep(3)} />
             )}
             {step === 3 && (
               <Step3Welcome spiritId={spiritId} />

@@ -78,6 +78,7 @@ model User {
   isPhoneVerified Boolean         @default(false)
   address         String?
   gender          Gender          @default(unspecified)
+  birthYear       Int? // 出生年（西元年 4 位數；既有會員可為 null）
   displayNameMode DisplayNameMode @default(nickname)
 
   // 學習等級（0=未完成任何課程；1~4=已完成啟動靈人對應等級）

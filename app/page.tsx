@@ -93,12 +93,19 @@ export default async function HomePage() {
           </div>
 
           {/* CTA */}
-          <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+          <div className="flex flex-col items-center gap-3">
             <Link
               href="/login"
               className={cn(buttonVariants({ size: 'lg' }), 'px-10')}
             >
               開始啟動
+            </Link>
+            {/* 灌檔且未登入過的會員：找回帳號 */}
+            <Link
+              href="/recover-account"
+              className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+            >
+              還沒設定過帳號？找回我的帳號
             </Link>
           </div>
 

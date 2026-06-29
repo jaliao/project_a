@@ -24,6 +24,7 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
 } from '@/lib/schemas/auth'
+import { onboardingProfileSchema } from '@/lib/schemas/profile'
 import {
   getValidResetToken,
   markTokenUsed,
@@ -177,19 +178,38 @@ export async function completeOnboardingProfile(
     return { success: false, message: '請先登入' }
   }
 
-  const realName = (formData.get('realName') as string | null)?.trim() ?? ''
-  const phone = (formData.get('phone') as string | null)?.trim() ?? ''
+  const churchIdRaw = formData.get('churchId')
+  const parsed = onboardingProfileSchema.safeParse({
+    realName: formData.get('realName'),
+    phone: formData.get('phone'),
+    gender: formData.get('gender'),
+    birthYear: formData.get('birthYear'),
+    churchType: formData.get('churchType'),
+    churchId: churchIdRaw ? Number(churchIdRaw) : null,
+    churchOther: formData.get('churchOther'),
+  })
 
-  if (!realName) {
-    return { success: false, errors: { realName: ['請輸入真實姓名'] } }
+  if (!parsed.success) {
+    return {
+      success: false,
+      message: '部分欄位填寫有誤，請檢查後再試',
+      errors: parsed.error.flatten().fieldErrors,
+    }
   }
-  if (!phone) {
-    return { success: false, errors: { phone: ['請輸入手機號碼'] } }
-  }
+
+  const { realName, phone, gender, birthYear, churchType, churchId, churchOther } = parsed.data
 
   await prisma.user.update({
     where: { id: session.user.id },
-    data: { realName, phone },
+    data: {
+      realName,
+      phone,
+      gender,
+      birthYear,
+      churchType,
+      churchId: churchType === 'church' ? (churchId ?? null) : null,
+      churchOther: churchType === 'other' ? (churchOther?.trim() || null) : null,
+    },
   })
 
   return { success: true, message: '基本資料已儲存' }

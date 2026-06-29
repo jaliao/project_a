@@ -169,6 +169,17 @@ function AuthForm() {
         <GoogleIcon className="mr-2 h-4 w-4" />
         以 Google 帳號繼續
       </Button>
+
+      {/* 灌檔且未登入過的會員：找回帳號 */}
+      <p className="text-center text-xs text-muted-foreground">
+        還沒設定過帳號？{' '}
+        <Link
+          href="/recover-account"
+          className="font-medium underline underline-offset-4 hover:text-primary"
+        >
+          找回我的帳號
+        </Link>
+      </p>
     </div>
   )
 }

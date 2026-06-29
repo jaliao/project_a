@@ -36,6 +36,7 @@ export async function updateProfile(
     address: formData.get('address'),
     englishName: formData.get('englishName'),
     gender: formData.get('gender') || 'unspecified',
+    birthYear: formData.get('birthYear'),
     displayNameMode: formData.get('displayNameMode') || 'nickname',
     churchType: formData.get('churchType') || 'none',
     // FormData 取出為字串，需轉為數字（schema 期望 number）
@@ -62,6 +63,7 @@ export async function updateProfile(
       phone: parsed.data.phone || null,
       address: parsed.data.address || null,
       gender: parsed.data.gender,
+      birthYear: parsed.data.birthYear,
       displayNameMode: parsed.data.displayNameMode,
       churchType,
       churchId: churchType === 'church' ? (churchId ?? null) : null,
