@@ -272,6 +272,16 @@ export type ProjectStatus = keyof typeof PROJECT_STATUSES
 - 呼叫端查詢 `User` 時須 select `email`、`commEmail`、`isCommVerified`，再傳解析結果給 mailer。
 - **例外**：通訊 Email 驗證信（`sendCommEmailVerification`）仍寄至「待驗證的 `commEmail`」，不套用此規則（否則無法完成驗證）。
 
+### 11. 路由存取與分組（免登入頁面/API 管理）
+- **單一事實來源**：免登入頁面/API 與訪客頁一律宣告於 `lib/auth/route-access.ts`（`PUBLIC_PAGES` / `PUBLIC_APIS` / `GUEST_PAGES`，每筆附 `reason`）。`middleware.ts` 與 `app/(user)/layout.tsx` 共用其 `isPublicRoute` / `isGuestRoute`，**禁止**在他處另列免登入路由清單。
+  - ⚠️ 此模組由 Edge runtime 載入：僅可用純字串/正規表達式，不得引入 `prisma`、Node-only API 或重量相依。
+  - i18n 預留：比對前以 `stripLocale()` 剝除可能的 `/<locale>` 前綴。
+- **依權限層級分組（route group，URL 不變），group `layout.tsx` 即守衛**：
+  - `app/(guest)/`：免登入頁（首頁、登入/註冊/找回帳號、terms/privacy、以及自行 `auth()` 處理的 onboarding/change-password/account-suspended）。layout 為薄 passthrough，**不可**盲目把已登入者導走。
+  - `app/(user)/`：需登入頁；layout 做登入 + 暫停 + 臨時密碼 + profile 完整度守衛 + Topbar。
+  - `app/(admin)/`：需 admin 身分；layout 在 `(user)` 守衛之上再加 `canAccessAdmin`。**後台各頁不得自行重複** session / `canAccessAdmin` 轉導判定。
+- **新增免登入頁面/API 時**：①在 `lib/auth/route-access.ts` 註冊（附 reason）；②頁面放入對應 `(guest)`／`(user)`／`(admin)` group。新增受 admin 保護頁只需放進 `(admin)/`，不需在頁面內寫守衛。
+
 ## Database Schema Notes
 
 ### User Models (user.prisma)

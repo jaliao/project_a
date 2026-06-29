@@ -7,9 +7,6 @@
  */
 
 import type { Metadata } from 'next'
-import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
-import { canAccessAdmin } from '@/lib/auth-roles'
 import { getDashboardStats } from '@/lib/data/dashboard'
 
 export const dynamic = 'force-dynamic'
@@ -28,10 +25,7 @@ function StatCard({ label, value }: { label: string; value: number }) {
 }
 
 export default async function AdminDashboardPage() {
-  const session = await auth()
-  if (!session?.user) redirect('/login')
-  if (!canAccessAdmin(session.user.roles)) redirect('/')
-
+  // 守衛（登入 + admin 身分）由 (admin)/layout.tsx 統一處理
   const stats = await getDashboardStats()
 
   return (

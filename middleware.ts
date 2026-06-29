@@ -16,35 +16,7 @@
 
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { isGuestCoursePath } from '@/lib/utils/guest-paths'
-
-// 不需要登入的路徑
-const PUBLIC_PATHS = [
-  '/login',
-  '/register',
-  '/forgot-password',
-  '/reset-password',
-  '/change-password',
-  // 找回帳號（灌檔且未登入過的會員自助）：免登入可見
-  '/recover-account',
-  '/onboarding',
-  '/api/auth',
-  // ECPay 門市選擇 callback：ECPay 跨站 POST 回傳不帶 session cookie，須免登入放行
-  '/api/ecpay/store-callback',
-  // 被暫停會員登出轉址（清 session 後導向 /account-suspended）
-  '/api/suspended-logout',
-  // 帳號已暫停獨立頁（免登入可見）
-  '/account-suspended',
-  '/terms',
-  '/privacy',
-  '/',
-]
-
-function isPublic(pathname: string): boolean {
-  return PUBLIC_PATHS.some(
-    (p) => pathname === p || pathname.startsWith(p + '/')
-  )
-}
+import { isPublicRoute, isGuestRoute } from '@/lib/auth/route-access'
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
@@ -54,11 +26,11 @@ export function middleware(req: NextRequest) {
   requestHeaders.set('x-pathname', pathname)
   const pass = () => NextResponse.next({ request: { headers: requestHeaders } })
 
-  // 公開路由直接放行
-  if (isPublic(pathname)) return pass()
+  // 公開路由直接放行（單一事實來源：lib/auth/route-access）
+  if (isPublicRoute(pathname)) return pass()
 
-  // 課程詳情頁：未登入也放行，由頁面顯示登入提示卡片（子路徑仍受保護）
-  if (isGuestCoursePath(pathname)) return pass()
+  // 訪客頁（如課程詳情）：未登入也放行，由頁面顯示登入提示卡片（子路徑仍受保護）
+  if (isGuestRoute(pathname)) return pass()
 
   // 檢查 NextAuth session cookie（HTTPS 環境名稱不同）
   const sessionCookie =

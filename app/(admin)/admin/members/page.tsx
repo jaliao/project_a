@@ -8,10 +8,8 @@
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
-import { auth } from '@/lib/auth'
-import { canAccessAdmin, ROLE_LABELS } from '@/lib/auth-roles'
+import { ROLE_LABELS } from '@/lib/auth-roles'
 import type { Gender, UserRole } from '@prisma/client'
 import { searchMembers, hasAnyMemberFilter, type MemberFilters } from '@/lib/data/members'
 import { getActiveChurches } from '@/lib/data/churches'
@@ -34,9 +32,7 @@ export default async function AdminMembersPage({
 }: {
   searchParams: Promise<{ q?: string; gender?: string; role?: string; church?: string; page?: string }>
 }) {
-  const session = await auth()
-  if (!session?.user) redirect('/login')
-  if (!canAccessAdmin(session.user.roles)) redirect('/')
+  // 守衛（登入 + admin 身分）由 (admin)/layout.tsx 統一處理
 
   const sp = await searchParams
   const filters: MemberFilters = {

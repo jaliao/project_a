@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.99（2026-06-29）
+> 自動產生，版本 0.1.100（2026-06-29）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -33,30 +33,37 @@
 
 ```
 app/
-├── (auth)/          # 公開路由：login, register, forgot/reset-password, recover-account（找回帳號）
-├── (user)/          # 已登入路由群組（共用 Topbar layout）
-│   ├── layout.tsx   # Topbar 包裝層（含未讀通知數 server fetch；profile completion guard；傳遞 roles/spiritId 給 Topbar）
+# 路由依「權限層級」分組（route group () 不影響 URL），各 group layout 即守衛；
+# 免登入頁面/API 的單一事實來源為 lib/auth/route-access.ts（middleware 與 layout 共用）
+├── (guest)/         # 免登入群組（薄 passthrough layout，不擋已登入者）
+│   ├── page.tsx         # 行銷首頁（/）
+│   ├── login, register, forgot-password, reset-password, recover-account（找回帳號）
+│   ├── terms, privacy, account-suspended
+│   ├── onboarding/      # 首次登入 Wizard（三步驟；頁面自行 auth 守衛）
+│   └── change-password/ # 已登入用戶主動變更密碼（頁面自行 auth 守衛）
+├── (user)/          # 需登入群組
+│   ├── layout.tsx   # 登入 + 暫停 + 臨時密碼 + profile completion 守衛 + Topbar
 │   ├── dashboard/       # redirect → /user/{id}（舊書籤相容）
-│   ├── admin/           # 管理後台：功能按鈕網格（儀錶板/課程/授課/教材/會員/教會/系統設定）
-│   │   ├── dashboard/       # 後台儀錶板（統計卡片 7 個：總會員數/靈人講師資格/豐盛講師資格/得勝講師資格/開課中/進行中/已結業；圖表已移除）
-│   │   ├── course-sessions/ # 開課管理（全站所有開課；搜尋 + 篩選；另開視窗；前 30 筆；每筆 inline 狀態下拉變更狀態）
-│   │   ├── members/         # 會員管理清單（搜尋 + 性別/身分/教會篩選；無條件不列清單；每頁 30 筆翻頁；重設密碼 + 查看詳情）
-│   │   ├── members/[id]/    # 會員詳情（Tabs：基本資料含所屬教會/學習階層）
-│   │   ├── members/inactive/ # 未啟用會員清單（lastLoginAt 為 null；管理者限定）
-│   │   ├── churches/        # redirect → /admin/settings?tab=churches（舊路由相容）
-│   │   └── settings/        # 系統設定 Tabs（基本設定：hierarchy_depth superadmin only；教會代碼維護：admin+；課程目錄管理：admin+）
-│   ├── user/[id]/       # 學員專屬頁面：基本資料（姓名、身分標籤、已完成課程）+ 本人功能單元
+│   ├── user/[id]/       # 學員專屬頁面：基本資料 + 本人功能單元
 │   ├── user/[id]/courses/ # 我的開課列表（本人專屬，Spirit ID 小寫路由）
 │   ├── course-sessions/ # 開課查詢頁（保留，將逐步以 /user/[id]/courses 取代）
 │   ├── notifications/   # 通知歷史頁面（分頁，每頁 20 則）
-│   ├── admin/materials/ # 教材申請管理（管理者查看、確認已寄送）
-│   ├── course/[id]/     # 課程詳情頁（授課老師、學員名單、取消課程、教材申請）
+│   ├── course/[id]/     # 課程詳情頁（訪客可達，由 GUEST_PAGES 放行）
 │   ├── course/[id]/graduate/  # 課程結業表單頁（填寫→預覽→送出）
 │   ├── learning/        # 學習紀錄頁面
 │   ├── profile/         # 舊路由相容：server redirect → /user/{spiritId}/profile
 │   └── user/[spiritId]/profile/  # 個人資料維護（新路由，含 profile-form.tsx）
-├── onboarding/      # 首次登入 Onboarding Wizard（三步驟：設定密碼→基本資料→歡迎）
-├── change-password/ # 已登入用戶主動變更密碼（Profile 頁入口）
+├── (admin)/         # 需 admin 身分群組（URL 仍為 /admin/*）
+│   ├── layout.tsx   # (user) 守衛 + canAccessAdmin；後台各頁不再自行守衛
+│   └── admin/           # 管理後台：功能網格（儀錶板/課程/授課/教材/會員/教會/系統設定）
+│       ├── dashboard/       # 後台儀錶板（統計卡片 7 個）
+│       ├── course-sessions/ # 開課管理（全站；搜尋 + 篩選；inline 狀態變更）
+│       ├── members/         # 會員管理清單（搜尋/篩選/翻頁/重設密碼/查看詳情）
+│       ├── members/[id]/    # 會員詳情（Tabs：基本資料/學習階層/講師身分/特殊設定）
+│       ├── members/inactive/ # 未啟用會員清單（lastLoginAt 為 null）
+│       ├── materials/       # 教材申請管理（查看、確認已寄送、出貨單列印）
+│       ├── churches/        # redirect → /admin/settings?tab=churches（舊路由相容）
+│       └── settings/        # 系統設定 Tabs（hierarchy_depth/教會/課程目錄）
 ├── api/auth/        # NextAuth handlers
 ├── api/ecpay/
 │   ├── store-map/       # GET：產生 ECPay MapCVS auto-submit form（Mock 模式支援）
@@ -364,6 +371,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260629-003` — Middleware/路由存取架構重構：新增 `lib/auth/route-access.ts` 單一事實來源（`PUBLIC_PAGES`/`PUBLIC_APIS`/`GUEST_PAGES` + `isPublicRoute`/`isGuestRoute`/`stripLocale`，Edge-safe），middleware 與 `(user)/layout` 共用；移除 `lib/utils/guest-paths.ts`；補 `/api/verify-email` 為公開；依權限層級重組 route group（URL 不變）：`(guest)`（首頁/登入/註冊/找回/terms/privacy/onboarding/change-password/account-suspended）、`(user)`、新增 `(admin)`（`(admin)/layout.tsx` 統一 `canAccessAdmin` 守衛，移除 8 後台頁重複守衛）；慣例寫入 `CLAUDE.md` 第 11 條
 - `cr-spec-260629-002` — 找回帳號（灌檔/未登入會員自助）：公開 `/recover-account` 流程——中文名字查未啟用帳號（`lastLoginAt=null` 且 `isTempPassword`）→ 課程選擇題驗證身分（老師/同學，正解取自 `InviteEnrollment`，誘答取無關會員，4 選 1、限 3 次，HMAC 簽章 token 跨步驟防竄改）→ 確認/修改 email（唯一性檢查）→ `$transaction` 更新 email + 重產臨時密碼 + 白名單 upsert → `sendTempPasswordEmail`；首頁/登入頁加入口；後台 `/admin/members/inactive` 列出未登入過會員；同名多筆/查無/無題料一律導向管理員；新增 `lib/data/account-recovery.ts`、`lib/utils/recovery-token.ts`、`app/actions/account-recovery.ts`；無 DB schema 變更
 - `cr-spec-260629-001` — 首次登入新增必填會員資訊：`User` 新增 `birthYear Int?`（西元年，migration `add_user_birth_year`）；onboarding Step 2 改用 react-hook-form + `onboardingProfileSchema`，新增性別／出生年／所屬教會三項必填（性別須男/女、教會須清單或其他、出生年 1900~當年）；`completeOnboardingProfile` 一併寫入；個人資料頁新增出生年維護（`updateProfileSchema` 加 `birthYear`、可空）；放行條件維持 `realName && phone` 不強制既有會員回填
 - `cr-spec-260628-007` — 結業資訊權限收斂：課程詳情頁「結業資訊」區塊顯示條件加入身分判定（`canTeachAny`），改為僅管理者（admin/superadmin）與講師（teacher_1~3）可見，一般會員/已報名學員不再顯示（純前端條件、無資料模型/路由變更）

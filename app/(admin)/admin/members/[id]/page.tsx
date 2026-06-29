@@ -8,10 +8,9 @@
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { redirect, notFound } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import {
-  canAccessAdmin,
   isSuperadmin,
   TEACHER_ROLE_BY_CATALOG,
   BOOK_LABEL_BY_TEACHER_ROLE,
@@ -61,9 +60,9 @@ export default async function MemberDetailPage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  // 登入 + admin 守衛由 (admin)/layout.tsx 處理；此處 session 供身分權限判定
   const session = await auth()
-  if (!session?.user) redirect('/login')
-  if (!canAccessAdmin(session.user.roles)) redirect('/')
+  if (!session?.user) notFound()
 
   const { id } = await params
   const [member, depthStr] = await Promise.all([

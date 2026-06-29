@@ -1,16 +1,13 @@
 /*
  * ----------------------------------------------
  * 後台開課管理頁
- * 2026-04-03
- * app/(user)/admin/course-sessions/page.tsx
+ * 2026-04-03 (Updated: 2026-06-29)
+ * app/(admin)/admin/course-sessions/page.tsx
  * ----------------------------------------------
  */
 
 import type { Metadata } from 'next'
-import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
-import { auth } from '@/lib/auth'
-import { canAccessAdmin } from '@/lib/auth-roles'
 import { getAllCourseSessionsAdmin } from '@/lib/data/course-sessions'
 import { getAllCourses } from '@/lib/data/course-catalog'
 import { CourseSessionCard } from '@/components/course-session/course-session-card'
@@ -48,10 +45,7 @@ export default async function AdminCourseSessionsPage({
     endDate?: string
   }>
 }) {
-  const session = await auth()
-  if (!session?.user) redirect('/login')
-  if (!canAccessAdmin(session.user.roles)) redirect('/')
-
+  // 守衛（登入 + admin 身分）由 (admin)/layout.tsx 統一處理
   const { q, catalogId, status, startDate, endDate } = await searchParams
 
   const validStatus = ['recruiting', 'started', 'completed', 'cancelled'].includes(status ?? '')

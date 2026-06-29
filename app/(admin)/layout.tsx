@@ -1,8 +1,11 @@
 /*
  * ----------------------------------------------
- * (user) Layout - 已登入使用者共用佈局
- * 2026-03-23 (Updated: 2026-04-07)
- * app/(user)/layout.tsx
+ * (admin) Layout - 後台群組共用佈局與守衛
+ * 2026-06-29
+ * app/(admin)/layout.tsx
+ *
+ * 統一後台守衛：登入 → 暫停 → 臨時密碼 → profile 完整度 → admin 身分。
+ * 後台各頁不再各自重複 canAccessAdmin / session 檢查。
  * ----------------------------------------------
  */
 
@@ -10,53 +13,43 @@ import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { canAccessAdmin } from '@/lib/auth-roles'
 import { Topbar } from '@/components/layout/topbar'
 import { getUnreadNotificationCount } from '@/lib/data/notification'
-import { isGuestRoute } from '@/lib/auth/route-access'
 
-export default async function UserLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  // auth() 完整版：JWT callback 讀 DB，isTempPassword / isProfileComplete 永遠是最新值
+  // auth() 完整版：JWT callback 讀 DB，isTempPassword / roles 永遠是最新值
   const session = await auth()
   const userId = session?.user?.id
+  if (!userId) redirect('/login')
 
   const pathname = (await headers()).get('x-pathname') ?? ''
 
-  // 未登入訪客存取課程詳情頁：不轉導，渲染精簡版面（無 Topbar），由頁面顯示登入提示卡片
-  if (!userId) {
-    if (isGuestRoute(pathname)) {
-      return (
-        <div className="min-h-screen flex flex-col">
-          <main className="flex-1 p-6">{children}</main>
-        </div>
-      )
-    }
-    redirect('/login')
-  }
-
-  // 被暫停會員：即時擋下（不等 token 過期）；經 route 清除 session 後導向暫停提示
+  // 被暫停會員：即時擋下
   const suspendCheck = await prisma.user.findUnique({
     where: { id: userId },
     select: { suspendedAt: true },
   })
   if (suspendCheck?.suspendedAt) redirect('/api/suspended-logout')
 
-  // 臨時密碼：強制完成 onboarding wizard
+  // 臨時密碼：強制完成 onboarding
   if (session.user?.isTempPassword) redirect('/onboarding')
 
-  // Profile 完整度：realName / phone 未填時導向個人資料頁
-  // ⚠️ 排除 Profile 頁本身，避免在該頁又被導回 → 無限迴圈（profile-completion-guard spec）
-  const onProfilePage = pathname.includes('/profile')
+  // Profile 完整度（與 (user) 一致；後台頁非 profile 頁）
   const requireCompletion = process.env.REQUIRE_PROFILE_COMPLETION !== 'false'
   const spiritId = session.user?.spiritId
-  if (requireCompletion && !session.user?.isProfileComplete && spiritId && !onProfilePage) {
+  if (requireCompletion && !session.user?.isProfileComplete && spiritId && !pathname.includes('/profile')) {
     redirect(`/user/${spiritId.toLowerCase()}/profile?incomplete=1`)
   }
 
-  const unreadCount = userId ? await getUnreadNotificationCount(userId) : 0
+  // 後台守衛：須具 admin / superadmin 身分
+  if (!canAccessAdmin(session.user?.roles)) redirect('/')
+
+  const unreadCount = await getUnreadNotificationCount(userId)
 
   return (
     <div className="min-h-screen flex flex-col">

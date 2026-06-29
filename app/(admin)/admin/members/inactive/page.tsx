@@ -10,9 +10,7 @@
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
-import { canAccessAdmin, ROLE_LABELS } from '@/lib/auth-roles'
+import { ROLE_LABELS } from '@/lib/auth-roles'
 import type { UserRole } from '@prisma/client'
 import { listInactiveMembers } from '@/lib/data/account-recovery'
 import { Badge } from '@/components/ui/badge'
@@ -32,10 +30,7 @@ function formatDate(d: Date): string {
 }
 
 export default async function InactiveMembersPage() {
-  const session = await auth()
-  if (!session?.user) redirect('/login')
-  if (!canAccessAdmin(session.user.roles)) redirect('/')
-
+  // 守衛（登入 + admin 身分）由 (admin)/layout.tsx 統一處理
   const members = await listInactiveMembers()
 
   return (

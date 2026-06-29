@@ -6,9 +6,7 @@
  * ----------------------------------------------
  */
 
-import { notFound, redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
-import { canAccessAdmin } from '@/lib/auth-roles'
+import { notFound } from 'next/navigation'
 import { getCourseOrderForPrint } from '@/lib/data/course-order'
 import { PrintButton } from './print-button'
 
@@ -24,11 +22,7 @@ export default async function PrintShippingOrderPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const session = await auth()
-  if (!session?.user) redirect('/login')
-
-  if (!canAccessAdmin(session.user.roles)) redirect('/')
-
+  // 守衛（登入 + admin 身分）由 (admin)/layout.tsx 統一處理
   const orderId = parseInt(id, 10)
   if (isNaN(orderId)) notFound()
 

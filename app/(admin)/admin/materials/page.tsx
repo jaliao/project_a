@@ -8,12 +8,9 @@
 
 export const dynamic = 'force-dynamic'
 
-import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { IconArrowLeft, IconPackage } from '@tabler/icons-react'
-import { auth } from '@/lib/auth'
-import { canAccessAdmin } from '@/lib/auth-roles'
 import { getAllCourseOrdersWithInvite } from '@/lib/data/course-order'
 import { getAdminSetting, REMITTANCE_ACCOUNT_KEY, REMITTANCE_ACCOUNT_DEFAULT } from '@/lib/data/admin-settings'
 import { MaterialOrderTable } from '@/components/admin/material-order-table'
@@ -23,10 +20,7 @@ export const metadata: Metadata = {
 }
 
 export default async function AdminMaterialsPage() {
-  const session = await auth()
-
-  // 僅 admin/superadmin 可存取
-  if (!canAccessAdmin(session?.user?.roles)) redirect('/dashboard')
+  // 守衛（登入 + admin 身分）由 (admin)/layout.tsx 統一處理
 
   const [orders, remittanceAccount] = await Promise.all([
     getAllCourseOrdersWithInvite(),
