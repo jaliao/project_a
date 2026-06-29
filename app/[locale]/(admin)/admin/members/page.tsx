@@ -66,6 +66,7 @@ export default async function AdminMembersPage({
           {active && result && (
             <>
               <span className="text-sm text-muted-foreground">共 {result.total} 筆</span>
+              {/* API 下載端點需用原生 <a>（非頁面導航） */}
               <a
                 href={`/api/admin/members/export${exportQs}`}
                 className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
@@ -74,6 +75,8 @@ export default async function AdminMembersPage({
               </a>
             </>
           )}
+          {/* API 下載端點需用原生 <a>（非頁面導航；i18n [locale] 下 lint 規則誤判） */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a
             href="/api/admin/members/export"
             className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"

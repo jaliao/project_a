@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.100（2026-06-29）
+> 自動產生，版本 0.1.101（2026-06-29）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -23,6 +23,7 @@
 | 樣式 | Tailwind CSS 4 + shadcn/ui (Radix UI) + Tabler Icons |
 | 認證 | NextAuth 5.0 (beta) — Google OAuth + Credentials |
 | ORM | Prisma 7.2.0 多檔案 schema |
+| 多語系 | next-intl 4（zh-TW 預設 / en / zh-CN；path-prefix as-needed；簡體由 OpenCC 自動產生） |
 | 資料庫 | PostgreSQL（Docker 開發，VPS3 生產） |
 | 運行環境 | Docker（standalone build） |
 | 工具 | date-fns 4、bcryptjs、Zod、React Hook Form、Sonner |
@@ -33,8 +34,11 @@
 
 ```
 app/
+# i18n：頁面路由全部位於 app/[locale]/ 之下（next-intl，zh-TW 預設無前綴 / en / zh-CN）；
+#       <html lang> 由 app/[locale]/layout.tsx 提供（已無 app/layout.tsx）；api/ 不在地化
 # 路由依「權限層級」分組（route group () 不影響 URL），各 group layout 即守衛；
 # 免登入頁面/API 的單一事實來源為 lib/auth/route-access.ts（middleware 與 layout 共用）
+├── [locale]/        # i18n 根：層下含 (guest)/(user)/(admin) 三群組
 ├── (guest)/         # 免登入群組（薄 passthrough layout，不擋已登入者）
 │   ├── page.tsx         # 行銷首頁（/）
 │   ├── login, register, forgot-password, reset-password, recover-account（找回帳號）
@@ -371,6 +375,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260629-004` — 多語系導入（基礎建設 + 範例切片）：導入 next-intl（`i18n/routing|request|navigation.ts`、`next-intl/plugin`），語言 zh-TW（預設無前綴）/ en / zh-CN（path-prefix as-needed）；頁面路由整批移至 `app/[locale]/`，`<html lang>` 由 `app/[locale]/layout.tsx` 提供（移除 `app/layout.tsx`）；middleware 改為 next-intl + 認證組合（沿用 `route-access`/`stripLocale`，補 x-pathname）；`messages/zh-TW.json`（來源）+ `en.json` + `zh-CN.json`（OpenCC 自動產生，`scripts/gen-zh-cn.mjs` + `gen:zh-cn`/`prebuild`）；缺 key 逐層回退繁體；新增語言切換器；範例切片＝登入頁（client `useTranslations` + server `getTranslations` metadata）+ Topbar；慣例寫入 CLAUDE.md 第 12 條。其餘 ~1,400 行字串依慣例漸進遷移
 - `cr-spec-260629-003` — Middleware/路由存取架構重構：新增 `lib/auth/route-access.ts` 單一事實來源（`PUBLIC_PAGES`/`PUBLIC_APIS`/`GUEST_PAGES` + `isPublicRoute`/`isGuestRoute`/`stripLocale`，Edge-safe），middleware 與 `(user)/layout` 共用；移除 `lib/utils/guest-paths.ts`；補 `/api/verify-email` 為公開；依權限層級重組 route group（URL 不變）：`(guest)`（首頁/登入/註冊/找回/terms/privacy/onboarding/change-password/account-suspended）、`(user)`、新增 `(admin)`（`(admin)/layout.tsx` 統一 `canAccessAdmin` 守衛，移除 8 後台頁重複守衛）；慣例寫入 `CLAUDE.md` 第 11 條
 - `cr-spec-260629-002` — 找回帳號（灌檔/未登入會員自助）：公開 `/recover-account` 流程——中文名字查未啟用帳號（`lastLoginAt=null` 且 `isTempPassword`）→ 課程選擇題驗證身分（老師/同學，正解取自 `InviteEnrollment`，誘答取無關會員，4 選 1、限 3 次，HMAC 簽章 token 跨步驟防竄改）→ 確認/修改 email（唯一性檢查）→ `$transaction` 更新 email + 重產臨時密碼 + 白名單 upsert → `sendTempPasswordEmail`；首頁/登入頁加入口；後台 `/admin/members/inactive` 列出未登入過會員；同名多筆/查無/無題料一律導向管理員；新增 `lib/data/account-recovery.ts`、`lib/utils/recovery-token.ts`、`app/actions/account-recovery.ts`；無 DB schema 變更
 - `cr-spec-260629-001` — 首次登入新增必填會員資訊：`User` 新增 `birthYear Int?`（西元年，migration `add_user_birth_year`）；onboarding Step 2 改用 react-hook-form + `onboardingProfileSchema`，新增性別／出生年／所屬教會三項必填（性別須男/女、教會須清單或其他、出生年 1900~當年）；`completeOnboardingProfile` 一併寫入；個人資料頁新增出生年維護（`updateProfileSchema` 加 `birthYear`、可空）；放行條件維持 `realName && phone` 不強制既有會員回填

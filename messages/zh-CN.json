@@ -1,0 +1,24 @@
+{
+  "__generated": "AUTO-GENERATED from zh-TW.json via OpenCC — 請勿手改",
+  "common": {
+    "appName": "启动事工",
+    "backToLogin": "返回登入"
+  },
+  "auth": {
+    "loginWithEmail": "以 Email 登入",
+    "loggingIn": "登入中...",
+    "password": "密码",
+    "forgotPassword": "忘记密码？",
+    "orContinueWith": "或继续使用",
+    "continueWithGoogle": "以 Google 帐号继续",
+    "noAccountYet": "还没设定过帐号？",
+    "recoverAccount": "找回我的帐号",
+    "loginPageTitle": "登入 — 启动事工"
+  },
+  "language": {
+    "label": "语言",
+    "zh-TW": "繁体中文",
+    "en": "English",
+    "zh-CN": "简体中文"
+  }
+}

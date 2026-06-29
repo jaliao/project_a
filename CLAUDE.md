@@ -281,6 +281,14 @@ export type ProjectStatus = keyof typeof PROJECT_STATUSES
   - `app/(user)/`：需登入頁；layout 做登入 + 暫停 + 臨時密碼 + profile 完整度守衛 + Topbar。
   - `app/(admin)/`：需 admin 身分；layout 在 `(user)` 守衛之上再加 `canAccessAdmin`。**後台各頁不得自行重複** session / `canAccessAdmin` 轉導判定。
 - **新增免登入頁面/API 時**：①在 `lib/auth/route-access.ts` 註冊（附 reason）；②頁面放入對應 `(guest)`／`(user)`／`(admin)` group。新增受 admin 保護頁只需放進 `(admin)/`，不需在頁面內寫守衛。
+- ⚠️ 路由實體位於 `app/[locale]/(guest|user|admin)/*`（見第 12 點 i18n）；route-access 的判定以 `stripLocale` 後路徑為準，與 locale 前綴無關。
+
+### 12. 多語系 i18n（next-intl）
+- **語言**：`zh-TW`（預設、無前綴）/ `en`（`/en`）/ `zh-CN`（`/zh-CN`）。設定於 `i18n/routing.ts`、`i18n/request.ts`、`i18n/navigation.ts`；頁面路由全部位於 `app/[locale]/` 之下，`<html lang>` 由 `app/[locale]/layout.tsx` 提供（已無 `app/layout.tsx`）。
+- **訊息目錄**：`messages/zh-TW.json` 為**唯一事實來源**（繁體），`messages/en.json` 為英文翻譯，`messages/zh-CN.json` 為 **OpenCC 自動產生**（`npm run gen:zh-cn`，`prebuild` 自動跑）。
+- **新增 UI 文案規範**：①一律加入 `messages/zh-TW.json`（依命名空間，如 `common`/`auth`/`nav`）並補 `messages/en.json`；②**不得在元件寫死中文**，以 key 取用——server 元件用 `getTranslations`、client 元件用 `useTranslations`；③**簡體勿手改**，改繁體來源後重新產生。
+- **缺 key 行為**：非預設語言缺 key 會逐層回退顯示繁體（`i18n/request.ts` deepMerge），支援漸進遷移；既有未遷移字串維持繁體顯示。
+- **連結與導向**：需 locale 感知時用 `@/i18n/navigation` 的 `Link`/`useRouter`/`usePathname`。
 
 ## Database Schema Notes
 

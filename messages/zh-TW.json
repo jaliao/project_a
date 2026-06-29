@@ -1,0 +1,23 @@
+{
+  "common": {
+    "appName": "啟動事工",
+    "backToLogin": "返回登入"
+  },
+  "auth": {
+    "loginWithEmail": "以 Email 登入",
+    "loggingIn": "登入中...",
+    "password": "密碼",
+    "forgotPassword": "忘記密碼？",
+    "orContinueWith": "或繼續使用",
+    "continueWithGoogle": "以 Google 帳號繼續",
+    "noAccountYet": "還沒設定過帳號？",
+    "recoverAccount": "找回我的帳號",
+    "loginPageTitle": "登入 — 啟動事工"
+  },
+  "language": {
+    "label": "語言",
+    "zh-TW": "繁體中文",
+    "en": "English",
+    "zh-CN": "简体中文"
+  }
+}

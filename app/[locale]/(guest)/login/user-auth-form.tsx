@@ -14,6 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { signIn } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Suspense } from 'react'
 import Link from 'next/link'
@@ -56,6 +57,7 @@ function GoogleIcon({ className }: { className?: string }) {
 }
 
 function AuthForm() {
+  const t = useTranslations('auth')
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') ?? '/dashboard'
   const [isPending, startTransition] = useTransition()
@@ -111,19 +113,19 @@ function AuthForm() {
         </div>
         <div className="grid gap-1.5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password" className="sr-only">密碼</Label>
+            <Label htmlFor="password" className="sr-only">{t('password')}</Label>
             <Link
               href="/forgot-password"
               className="ml-auto text-xs text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
             >
-              忘記密碼？
+              {t('forgotPassword')}
             </Link>
           </div>
           <div className="relative">
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="密碼"
+              placeholder={t('password')}
               autoComplete="current-password"
               disabled={isPending}
               className="pr-10"
@@ -143,7 +145,7 @@ function AuthForm() {
           )}
         </div>
         <Button disabled={isPending}>
-          {isPending ? '登入中...' : '以 Email 登入'}
+          {isPending ? t('loggingIn') : t('loginWithEmail')}
         </Button>
       </form>
 
@@ -154,7 +156,7 @@ function AuthForm() {
         </div>
         <div className="relative flex justify-center text-xs uppercase">
           <span className="bg-background px-2 text-muted-foreground">
-            或繼續使用
+            {t('orContinueWith')}
           </span>
         </div>
       </div>
@@ -167,17 +169,17 @@ function AuthForm() {
         onClick={handleGoogleSignIn}
       >
         <GoogleIcon className="mr-2 h-4 w-4" />
-        以 Google 帳號繼續
+        {t('continueWithGoogle')}
       </Button>
 
       {/* 灌檔且未登入過的會員：找回帳號 */}
       <p className="text-center text-xs text-muted-foreground">
-        還沒設定過帳號？{' '}
+        {t('noAccountYet')}{' '}
         <Link
           href="/recover-account"
           className="font-medium underline underline-offset-4 hover:text-primary"
         >
-          找回我的帳號
+          {t('recoverAccount')}
         </Link>
       </p>
     </div>

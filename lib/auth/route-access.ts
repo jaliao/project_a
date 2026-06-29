@@ -47,9 +47,9 @@ export const GUEST_PAGES: RegExp[] = [
   /^\/course\/\d+$/,
 ]
 
-// i18n 預留：未來導入 app/[locale]/ 時，路徑可能帶 locale 前綴
-const LOCALES = ['zh', 'zh-TW', 'en'] as const
-const LOCALE_PREFIX = new RegExp(`^/(${LOCALES.join('|')})(?=/|$)`)
+// i18n：app/[locale]/ 的 locale 前綴（與 i18n/routing.ts 對齊；預設 zh-TW 無前綴）
+const LOCALES = ['zh-TW', 'en', 'zh-CN'] as const
+const LOCALE_PREFIX = new RegExp(`^/(${LOCALES.join('|')})(?=/|$)`, 'i')
 
 /**
  * 剝除可能的 locale 前綴（如 /en/login → /login）。

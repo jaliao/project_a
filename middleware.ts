@@ -1,53 +1,67 @@
 /*
  * ----------------------------------------------
- * Middleware - 認證攔截
- * 2026-03-23 (Updated: 2026-04-08)
+ * Middleware - i18n（next-intl）+ 認證攔截
+ * 2026-03-23 (Updated: 2026-06-29)
  * middleware.ts
  *
- * 功能：
- * 1. 公開路由白名單（無需登入）
- * 2. 未登入導向 /login（依 session cookie 是否存在判斷）
- *
- * 注意：isTempPassword / isProfileComplete 等業務邏輯守衛
- * 由 (user)/layout.tsx（RSC，Node.js runtime）負責，
- * 以確保永遠讀到 DB 最新值，不依賴可能過期的 JWT cache。
+ * 順序：先以 route-access（locale 無關）判定免登入/訪客，受保護且未登入
+ * 則導向帶 locale 前綴的 /login；其餘交由 next-intl 處理語言協商/前綴，
+ * 並補上 x-pathname 供 RSC layout 守衛使用。
  * ----------------------------------------------
  */
 
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import createMiddleware from 'next-intl/middleware'
+import { routing } from '@/i18n/routing'
 import { isPublicRoute, isGuestRoute } from '@/lib/auth/route-access'
+
+const intlMiddleware = createMiddleware(routing)
+
+// 取出路徑開頭的 locale 前綴（如 /en、/zh-cn），無則回空字串
+function localePrefix(pathname: string): string {
+  const seg = pathname.split('/')[1]
+  const match = routing.locales.find((l) => l.toLowerCase() === seg?.toLowerCase())
+  return match && match !== routing.defaultLocale ? `/${seg}` : ''
+}
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // 以 header 傳遞目前路徑，供 RSC layout 判斷（避免 Profile 完成度守衛無限迴圈）
-  const requestHeaders = new Headers(req.headers)
-  requestHeaders.set('x-pathname', pathname)
-  const pass = () => NextResponse.next({ request: { headers: requestHeaders } })
-
-  // 公開路由直接放行（單一事實來源：lib/auth/route-access）
-  if (isPublicRoute(pathname)) return pass()
-
-  // 訪客頁（如課程詳情）：未登入也放行，由頁面顯示登入提示卡片（子路徑仍受保護）
-  if (isGuestRoute(pathname)) return pass()
-
-  // 檢查 NextAuth session cookie（HTTPS 環境名稱不同）
-  const sessionCookie =
-    req.cookies.get('__Secure-authjs.session-token') ??
-    req.cookies.get('authjs.session-token')
-
-  if (!sessionCookie) {
-    const loginUrl = new URL('/login', req.url)
-    loginUrl.searchParams.set('callbackUrl', pathname)
-    return NextResponse.redirect(loginUrl)
+  // 受保護路由（非公開、非訪客）且未登入 → 導向帶 locale 前綴的登入頁
+  if (!isPublicRoute(pathname) && !isGuestRoute(pathname)) {
+    const sessionCookie =
+      req.cookies.get('__Secure-authjs.session-token') ??
+      req.cookies.get('authjs.session-token')
+    if (!sessionCookie) {
+      const loginUrl = new URL(`${localePrefix(pathname)}/login`, req.url)
+      loginUrl.searchParams.set('callbackUrl', pathname)
+      return NextResponse.redirect(loginUrl)
+    }
   }
 
-  return pass()
+  // 交由 next-intl 處理語言（協商/前綴/cookie）
+  const intlResponse = intlMiddleware(req)
+
+  // 語言協商造成的 redirect 直接沿用
+  if (intlResponse.headers.has('location')) return intlResponse
+
+  // 補上 x-pathname（供 (user)/(admin) layout 判斷訪客頁與 profile 排除）。
+  // 併入 next-intl 既有的 request-header 覆寫機制（x-middleware-override-headers），避免互相覆蓋。
+  // ⚠️ 依賴 Next 內部 header 機制，需於執行階段驗證（見變更說明）。
+  intlResponse.headers.set('x-middleware-request-x-pathname', pathname)
+  const overrides = intlResponse.headers.get('x-middleware-override-headers')
+  intlResponse.headers.set(
+    'x-middleware-override-headers',
+    overrides ? `${overrides},x-pathname` : 'x-pathname'
+  )
+
+  return intlResponse
 }
 
 export const config = {
+  // 排除 api、_next、靜態檔；其餘交由 middleware（含 i18n）
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

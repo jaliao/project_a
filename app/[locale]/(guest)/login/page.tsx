@@ -8,12 +8,21 @@
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
+import { LanguageSwitcher } from '@/components/i18n/language-switcher'
 import { UserAuthForm } from './user-auth-form'
 
-export const metadata: Metadata = {
-  title: '登入 — 啟動事工',
+// server 元件取用翻譯示範
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'auth' })
+  return { title: t('loginPageTitle') }
 }
 
 export default function LoginPage() {
@@ -71,13 +80,16 @@ export default function LoginPage() {
             </svg>
             啟動事工
           </div>
-          {/* 建立帳號連結 */}
-          <Link
-            href="/register"
-            className={cn(buttonVariants({ variant: 'ghost' }), 'text-sm')}
-          >
-            建立帳號
-          </Link>
+          {/* 語言切換器 + 建立帳號連結 */}
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+            <Link
+              href="/register"
+              className={cn(buttonVariants({ variant: 'ghost' }), 'text-sm')}
+            >
+              建立帳號
+            </Link>
+          </div>
         </div>
 
         {/* 表單主體 */}
