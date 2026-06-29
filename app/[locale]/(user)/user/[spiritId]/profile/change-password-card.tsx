@@ -13,16 +13,19 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { IconEye, IconEyeOff } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { FieldError } from '@/components/ui/field-error'
 import { changePasswordSchema } from '@/lib/schemas/auth'
 import { changePassword } from '@/app/actions/auth'
 
 type ChangeForm = z.infer<typeof changePasswordSchema>
 
 export function ChangePasswordCard() {
+  const t = useTranslations()
   const [isPending, startTransition] = useTransition()
   const [showCurrent, setShowCurrent] = useState(false)
   const [showNew, setShowNew] = useState(false)
@@ -43,12 +46,8 @@ export function ChangePasswordCard() {
         toast.success(result.message ?? '密碼已更新')
         reset()
       } else {
-        const errMsg =
-          result.errors?.currentPassword?.[0] ??
-          result.errors?.newPassword?.[0] ??
-          result.message ??
-          '更新失敗'
-        toast.error(errMsg)
+        const errKey = result.errors?.currentPassword?.[0] ?? result.errors?.newPassword?.[0]
+        toast.error(errKey ? t(errKey) : (result.message ?? '更新失敗'))
       }
     })
   }
@@ -81,7 +80,7 @@ export function ChangePasswordCard() {
             </button>
           </div>
           {errors.currentPassword && (
-            <p className="text-xs text-destructive">{errors.currentPassword.message}</p>
+            <FieldError message={errors.currentPassword?.message} />
           )}
         </div>
 
@@ -108,7 +107,7 @@ export function ChangePasswordCard() {
             </button>
           </div>
           {errors.newPassword && (
-            <p className="text-xs text-destructive">{errors.newPassword.message}</p>
+            <FieldError message={errors.newPassword?.message} />
           )}
         </div>
 
@@ -135,7 +134,7 @@ export function ChangePasswordCard() {
             </button>
           </div>
           {errors.confirmPassword && (
-            <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
+            <FieldError message={errors.confirmPassword?.message} />
           )}
         </div>
 

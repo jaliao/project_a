@@ -289,6 +289,10 @@ export type ProjectStatus = keyof typeof PROJECT_STATUSES
 - **新增 UI 文案規範**：①一律加入 `messages/zh-TW.json`（依命名空間，如 `common`/`auth`/`nav`）並補 `messages/en.json`；②**不得在元件寫死中文**，以 key 取用——server 元件用 `getTranslations`、client 元件用 `useTranslations`；③**簡體勿手改**，改繁體來源後重新產生。
 - **缺 key 行為**：非預設語言缺 key 會逐層回退顯示繁體（`i18n/request.ts` deepMerge），支援漸進遷移；既有未遷移字串維持繁體顯示。
 - **連結與導向**：需 locale 感知時用 `@/i18n/navigation` 的 `Link`/`useRouter`/`usePathname`。
+- **命名空間**：`common`/`nav`/`auth`/`language`/`validation`/`status`/`role`/`catalog`…依功能分。
+- **驗證訊息（Zod）**：schema 的訊息一律放 `validation.*` **key**（不寫死中文）；表單以共用元件 `<FieldError message={errors.x?.message} />`（`components/ui/field-error.tsx`，內部 `t()`）呈現；server action 回傳的 `errors` 為 key，toast 顯示時 `t(key)`（`result.message` 為動作層文案、非 key，維持原樣）。
+- **enum/標籤**：共用標籤的 **React 顯示**用 i18n（如 `status`/`role`/`catalog` 命名空間、`useTranslations`）；**非 React／匯出**情境（如 Excel 匯出）保留既有 `*_LABELS` map。
+- **漸進遷移**：schema key 化採「全有全無」——key 化某 schema 時，其所有呈現端須同批改用 `t()`/`<FieldError>`，否則顯示原始 key。後台與其專屬字串本階段維持繁體。
 
 ### 13. 對外絕對網址建構（dev tunnel 安全）
 - 對外絕對網址（寄信連結、跨站導向）一律透過 `lib/utils/app-url.ts` 建構：

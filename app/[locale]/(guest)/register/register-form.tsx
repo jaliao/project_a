@@ -14,7 +14,9 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { signIn } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
+import { FieldError } from '@/components/ui/field-error'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -61,6 +63,7 @@ function GoogleIcon({ className }: { className?: string }) {
 }
 
 export function RegisterForm() {
+  const t = useTranslations()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [successOpen, setSuccessOpen] = useState(false)
@@ -77,7 +80,8 @@ export function RegisterForm() {
       if (result.success) {
         setSuccessOpen(true)
       } else {
-        toast.error(result.errors?.email?.[0] ?? result.message ?? '註冊失敗')
+        const errKey = result.errors?.email?.[0]
+        toast.error(errKey ? t(errKey) : (result.message ?? '註冊失敗'))
       }
     })
   }
@@ -104,9 +108,7 @@ export function RegisterForm() {
             disabled={isPending}
             {...register('email')}
           />
-          {errors.email && (
-            <p className="text-xs text-destructive">{errors.email.message}</p>
-          )}
+          <FieldError message={errors.email?.message} />
         </div>
         <Button disabled={isPending}>
           {isPending ? '建立中...' : '以 Email 建立帳號'}

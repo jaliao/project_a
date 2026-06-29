@@ -6,34 +6,17 @@
  * ----------------------------------------------
  */
 
+'use client'
+
+import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
-
-export type CourseStatus = 'recruiting' | 'active' | 'completed' | 'cancelled'
-
-const STATUS_LABELS: Record<CourseStatus, string> = {
-  recruiting: '招生中',
-  active: '進行中',
-  completed: '已結業',
-  cancelled: '已取消',
-}
+import type { CourseStatus } from './course-status'
 
 const STATUS_COLORS: Record<CourseStatus, string> = {
   recruiting: 'bg-gray-100 text-gray-600',
   active: 'bg-blue-100 text-blue-700',
   completed: 'bg-green-100 text-green-700',
   cancelled: 'bg-red-100 text-red-700',
-}
-
-export function getCourseStatus(item: {
-  cancelledAt?: Date | null
-  completedAt?: Date | null
-  startedAt?: Date | null
-}): CourseStatus | null {
-  if (item.cancelledAt === undefined && item.completedAt === undefined && item.startedAt === undefined) return null
-  if (item.cancelledAt) return 'cancelled'
-  if (item.completedAt) return 'completed'
-  if (item.startedAt) return 'active'
-  return 'recruiting'
 }
 
 type Props = {
@@ -43,6 +26,7 @@ type Props = {
 }
 
 export function CourseStatusBadge({ status, size = 'md', className }: Props) {
+  const t = useTranslations('status')
   return (
     <span
       className={cn(
@@ -52,7 +36,7 @@ export function CourseStatusBadge({ status, size = 'md', className }: Props) {
         className
       )}
     >
-      {STATUS_LABELS[status]}
+      {t(status)}
     </span>
   )
 }

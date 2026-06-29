@@ -8,6 +8,8 @@
 
 import { z } from 'zod'
 
+// 驗證訊息為 i18n key（validation.* 命名空間），由呈現端 t() 翻譯（見 CLAUDE.md 第 12 點）
+
 // 出生年合理區間：西元 1900 ~ 當年
 const BIRTH_YEAR_MIN = 1900
 const currentYear = () => new Date().getFullYear()
@@ -16,20 +18,20 @@ const currentYear = () => new Date().getFullYear()
 const birthYearOptional = z.preprocess(
   (v) => (v === '' || v === null || v === undefined ? null : Number(v)),
   z
-    .number({ message: '請輸入有效的出生年（西元）' })
-    .int('出生年需為整數')
-    .min(BIRTH_YEAR_MIN, `出生年不可早於 ${BIRTH_YEAR_MIN}`)
-    .max(currentYear(), `出生年不可超過 ${currentYear()}`)
+    .number({ message: 'validation.birthYearInvalid' })
+    .int('validation.birthYearInteger')
+    .min(BIRTH_YEAR_MIN, 'validation.birthYearMin')
+    .max(currentYear(), 'validation.birthYearMax')
     .nullable()
 )
 
 export const updateProfileSchema = z
   .object({
-    realName: z.string().min(1, '真實姓名為必填'),
-    nickname: z.string().max(20, '暱稱不可超過 20 個字').optional(),
+    realName: z.string().min(1, 'validation.realNameRequired'),
+    nickname: z.string().max(20, 'validation.nicknameMax20').optional(),
     phone: z
       .string()
-      .regex(/^(09\d{8}|\+8869\d{8})$/, '請輸入有效的台灣手機號碼（09xxxxxxxx 或 +886xxxxxxxxx）')
+      .regex(/^(09\d{8}|\+8869\d{8})$/, 'validation.phoneInvalid')
       .optional()
       .or(z.literal('')),
     address: z.string().optional(),
@@ -45,46 +47,46 @@ export const updateProfileSchema = z
   })
   .superRefine((data, ctx) => {
     if (data.churchType === 'church' && !data.churchId) {
-      ctx.addIssue({ code: 'custom', path: ['churchId'], message: '請選擇教會' })
+      ctx.addIssue({ code: 'custom', path: ['churchId'], message: 'validation.churchSelect' })
     }
     if (data.churchType === 'other' && !data.churchOther?.trim()) {
-      ctx.addIssue({ code: 'custom', path: ['churchOther'], message: '請填寫教會/單位名稱' })
+      ctx.addIssue({ code: 'custom', path: ['churchOther'], message: 'validation.churchOtherRequired' })
     }
   })
 
 // 首次登入（onboarding）Step 2：性別、出生年、所屬教會皆必填
 export const onboardingProfileSchema = z
   .object({
-    realName: z.string().trim().min(1, '請輸入真實姓名'),
+    realName: z.string().trim().min(1, 'validation.realNameEnter'),
     phone: z
       .string()
       .trim()
-      .regex(/^(09\d{8}|\+8869\d{8})$/, '請輸入有效的台灣手機號碼（09xxxxxxxx 或 +886xxxxxxxxx）'),
+      .regex(/^(09\d{8}|\+8869\d{8})$/, 'validation.phoneInvalid'),
     // 性別必填：須為男/女，不接受未指定
-    gender: z.enum(['male', 'female'], { message: '請選擇性別' }),
+    gender: z.enum(['male', 'female'], { message: 'validation.genderRequired' }),
     // 出生年必填：合理西元年整數
     birthYear: z.preprocess(
       (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
       z
-        .number({ message: '請輸入出生年（西元）' })
-        .int('出生年需為整數')
-        .min(BIRTH_YEAR_MIN, `出生年不可早於 ${BIRTH_YEAR_MIN}`)
-        .max(currentYear(), `出生年不可超過 ${currentYear()}`)
+        .number({ message: 'validation.birthYearEnter' })
+        .int('validation.birthYearInteger')
+        .min(BIRTH_YEAR_MIN, 'validation.birthYearMin')
+        .max(currentYear(), 'validation.birthYearMax')
     ),
     // 所屬教會必填：清單教會或其他，不接受「無」
-    churchType: z.enum(['church', 'other'], { message: '請選擇所屬教會/單位' }),
+    churchType: z.enum(['church', 'other'], { message: 'validation.churchRequired' }),
     churchId: z.number().int().positive().optional().nullable(),
     churchOther: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.churchType === 'church' && !data.churchId) {
-      ctx.addIssue({ code: 'custom', path: ['churchId'], message: '請選擇教會' })
+      ctx.addIssue({ code: 'custom', path: ['churchId'], message: 'validation.churchSelect' })
     }
     if (data.churchType === 'other' && !data.churchOther?.trim()) {
-      ctx.addIssue({ code: 'custom', path: ['churchOther'], message: '請填寫教會/單位名稱' })
+      ctx.addIssue({ code: 'custom', path: ['churchOther'], message: 'validation.churchOtherRequired' })
     }
   })
 
 export const commEmailSchema = z.object({
-  commEmail: z.string().email('請輸入有效的 Email 格式'),
+  commEmail: z.string().email('validation.emailInvalid'),
 })

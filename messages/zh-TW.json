@@ -1,7 +1,22 @@
 {
   "common": {
     "appName": "啟動事工",
-    "backToLogin": "返回登入"
+    "backToLogin": "返回登入",
+    "save": "儲存",
+    "cancel": "取消",
+    "confirm": "確認",
+    "delete": "刪除",
+    "edit": "編輯",
+    "back": "返回",
+    "loading": "載入中...",
+    "search": "搜尋"
+  },
+  "nav": {
+    "home": "回首頁",
+    "profile": "個人資料",
+    "notifications": "訊息通知",
+    "matchBoard": "媒合布告欄",
+    "admin": "後台管理"
   },
   "auth": {
     "loginWithEmail": "以 Email 登入",
@@ -13,6 +28,42 @@
     "noAccountYet": "還沒設定過帳號？",
     "recoverAccount": "找回我的帳號",
     "loginPageTitle": "登入 — 啟動事工"
+  },
+  "validation": {
+    "emailInvalid": "請輸入有效的 Email 格式",
+    "passwordRequired": "請輸入密碼",
+    "currentPasswordRequired": "請輸入目前密碼",
+    "newPasswordMin8": "新密碼至少需 8 字元",
+    "confirmPasswordRequired": "請確認新密碼",
+    "passwordMismatch": "兩次輸入的密碼不一致",
+    "newPasswordSameAsCurrent": "新密碼不可與目前密碼相同",
+    "realNameRequired": "真實姓名為必填",
+    "realNameEnter": "請輸入真實姓名",
+    "nicknameMax20": "暱稱不可超過 20 個字",
+    "phoneInvalid": "請輸入有效的台灣手機號碼（09xxxxxxxx 或 +886xxxxxxxxx）",
+    "birthYearInvalid": "請輸入有效的出生年（西元）",
+    "birthYearEnter": "請輸入出生年（西元）",
+    "birthYearInteger": "出生年需為整數",
+    "birthYearMin": "出生年不可早於 1900",
+    "birthYearMax": "出生年不可超過今年",
+    "genderRequired": "請選擇性別",
+    "churchRequired": "請選擇所屬教會/單位",
+    "churchSelect": "請選擇教會",
+    "churchOtherRequired": "請填寫教會/單位名稱"
+  },
+  "status": {
+    "recruiting": "招生中",
+    "active": "進行中",
+    "completed": "已結業",
+    "cancelled": "已取消"
+  },
+  "role": {
+    "user": "一般會員",
+    "teacher_1": "啟動靈人講師",
+    "teacher_2": "啟動豐盛講師",
+    "teacher_3": "啟動得勝講師",
+    "admin": "管理者",
+    "superadmin": "超級管理者"
   },
   "language": {
     "label": "語言",

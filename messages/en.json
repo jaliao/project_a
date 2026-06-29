@@ -1,7 +1,22 @@
 {
   "common": {
     "appName": "啟動事工",
-    "backToLogin": "Back to login"
+    "backToLogin": "Back to login",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "loading": "Loading...",
+    "search": "Search"
+  },
+  "nav": {
+    "home": "Home",
+    "profile": "Profile",
+    "notifications": "Notifications",
+    "matchBoard": "Match board",
+    "admin": "Admin"
   },
   "auth": {
     "loginWithEmail": "Log in with Email",
@@ -13,6 +28,42 @@
     "noAccountYet": "Haven't set up your account yet?",
     "recoverAccount": "Recover my account",
     "loginPageTitle": "Log in — 啟動事工"
+  },
+  "validation": {
+    "emailInvalid": "Please enter a valid email address",
+    "passwordRequired": "Please enter your password",
+    "currentPasswordRequired": "Please enter your current password",
+    "newPasswordMin8": "New password must be at least 8 characters",
+    "confirmPasswordRequired": "Please confirm your new password",
+    "passwordMismatch": "The two passwords do not match",
+    "newPasswordSameAsCurrent": "New password must differ from the current one",
+    "realNameRequired": "Real name is required",
+    "realNameEnter": "Please enter your real name",
+    "nicknameMax20": "Nickname must not exceed 20 characters",
+    "phoneInvalid": "Please enter a valid Taiwan mobile number (09xxxxxxxx or +8869xxxxxxxx)",
+    "birthYearInvalid": "Please enter a valid birth year (Gregorian)",
+    "birthYearEnter": "Please enter your birth year (Gregorian)",
+    "birthYearInteger": "Birth year must be an integer",
+    "birthYearMin": "Birth year cannot be earlier than 1900",
+    "birthYearMax": "Birth year cannot be later than this year",
+    "genderRequired": "Please select your gender",
+    "churchRequired": "Please select your church/organization",
+    "churchSelect": "Please select a church",
+    "churchOtherRequired": "Please enter the church/organization name"
+  },
+  "status": {
+    "recruiting": "Recruiting",
+    "active": "In progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "role": {
+    "user": "Member",
+    "teacher_1": "Activate Spirit Instructor",
+    "teacher_2": "Activate Abundance Instructor",
+    "teacher_3": "Activate Victory Instructor",
+    "admin": "Administrator",
+    "superadmin": "Super Administrator"
   },
   "language": {
     "label": "Language",

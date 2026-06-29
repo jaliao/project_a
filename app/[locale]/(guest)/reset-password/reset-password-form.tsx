@@ -16,6 +16,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { IconEye, IconEyeOff } from '@tabler/icons-react'
+import { FieldError } from '@/components/ui/field-error'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -103,9 +104,7 @@ function ResetForm() {
               {showNew ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
             </button>
           </div>
-          {errors.newPassword && (
-            <p className="text-xs text-destructive">{errors.newPassword.message}</p>
-          )}
+          <FieldError message={errors.newPassword?.message} />
         </div>
 
         <div className="grid gap-1.5">
@@ -129,9 +128,7 @@ function ResetForm() {
               {showConfirm ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
             </button>
           </div>
-          {errors.confirmPassword && (
-            <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
-          )}
+          <FieldError message={errors.confirmPassword?.message} />
         </div>
 
         <Button disabled={isPending}>

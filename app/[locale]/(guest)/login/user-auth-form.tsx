@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
+import { FieldError } from '@/components/ui/field-error'
 import { loginSchema } from '@/lib/schemas/auth'
 
 type LoginForm = z.infer<typeof loginSchema>
@@ -107,9 +108,7 @@ function AuthForm() {
             disabled={isPending}
             {...register('email')}
           />
-          {errors.email && (
-            <p className="text-xs text-destructive">{errors.email.message}</p>
-          )}
+          <FieldError message={errors.email?.message} />
         </div>
         <div className="grid gap-1.5">
           <div className="flex items-center justify-between">
@@ -140,9 +139,7 @@ function AuthForm() {
               {showPassword ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
             </button>
           </div>
-          {errors.password && (
-            <p className="text-xs text-destructive">{errors.password.message}</p>
-          )}
+          <FieldError message={errors.password?.message} />
         </div>
         <Button disabled={isPending}>
           {isPending ? t('loggingIn') : t('loginWithEmail')}

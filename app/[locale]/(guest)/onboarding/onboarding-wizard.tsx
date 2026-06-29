@@ -15,10 +15,12 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { IconEye, IconEyeOff, IconCheck } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { FieldError } from '@/components/ui/field-error'
 import { changePasswordSchema } from '@/lib/schemas/auth'
 import { onboardingProfileSchema } from '@/lib/schemas/profile'
 import { changeTempPassword, completeOnboardingProfile } from '@/app/actions/auth'
@@ -63,6 +65,7 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
 
 // ── Step 1：設定密碼 ──────────────────────────
 function Step1Password({ onSuccess }: { onSuccess: (spiritId: string) => void }) {
+  const t = useTranslations()
   const [isPending, startTransition] = useTransition()
   const [showCurrent, setShowCurrent] = useState(false)
   const [showNew, setShowNew] = useState(false)
@@ -83,12 +86,8 @@ function Step1Password({ onSuccess }: { onSuccess: (spiritId: string) => void })
         const spiritId = (result.data?.spiritId as string | null | undefined) ?? ''
         onSuccess(spiritId)
       } else {
-        const errMsg =
-          result.errors?.currentPassword?.[0] ??
-          result.errors?.newPassword?.[0] ??
-          result.message ??
-          '更新失敗'
-        toast.error(errMsg)
+        const errKey = result.errors?.currentPassword?.[0] ?? result.errors?.newPassword?.[0]
+        toast.error(errKey ? t(errKey) : (result.message ?? '更新失敗'))
       }
     })
   }
@@ -113,7 +112,7 @@ function Step1Password({ onSuccess }: { onSuccess: (spiritId: string) => void })
             {showCurrent ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
           </button>
         </div>
-        {errors.currentPassword && <p className="text-xs text-destructive">{errors.currentPassword.message}</p>}
+        <FieldError message={errors.currentPassword?.message} />
       </div>
 
       {/* 新密碼 */}
@@ -134,7 +133,7 @@ function Step1Password({ onSuccess }: { onSuccess: (spiritId: string) => void })
             {showNew ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
           </button>
         </div>
-        {errors.newPassword && <p className="text-xs text-destructive">{errors.newPassword.message}</p>}
+        <FieldError message={errors.newPassword?.message} />
       </div>
 
       {/* 確認新密碼 */}
@@ -155,7 +154,7 @@ function Step1Password({ onSuccess }: { onSuccess: (spiritId: string) => void })
             {showConfirm ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
           </button>
         </div>
-        {errors.confirmPassword && <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>}
+        <FieldError message={errors.confirmPassword?.message} />
       </div>
 
       <Button type="submit" disabled={isPending} className="w-full mt-2">
@@ -168,6 +167,7 @@ function Step1Password({ onSuccess }: { onSuccess: (spiritId: string) => void })
 // ── Step 2：填寫基本資料 ───────────────────────
 // 性別、出生年、所屬教會皆必填（首次登入）
 function Step2Profile({ churches, onSuccess }: { churches: OnboardingChurch[]; onSuccess: () => void }) {
+  const t = useTranslations()
   const [isPending, startTransition] = useTransition()
   // 教會選單 value 格式：'' | 'other' | 'church:<id>'
   const [churchSelect, setChurchSelect] = useState('')
@@ -211,17 +211,15 @@ function Step2Profile({ churches, onSuccess }: { churches: OnboardingChurch[]; o
       if (result.success) {
         onSuccess()
       } else {
-        const errMsg =
+        const errKey =
           result.errors?.realName?.[0] ??
           result.errors?.phone?.[0] ??
           result.errors?.gender?.[0] ??
           result.errors?.birthYear?.[0] ??
           result.errors?.churchType?.[0] ??
           result.errors?.churchId?.[0] ??
-          result.errors?.churchOther?.[0] ??
-          result.message ??
-          '儲存失敗'
-        toast.error(errMsg)
+          result.errors?.churchOther?.[0]
+        toast.error(errKey ? t(errKey) : (result.message ?? '儲存失敗'))
       }
     })
   }
@@ -240,7 +238,7 @@ function Step2Profile({ churches, onSuccess }: { churches: OnboardingChurch[]; o
           disabled={isPending}
           {...register('realName')}
         />
-        {errors.realName && <p className="text-xs text-destructive">{errors.realName.message}</p>}
+        <FieldError message={errors.realName?.message} />
       </div>
 
       <div className="grid gap-1.5">
@@ -253,7 +251,7 @@ function Step2Profile({ churches, onSuccess }: { churches: OnboardingChurch[]; o
           disabled={isPending}
           {...register('phone')}
         />
-        {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
+        <FieldError message={errors.phone?.message} />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -271,7 +269,7 @@ function Step2Profile({ churches, onSuccess }: { churches: OnboardingChurch[]; o
             <option value="male">男</option>
             <option value="female">女</option>
           </select>
-          {errors.gender && <p className="text-xs text-destructive">{errors.gender.message}</p>}
+          <FieldError message={errors.gender?.message} />
         </div>
 
         {/* 出生年（必填，西元） */}
@@ -287,7 +285,7 @@ function Step2Profile({ churches, onSuccess }: { churches: OnboardingChurch[]; o
             disabled={isPending}
             {...register('birthYear')}
           />
-          {errors.birthYear && <p className="text-xs text-destructive">{errors.birthYear.message}</p>}
+          <FieldError message={errors.birthYear?.message} />
         </div>
       </div>
 
@@ -314,9 +312,9 @@ function Step2Profile({ churches, onSuccess }: { churches: OnboardingChurch[]; o
             {...register('churchOther')}
           />
         )}
-        {errors.churchType && <p className="text-xs text-destructive">{errors.churchType.message}</p>}
-        {errors.churchId && <p className="text-xs text-destructive">{errors.churchId.message}</p>}
-        {errors.churchOther && <p className="text-xs text-destructive">{errors.churchOther.message}</p>}
+        <FieldError message={errors.churchType?.message} />
+        <FieldError message={errors.churchId?.message} />
+        <FieldError message={errors.churchOther?.message} />
       </div>
 
       <p className="text-xs text-muted-foreground">其餘資料可於個人資料頁補填。</p>

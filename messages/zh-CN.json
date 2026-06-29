@@ -2,7 +2,22 @@
   "__generated": "AUTO-GENERATED from zh-TW.json via OpenCC — 請勿手改",
   "common": {
     "appName": "启动事工",
-    "backToLogin": "返回登入"
+    "backToLogin": "返回登入",
+    "save": "储存",
+    "cancel": "取消",
+    "confirm": "确认",
+    "delete": "删除",
+    "edit": "编辑",
+    "back": "返回",
+    "loading": "载入中...",
+    "search": "搜寻"
+  },
+  "nav": {
+    "home": "回首页",
+    "profile": "个人资料",
+    "notifications": "讯息通知",
+    "matchBoard": "媒合布告栏",
+    "admin": "后台管理"
   },
   "auth": {
     "loginWithEmail": "以 Email 登入",
@@ -14,6 +29,42 @@
     "noAccountYet": "还没设定过帐号？",
     "recoverAccount": "找回我的帐号",
     "loginPageTitle": "登入 — 启动事工"
+  },
+  "validation": {
+    "emailInvalid": "请输入有效的 Email 格式",
+    "passwordRequired": "请输入密码",
+    "currentPasswordRequired": "请输入目前密码",
+    "newPasswordMin8": "新密码至少需 8 字元",
+    "confirmPasswordRequired": "请确认新密码",
+    "passwordMismatch": "两次输入的密码不一致",
+    "newPasswordSameAsCurrent": "新密码不可与目前密码相同",
+    "realNameRequired": "真实姓名为必填",
+    "realNameEnter": "请输入真实姓名",
+    "nicknameMax20": "暱称不可超过 20 个字",
+    "phoneInvalid": "请输入有效的台湾手机号码（09xxxxxxxx 或 +886xxxxxxxxx）",
+    "birthYearInvalid": "请输入有效的出生年（西元）",
+    "birthYearEnter": "请输入出生年（西元）",
+    "birthYearInteger": "出生年需为整数",
+    "birthYearMin": "出生年不可早于 1900",
+    "birthYearMax": "出生年不可超过今年",
+    "genderRequired": "请选择性别",
+    "churchRequired": "请选择所属教会/单位",
+    "churchSelect": "请选择教会",
+    "churchOtherRequired": "请填写教会/单位名称"
+  },
+  "status": {
+    "recruiting": "招生中",
+    "active": "进行中",
+    "completed": "已结业",
+    "cancelled": "已取消"
+  },
+  "role": {
+    "user": "一般会员",
+    "teacher_1": "启动灵人讲师",
+    "teacher_2": "启动丰盛讲师",
+    "teacher_3": "启动得胜讲师",
+    "admin": "管理者",
+    "superadmin": "超级管理者"
   },
   "language": {
     "label": "语言",

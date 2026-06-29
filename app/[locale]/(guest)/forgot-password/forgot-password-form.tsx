@@ -16,6 +16,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { FieldError } from '@/components/ui/field-error'
 import { forgotPasswordSchema } from '@/lib/schemas/auth'
 import { requestPasswordReset } from '@/app/actions/auth'
 
@@ -77,9 +78,7 @@ export function ForgotPasswordForm() {
             disabled={isPending}
             {...register('email')}
           />
-          {errors.email && (
-            <p className="text-xs text-destructive">{errors.email.message}</p>
-          )}
+          <FieldError message={errors.email?.message} />
         </div>
         <Button disabled={isPending}>
           {isPending ? '發送中...' : '發送重設連結'}

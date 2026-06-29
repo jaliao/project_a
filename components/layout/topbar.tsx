@@ -12,6 +12,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { IconUser, IconBell, IconHome, IconLayoutDashboard, IconClipboardList } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
+import { useTranslations } from 'next-intl'
 import { NotificationDrawer } from '@/components/notification/notification-drawer'
 import { LanguageSwitcher } from '@/components/i18n/language-switcher'
 import { canAccessAdmin } from '@/lib/auth-roles'
@@ -23,6 +24,8 @@ interface TopbarProps {
 }
 
 export function Topbar({ unreadCount = 0, roles, spiritId }: TopbarProps) {
+  const t = useTranslations('nav')
+  const tc = useTranslations('common')
   const router = useRouter()
   const [isNotifOpen, setIsNotifOpen] = useState(false)
 
@@ -33,7 +36,7 @@ export function Topbar({ unreadCount = 0, roles, spiritId }: TopbarProps) {
   return (
     <header className="sticky top-0 z-50 bg-background flex h-16 items-center border-b px-4 gap-4">
       {/* 系統標題 */}
-      <span className="font-semibold text-lg flex-1">啟動事工</span>
+      <span className="font-semibold text-lg flex-1">{tc('appName')}</span>
 
       {/* 右側操作按鈕群組 */}
       <div className="flex items-center gap-2">
@@ -42,7 +45,7 @@ export function Topbar({ unreadCount = 0, roles, spiritId }: TopbarProps) {
           variant="ghost"
           size="icon"
           onClick={() => router.push(homeUrl)}
-          title="回首頁"
+          title={t('home')}
         >
           <IconHome className="h-5 w-5" />
         </Button>
@@ -52,7 +55,7 @@ export function Topbar({ unreadCount = 0, roles, spiritId }: TopbarProps) {
           variant="ghost"
           size="icon"
           onClick={() => router.push('/match-board')}
-          title="媒合布告欄"
+          title={t('matchBoard')}
         >
           <IconClipboardList className="h-5 w-5" />
         </Button>
@@ -63,7 +66,7 @@ export function Topbar({ unreadCount = 0, roles, spiritId }: TopbarProps) {
             variant="ghost"
             size="icon"
             onClick={() => router.push('/admin')}
-            title="後台管理"
+            title={t('admin')}
           >
             <IconLayoutDashboard className="h-5 w-5" />
           </Button>
@@ -77,7 +80,7 @@ export function Topbar({ unreadCount = 0, roles, spiritId }: TopbarProps) {
           variant="ghost"
           size="icon"
           onClick={() => router.push(profileUrl)}
-          title="個人資料"
+          title={t('profile')}
         >
           <IconUser className="h-5 w-5" />
         </Button>
@@ -87,7 +90,7 @@ export function Topbar({ unreadCount = 0, roles, spiritId }: TopbarProps) {
           variant="ghost"
           size="icon"
           onClick={() => setIsNotifOpen(true)}
-          title="訊息通知"
+          title={t('notifications')}
           className="relative"
         >
           <IconBell className="h-5 w-5" />

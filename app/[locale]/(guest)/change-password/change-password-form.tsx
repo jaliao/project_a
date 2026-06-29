@@ -18,12 +18,15 @@ import { IconEye, IconEyeOff } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useTranslations } from 'next-intl'
+import { FieldError } from '@/components/ui/field-error'
 import { changePasswordSchema } from '@/lib/schemas/auth'
 import { changeTempPassword } from '@/app/actions/auth'
 
 type ChangeForm = z.infer<typeof changePasswordSchema>
 
 export function ChangePasswordForm() {
+  const t = useTranslations()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [showCurrent, setShowCurrent] = useState(false)
@@ -47,12 +50,8 @@ export function ChangePasswordForm() {
         router.push(spiritId ? `/user/${spiritId.toLowerCase()}/profile` : '/profile')
         router.refresh()
       } else {
-        const errMsg =
-          result.errors?.currentPassword?.[0] ??
-          result.errors?.newPassword?.[0] ??
-          result.message ??
-          '更新失敗'
-        toast.error(errMsg)
+        const errKey = result.errors?.currentPassword?.[0] ?? result.errors?.newPassword?.[0]
+        toast.error(errKey ? t(errKey) : (result.message ?? '更新失敗'))
       }
     })
   }
@@ -91,9 +90,7 @@ export function ChangePasswordForm() {
               {showCurrent ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
             </button>
           </div>
-          {errors.currentPassword && (
-            <p className="text-xs text-destructive">{errors.currentPassword.message}</p>
-          )}
+          <FieldError message={errors.currentPassword?.message} />
         </div>
 
         {/* 新密碼 */}
@@ -118,9 +115,7 @@ export function ChangePasswordForm() {
               {showNew ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
             </button>
           </div>
-          {errors.newPassword && (
-            <p className="text-xs text-destructive">{errors.newPassword.message}</p>
-          )}
+          <FieldError message={errors.newPassword?.message} />
         </div>
 
         {/* 確認新密碼 */}
@@ -145,9 +140,7 @@ export function ChangePasswordForm() {
               {showConfirm ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
             </button>
           </div>
-          {errors.confirmPassword && (
-            <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
-          )}
+          <FieldError message={errors.confirmPassword?.message} />
         </div>
 
         <Button disabled={isPending}>

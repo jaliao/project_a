@@ -9,7 +9,8 @@
 import Link from 'next/link'
 import { IconCalendar, IconUsers, IconClock } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
-import { CourseStatusBadge, getCourseStatus } from '@/components/course-session/course-status-badge'
+import { CourseStatusBadge } from '@/components/course-session/course-status-badge'
+import { getCourseStatus } from '@/components/course-session/course-status'
 import { CourseCatalogBadge } from '@/components/course-session/course-catalog-badge'
 import { Badge } from '@/components/ui/badge'
 

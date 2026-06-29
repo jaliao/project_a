@@ -8,41 +8,43 @@
 
 import { z } from 'zod'
 
+// 驗證訊息為 i18n key（validation.* 命名空間），由呈現端 t() 翻譯（見 CLAUDE.md 第 12 點）
+
 export const registerSchema = z.object({
-  email: z.string().email('請輸入有效的 Email 格式'),
+  email: z.string().email('validation.emailInvalid'),
 })
 
 export const loginSchema = z.object({
-  email: z.string().email('請輸入有效的 Email 格式'),
-  password: z.string().min(1, '請輸入密碼'),
+  email: z.string().email('validation.emailInvalid'),
+  password: z.string().min(1, 'validation.passwordRequired'),
 })
 
 export const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, '請輸入目前密碼'),
-    newPassword: z.string().min(8, '新密碼至少需 8 字元'),
-    confirmPassword: z.string().min(1, '請確認新密碼'),
+    currentPassword: z.string().min(1, 'validation.currentPasswordRequired'),
+    newPassword: z.string().min(8, 'validation.newPasswordMin8'),
+    confirmPassword: z.string().min(1, 'validation.confirmPasswordRequired'),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
-    message: '兩次輸入的密碼不一致',
+    message: 'validation.passwordMismatch',
     path: ['confirmPassword'],
   })
   .refine((data) => data.newPassword !== data.currentPassword, {
-    message: '新密碼不可與目前密碼相同',
+    message: 'validation.newPasswordSameAsCurrent',
     path: ['newPassword'],
   })
 
 export const forgotPasswordSchema = z.object({
-  email: z.string().email('請輸入有效的 Email 格式'),
+  email: z.string().email('validation.emailInvalid'),
 })
 
 export const resetPasswordSchema = z
   .object({
     token: z.string().min(1),
-    newPassword: z.string().min(8, '新密碼至少需 8 字元'),
-    confirmPassword: z.string().min(1, '請確認新密碼'),
+    newPassword: z.string().min(8, 'validation.newPasswordMin8'),
+    confirmPassword: z.string().min(1, 'validation.confirmPasswordRequired'),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
-    message: '兩次輸入的密碼不一致',
+    message: 'validation.passwordMismatch',
     path: ['confirmPassword'],
   })

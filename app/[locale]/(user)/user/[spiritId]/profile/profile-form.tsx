@@ -17,6 +17,7 @@ import { signIn } from 'next-auth/react'
 import { updateProfile, updateCommEmail, resendCommVerification, unlinkGoogleAccount } from '@/app/actions/profile'
 import { updateProfileSchema, commEmailSchema } from '@/lib/schemas/profile'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
+import { FieldError } from '@/components/ui/field-error'
 
 type Church = { id: number; name: string; isActive: boolean }
 
@@ -180,7 +181,7 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
               disabled={isPending}
             />
             {profileForm.formState.errors.realName && (
-              <p className="text-sm text-red-500 mt-1">{profileForm.formState.errors.realName.message}</p>
+              <FieldError message={profileForm.formState.errors.realName.message} className="text-sm text-red-500 mt-1" />
             )}
           </div>
           <div>
@@ -201,7 +202,7 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
               disabled={isPending}
             />
             {profileForm.formState.errors.nickname && (
-              <p className="text-sm text-red-500 mt-1">{profileForm.formState.errors.nickname.message}</p>
+              <FieldError message={profileForm.formState.errors.nickname.message} className="text-sm text-red-500 mt-1" />
             )}
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -247,7 +248,7 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
               disabled={isPending}
             />
             {profileForm.formState.errors.birthYear && (
-              <p className="text-sm text-red-500 mt-1">{profileForm.formState.errors.birthYear.message}</p>
+              <FieldError message={profileForm.formState.errors.birthYear.message} className="text-sm text-red-500 mt-1" />
             )}
           </div>
           <div>
@@ -259,7 +260,7 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
               disabled={isPending}
             />
             {profileForm.formState.errors.phone && (
-              <p className="text-sm text-red-500 mt-1">{profileForm.formState.errors.phone.message}</p>
+              <FieldError message={profileForm.formState.errors.phone.message} className="text-sm text-red-500 mt-1" />
             )}
           </div>
           <div>
@@ -297,7 +298,7 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
               />
             )}
             {profileForm.formState.errors.churchOther && (
-              <p className="text-sm text-red-500">{profileForm.formState.errors.churchOther.message}</p>
+              <FieldError message={profileForm.formState.errors.churchOther.message} className="text-sm text-red-500" />
             )}
           </div>
 
@@ -331,7 +332,7 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
               disabled={isPending}
             />
             {commEmailForm.formState.errors.commEmail && (
-              <p className="text-sm text-red-500 mt-1">{commEmailForm.formState.errors.commEmail.message}</p>
+              <FieldError message={commEmailForm.formState.errors.commEmail.message} className="text-sm text-red-500 mt-1" />
             )}
           </div>
           <div className="flex gap-2">
