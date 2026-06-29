@@ -8,6 +8,7 @@
 
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { auth } from '@/lib/auth'
 import { getNotificationsPaginated } from '@/lib/data/notification'
 import { markNotificationRead } from '@/app/actions/notification'
@@ -19,6 +20,7 @@ import type { Notification } from '@prisma/client'
 const PAGE_SIZE = 20
 
 interface PageProps {
+  params: Promise<{ locale: string }>
   searchParams: Promise<{ page?: string }>
 }
 
@@ -33,12 +35,14 @@ function formatAbsoluteTime(date: Date): string {
   })
 }
 
-export default async function NotificationsPage({ searchParams }: PageProps) {
+export default async function NotificationsPage({ params, searchParams }: PageProps) {
   const session = await auth()
   if (!session?.user?.id) redirect('/login')
 
-  const params = await searchParams
-  const page = Math.max(1, parseInt(params.page ?? '1', 10))
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'notifications' })
+  const sp = await searchParams
+  const page = Math.max(1, parseInt(sp.page ?? '1', 10))
 
   const { items, total, totalPages } = await getNotificationsPaginated(
     session.user.id,
@@ -48,11 +52,11 @@ export default async function NotificationsPage({ searchParams }: PageProps) {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-xl font-semibold mb-6">通知紀錄</h1>
+      <h1 className="text-xl font-semibold mb-6">{t('title')}</h1>
 
       {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-          <p className="text-sm">目前沒有通知紀錄</p>
+          <p className="text-sm">{t('empty')}</p>
         </div>
       ) : (
         <>
@@ -79,7 +83,7 @@ export default async function NotificationsPage({ searchParams }: PageProps) {
                     <p className="text-xs text-muted-foreground mt-1">
                       {formatAbsoluteTime(n.createdAt)}
                       {n.isRead && n.readAt && (
-                        <span className="ml-2">· 已讀</span>
+                        <span className="ml-2">· {t('read')}</span>
                       )}
                     </p>
                   </div>
@@ -92,14 +96,14 @@ export default async function NotificationsPage({ searchParams }: PageProps) {
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-4">
               <span className="text-sm text-muted-foreground">
-                共 {total} 則，第 {page} / {totalPages} 頁
+                {t('summary', { total, page, totalPages })}
               </span>
               <div className="flex gap-2">
                 {page > 1 ? (
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/notifications?page=${page - 1}`}>
                       <IconChevronLeft className="h-4 w-4" />
-                      上一頁
+                      {t('prev')}
                     </Link>
                   </Button>
                 ) : (
@@ -111,7 +115,7 @@ export default async function NotificationsPage({ searchParams }: PageProps) {
                 {page < totalPages ? (
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/notifications?page=${page + 1}`}>
-                      下一頁
+                      {t('next')}
                       <IconChevronRight className="h-4 w-4" />
                     </Link>
                   </Button>

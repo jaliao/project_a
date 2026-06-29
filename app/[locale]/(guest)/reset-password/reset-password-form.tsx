@@ -15,6 +15,7 @@ import { z } from 'zod'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { IconEye, IconEyeOff } from '@tabler/icons-react'
 import { FieldError } from '@/components/ui/field-error'
 import { Button } from '@/components/ui/button'
@@ -26,6 +27,7 @@ import { resetPassword } from '@/app/actions/auth'
 type ResetForm = z.infer<typeof resetPasswordSchema>
 
 function ResetForm() {
+  const t = useTranslations()
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token') ?? ''
@@ -46,10 +48,10 @@ function ResetForm() {
       formData.set('confirmPassword', data.confirmPassword)
       const result = await resetPassword(formData)
       if (result.success) {
-        toast.success(result.message ?? '密碼已重設')
+        toast.success(result.message ?? t('account.reset.doneTitle'))
         router.push('/login')
       } else {
-        toast.error(result.message ?? '重設失敗，請重新申請')
+        toast.error(result.message ?? t('account.reset.failed'))
       }
     })
   }
@@ -57,15 +59,15 @@ function ResetForm() {
   if (!token) {
     return (
       <div className="space-y-4 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">連結無效</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('account.reset.invalidTitle')}</h1>
         <p className="text-sm text-muted-foreground">
-          此密碼重設連結無效或已失效。
+          {t('account.reset.invalidDesc')}
         </p>
         <Link
           href="/forgot-password"
           className="block text-sm font-medium underline underline-offset-4 hover:text-primary"
         >
-          重新申請密碼重設
+          {t('account.reset.requestNew')}
         </Link>
       </div>
     )
@@ -74,9 +76,9 @@ function ResetForm() {
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">設定新密碼</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('account.reset.title')}</h1>
         <p className="text-sm text-muted-foreground">
-          請輸入您的新密碼
+          {t('account.reset.subtitle')}
         </p>
       </div>
 
@@ -84,12 +86,12 @@ function ResetForm() {
         <input type="hidden" {...register('token')} />
 
         <div className="grid gap-1.5">
-          <Label htmlFor="newPassword">新密碼</Label>
+          <Label htmlFor="newPassword">{t('account.reset.newPassword')}</Label>
           <div className="relative">
             <Input
               id="newPassword"
               type={showNew ? 'text' : 'password'}
-              placeholder="至少 8 個字元"
+              placeholder={t('account.reset.newPasswordPlaceholder')}
               autoComplete="new-password"
               disabled={isPending}
               className="pr-10"
@@ -108,12 +110,12 @@ function ResetForm() {
         </div>
 
         <div className="grid gap-1.5">
-          <Label htmlFor="confirmPassword">確認新密碼</Label>
+          <Label htmlFor="confirmPassword">{t('account.reset.confirmNewPassword')}</Label>
           <div className="relative">
             <Input
               id="confirmPassword"
               type={showConfirm ? 'text' : 'password'}
-              placeholder="再次輸入新密碼"
+              placeholder={t('account.reset.confirmPlaceholder')}
               autoComplete="new-password"
               disabled={isPending}
               className="pr-10"
@@ -132,7 +134,7 @@ function ResetForm() {
         </div>
 
         <Button disabled={isPending}>
-          {isPending ? '更新中...' : '確認設定新密碼'}
+          {isPending ? t('account.reset.submitting') : t('account.reset.submit')}
         </Button>
       </form>
     </div>

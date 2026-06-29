@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.103（2026-06-29）
+> 自動產生，版本 0.1.104（2026-06-29）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -375,6 +375,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260629-007` — 多語系會員前台批（子批 1）：未登入流程（login/register/forgot/reset/recover/onboarding 頁與表單）與小型會員頁（notifications/invites/learning/match-board）UI 文案在地化；新增 `account`/`onboarding`/`recover`/`notifications`/`invites`/`learning`/`matchBoard` 命名空間（en 草稿 + zh-CN OpenCC）；server 頁用 `getTranslations`+`generateMetadata`、client 用 `useTranslations`；動態文案用 ICU 參數。course 網域留 008、terms/privacy 法律長文與後台維持繁體
 - `cr-spec-260629-006` — 多語系第二階段（共用基礎批）：擴充訊息命名空間（common/nav/validation/status/role）；Zod 驗證訊息 key 化（`auth`/`profile` schema → `validation.*`），新增共用 `<FieldError>`（i18n）並遷移 8 個前台表單（login/register/forgot/reset/change-password/change-password-card/profile/onboarding）的錯誤呈現與 toast；課程狀態徽章 `course-status-badge` 改 i18n（`status` 命名空間，轉 client）；Topbar 導覽/品牌字串改 `nav`/`common`；保留 `ROLE_LABELS` map 供匯出；CLAUDE.md 第 12 條補驗證/標籤子規範。後台與信件維持繁體；其餘字串續漸進遷移
 - `cr-spec-260629-005` — 對外網址建構收斂：新增 `lib/utils/app-url.ts`（`getAppUrl()` 讀 NEXTAUTH_URL 給寄信用、`getRequestBaseUrl(req)` 依 forwarded-host 給 route handler 導向用）；收斂 5 處（profile/auth/course-invite 寄信連結 + verify-email/suspended-logout 導向）；CLAUDE.md 第 13 條明訂「route handler 禁用 req.url 建對外網址」（dev tunnel 會取到 localhost）
 - `cr-spec-260629-004` — 多語系導入（基礎建設 + 範例切片）：導入 next-intl（`i18n/routing|request|navigation.ts`、`next-intl/plugin`），語言 zh-TW（預設無前綴）/ en / zh-CN（path-prefix as-needed）；頁面路由整批移至 `app/[locale]/`，`<html lang>` 由 `app/[locale]/layout.tsx` 提供（移除 `app/layout.tsx`）；middleware 改為 next-intl + 認證組合（沿用 `route-access`/`stripLocale`，補 x-pathname）；`messages/zh-TW.json`（來源）+ `en.json` + `zh-CN.json`（OpenCC 自動產生，`scripts/gen-zh-cn.mjs` + `gen:zh-cn`/`prebuild`）；缺 key 逐層回退繁體；新增語言切換器；範例切片＝登入頁（client `useTranslations` + server `getTranslations` metadata）+ Topbar；慣例寫入 CLAUDE.md 第 12 條。其餘 ~1,400 行字串依慣例漸進遷移

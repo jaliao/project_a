@@ -81,7 +81,7 @@ export function RegisterForm() {
         setSuccessOpen(true)
       } else {
         const errKey = result.errors?.email?.[0]
-        toast.error(errKey ? t(errKey) : (result.message ?? '註冊失敗'))
+        toast.error(errKey ? t(errKey) : (result.message ?? t('account.register.failed')))
       }
     })
   }
@@ -111,7 +111,7 @@ export function RegisterForm() {
           <FieldError message={errors.email?.message} />
         </div>
         <Button disabled={isPending}>
-          {isPending ? '建立中...' : '以 Email 建立帳號'}
+          {isPending ? t('account.register.submitting') : t('account.register.submit')}
         </Button>
       </form>
 
@@ -121,7 +121,7 @@ export function RegisterForm() {
           <Separator />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">或繼續使用</span>
+          <span className="bg-background px-2 text-muted-foreground">{t('auth.orContinueWith')}</span>
         </div>
       </div>
 
@@ -133,21 +133,21 @@ export function RegisterForm() {
         onClick={handleGoogleSignUp}
       >
         <GoogleIcon className="mr-2 h-4 w-4" />
-        以 Google 帳號繼續
+        {t('auth.continueWithGoogle')}
       </Button>
 
       {/* 註冊成功 Dialog */}
       <Dialog open={successOpen} onOpenChange={() => { }}>
         <DialogContent className="sm:max-w-sm" showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>帳號建立成功</DialogTitle>
+            <DialogTitle>{t('account.register.successTitle')}</DialogTitle>
             <DialogDescription>
-              請查收 Email 取得臨時密碼，即可登入使用。
+              {t('account.register.successDesc')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button className="w-full" onClick={() => router.push('/')}>
-              返回首頁
+              {t('account.register.backToHome')}
             </Button>
           </DialogFooter>
         </DialogContent>

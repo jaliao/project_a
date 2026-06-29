@@ -13,6 +13,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -23,6 +24,7 @@ import { requestPasswordReset } from '@/app/actions/auth'
 type ForgotForm = z.infer<typeof forgotPasswordSchema>
 
 export function ForgotPasswordForm() {
+  const t = useTranslations()
   const [isPending, startTransition] = useTransition()
   const [submitted, setSubmitted] = useState(false)
 
@@ -42,15 +44,15 @@ export function ForgotPasswordForm() {
   if (submitted) {
     return (
       <div className="space-y-4 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">重設信已發送</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('account.forgot.sentTitle')}</h1>
         <p className="text-sm text-muted-foreground">
-          若此 Email 已註冊，將發送密碼重設信至您的信箱。
+          {t('account.forgot.sentDesc')}
         </p>
         <Link
           href="/login"
           className="block text-sm font-medium underline underline-offset-4 hover:text-primary"
         >
-          返回登入
+          {t('common.backToLogin')}
         </Link>
       </div>
     )
@@ -59,9 +61,9 @@ export function ForgotPasswordForm() {
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">忘記密碼</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('account.forgot.title')}</h1>
         <p className="text-sm text-muted-foreground">
-          輸入您的 Email，我們將發送密碼重設連結
+          {t('account.forgot.subtitle')}
         </p>
       </div>
 
@@ -81,17 +83,17 @@ export function ForgotPasswordForm() {
           <FieldError message={errors.email?.message} />
         </div>
         <Button disabled={isPending}>
-          {isPending ? '發送中...' : '發送重設連結'}
+          {isPending ? t('account.forgot.submitting') : t('account.forgot.submit')}
         </Button>
       </form>
 
       <p className="text-center text-sm text-muted-foreground">
-        想起密碼了？{' '}
+        {t('account.forgot.rememberedQ')}{' '}
         <Link
           href="/login"
           className="font-medium underline underline-offset-4 hover:text-primary"
         >
-          返回登入
+          {t('common.backToLogin')}
         </Link>
       </p>
     </div>

@@ -11,23 +11,36 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 import { formatDistanceToNow } from 'date-fns'
 import { zhTW } from 'date-fns/locale'
+import { getTranslations } from 'next-intl/server'
 import { getMyInvites } from '@/app/actions/course-invite'
 import { InviteCopyButton } from '@/components/course-invite/invite-copy-button'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
 
-export const metadata: Metadata = {
-  title: '邀請進度 — 啟動事工',
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'invites' })
+  return { title: t('metaTitle') }
 }
 
-export default async function InvitesPage() {
+export default async function InvitesPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}) {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'invites' })
   const invites = await getMyInvites()
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">邀請進度</h1>
+      <h1 className="text-2xl font-semibold">{t('title')}</h1>
 
       {invites.length === 0 ? (
-        <p className="text-muted-foreground text-sm">尚未建立任何邀請</p>
+        <p className="text-muted-foreground text-sm">{t('empty')}</p>
       ) : (
         <div className="space-y-4">
           {invites.map((invite) => (
@@ -37,15 +50,15 @@ export default async function InvitesPage() {
                 <div>
                   <p className="font-semibold">{invite.title}</p>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    預計 {invite.maxCount} 人・已確認 {invite.enrollments.length} 人
+                    {t('capacity', { max: invite.maxCount, approved: invite.enrollments.length })}
                     {invite.orders.length > 0 && (
                       <span className="ml-2">
-                        ・教材訂單 {invite.orders.length} 筆
+                        ・{t('orders', { count: invite.orders.length })}
                       </span>
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    建立於{' '}
+                    {t('createdAtPrefix')}{' '}
                     {formatDistanceToNow(invite.createdAt, {
                       addSuffix: true,
                       locale: zhTW,
@@ -57,14 +70,14 @@ export default async function InvitesPage() {
 
               {/* 學員列表 */}
               {invite.enrollments.length === 0 ? (
-                <p className="text-sm text-muted-foreground">尚無學員加入</p>
+                <p className="text-sm text-muted-foreground">{t('noStudents')}</p>
               ) : (
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-muted-foreground text-left">
-                      <th className="pb-1 font-medium">姓名</th>
+                      <th className="pb-1 font-medium">{t('name')}</th>
                       <th className="pb-1 font-medium">Email</th>
-                      <th className="pb-1 font-medium">加入時間</th>
+                      <th className="pb-1 font-medium">{t('joinedAt')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">

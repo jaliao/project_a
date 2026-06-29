@@ -12,6 +12,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,6 +26,7 @@ type Option = { id: string; name: string }
 type Step = 'name' | 'quiz' | 'email' | 'done'
 
 export function RecoverAccountForm() {
+  const t = useTranslations()
   const [isPending, startTransition] = useTransition()
   const [step, setStep] = useState<Step>('name')
   const [error, setError] = useState<string | null>(null)
@@ -98,16 +100,16 @@ export function RecoverAccountForm() {
   if (step === 'done') {
     return (
       <div className="space-y-4 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">帳號已找回</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('recover.doneTitle')}</h1>
         <p className="text-sm text-muted-foreground">{doneMsg}</p>
         <p className="text-sm text-muted-foreground">
-          請至登入頁，以您的 Email 與臨時密碼登入。
+          {t('recover.doneLoginHint')}
         </p>
         <Link
           href="/login"
           className="block text-sm font-medium underline underline-offset-4 hover:text-primary"
         >
-          前往登入
+          {t('recover.goLogin')}
         </Link>
       </div>
     )
@@ -116,11 +118,11 @@ export function RecoverAccountForm() {
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">找回帳號</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('recover.title')}</h1>
         <p className="text-sm text-muted-foreground">
-          {step === 'name' && '輸入您的中文名字，協助您找回尚未啟用的帳號'}
-          {step === 'quiz' && '為確認是您本人，請回答下列問題'}
-          {step === 'email' && '確認或修改您的 Email，臨時密碼將寄至此信箱'}
+          {step === 'name' && t('recover.subtitleName')}
+          {step === 'quiz' && t('recover.subtitleQuiz')}
+          {step === 'email' && t('recover.subtitleEmail')}
         </p>
       </div>
 
@@ -132,16 +134,16 @@ export function RecoverAccountForm() {
       {step === 'name' && (
         <form onSubmit={onSubmitName} className="grid gap-4">
           <div className="grid gap-1.5">
-            <Label htmlFor="realName">中文名字</Label>
+            <Label htmlFor="realName">{t('recover.nameLabel')}</Label>
             <Input
               id="realName"
-              placeholder="請輸入您的中文姓名"
+              placeholder={t('recover.namePlaceholder')}
               disabled={isPending}
               value={realName}
               onChange={(e) => setRealName(e.target.value)}
             />
           </div>
-          <Button disabled={isPending}>{isPending ? '查詢中...' : '下一步'}</Button>
+          <Button disabled={isPending}>{isPending ? t('recover.querying') : t('recover.next')}</Button>
         </form>
       )}
 
@@ -181,16 +183,16 @@ export function RecoverAccountForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
-            <p className="text-xs text-muted-foreground">確認無誤可直接送出；如有錯誤請修改。</p>
+            <p className="text-xs text-muted-foreground">{t('recover.emailHint')}</p>
           </div>
-          <Button disabled={isPending}>{isPending ? '送出中...' : '確認並寄送臨時密碼'}</Button>
+          <Button disabled={isPending}>{isPending ? t('recover.submitting') : t('recover.submitEmail')}</Button>
         </form>
       )}
 
       <p className="text-center text-sm text-muted-foreground">
-        已經能登入了？{' '}
+        {t('recover.canLoginQ')}{' '}
         <Link href="/login" className="font-medium underline underline-offset-4 hover:text-primary">
-          返回登入
+          {t('common.backToLogin')}
         </Link>
       </p>
     </div>

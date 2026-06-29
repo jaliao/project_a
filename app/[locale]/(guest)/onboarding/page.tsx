@@ -11,13 +11,20 @@
 
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getActiveChurches } from '@/lib/data/churches'
 import { OnboardingWizard } from './onboarding-wizard'
 
-export const metadata: Metadata = {
-  title: '歡迎加入 — 啟動事工',
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'onboarding' })
+  return { title: t('metaTitle') }
 }
 
 export default async function OnboardingPage() {

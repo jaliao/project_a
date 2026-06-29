@@ -1,8 +1,8 @@
 /*
  * ----------------------------------------------
  * 登入頁面（shadcn Authentication 版型，Mobile First）
- * 2026-03-23
- * app/(auth)/login/page.tsx
+ * 2026-03-23 (Updated: 2026-06-29)
+ * app/[locale]/(guest)/login/page.tsx
  * ----------------------------------------------
  */
 
@@ -25,7 +25,14 @@ export async function generateMetadata({
   return { title: t('loginPageTitle') }
 }
 
-export default function LoginPage() {
+export default async function LoginPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}) {
+  const { locale } = await params
+  const t = await getTranslations({ locale })
+
   return (
     <div className="relative min-h-screen lg:grid lg:grid-cols-2">
 
@@ -45,17 +52,16 @@ export default function LoginPage() {
           >
             <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
           </svg>
-          啟動事工
+          {t('common.appName')}
         </div>
 
         {/* 底部引言 */}
         <div className="mt-auto">
           <blockquote className="space-y-2">
             <p className="text-lg leading-relaxed">
-              &ldquo;透過啟動事工，我的課程管理與學員追蹤變得更加有條理，
-              讓我能專注於教學本身。&rdquo;
+              &ldquo;{t('account.login.quote')}&rdquo;
             </p>
-            <footer className="text-sm text-zinc-400">— 系統使用者</footer>
+            <footer className="text-sm text-zinc-400">— {t('account.quoteAuthor')}</footer>
           </blockquote>
         </div>
       </div>
@@ -78,7 +84,7 @@ export default function LoginPage() {
             >
               <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
             </svg>
-            啟動事工
+            {t('common.appName')}
           </div>
           {/* 語言切換器 + 建立帳號連結 */}
           <div className="flex items-center gap-3">
@@ -87,7 +93,7 @@ export default function LoginPage() {
               href="/register"
               className={cn(buttonVariants({ variant: 'ghost' }), 'text-sm')}
             >
-              建立帳號
+              {t('account.login.createAccount')}
             </Link>
           </div>
         </div>
@@ -97,40 +103,39 @@ export default function LoginPage() {
           <div className="w-full max-w-sm space-y-6">
             <div className="space-y-2 text-center">
               <h1 className="text-2xl font-semibold tracking-tight">
-                登入帳號
+                {t('account.login.title')}
               </h1>
               <p className="text-sm text-muted-foreground">
-                輸入您的 Email 或使用 Google 帳號登入
+                {t('account.login.subtitle')}
               </p>
             </div>
 
             <UserAuthForm />
 
             <p className="px-4 text-center text-xs text-muted-foreground">
-              點擊繼續即表示您同意我們的{' '}
+              {t('account.termsAgree')}{' '}
               <Link
                 href="/terms"
                 className="underline underline-offset-4 hover:text-primary"
               >
-                服務條款
+                {t('account.terms')}
               </Link>{' '}
-              與{' '}
+              {t('account.and')}{' '}
               <Link
                 href="/privacy"
                 className="underline underline-offset-4 hover:text-primary"
               >
-                隱私政策
+                {t('account.privacy')}
               </Link>
-              。
             </p>
 
             <p className="text-center text-sm text-muted-foreground">
-              還沒有帳號？{' '}
+              {t('account.login.noAccount')}{' '}
               <Link
                 href="/register"
                 className="font-medium underline underline-offset-4 hover:text-primary"
               >
-                立即註冊
+                {t('account.login.registerNow')}
               </Link>
             </p>
           </div>

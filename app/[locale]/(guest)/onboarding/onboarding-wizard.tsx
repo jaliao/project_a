@@ -87,7 +87,7 @@ function Step1Password({ onSuccess }: { onSuccess: (spiritId: string) => void })
         onSuccess(spiritId)
       } else {
         const errKey = result.errors?.currentPassword?.[0] ?? result.errors?.newPassword?.[0]
-        toast.error(errKey ? t(errKey) : (result.message ?? '更新失敗'))
+        toast.error(errKey ? t(errKey) : (result.message ?? t('onboarding.updateFailed')))
       }
     })
   }
@@ -96,12 +96,12 @@ function Step1Password({ onSuccess }: { onSuccess: (spiritId: string) => void })
     <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
       {/* 目前密碼（臨時密碼） */}
       <div className="grid gap-1.5">
-        <Label htmlFor="ob-currentPassword">臨時密碼</Label>
+        <Label htmlFor="ob-currentPassword">{t('onboarding.tempPassword')}</Label>
         <div className="relative">
           <Input
             id="ob-currentPassword"
             type={showCurrent ? 'text' : 'password'}
-            placeholder="輸入信件中的臨時密碼"
+            placeholder={t('onboarding.tempPasswordPlaceholder')}
             autoComplete="current-password"
             disabled={isPending}
             className="pr-10"
@@ -117,12 +117,12 @@ function Step1Password({ onSuccess }: { onSuccess: (spiritId: string) => void })
 
       {/* 新密碼 */}
       <div className="grid gap-1.5">
-        <Label htmlFor="ob-newPassword">新密碼</Label>
+        <Label htmlFor="ob-newPassword">{t('onboarding.newPassword')}</Label>
         <div className="relative">
           <Input
             id="ob-newPassword"
             type={showNew ? 'text' : 'password'}
-            placeholder="至少 8 個字元"
+            placeholder={t('onboarding.newPasswordPlaceholder')}
             autoComplete="new-password"
             disabled={isPending}
             className="pr-10"
@@ -138,12 +138,12 @@ function Step1Password({ onSuccess }: { onSuccess: (spiritId: string) => void })
 
       {/* 確認新密碼 */}
       <div className="grid gap-1.5">
-        <Label htmlFor="ob-confirmPassword">確認新密碼</Label>
+        <Label htmlFor="ob-confirmPassword">{t('onboarding.confirmPassword')}</Label>
         <div className="relative">
           <Input
             id="ob-confirmPassword"
             type={showConfirm ? 'text' : 'password'}
-            placeholder="再次輸入新密碼"
+            placeholder={t('onboarding.confirmPlaceholder')}
             autoComplete="new-password"
             disabled={isPending}
             className="pr-10"
@@ -158,7 +158,7 @@ function Step1Password({ onSuccess }: { onSuccess: (spiritId: string) => void })
       </div>
 
       <Button type="submit" disabled={isPending} className="w-full mt-2">
-        {isPending ? '設定中...' : '下一步 →'}
+        {isPending ? t('onboarding.settingUp') : t('onboarding.next')}
       </Button>
     </form>
   )
@@ -219,7 +219,7 @@ function Step2Profile({ churches, onSuccess }: { churches: OnboardingChurch[]; o
           result.errors?.churchType?.[0] ??
           result.errors?.churchId?.[0] ??
           result.errors?.churchOther?.[0]
-        toast.error(errKey ? t(errKey) : (result.message ?? '儲存失敗'))
+        toast.error(errKey ? t(errKey) : (result.message ?? t('onboarding.saveFailed')))
       }
     })
   }
@@ -230,10 +230,10 @@ function Step2Profile({ churches, onSuccess }: { churches: OnboardingChurch[]; o
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
       <div className="grid gap-1.5">
-        <Label htmlFor="ob-realName">真實姓名</Label>
+        <Label htmlFor="ob-realName">{t('onboarding.realName')}</Label>
         <Input
           id="ob-realName"
-          placeholder="請輸入您的真實姓名"
+          placeholder={t('onboarding.realNamePlaceholder')}
           autoComplete="name"
           disabled={isPending}
           {...register('realName')}
@@ -242,11 +242,11 @@ function Step2Profile({ churches, onSuccess }: { churches: OnboardingChurch[]; o
       </div>
 
       <div className="grid gap-1.5">
-        <Label htmlFor="ob-phone">手機號碼</Label>
+        <Label htmlFor="ob-phone">{t('onboarding.phone')}</Label>
         <Input
           id="ob-phone"
           type="tel"
-          placeholder="例：0912345678"
+          placeholder={t('onboarding.phonePlaceholder')}
           autoComplete="tel"
           disabled={isPending}
           {...register('phone')}
@@ -257,7 +257,7 @@ function Step2Profile({ churches, onSuccess }: { churches: OnboardingChurch[]; o
       <div className="grid grid-cols-2 gap-4">
         {/* 性別（必填） */}
         <div className="grid gap-1.5">
-          <Label htmlFor="ob-gender">性別</Label>
+          <Label htmlFor="ob-gender">{t('onboarding.gender')}</Label>
           <select
             id="ob-gender"
             disabled={isPending}
@@ -265,21 +265,21 @@ function Step2Profile({ churches, onSuccess }: { churches: OnboardingChurch[]; o
             className="h-9 rounded-md border px-3 py-1 text-sm bg-background"
             {...register('gender')}
           >
-            <option value="" disabled>請選擇</option>
-            <option value="male">男</option>
-            <option value="female">女</option>
+            <option value="" disabled>{t('onboarding.selectPlaceholder')}</option>
+            <option value="male">{t('onboarding.male')}</option>
+            <option value="female">{t('onboarding.female')}</option>
           </select>
           <FieldError message={errors.gender?.message} />
         </div>
 
         {/* 出生年（必填，西元） */}
         <div className="grid gap-1.5">
-          <Label htmlFor="ob-birthYear">出生年（西元）</Label>
+          <Label htmlFor="ob-birthYear">{t('onboarding.birthYear')}</Label>
           <Input
             id="ob-birthYear"
             type="number"
             inputMode="numeric"
-            placeholder={`例：1990（1900~${currentYear}）`}
+            placeholder={t('onboarding.birthYearPlaceholder', { year: currentYear })}
             min={1900}
             max={currentYear}
             disabled={isPending}
@@ -291,7 +291,7 @@ function Step2Profile({ churches, onSuccess }: { churches: OnboardingChurch[]; o
 
       {/* 所屬教會/單位（必填） */}
       <div className="grid gap-1.5">
-        <Label htmlFor="ob-church">所屬教會/單位</Label>
+        <Label htmlFor="ob-church">{t('onboarding.church')}</Label>
         <select
           id="ob-church"
           disabled={isPending}
@@ -299,15 +299,15 @@ function Step2Profile({ churches, onSuccess }: { churches: OnboardingChurch[]; o
           onChange={(e) => handleChurchSelectChange(e.target.value)}
           className="h-9 rounded-md border px-3 py-1 text-sm bg-background"
         >
-          <option value="" disabled>請選擇</option>
+          <option value="" disabled>{t('onboarding.selectPlaceholder')}</option>
           {churches.map((c) => (
             <option key={c.id} value={`church:${c.id}`}>{c.name}</option>
           ))}
-          <option value="other">其他</option>
+          <option value="other">{t('onboarding.churchOther')}</option>
         </select>
         {showOther && (
           <Input
-            placeholder="請填寫教會/單位名稱"
+            placeholder={t('onboarding.churchOtherPlaceholder')}
             disabled={isPending}
             {...register('churchOther')}
           />
@@ -317,10 +317,10 @@ function Step2Profile({ churches, onSuccess }: { churches: OnboardingChurch[]; o
         <FieldError message={errors.churchOther?.message} />
       </div>
 
-      <p className="text-xs text-muted-foreground">其餘資料可於個人資料頁補填。</p>
+      <p className="text-xs text-muted-foreground">{t('onboarding.restFillLater')}</p>
 
       <Button type="submit" disabled={isPending} className="w-full mt-2">
-        {isPending ? '儲存中...' : '下一步 →'}
+        {isPending ? t('onboarding.saving') : t('onboarding.next')}
       </Button>
     </form>
   )
@@ -328,6 +328,7 @@ function Step2Profile({ churches, onSuccess }: { churches: OnboardingChurch[]; o
 
 // ── Step 3：歡迎畫面 ──────────────────────────
 function Step3Welcome({ spiritId }: { spiritId: string }) {
+  const t = useTranslations()
   const router = useRouter()
   return (
     <div className="grid gap-6 text-center">
@@ -337,17 +338,17 @@ function Step3Welcome({ spiritId }: { spiritId: string }) {
         </div>
       </div>
       <div className="grid gap-2">
-        <h2 className="text-xl font-semibold">歡迎加入！</h2>
-        <p className="text-sm text-muted-foreground">密碼與基本資料已設定完成。</p>
+        <h2 className="text-xl font-semibold">{t('onboarding.welcomeTitle')}</h2>
+        <p className="text-sm text-muted-foreground">{t('onboarding.welcomeDesc')}</p>
         {spiritId && (
           <div className="mt-2 rounded-lg bg-muted px-4 py-3">
-            <p className="text-xs text-muted-foreground mb-1">您的啟動編號</p>
+            <p className="text-xs text-muted-foreground mb-1">{t('onboarding.spiritIdLabel')}</p>
             <p className="text-2xl font-mono font-bold tracking-widest">{spiritId}</p>
           </div>
         )}
       </div>
       <Button onClick={() => router.push('/dashboard')} className="w-full">
-        開始使用 →
+        {t('onboarding.startUsing')}
       </Button>
     </div>
   )
@@ -361,10 +362,11 @@ interface OnboardingWizardProps {
 }
 
 export function OnboardingWizard({ initialStep, initialSpiritId, churches }: OnboardingWizardProps) {
+  const t = useTranslations()
   const [step, setStep] = useState(initialStep)
   const [spiritId, setSpiritId] = useState(initialSpiritId)
 
-  const stepTitles = ['設定您的密碼', '填寫基本資料', '歡迎加入！']
+  const stepTitles = [t('onboarding.stepTitle1'), t('onboarding.stepTitle2'), t('onboarding.stepTitle3')]
 
   return (
     <div className="relative min-h-screen lg:grid lg:grid-cols-2">
@@ -377,14 +379,14 @@ export function OnboardingWizard({ initialStep, initialSpiritId, churches }: Onb
             className="mr-2 h-6 w-6">
             <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
           </svg>
-          啟動事工
+          {t('common.appName')}
         </div>
         <div className="mt-auto">
           <blockquote className="space-y-2">
             <p className="text-lg leading-relaxed">
-              &ldquo;歡迎加入啟動事工，幾個簡單步驟，開啟您的事工旅程。&rdquo;
+              &ldquo;{t('onboarding.brandQuote')}&rdquo;
             </p>
-            <footer className="text-sm text-zinc-400">— 啟動事工</footer>
+            <footer className="text-sm text-zinc-400">— {t('common.appName')}</footer>
           </blockquote>
         </div>
       </div>
@@ -400,7 +402,7 @@ export function OnboardingWizard({ initialStep, initialSpiritId, churches }: Onb
               className="h-5 w-5">
               <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
             </svg>
-            啟動事工
+            {t('common.appName')}
           </div>
           {/* 登出連結 */}
           <button
@@ -408,7 +410,7 @@ export function OnboardingWizard({ initialStep, initialSpiritId, churches }: Onb
             onClick={() => signOut({ callbackUrl: '/login' })}
             className="text-sm text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
           >
-            登出
+            {t('onboarding.logout')}
           </button>
         </div>
 

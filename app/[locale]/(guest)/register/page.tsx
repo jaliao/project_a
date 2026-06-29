@@ -1,22 +1,36 @@
 /*
  * ----------------------------------------------
  * 註冊頁面
- * 2026-03-23 (Updated: 2026-04-01)
- * app/(auth)/register/page.tsx
+ * 2026-03-23 (Updated: 2026-06-29)
+ * app/[locale]/(guest)/register/page.tsx
  * ----------------------------------------------
  */
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
 import { RegisterForm } from './register-form'
 
-export const metadata: Metadata = {
-  title: '建立帳號 — 啟動事工',
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'account' })
+  return { title: t('register.metaTitle') }
 }
 
-export default function RegisterPage() {
+export default async function RegisterPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}) {
+  const { locale } = await params
+  const t = await getTranslations({ locale })
+
   return (
     <div className="relative min-h-screen lg:grid lg:grid-cols-2">
 
@@ -36,16 +50,16 @@ export default function RegisterPage() {
           >
             <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
           </svg>
-          啟動事工
+          {t('common.appName')}
         </div>
 
         {/* 底部引言 */}
         <div className="mt-auto">
           <blockquote className="space-y-2">
             <p className="text-lg leading-relaxed">
-              &ldquo;加入啟動事工，開始您的靈命成長旅程。&rdquo;
+              &ldquo;{t('account.register.quote')}&rdquo;
             </p>
-            <footer className="text-sm text-zinc-400">— 系統使用者</footer>
+            <footer className="text-sm text-zinc-400">— {t('account.quoteAuthor')}</footer>
           </blockquote>
         </div>
       </div>
@@ -68,14 +82,14 @@ export default function RegisterPage() {
             >
               <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
             </svg>
-            啟動事工
+            {t('common.appName')}
           </div>
           {/* 登入連結 */}
           <Link
             href="/login"
             className={cn(buttonVariants({ variant: 'ghost' }), 'text-sm')}
           >
-            登入
+            {t('account.register.loginLink')}
           </Link>
         </div>
 
@@ -84,40 +98,39 @@ export default function RegisterPage() {
           <div className="w-full max-w-sm space-y-6">
             <div className="space-y-2 text-center">
               <h1 className="text-2xl font-semibold tracking-tight">
-                建立帳號
+                {t('account.register.title')}
               </h1>
               <p className="text-sm text-muted-foreground">
-                輸入您的 Email 或使用 Google 帳號建立帳號
+                {t('account.register.subtitle')}
               </p>
             </div>
 
             <RegisterForm />
 
             <p className="px-4 text-center text-xs text-muted-foreground">
-              點擊繼續即表示您同意我們的{' '}
+              {t('account.termsAgree')}{' '}
               <Link
                 href="/terms"
                 className="underline underline-offset-4 hover:text-primary"
               >
-                服務條款
+                {t('account.terms')}
               </Link>{' '}
-              與{' '}
+              {t('account.and')}{' '}
               <Link
                 href="/privacy"
                 className="underline underline-offset-4 hover:text-primary"
               >
-                隱私政策
+                {t('account.privacy')}
               </Link>
-              。
             </p>
 
             <p className="text-center text-sm text-muted-foreground">
-              已有帳號？{' '}
+              {t('account.register.haveAccount')}{' '}
               <Link
                 href="/login"
                 className="font-medium underline underline-offset-4 hover:text-primary"
               >
-                立即登入
+                {t('account.register.loginNow')}
               </Link>
             </p>
           </div>

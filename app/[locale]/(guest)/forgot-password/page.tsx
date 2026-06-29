@@ -1,22 +1,36 @@
 /*
  * ----------------------------------------------
  * 忘記密碼頁面
- * 2026-03-23 (Updated: 2026-04-07)
- * app/(auth)/forgot-password/page.tsx
+ * 2026-03-23 (Updated: 2026-06-29)
+ * app/[locale]/(guest)/forgot-password/page.tsx
  * ----------------------------------------------
  */
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
 import { ForgotPasswordForm } from './forgot-password-form'
 
-export const metadata: Metadata = {
-  title: '忘記密碼 — 啟動事工',
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'account' })
+  return { title: t('forgot.metaTitle') }
 }
 
-export default function ForgotPasswordPage() {
+export default async function ForgotPasswordPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}) {
+  const { locale } = await params
+  const t = await getTranslations({ locale })
+
   return (
     <div className="relative min-h-screen lg:grid lg:grid-cols-2">
 
@@ -36,16 +50,16 @@ export default function ForgotPasswordPage() {
           >
             <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
           </svg>
-          啟動事工
+          {t('common.appName')}
         </div>
 
         {/* 底部引言 */}
         <div className="mt-auto">
           <blockquote className="space-y-2">
             <p className="text-lg leading-relaxed">
-              &ldquo;忘記密碼？輸入您的 Email，我們將發送重設連結。&rdquo;
+              &ldquo;{t('account.forgot.quote')}&rdquo;
             </p>
-            <footer className="text-sm text-zinc-400">— 啟動事工</footer>
+            <footer className="text-sm text-zinc-400">— {t('common.appName')}</footer>
           </blockquote>
         </div>
       </div>
@@ -68,14 +82,14 @@ export default function ForgotPasswordPage() {
             >
               <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
             </svg>
-            啟動事工
+            {t('common.appName')}
           </div>
           {/* 返回登入連結 */}
           <Link
             href="/login"
             className={cn(buttonVariants({ variant: 'ghost' }), 'text-sm')}
           >
-            返回登入
+            {t('common.backToLogin')}
           </Link>
         </div>
 

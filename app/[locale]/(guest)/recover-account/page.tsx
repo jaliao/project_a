@@ -11,15 +11,28 @@
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
 import { RecoverAccountForm } from './recover-account-form'
 
-export const metadata: Metadata = {
-  title: '找回帳號 — 啟動事工',
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'recover' })
+  return { title: t('metaTitle') }
 }
 
-export default function RecoverAccountPage() {
+export default async function RecoverAccountPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}) {
+  const { locale } = await params
+  const t = await getTranslations({ locale })
   return (
     <div className="relative min-h-screen lg:grid lg:grid-cols-2">
 
@@ -38,14 +51,14 @@ export default function RecoverAccountPage() {
           >
             <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
           </svg>
-          啟動事工
+          {t('common.appName')}
         </div>
         <div className="mt-auto">
           <blockquote className="space-y-2">
             <p className="text-lg leading-relaxed">
-              &ldquo;還沒設定過帳號？輸入您的中文名字，我們協助您找回帳號。&rdquo;
+              &ldquo;{t('recover.quote')}&rdquo;
             </p>
-            <footer className="text-sm text-zinc-400">— 啟動事工</footer>
+            <footer className="text-sm text-zinc-400">— {t('common.appName')}</footer>
           </blockquote>
         </div>
       </div>
@@ -66,13 +79,13 @@ export default function RecoverAccountPage() {
             >
               <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
             </svg>
-            啟動事工
+            {t('common.appName')}
           </div>
           <Link
             href="/login"
             className={cn(buttonVariants({ variant: 'ghost' }), 'text-sm')}
           >
-            返回登入
+            {t('common.backToLogin')}
           </Link>
         </div>
 
