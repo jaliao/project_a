@@ -25,6 +25,7 @@ import {
   resetPasswordSchema,
 } from '@/lib/schemas/auth'
 import { onboardingProfileSchema } from '@/lib/schemas/profile'
+import { getAppUrl } from '@/lib/utils/app-url'
 import {
   getValidResetToken,
   markTokenUsed,
@@ -242,7 +243,7 @@ export async function requestPasswordReset(
       data: { token, email, expiresAt },
     })
 
-    const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`
+    const resetUrl = `${getAppUrl()}/reset-password?token=${token}`
     // 收件地址依規則：優先已驗證通訊 Email，否則帳號 Email
     sendPasswordResetEmail(resolveContactEmail(user), resetUrl).catch((err) => {
       console.error('[requestPasswordReset] 寄信失敗：', err)

@@ -11,6 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { getRequestBaseUrl } from '@/lib/utils/app-url'
 
 // NextAuth session cookie 可能的名稱（https 加 __Secure- 前綴；過長時分塊 .0/.1）
 const COOKIE_NAMES = [
@@ -23,8 +24,8 @@ const COOKIE_NAMES = [
 ]
 
 export function GET(req: NextRequest) {
-  // 用公開網址（NEXTAUTH_URL）組轉址，避免 cloudflared 後面取到內部 localhost host
-  const base = process.env.NEXTAUTH_URL ?? req.nextUrl.origin
+  // 用對外網址組轉址，避免 cloudflared 後面取到內部 localhost host
+  const base = getRequestBaseUrl(req)
   const res = NextResponse.redirect(new URL('/account-suspended', base))
   for (const name of COOKIE_NAMES) {
     res.cookies.set(name, '', { path: '/', maxAge: 0 })

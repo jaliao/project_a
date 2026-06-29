@@ -18,6 +18,7 @@ import { sendGraduationEmail } from '@/lib/mailer'
 import { resolveContactEmail } from '@/lib/utils/contact-email'
 import { renderTemplate } from '@/lib/utils/render-template'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
+import { getAppUrl } from '@/lib/utils/app-url'
 import { evaluateCourseStartGate } from '@/lib/utils/course-start-gate'
 import { computeMaterialProgress } from '@/lib/utils/material-progress'
 import { getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
@@ -116,8 +117,7 @@ export async function inviteBySpirtId(
 
   // 發送 Inbox 通知（fire-and-forget）
   try {
-    const origin = process.env.NEXTAUTH_URL ?? ''
-    const inviteLink = `${origin}/course/${courseInviteId}`
+    const inviteLink = `${getAppUrl()}/course/${courseInviteId}`
     await createNotification(
       targetUser.id,
       '課程邀請',

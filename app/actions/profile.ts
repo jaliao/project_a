@@ -14,6 +14,7 @@ import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { sendCommEmailVerification } from '@/lib/mailer'
 import { updateProfileSchema, commEmailSchema } from '@/lib/schemas/profile'
+import { getAppUrl } from '@/lib/utils/app-url'
 
 type ActionResponse = {
   success: boolean
@@ -105,7 +106,7 @@ export async function updateCommEmail(
     }),
   ])
 
-  const verifyUrl = `${process.env.NEXTAUTH_URL}/api/verify-email?token=${token}`
+  const verifyUrl = `${getAppUrl()}/api/verify-email?token=${token}`
   sendCommEmailVerification(commEmail, verifyUrl).catch((err) => {
     console.error('[updateCommEmail] 寄信失敗：', err)
   })
@@ -162,7 +163,7 @@ export async function resendCommVerification(): Promise<ActionResponse> {
     data: { token, email: user.commEmail, userId: user.id, expiresAt },
   })
 
-  const verifyUrl = `${process.env.NEXTAUTH_URL}/api/verify-email?token=${token}`
+  const verifyUrl = `${getAppUrl()}/api/verify-email?token=${token}`
   sendCommEmailVerification(user.commEmail, verifyUrl).catch((err) => {
     console.error('[resendCommVerification] 寄信失敗：', err)
   })

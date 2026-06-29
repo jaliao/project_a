@@ -290,6 +290,13 @@ export type ProjectStatus = keyof typeof PROJECT_STATUSES
 - **缺 key 行為**：非預設語言缺 key 會逐層回退顯示繁體（`i18n/request.ts` deepMerge），支援漸進遷移；既有未遷移字串維持繁體顯示。
 - **連結與導向**：需 locale 感知時用 `@/i18n/navigation` 的 `Link`/`useRouter`/`usePathname`。
 
+### 13. 對外絕對網址建構（dev tunnel 安全）
+- 對外絕對網址（寄信連結、跨站導向）一律透過 `lib/utils/app-url.ts` 建構：
+  - **無 request 情境**（server action 寄信/通知連結）用 `getAppUrl()`（讀 `NEXTAUTH_URL`）。
+  - **route handler 導向**用 `getRequestBaseUrl(req)`（依 `x-forwarded-host`/`x-forwarded-proto` 還原對外網域）。
+- ⚠️ **route handler 禁止用 `req.url` / `req.nextUrl.origin` 建對外網址**：開發經 Cloudflare Tunnel 時其 host 會是內部 `localhost:3000`，導致導向落到瀏覽器無法到達的位址（曾於 `/api/verify-email` 踩坑）。
+- 不要散落 `process.env.NEXTAUTH_URL` 字串拼接，改用 `getAppUrl()`。
+
 ## Database Schema Notes
 
 ### User Models (user.prisma)
