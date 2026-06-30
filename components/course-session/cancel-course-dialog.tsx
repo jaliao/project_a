@@ -11,6 +11,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -30,12 +31,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { cancelCourseSession } from '@/app/actions/course-invite'
 
-const PRESET_REASONS = [
-  { value: '人數不足', label: '人數不足' },
-  { value: '時間因素', label: '時間因素' },
-  { value: '__other__', label: '其他' },
-]
-
 type Props = {
   inviteId: number
   open: boolean
@@ -43,6 +38,13 @@ type Props = {
 }
 
 export function CancelCourseDialog({ inviteId, open, onOpenChange }: Props) {
+  const t = useTranslations()
+  // value 為送至後端的原因（保留繁體），label 在地化顯示
+  const PRESET_REASONS = [
+    { value: '人數不足', label: t('course.cancel.reasonInsufficient') },
+    { value: '時間因素', label: t('course.cancel.reasonTime') },
+    { value: '__other__', label: t('course.cancel.reasonOther') },
+  ]
   const router = useRouter()
   const [selected, setSelected] = useState('')
   const [customReason, setCustomReason] = useState('')
@@ -59,18 +61,18 @@ export function CancelCourseDialog({ inviteId, open, onOpenChange }: Props) {
 
   async function handleConfirm() {
     if (!finalReason) {
-      toast.error('請填寫取消原因')
+      toast.error(t('course.cancel.validateReason'))
       return
     }
     setLoading(true)
     const result = await cancelCourseSession(inviteId, finalReason)
     setLoading(false)
     if (result.success) {
-      toast.success('課程已取消')
+      toast.success(t('course.cancel.success'))
       handleClose()
       router.refresh()
     } else {
-      toast.error(result.message ?? '取消失敗，請稍後再試')
+      toast.error(result.message ?? t('course.cancel.fail'))
     }
   }
 
@@ -78,15 +80,15 @@ export function CancelCourseDialog({ inviteId, open, onOpenChange }: Props) {
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>確認取消課程</DialogTitle>
+          <DialogTitle>{t('course.cancel.title')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
-            <Label>取消原因</Label>
+            <Label>{t('course.cancel.reasonLabel')}</Label>
             <Select value={selected} onValueChange={setSelected}>
               <SelectTrigger>
-                <SelectValue placeholder="請選擇原因" />
+                <SelectValue placeholder={t('course.cancel.selectReason')} />
               </SelectTrigger>
               <SelectContent>
                 {PRESET_REASONS.map((r) => (
@@ -100,9 +102,9 @@ export function CancelCourseDialog({ inviteId, open, onOpenChange }: Props) {
 
           {isOther && (
             <div className="space-y-1.5">
-              <Label>請說明原因</Label>
+              <Label>{t('course.cancel.explainReason')}</Label>
               <Textarea
-                placeholder="請輸入取消原因..."
+                placeholder={t('course.cancel.reasonPlaceholder')}
                 value={customReason}
                 onChange={(e) => setCustomReason(e.target.value)}
                 rows={3}
@@ -113,10 +115,10 @@ export function CancelCourseDialog({ inviteId, open, onOpenChange }: Props) {
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose} disabled={loading}>
-            取消
+            {t('common.cancel')}
           </Button>
           <Button variant="destructive" onClick={handleConfirm} disabled={loading}>
-            {loading ? '處理中...' : '確認取消課程'}
+            {loading ? t('course.cancel.processing') : t('course.cancel.title')}
           </Button>
         </DialogFooter>
       </DialogContent>

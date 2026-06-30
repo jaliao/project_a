@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.104（2026-06-29）
+> 自動產生，版本 0.1.105（2026-06-30）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -375,6 +375,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260629-008` — 多語系課程網域（子批 2）：課程頁（course/[id] 詳情/graduate/course-sessions）、course-session 元件（卡片/dialogs/create-course-wizard/enrolled-list）、course-faq、graduation-form、課程詳情互動子元件（apply/match/feedback/pending/copy-link）全面 i18n；新增 course 命名空間（detail/sessions/material/graduate/card/wizard/faq/cancel/editInfo/enroll/apply/match/feedback/pending/copyLink/gradForm…，en 草稿 + zh-CN OpenCC）；ICU 計數。**排除**：material-order-dialog + course-detail-actions（教材訂購/付款）→ 009；course-catalog 後台 CRUD 與 course-status-select（後台）維持繁體；shared course-* schema 驗證訊息不動；course-session-form 為 dead code 未動
 - `cr-spec-260629-007` — 多語系會員前台批（子批 1）：未登入流程（login/register/forgot/reset/recover/onboarding 頁與表單）與小型會員頁（notifications/invites/learning/match-board）UI 文案在地化；新增 `account`/`onboarding`/`recover`/`notifications`/`invites`/`learning`/`matchBoard` 命名空間（en 草稿 + zh-CN OpenCC）；server 頁用 `getTranslations`+`generateMetadata`、client 用 `useTranslations`；動態文案用 ICU 參數。course 網域留 008、terms/privacy 法律長文與後台維持繁體
 - `cr-spec-260629-006` — 多語系第二階段（共用基礎批）：擴充訊息命名空間（common/nav/validation/status/role）；Zod 驗證訊息 key 化（`auth`/`profile` schema → `validation.*`），新增共用 `<FieldError>`（i18n）並遷移 8 個前台表單（login/register/forgot/reset/change-password/change-password-card/profile/onboarding）的錯誤呈現與 toast；課程狀態徽章 `course-status-badge` 改 i18n（`status` 命名空間，轉 client）；Topbar 導覽/品牌字串改 `nav`/`common`；保留 `ROLE_LABELS` map 供匯出；CLAUDE.md 第 12 條補驗證/標籤子規範。後台與信件維持繁體；其餘字串續漸進遷移
 - `cr-spec-260629-005` — 對外網址建構收斂：新增 `lib/utils/app-url.ts`（`getAppUrl()` 讀 NEXTAUTH_URL 給寄信用、`getRequestBaseUrl(req)` 依 forwarded-host 給 route handler 導向用）；收斂 5 處（profile/auth/course-invite 寄信連結 + verify-email/suspended-logout 導向）；CLAUDE.md 第 13 條明訂「route handler 禁用 req.url 建對外網址」（dev tunnel 會取到 localhost）

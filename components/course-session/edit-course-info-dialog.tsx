@@ -11,6 +11,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -46,6 +47,7 @@ function toDateInput(date: Date | null): string {
 }
 
 export function EditCourseInfoDialog({ inviteId, approvedCount, initial }: Props) {
+  const t = useTranslations()
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -58,11 +60,11 @@ export function EditCourseInfoDialog({ inviteId, approvedCount, initial }: Props
 
   const handleSave = () => {
     if (!title.trim()) {
-      toast.error('課程名稱為必填')
+      toast.error(t('course.editInfo.nameRequired'))
       return
     }
     if (!expiredAt || !courseDate) {
-      toast.error('請選擇截止日與開課日')
+      toast.error(t('course.editInfo.selectDates'))
       return
     }
     startTransition(async () => {
@@ -74,11 +76,11 @@ export function EditCourseInfoDialog({ inviteId, approvedCount, initial }: Props
         notes,
       })
       if (res.success) {
-        toast.success(res.message ?? '已更新課程資訊')
+        toast.success(res.message ?? t('course.editInfo.success'))
         setOpen(false)
         router.refresh()
       } else {
-        toast.error(res.message ?? res.errors?.maxCount?.[0] ?? '更新失敗，請稍後再試')
+        toast.error(res.message ?? res.errors?.maxCount?.[0] ?? t('course.editInfo.fail'))
       }
     })
   }
@@ -87,22 +89,22 @@ export function EditCourseInfoDialog({ inviteId, approvedCount, initial }: Props
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          編輯課程資訊
+          {t('course.editInfo.title')}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>編輯課程資訊</DialogTitle>
+          <DialogTitle>{t('course.editInfo.title')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">課程名稱</label>
+            <label className="text-sm font-medium">{t('course.editInfo.courseName')}</label>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} disabled={isPending} />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">預計人數</label>
+            <label className="text-sm font-medium">{t('course.editInfo.maxCount')}</label>
             <Input
               type="number"
               min={1}
@@ -113,33 +115,33 @@ export function EditCourseInfoDialog({ inviteId, approvedCount, initial }: Props
               className="w-28"
             />
             <p className="text-xs text-muted-foreground">
-              每班最多 7 人{approvedCount > 0 && `，且不可低於已核准學員數（${approvedCount}）`}
+              {t('course.editInfo.maxHint')}{approvedCount > 0 && t('course.editInfo.maxHintApproved', { count: approvedCount })}
             </p>
           </div>
 
           <div className="flex gap-3">
             <div className="flex-1 space-y-1.5">
-              <label className="text-sm font-medium">邀請截止日</label>
+              <label className="text-sm font-medium">{t('course.editInfo.deadline')}</label>
               <Input type="date" value={expiredAt} onChange={(e) => setExpiredAt(e.target.value)} disabled={isPending} />
             </div>
             <div className="flex-1 space-y-1.5">
-              <label className="text-sm font-medium">預計開課日</label>
+              <label className="text-sm font-medium">{t('course.editInfo.startDate')}</label>
               <Input type="date" value={courseDate} onChange={(e) => setCourseDate(e.target.value)} disabled={isPending} />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">內部備註</label>
-            <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} disabled={isPending} placeholder="選填" />
+            <label className="text-sm font-medium">{t('course.editInfo.notes')}</label>
+            <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} disabled={isPending} placeholder={t('course.editInfo.optional')} />
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={isPending}>
-            取消
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSave} disabled={isPending}>
-            {isPending ? '儲存中…' : '儲存'}
+            {isPending ? t('course.editInfo.saving') : t('common.save')}
           </Button>
         </DialogFooter>
       </DialogContent>

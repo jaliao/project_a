@@ -20,15 +20,10 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 import { applyToCourse } from '@/app/actions/course-invite'
 
 type MaterialChoice = 'none' | 'traditional' | 'simplified'
-
-const MATERIAL_OPTIONS: { value: MaterialChoice; label: string; desc: string }[] = [
-  { value: 'none', label: '無須購買', desc: '已有教材或不需要購買' },
-  { value: 'traditional', label: '繁體教材', desc: '購買繁體中文版教材' },
-  { value: 'simplified', label: '簡體教材', desc: '購買簡體中文版教材' },
-]
 
 type Props = {
   inviteId: number
@@ -40,6 +35,12 @@ type Props = {
 }
 
 export function EnrollmentApplicationDialog({ inviteId, open, onOpenChange, courseTitle, courseDate, instructorName }: Props) {
+  const t = useTranslations()
+  const MATERIAL_OPTIONS: { value: MaterialChoice; label: string; desc: string }[] = [
+    { value: 'none', label: t('course.material.none'), desc: t('course.enroll.noneDesc') },
+    { value: 'traditional', label: t('course.material.traditional'), desc: t('course.enroll.tradDesc') },
+    { value: 'simplified', label: t('course.material.simplified'), desc: t('course.enroll.simpDesc') },
+  ]
   const router = useRouter()
   const [selected, setSelected] = useState<MaterialChoice | ''>('')
   const [loading, setLoading] = useState(false)
@@ -51,18 +52,18 @@ export function EnrollmentApplicationDialog({ inviteId, open, onOpenChange, cour
 
   async function handleConfirm() {
     if (!selected) {
-      toast.error('請選擇書籍選項')
+      toast.error(t('course.enroll.selectBook'))
       return
     }
     setLoading(true)
     const result = await applyToCourse(inviteId, selected)
     setLoading(false)
     if (result.success) {
-      toast.success('申請已送出，等待講師審核')
+      toast.success(t('course.enroll.success'))
       handleClose()
       router.refresh()
     } else {
-      toast.error(result.message ?? '申請失敗，請稍後再試')
+      toast.error(result.message ?? t('course.enroll.fail'))
     }
   }
 
@@ -70,15 +71,15 @@ export function EnrollmentApplicationDialog({ inviteId, open, onOpenChange, cour
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>選擇書籍</DialogTitle>
+          <DialogTitle>{t('course.enroll.chooseBook')}</DialogTitle>
         </DialogHeader>
 
         {/* 課程資訊確認區塊 */}
         <div className="rounded-lg bg-muted/50 border p-3 space-y-1 text-sm">
           <p className="font-medium">{courseTitle}</p>
-          <p className="text-muted-foreground">講師：{instructorName}</p>
+          <p className="text-muted-foreground">{t('course.enroll.teacherLabel')}{instructorName}</p>
           {courseDate && (
-            <p className="text-muted-foreground">預計開課：{courseDate}</p>
+            <p className="text-muted-foreground">{t('course.enroll.expectedStart')}{courseDate}</p>
           )}
         </div>
 
@@ -103,10 +104,10 @@ export function EnrollmentApplicationDialog({ inviteId, open, onOpenChange, cour
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose} disabled={loading}>
-            取消
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleConfirm} disabled={loading || !selected}>
-            {loading ? '送出中...' : '確認申請'}
+            {loading ? t('course.enroll.submitting') : t('course.enroll.confirm')}
           </Button>
         </DialogFooter>
       </DialogContent>

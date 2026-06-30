@@ -10,6 +10,7 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,7 @@ export function InstructorFeedbackButton({
   initialRecommended,
   initialNote,
 }: InstructorFeedbackButtonProps) {
+  const t = useTranslations('course.feedback')
   const [open, setOpen] = useState(false)
   const [recommended, setRecommended] = useState<boolean>(initialRecommended ?? true)
   const [note, setNote] = useState(initialNote ?? '')
@@ -50,10 +52,10 @@ export function InstructorFeedbackButton({
     startTransition(async () => {
       const res = await upsertInstructorFeedback({ enrollmentId, recommended, note })
       if (res.success) {
-        toast.success(res.message ?? '已儲存')
+        toast.success(res.message ?? t('saved'))
         setOpen(false)
       } else {
-        toast.error(res.message ?? '操作失敗，請稍後再試')
+        toast.error(res.message ?? t('fail'))
       }
     })
   }
@@ -64,20 +66,20 @@ export function InstructorFeedbackButton({
         <Button variant="outline" size="sm" className="h-7 text-xs">
           {hasFeedback
             ? initialRecommended
-              ? '已推薦・編輯'
-              : '不推薦・編輯'
-            : '填寫講師資格回饋'}
+              ? t('recommendedEdit')
+              : t('notRecommendedEdit')
+            : t('fill')}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>講師資格回饋 — {studentName}</DialogTitle>
+          <DialogTitle>{t('title', { name: studentName })}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            是否推薦 {studentName} 成為「{bookLabel}」講師？
+            {t('ask', { name: studentName, book: bookLabel })}
           </p>
 
           <RadioGroup
@@ -87,17 +89,17 @@ export function InstructorFeedbackButton({
           >
             <div className="flex items-center gap-2">
               <RadioGroupItem value="yes" id="rec-yes" />
-              <Label htmlFor="rec-yes">推薦</Label>
+              <Label htmlFor="rec-yes">{t('recommend')}</Label>
             </div>
             <div className="flex items-center gap-2">
               <RadioGroupItem value="no" id="rec-no" />
-              <Label htmlFor="rec-no">不推薦</Label>
+              <Label htmlFor="rec-no">{t('notRecommend')}</Label>
             </div>
           </RadioGroup>
 
           <div className="space-y-1.5">
             <Label htmlFor="fb-note" className="text-xs text-muted-foreground">
-              備註（選填，最多 500 字）
+              {t('noteLabel')}
             </Label>
             <Textarea
               id="fb-note"
@@ -105,14 +107,14 @@ export function InstructorFeedbackButton({
               onChange={(e) => setNote(e.target.value)}
               maxLength={500}
               rows={3}
-              placeholder="補充推薦理由或觀察…"
+              placeholder={t('notePlaceholder')}
             />
           </div>
         </div>
 
         <DialogFooter>
           <Button onClick={handleSave} disabled={isPending}>
-            {isPending ? '儲存中…' : '儲存回饋'}
+            {isPending ? t('saving') : t('saveFeedback')}
           </Button>
         </DialogFooter>
       </DialogContent>

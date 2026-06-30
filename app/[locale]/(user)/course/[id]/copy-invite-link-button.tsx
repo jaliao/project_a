@@ -10,6 +10,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { IconShare } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 
@@ -18,20 +19,21 @@ type Props = {
 }
 
 export function CopyInviteLinkButton({ courseId }: Props) {
+  const t = useTranslations('course.copyLink')
   const [copied, setCopied] = useState(false)
 
   async function handleShare() {
     const url = `${window.location.origin}/course/${courseId}`
     if (navigator.share) {
       try {
-        await navigator.share({ title: '課程連結', url })
+        await navigator.share({ title: t('courseLink'), url })
       } catch {
         // 使用者取消分享，不顯示錯誤
       }
     } else {
       await navigator.clipboard.writeText(url)
       setCopied(true)
-      toast.success('已複製課程連結！')
+      toast.success(t('copied'))
       setTimeout(() => setCopied(false), 2000)
     }
   }
@@ -39,7 +41,7 @@ export function CopyInviteLinkButton({ courseId }: Props) {
   return (
     <Button variant="outline" size="sm" onClick={handleShare} className="w-fit gap-2">
       <IconShare className="h-4 w-4" />
-      {copied ? '已複製！' : '分享'}
+      {copied ? t('copiedShort') : t('share')}
     </Button>
   )
 }

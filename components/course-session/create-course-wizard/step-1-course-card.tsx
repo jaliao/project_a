@@ -9,6 +9,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import type { CourseCatalogEntry } from '@/lib/data/course-catalog'
 import { IconCheck } from '@tabler/icons-react'
@@ -31,9 +32,10 @@ export function Step1CourseCard({
   teachableCatalogIds,
   isAdmin,
 }: Step1CourseCardProps) {
+  const t = useTranslations('course.wizard')
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">請選擇要開設的課程</p>
+      <p className="text-sm text-muted-foreground">{t('selectCourse')}</p>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {courses.map((course) => {
@@ -69,7 +71,7 @@ export function Step1CourseCard({
               {/* 無授課資格提示 */}
               {!hasQualification && (
                 <p className="mt-1.5 text-xs text-muted-foreground">
-                  須具備{course.label}講師身分才能授課
+                  {t('needRolePrefix')}{course.label}{t('needRoleSuffix')}
                 </p>
               )}
             </button>
@@ -78,7 +80,7 @@ export function Step1CourseCard({
       </div>
 
       <Button className="w-full" disabled={!selected} onClick={onNext}>
-        下一步
+        {t('next')}
       </Button>
     </div>
   )

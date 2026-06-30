@@ -10,6 +10,7 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { IconCopy, IconCheck, IconSend } from '@tabler/icons-react'
@@ -26,12 +27,13 @@ export function InviteStep({ courseInviteId, onClose }: InviteStepProps) {
   const [spiritIdError, setSpiritIdError] = useState('')
   const [isPending, startTransition] = useTransition()
 
+  const t = useTranslations('course.wizard')
   const courseLink = `${window.location.origin}/course/${courseInviteId}`
 
   const handleCopy = () => {
     navigator.clipboard.writeText(courseLink).then(() => {
       setCopied(true)
-      toast.success('已複製課程連結！')
+      toast.success(t('linkCopied'))
       setTimeout(() => setCopied(false), 2000)
     })
   }
@@ -41,21 +43,21 @@ export function InviteStep({ courseInviteId, onClose }: InviteStepProps) {
     startTransition(async () => {
       const result = await inviteBySpirtId(courseInviteId, spiritId.trim())
       if (result.success) {
-        toast.success(result.message ?? '邀請通知已送出')
+        toast.success(result.message ?? t('inviteSent'))
         setSpiritId('')
       } else {
-        setSpiritIdError(result.message ?? '邀請失敗，請稍後再試')
+        setSpiritIdError(result.message ?? t('inviteFail'))
       }
     })
   }
 
   return (
     <div className="space-y-5">
-      <p className="text-sm text-muted-foreground">課程已建立成功！您可以複製連結或透過會員編號邀請學員。</p>
+      <p className="text-sm text-muted-foreground">{t('successHint')}</p>
 
       {/* 複製連結 */}
       <div className="space-y-2">
-        <p className="text-sm font-medium">邀請連結</p>
+        <p className="text-sm font-medium">{t('inviteLink')}</p>
         <div className="flex items-center gap-2">
           <Input value={courseLink} readOnly className="text-xs text-muted-foreground" />
           <Button type="button" variant="outline" size="icon" onClick={handleCopy} className="shrink-0">
@@ -66,10 +68,10 @@ export function InviteStep({ courseInviteId, onClose }: InviteStepProps) {
 
       {/* Spirit ID 邀請 */}
       <div className="space-y-2">
-        <p className="text-sm font-medium">透過會員編號邀請</p>
+        <p className="text-sm font-medium">{t('inviteBySpiritId')}</p>
         <div className="flex items-center gap-2">
           <Input
-            placeholder="輸入啟動編號（例：PA260001）"
+            placeholder={t('spiritIdPlaceholder')}
             value={spiritId}
             onChange={(e) => {
               setSpiritId(e.target.value)
@@ -95,7 +97,7 @@ export function InviteStep({ courseInviteId, onClose }: InviteStepProps) {
       </div>
 
       <Button type="button" variant="outline" className="w-full" onClick={onClose}>
-        完成
+        {t('done')}
       </Button>
     </div>
   )

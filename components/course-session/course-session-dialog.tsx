@@ -9,6 +9,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,7 @@ export function CourseSessionDialog({
   teachableCatalogIds = [],
   isAdmin = false,
 }: CourseSessionDialogProps) {
+  const t = useTranslations('course.sessionDialog')
   const [open, setOpen] = useState(false)
 
   return (
@@ -42,13 +44,13 @@ export function CourseSessionDialog({
       <DialogTrigger asChild>
         <Button>
           <IconPlus className="mr-2 h-4 w-4" />
-          新增授課
+          {t('newCourse')}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>新增授課</DialogTitle>
+          <DialogTitle>{t('newCourse')}</DialogTitle>
         </DialogHeader>
         <CreateCourseWizard
           instructorName={instructorName}

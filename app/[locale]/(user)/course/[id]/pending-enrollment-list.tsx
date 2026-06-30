@@ -11,16 +11,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { IconUserPlus } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { approveEnrollment } from '@/app/actions/course-invite'
 import { getMemberDisplayName, type DisplayNameMode } from '@/lib/utils/member-display'
-
-const MATERIAL_LABELS: Record<string, string> = {
-  none: '無須購買',
-  traditional: '繁體教材',
-  simplified: '簡體教材',
-}
 
 type Enrollment = {
   id: number
@@ -41,6 +36,7 @@ type Props = {
 }
 
 export function PendingEnrollmentList({ enrollments }: Props) {
+  const t = useTranslations()
   const router = useRouter()
   const [loadingId, setLoadingId] = useState<number | null>(null)
 
@@ -49,10 +45,10 @@ export function PendingEnrollmentList({ enrollments }: Props) {
     const result = await approveEnrollment(enrollmentId)
     setLoadingId(null)
     if (result.success) {
-      toast.success('已同意申請')
+      toast.success(t('course.pending.approved'))
       router.refresh()
     } else {
-      toast.error(result.message ?? '操作失敗，請稍後再試')
+      toast.error(result.message ?? t('course.pending.fail'))
     }
   }
 
@@ -60,7 +56,7 @@ export function PendingEnrollmentList({ enrollments }: Props) {
     <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 space-y-4">
       <div className="flex items-center gap-2 text-sm font-medium text-amber-800">
         <IconUserPlus className="h-4 w-4" />
-        待審申請（{enrollments.length} 筆）
+        {t('course.pending.title', { count: enrollments.length })}
       </div>
       <ul className="divide-y divide-amber-100">
         {enrollments.map((enrollment) => (
@@ -73,7 +69,7 @@ export function PendingEnrollmentList({ enrollments }: Props) {
                 <p className="text-xs text-muted-foreground">{enrollment.user.email}</p>
               )}
               <p className="text-xs text-amber-700 mt-0.5">
-                {MATERIAL_LABELS[enrollment.materialChoice] ?? enrollment.materialChoice}
+                {t(`course.material.${enrollment.materialChoice}`)}
               </p>
             </div>
             <Button
@@ -81,7 +77,7 @@ export function PendingEnrollmentList({ enrollments }: Props) {
               onClick={() => handleApprove(enrollment.id)}
               disabled={loadingId === enrollment.id}
             >
-              {loadingId === enrollment.id ? '處理中...' : '同意'}
+              {loadingId === enrollment.id ? t('course.pending.processing') : t('course.pending.approve')}
             </Button>
           </li>
         ))}

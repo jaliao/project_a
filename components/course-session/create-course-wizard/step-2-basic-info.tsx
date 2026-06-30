@@ -9,6 +9,7 @@
 'use client'
 
 import { useRef } from 'react'
+import { useTranslations } from 'next-intl'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { courseSessionSchema, type CourseSessionFormValues } from '@/lib/schemas/course-session'
@@ -47,6 +48,7 @@ export function Step2BasicInfo({
   onNext,
   onBack,
 }: Step2BasicInfoProps) {
+  const t = useTranslations('course.wizard')
   const titleDirtyRef = useRef(false)
 
   const buildDefaultTitle = () =>
@@ -88,7 +90,7 @@ export function Step2BasicInfo({
         {/* 課程名稱 */}
         <FormField control={form.control} name="title" render={({ field }) => (
           <FormItem>
-            <FormLabel>課程名稱 *</FormLabel>
+            <FormLabel>{t('courseName')} *</FormLabel>
             <FormControl>
               <Input
                 {...field}
@@ -106,7 +108,7 @@ export function Step2BasicInfo({
         {/* 預計上課人數 */}
         <FormField control={form.control} name="maxCount" render={({ field }) => (
           <FormItem>
-            <FormLabel>預計上課人數 *</FormLabel>
+            <FormLabel>{t('maxCount')} *</FormLabel>
             <FormControl>
               <Input
                 type="number"
@@ -117,7 +119,7 @@ export function Step2BasicInfo({
                 onChange={(e) => field.onChange(e.target.value)}
               />
             </FormControl>
-            <p className="text-xs text-muted-foreground">每班最多 7 人</p>
+            <p className="text-xs text-muted-foreground">{t('maxHint')}</p>
             <FormMessage />
           </FormItem>
         )} />
@@ -125,9 +127,9 @@ export function Step2BasicInfo({
         {/* 預計開課日期 */}
         <FormField control={form.control} name="courseDate" render={({ field }) => (
           <FormItem>
-            <FormLabel>預計開課日期 *</FormLabel>
+            <FormLabel>{t('startDate')} *</FormLabel>
             <FormControl>
-              <DatePicker value={field.value} onChange={field.onChange} placeholder="選擇開課日期" />
+              <DatePicker value={field.value} onChange={field.onChange} placeholder={t('selectStartDate')} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -136,9 +138,9 @@ export function Step2BasicInfo({
         {/* 邀請截止日期 */}
         <FormField control={form.control} name="expiredAt" render={({ field }) => (
           <FormItem>
-            <FormLabel>邀請截止日期 *</FormLabel>
+            <FormLabel>{t('deadline')} *</FormLabel>
             <FormControl>
-              <DatePicker value={field.value} onChange={field.onChange} placeholder="選擇截止日期" />
+              <DatePicker value={field.value} onChange={field.onChange} placeholder={t('selectDeadline')} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -147,9 +149,9 @@ export function Step2BasicInfo({
         {/* 備註（選填） */}
         <FormField control={form.control} name="notes" render={({ field }) => (
           <FormItem>
-            <FormLabel>備註</FormLabel>
+            <FormLabel>{t('notes')}</FormLabel>
             <FormControl>
-              <Textarea rows={3} placeholder="選填（內部備註）" {...field} />
+              <Textarea rows={3} placeholder={t('notesOptional')} {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -159,8 +161,8 @@ export function Step2BasicInfo({
         <FormField control={form.control} name="isPublicMatch" render={({ field }) => (
           <FormItem className="flex items-center justify-between rounded-lg border p-3">
             <div className="space-y-0.5">
-              <FormLabel>公開媒合</FormLabel>
-              <p className="text-xs text-muted-foreground">開啟後，此課程會出現在媒合布告欄供會員報名</p>
+              <FormLabel>{t('publicMatch')}</FormLabel>
+              <p className="text-xs text-muted-foreground">{t('publicMatchHint')}</p>
             </div>
             <FormControl>
               <Switch checked={!!field.value} onCheckedChange={field.onChange} />
@@ -172,9 +174,9 @@ export function Step2BasicInfo({
         {form.watch('isPublicMatch') && (
           <FormField control={form.control} name="matchNote" render={({ field }) => (
             <FormItem>
-              <FormLabel>公開招募備註</FormLabel>
+              <FormLabel>{t('matchNote')}</FormLabel>
               <FormControl>
-                <Textarea rows={3} placeholder="選填，會顯示在媒合布告欄（最長 500 字）" {...field} value={field.value ?? ''} />
+                <Textarea rows={3} placeholder={t('matchNoteHint')} {...field} value={field.value ?? ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -183,10 +185,10 @@ export function Step2BasicInfo({
 
         <div className="flex gap-2 pt-1">
           <Button type="button" variant="outline" className="flex-1" onClick={onBack}>
-            上一步
+            {t('prev')}
           </Button>
           <Button type="submit" className="flex-1">
-            下一步
+            {t('next')}
           </Button>
         </div>
       </form>

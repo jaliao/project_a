@@ -11,6 +11,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
@@ -41,16 +42,6 @@ type StudentState = {
   nonGraduateReason: string // 'insufficient_time' | 'other' | ''
 }
 
-const NON_GRADUATE_REASONS: { value: string; label: string }[] = [
-  { value: 'insufficient_time', label: '時間不足' },
-  { value: 'other', label: '其他' },
-]
-
-const REASON_LABELS: Record<string, string> = {
-  insufficient_time: '時間不足',
-  other: '其他',
-}
-
 type Step = 'fill' | 'preview'
 
 type Props = {
@@ -59,6 +50,16 @@ type Props = {
 }
 
 export function GraduationForm({ inviteId, students }: Props) {
+  const t = useTranslations('course.gradForm')
+  // value 送至後端（保留），label 在地化
+  const NON_GRADUATE_REASONS: { value: string; label: string }[] = [
+    { value: 'insufficient_time', label: t('reasonInsufficient') },
+    { value: 'other', label: t('reasonOther') },
+  ]
+  const REASON_LABELS: Record<string, string> = {
+    insufficient_time: t('reasonInsufficient'),
+    other: t('reasonOther'),
+  }
   const router = useRouter()
   const [step, setStep] = useState<Step>('fill')
   // 最後一堂課程日期
@@ -103,13 +104,13 @@ export function GraduationForm({ inviteId, students }: Props) {
     const newErrors: Record<string, string> = {}
 
     if (!lastCourseDate) {
-      newErrors.lastCourseDate = '請填寫最後一堂課程日期'
+      newErrors.lastCourseDate = t('validateDate')
     }
 
     students.forEach((s) => {
       const state = studentStates[s.userId]
       if (!state.graduated && !state.nonGraduateReason) {
-        newErrors[`reason_${s.userId}`] = '請填寫未結業原因'
+        newErrors[`reason_${s.userId}`] = t('validateReason')
       }
     })
 
@@ -141,10 +142,10 @@ export function GraduationForm({ inviteId, students }: Props) {
     setSubmitting(false)
 
     if (result.success) {
-      toast.success('課程已結業')
+      toast.success(t('success'))
       router.push(`/course/${inviteId}`)
     } else {
-      toast.error(result.message ?? '操作失敗，請稍後再試')
+      toast.error(result.message ?? t('fail'))
     }
   }
 
@@ -158,16 +159,16 @@ export function GraduationForm({ inviteId, students }: Props) {
       <div className="space-y-6">
         {/* 步驟指示 */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">1. 填寫</span>
+          <span className="font-medium text-foreground">1. {t('stepFill')}</span>
           <span>→</span>
-          <span>2. 預覽</span>
+          <span>2. {t('stepPreview')}</span>
           <span>→</span>
-          <span>3. 送出</span>
+          <span>3. {t('stepSubmit')}</span>
         </div>
 
         {/* 最後一堂課程日期 */}
         <div className="rounded-lg border p-5 space-y-3">
-          <h2 className="text-sm font-medium">最後一堂課程日期</h2>
+          <h2 className="text-sm font-medium">{t('lastClassDate')}</h2>
           <div className="space-y-1">
             <input
               type="date"
@@ -190,10 +191,10 @@ export function GraduationForm({ inviteId, students }: Props) {
 
         {/* 學員結業狀態 */}
         <div className="rounded-lg border p-5 space-y-4">
-          <h2 className="text-sm font-medium">學員結業狀態（{students.length} 人）</h2>
+          <h2 className="text-sm font-medium">{t('studentStatus', { count: students.length })}</h2>
 
           {students.length === 0 ? (
-            <p className="text-sm text-muted-foreground">尚無已核准學員</p>
+            <p className="text-sm text-muted-foreground">{t('noApproved')}</p>
           ) : (
             <div className="space-y-4">
               {students.map((s) => {
@@ -213,7 +214,7 @@ export function GraduationForm({ inviteId, students }: Props) {
                         )}
                       </Label>
                       {state.graduated && (
-                        <span className="ml-auto text-xs text-green-600 font-medium">已結業</span>
+                        <span className="ml-auto text-xs text-green-600 font-medium">{t('graduated')}</span>
                       )}
                     </div>
 
@@ -225,7 +226,7 @@ export function GraduationForm({ inviteId, students }: Props) {
                           onValueChange={(v) => setReason(s.userId, v)}
                         >
                           <SelectTrigger className="w-48 h-8 text-sm">
-                            <SelectValue placeholder="選擇未結業原因" />
+                            <SelectValue placeholder={t('selectReason')} />
                           </SelectTrigger>
                           <SelectContent>
                             {NON_GRADUATE_REASONS.map((r) => (
@@ -250,7 +251,7 @@ export function GraduationForm({ inviteId, students }: Props) {
         </div>
 
         <div className="flex justify-end">
-          <Button onClick={handleToPreview}>下一步：預覽結業結果</Button>
+          <Button onClick={handleToPreview}>{t('nextPreview')}</Button>
         </div>
       </div>
     )
@@ -261,30 +262,30 @@ export function GraduationForm({ inviteId, students }: Props) {
     <div className="space-y-6">
       {/* 步驟指示 */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span>1. 填寫</span>
+        <span>1. {t('stepFill')}</span>
         <span>→</span>
-        <span className="font-medium text-foreground">2. 預覽</span>
+        <span className="font-medium text-foreground">2. {t('stepPreview')}</span>
         <span>→</span>
-        <span>3. 送出</span>
+        <span>3. {t('stepSubmit')}</span>
       </div>
 
       {/* 預覽摘要 */}
       <div className="rounded-lg border p-5 space-y-4">
-        <h2 className="text-sm font-medium">結業結果預覽</h2>
+        <h2 className="text-sm font-medium">{t('previewTitle')}</h2>
 
         {/* 最後一堂課程日期 */}
         <div className="text-sm">
-          <span className="text-muted-foreground">最後一堂課程日期：</span>
+          <span className="text-muted-foreground">{t('lastClassDateColon')}</span>
           <span className="font-medium">{lastCourseDate}</span>
         </div>
 
         {/* 已結業 */}
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-green-700">
-            已結業（{graduatedStudents.length} 人）
+            {t('graduatedCount', { count: graduatedStudents.length })}
           </h3>
           {graduatedStudents.length === 0 ? (
-            <p className="text-sm text-muted-foreground">無</p>
+            <p className="text-sm text-muted-foreground">{t('none')}</p>
           ) : (
             <ul className="space-y-1">
               {graduatedStudents.map((s) => (
@@ -304,7 +305,7 @@ export function GraduationForm({ inviteId, students }: Props) {
         {nonGraduatedStudents.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-orange-700">
-              未結業（{nonGraduatedStudents.length} 人）
+              {t('nonGraduatedCount', { count: nonGraduatedStudents.length })}
             </h3>
             <ul className="space-y-1">
               {nonGraduatedStudents.map((s) => (
@@ -315,7 +316,7 @@ export function GraduationForm({ inviteId, students }: Props) {
                     <span className="text-xs text-muted-foreground">{s.email}</span>
                   )}
                   <span className="text-xs text-orange-600">
-                    — {REASON_LABELS[studentStates[s.userId].nonGraduateReason] ?? '未知原因'}
+                    — {REASON_LABELS[studentStates[s.userId].nonGraduateReason] ?? t('unknownReason')}
                   </span>
                 </li>
               ))}
@@ -326,10 +327,10 @@ export function GraduationForm({ inviteId, students }: Props) {
 
       <div className="flex items-center justify-between">
         <Button variant="outline" onClick={() => setStep('fill')} disabled={submitting}>
-          返回修改
+          {t('backToEdit')}
         </Button>
         <Button onClick={handleSubmit} disabled={submitting}>
-          {submitting ? '處理中...' : '確認送出'}
+          {submitting ? t('processing') : t('confirmSubmit')}
         </Button>
       </div>
     </div>

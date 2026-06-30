@@ -9,6 +9,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { EnrollmentApplicationDialog } from '@/components/course-session/enrollment-application-dialog'
 
@@ -41,6 +42,7 @@ export function StudentApplySection({
   instructorName,
   missingPrerequisites,
 }: Props) {
+  const t = useTranslations('course.apply')
   const [dialogOpen, setDialogOpen] = useState(false)
 
   // 課程已取消或結業
@@ -51,13 +53,13 @@ export function StudentApplySection({
     if (myEnrollment.status === 'approved') {
       return (
         <div className="rounded-lg border bg-green-50 border-green-200 p-4 text-sm text-green-700 font-medium">
-          ✓ 已加入此課程
+          ✓ {t('joined')}
         </div>
       )
     }
     return (
       <div className="rounded-lg border bg-amber-50 border-amber-200 p-4 text-sm text-amber-700 font-medium">
-        ⏳ 申請審核中，等待講師同意
+        ⏳ {t('pending')}
       </div>
     )
   }
@@ -67,7 +69,7 @@ export function StudentApplySection({
   if (isExpired) {
     return (
       <div className="rounded-lg border p-4 text-sm text-muted-foreground font-medium">
-        報名截止
+        {t('deadline')}
       </div>
     )
   }
@@ -77,13 +79,13 @@ export function StudentApplySection({
   return (
     <div className="space-y-3">
       <Button disabled={hasPrereqBlock} onClick={() => !hasPrereqBlock && setDialogOpen(true)}>
-        申請參加
+        {t('apply')}
       </Button>
 
       {/* 先修課程不符資格提醒 */}
       {hasPrereqBlock && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-          <p className="font-medium mb-1">尚未符合報名資格，須先完成以下課程：</p>
+          <p className="font-medium mb-1">{t('prereqHint')}</p>
           <ul className="space-y-0.5">
             {missingPrerequisites.map((p) => (
               <li key={p.id} className="flex items-center gap-1.5">

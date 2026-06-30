@@ -9,6 +9,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import type { CourseCatalogEntry } from '@/lib/data/course-catalog'
 import { Step1CourseCard } from './step-1-course-card'
 import { Step2BasicInfo, type Step2FormValues } from './step-2-basic-info'
@@ -26,14 +27,6 @@ interface CreateCourseWizardProps {
   onClose: () => void
 }
 
-// 步驟標題
-const STEP_TITLES: Record<WizardStep, string> = {
-  1: '選擇課程',
-  2: '填寫資料',
-  3: '預覽確認',
-  invite: '邀請學員',
-}
-
 export function CreateCourseWizard({
   instructorName,
   activeCourses,
@@ -41,6 +34,13 @@ export function CreateCourseWizard({
   isAdmin,
   onClose,
 }: CreateCourseWizardProps) {
+  const t = useTranslations('course.wizard')
+  const STEP_TITLES: Record<WizardStep, string> = {
+    1: t('step1'),
+    2: t('step2'),
+    3: t('step3'),
+    invite: t('step4'),
+  }
   const [step, setStep] = useState<WizardStep>(1)
   const [selectedCatalogId, setSelectedCatalogId] = useState<number | null>(null)
   const [formValues, setFormValues] = useState<Step2FormValues | null>(null)
@@ -69,7 +69,7 @@ export function CreateCourseWizard({
         {step === 'invite' && (
           <span className="flex items-center gap-1">
             <span>›</span>
-            <span className="font-semibold text-foreground">邀請學員</span>
+            <span className="font-semibold text-foreground">{t('step4')}</span>
           </span>
         )}
       </div>
