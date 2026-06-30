@@ -199,6 +199,26 @@
       "metaTitle": "課程結業 — 啟動事工",
       "backToDetail": "返回課程詳情",
       "title": "課程結業"
+    },
+    "card": {
+      "publicRecruiting": "公開媒合・招募中",
+      "enrolledPlanned": "已報名 {enrolled} / 預計 {max} 人",
+      "expectedStart": "預計開課：{date}",
+      "deadline": "截止報名：{date}"
+    },
+    "loginPrompt": {
+      "title": "無法檢視此課程",
+      "desc": "請先登入後再檢視課程內容",
+      "goLogin": "前往登入"
+    },
+    "enrolled": {
+      "empty": "尚無學員接受邀請"
+    },
+    "test": {
+      "created": "測試授課已建立",
+      "failed": "建立失敗，請稍後再試",
+      "creating": "建立中…",
+      "add": "新增測試授課"
     }
   },
   "matchBoard": {

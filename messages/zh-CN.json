@@ -198,6 +198,26 @@
       "metaTitle": "课程结业 — 启动事工",
       "backToDetail": "返回课程详情",
       "title": "课程结业"
+    },
+    "card": {
+      "publicRecruiting": "公开媒合・招募中",
+      "enrolledPlanned": "已报名 {enrolled} / 预计 {max} 人",
+      "expectedStart": "预计开课：{date}",
+      "deadline": "截止报名：{date}"
+    },
+    "loginPrompt": {
+      "title": "无法检视此课程",
+      "desc": "请先登入后再检视课程内容",
+      "goLogin": "前往登入"
+    },
+    "enrolled": {
+      "empty": "尚无学员接受邀请"
+    },
+    "test": {
+      "created": "测试授课已建立",
+      "failed": "建立失败，请稍后再试",
+      "creating": "建立中…",
+      "add": "新增测试授课"
     }
   },
   "matchBoard": {

@@ -9,6 +9,7 @@
 import { prisma } from '@/lib/prisma'
 import { format } from 'date-fns'
 import { zhTW } from 'date-fns/locale'
+import { getTranslations } from 'next-intl/server'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
 
 // 取得最新邀請的接受學員清單
@@ -33,11 +34,12 @@ async function getEnrolledStudents() {
 
 
 export async function EnrolledStudentsList() {
+  const t = await getTranslations('course.enrolled')
   const enrollments = await getEnrolledStudents()
 
   if (enrollments.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground py-2">尚無學員接受邀請</p>
+      <p className="text-sm text-muted-foreground py-2">{t('empty')}</p>
     )
   }
 

@@ -6,7 +6,10 @@
  * ----------------------------------------------
  */
 
+'use client'
+
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { IconCalendar, IconUsers, IconClock } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
 import { CourseStatusBadge } from '@/components/course-session/course-status-badge'
@@ -57,6 +60,7 @@ export function CourseSessionCard({
   showMatchBadge = false,
 }: CourseSessionCardProps) {
   const status = getCourseStatus({ cancelledAt, completedAt, startedAt })
+  const t = useTranslations('course.card')
   const progressRatio = maxCount > 0 ? Math.min(enrolledCount / maxCount, 1) : 0
 
   const card = (
@@ -74,7 +78,7 @@ export function CourseSessionCard({
         </p>
         <div className="flex shrink-0 items-center gap-1.5">
           {showMatchBadge && (
-            <Badge className="bg-emerald-600 text-white hover:bg-emerald-600 text-xs">公開媒合・招募中</Badge>
+            <Badge className="bg-emerald-600 text-white hover:bg-emerald-600 text-xs">{t('publicRecruiting')}</Badge>
           )}
           <CourseCatalogBadge catalogId={courseCatalogId} label={courseCatalogLabel} size="sm" />
           {status && <CourseStatusBadge status={status} size="sm" />}
@@ -87,7 +91,7 @@ export function CourseSessionCard({
         <div className="flex items-center gap-1.5">
           <IconUsers className="h-3.5 w-3.5 shrink-0" />
           <span>
-            已報名 {enrolledCount} / 預計 {maxCount} 人
+            {t('enrolledPlanned', { enrolled: enrolledCount, max: maxCount })}
           </span>
         </div>
         <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
@@ -106,7 +110,7 @@ export function CourseSessionCard({
         {courseDate && (
           <div className="flex items-center gap-1.5">
             <IconCalendar className="h-3.5 w-3.5 shrink-0" />
-            <span>預計開課：{courseDate}</span>
+            <span>{t('expectedStart', { date: courseDate })}</span>
           </div>
         )}
 
@@ -114,7 +118,7 @@ export function CourseSessionCard({
         {expiredAt && (
           <div className="flex items-center gap-1.5">
             <IconClock className="h-3.5 w-3.5 shrink-0" />
-            <span>截止報名：{formatDate(expiredAt)}</span>
+            <span>{t('deadline', { date: formatDate(expiredAt) })}</span>
           </div>
         )}
       </div>

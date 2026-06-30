@@ -199,6 +199,26 @@
       "metaTitle": "Course graduation — 啟動事工",
       "backToDetail": "Back to course details",
       "title": "Course graduation"
+    },
+    "card": {
+      "publicRecruiting": "Public match · Recruiting",
+      "enrolledPlanned": "Enrolled {enrolled} / Planned {max}",
+      "expectedStart": "Expected start: {date}",
+      "deadline": "Deadline: {date}"
+    },
+    "loginPrompt": {
+      "title": "Cannot view this course",
+      "desc": "Please log in to view course content",
+      "goLogin": "Go to login"
+    },
+    "enrolled": {
+      "empty": "No students have accepted the invite yet"
+    },
+    "test": {
+      "created": "Test course created",
+      "failed": "Creation failed, please try again later",
+      "creating": "Creating…",
+      "add": "Add test course"
     }
   },
   "matchBoard": {
