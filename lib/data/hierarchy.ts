@@ -4,8 +4,8 @@
  * 2026-04-02
  * lib/data/hierarchy.ts
  *
- * 師生關係定義（僅限啟動靈人 courseCatalogId = 1）：
- * - 老師：帶領此會員完成啟動靈人的 CourseInvite.createdBy
+ * 師生關係定義（依課程階層 courseCatalogId：1 啟動靈人 / 2 啟動豐盛 / 3 啟動得勝）：
+ * - 老師：帶領此會員完成該階層的 CourseInvite.createdBy
  * - 學生：此會員建立的 CourseInvite 中已結業的 InviteEnrollment.user
  * 只計算 graduatedAt IS NOT NULL 的結業紀錄
  * ----------------------------------------------
@@ -14,7 +14,7 @@
 import { prisma } from '@/lib/prisma'
 import type { DisplayNameMode } from '@/lib/utils/member-display'
 
-const SPIRIT_COURSE_ID = 1 // 啟動靈人
+const SPIRIT_COURSE_ID = 1 // 啟動靈人（預設階層）
 
 export type HierarchyNode = {
   id: string
@@ -45,7 +45,11 @@ export type MemberHierarchy = {
 // ==========================================
 // 取得指定會員的師生傳承樹
 // ==========================================
-export async function getMemberHierarchy(userId: string, depth: number): Promise<MemberHierarchy> {
+export async function getMemberHierarchy(
+  userId: string,
+  depth: number,
+  courseCatalogId: number = SPIRIT_COURSE_ID,
+): Promise<MemberHierarchy> {
   // ── 取得根節點資料 ──────────────────────────
   const rootUser = await prisma.user.findUnique({
     where: { id: userId },
@@ -57,7 +61,7 @@ export async function getMemberHierarchy(userId: string, depth: number): Promise
     where: {
       userId,
       graduatedAt: { not: null },
-      invite: { courseCatalogId: SPIRIT_COURSE_ID },
+      invite: { courseCatalogId },
     },
     orderBy: { graduatedAt: 'asc' }, // 取最早結業那次
     select: {
@@ -97,7 +101,7 @@ export async function getMemberHierarchy(userId: string, depth: number): Promise
       where: {
         graduatedAt: { not: null },
         invite: {
-          courseCatalogId: SPIRIT_COURSE_ID,
+          courseCatalogId,
           createdById: node.id,
         },
       },

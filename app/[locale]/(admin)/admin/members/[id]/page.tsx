@@ -20,6 +20,7 @@ import type { UserRole } from '@prisma/client'
 import { getMemberDetail, getUserDisplayById } from '@/lib/data/members'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { getAdminSetting } from '@/lib/data/admin-settings'
+import { getGraduatedCatalogIds } from '@/lib/data/course-catalog'
 import { MemberResetButton } from '@/components/admin/member-reset-button'
 import { MemberDeleteButton } from '@/components/admin/member-delete-button'
 import { MemberHierarchyTree } from '@/components/admin/member-hierarchy-tree'
@@ -75,6 +76,14 @@ export default async function MemberDetailPage({
   const enableDelete = process.env.ENABLE_MEMBER_DELETE === 'true'
   const hierarchyDepth = Math.min(10, Math.max(1, parseInt(depthStr, 10) || 3))
   const actorIsSuperadmin = isSuperadmin(session.user.roles)
+
+  // 學習階層：各課程階層的結業狀態（未結業 → 該階層顯示「還沒畢業」）
+  const graduatedCatalogIds = await getGraduatedCatalogIds(member.id)
+  const HIERARCHY_LEVELS = [
+    { id: 1, label: '啟動靈人' },
+    { id: 2, label: '啟動豐盛' },
+    { id: 3, label: '啟動得勝' },
+  ]
 
   // 暫停操作人顯示名稱
   const suspendedByUser = member.suspendedById
@@ -208,11 +217,29 @@ export default async function MemberDetailPage({
           </div>
         </TabsContent>
 
-        {/* ── 學習階層分頁 ── */}
+        {/* ── 學習階層分頁（依課程階層分子頁：啟動靈人／啟動豐盛／啟動得勝）── */}
         <TabsContent value="hierarchy" className="pt-4">
-          <div className="rounded-lg border p-5">
-            <MemberHierarchyTree userId={member.id} depth={hierarchyDepth} />
-          </div>
+          <Tabs defaultValue="level-1">
+            <TabsList>
+              {HIERARCHY_LEVELS.map((lv) => (
+                <TabsTrigger key={lv.id} value={`level-${lv.id}`}>
+                  {lv.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            {HIERARCHY_LEVELS.map((lv) => (
+              <TabsContent key={lv.id} value={`level-${lv.id}`} className="pt-4">
+                <div className="rounded-lg border p-5">
+                  <MemberHierarchyTree
+                    userId={member.id}
+                    depth={hierarchyDepth}
+                    courseCatalogId={lv.id}
+                    graduated={graduatedCatalogIds.has(lv.id)}
+                  />
+                </div>
+              </TabsContent>
+            ))}
+          </Tabs>
         </TabsContent>
 
         {/* ── 講師身分分頁 ── */}

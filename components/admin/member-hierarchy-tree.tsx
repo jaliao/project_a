@@ -13,6 +13,8 @@ import { getMemberDisplayName, type DisplayNameMode } from '@/lib/utils/member-d
 type Props = {
   userId: string
   depth: number
+  courseCatalogId: number
+  graduated: boolean
 }
 
 function NodeLink({
@@ -56,8 +58,13 @@ function StudentTree({ node, indent = 0 }: { node: HierarchyNode; indent?: numbe
   )
 }
 
-export async function MemberHierarchyTree({ userId, depth }: Props) {
-  const { teacher, root } = await getMemberHierarchy(userId, depth)
+export async function MemberHierarchyTree({ userId, depth, courseCatalogId, graduated }: Props) {
+  // 尚未結業此階層 → 不顯示傳承樹
+  if (!graduated) {
+    return <p className="text-sm text-muted-foreground">還沒畢業</p>
+  }
+
+  const { teacher, root } = await getMemberHierarchy(userId, depth, courseCatalogId)
 
   return (
     <div className="space-y-6">
