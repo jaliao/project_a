@@ -18,6 +18,7 @@ import {
   IconCalendar,
   IconClock,
 } from '@tabler/icons-react'
+import { getTranslations } from 'next-intl/server'
 import { auth } from '@/lib/auth'
 import { canTeachAny } from '@/lib/auth-roles'
 import { getCourseSessionById, getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
@@ -39,8 +40,14 @@ import { getCourseStatus } from '@/components/course-session/course-status'
 import { CourseCatalogBadge } from '@/components/course-session/course-catalog-badge'
 import { CourseLoginPrompt } from '@/components/course-session/course-login-prompt'
 
-export const metadata: Metadata = {
-  title: '課程詳情 — 啟動事工',
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'course' })
+  return { title: t('detail.metaTitle') }
 }
 
 function formatDate(date: Date): string {
@@ -48,12 +55,6 @@ function formatDate(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, '0')
   const d = String(date.getDate()).padStart(2, '0')
   return `${y}/${m}/${d}`
-}
-
-const MATERIAL_LABELS: Record<string, string> = {
-  none: '無須購買',
-  traditional: '繁體教材',
-  simplified: '簡體教材',
 }
 
 const MATERIAL_COLORS: Record<string, string> = {
@@ -65,9 +66,10 @@ const MATERIAL_COLORS: Record<string, string> = {
 export default async function CourseDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string; locale: string }>
 }) {
-  const { id } = await params
+  const { id, locale } = await params
+  const t = await getTranslations({ locale })
   const numId = parseInt(id, 10)
   if (isNaN(numId)) notFound()
 
@@ -136,7 +138,7 @@ export default async function CourseDetailPage({
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <IconArrowLeft className="h-4 w-4" />
-        返回首頁
+        {t('common.backToHome')}
       </Link>
 
       {/* 頁首：標題 + 狀態標籤 + 分享按鈕 */}
@@ -171,25 +173,27 @@ export default async function CourseDetailPage({
       {/* 取消原因 */}
       {isCancelled && courseSession.cancelReason && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          <span className="font-medium">取消原因：</span>
+          <span className="font-medium">{t('course.detail.cancelReasonLabel')}</span>
           {courseSession.cancelReason}
         </div>
       )}
 
       {/* 結業資訊區塊（僅管理者／講師可見） */}
       {isCompleted && courseSession.completedAt && canViewGraduation && (() => {
-        const NON_GRADUATE_REASON_LABELS: Record<string, string> = {
-          insufficient_time: '時間不足',
-          other: '其他',
-        }
+        const nonGraduateReasonLabel = (reason: string) =>
+          reason === 'insufficient_time'
+            ? t('course.detail.reasonInsufficientTime')
+            : reason === 'other'
+              ? t('course.detail.reasonOther')
+              : reason
         const graduated = courseSession.approvedEnrollments.filter((e) => e.graduatedAt)
         const nonGraduated = courseSession.approvedEnrollments.filter((e) => !e.graduatedAt)
         return (
           <div className="rounded-lg border border-green-200 bg-green-50 p-5 space-y-4">
-            <h2 className="text-sm font-medium text-green-800">結業資訊</h2>
+            <h2 className="text-sm font-medium text-green-800">{t('course.detail.gradInfo')}</h2>
             {/* 最後一堂課程日期 */}
             <div className="text-sm">
-              <span className="text-green-700">最後一堂課程日期：</span>
+              <span className="text-green-700">{t('course.detail.lastClassDate')}</span>
               <span className="font-medium text-green-900">
                 {formatDate(courseSession.completedAt)}
               </span>
@@ -197,10 +201,10 @@ export default async function CourseDetailPage({
             {/* 已結業學員 */}
             <div className="space-y-1">
               <p className="text-xs font-medium text-green-700">
-                已結業（{graduated.length} 人）
+                {t('course.detail.graduatedCount', { count: graduated.length })}
               </p>
               {graduated.length === 0 ? (
-                <p className="text-sm text-green-600">無</p>
+                <p className="text-sm text-green-600">{t('course.detail.none')}</p>
               ) : (
                 <ul className="space-y-1">
                   {graduated.map((e) => (
@@ -226,7 +230,7 @@ export default async function CourseDetailPage({
             {nonGraduated.length > 0 && (
               <div className="space-y-1">
                 <p className="text-xs font-medium text-orange-700">
-                  未結業（{nonGraduated.length} 人）
+                  {t('course.detail.nonGraduatedCount', { count: nonGraduated.length })}
                 </p>
                 <ul className="space-y-0.5">
                   {nonGraduated.map((e) => (
@@ -234,9 +238,7 @@ export default async function CourseDetailPage({
                       <span className="w-1.5 h-1.5 rounded-full bg-orange-400 shrink-0" />
                       {getMemberDisplayName(e.user)}
                       <span className="text-xs text-orange-600">
-                        — {e.nonGraduateReason
-                          ? (NON_GRADUATE_REASON_LABELS[e.nonGraduateReason] ?? e.nonGraduateReason)
-                          : '—'}
+                        — {e.nonGraduateReason ? nonGraduateReasonLabel(e.nonGraduateReason) : '—'}
                       </span>
                     </li>
                   ))}
@@ -249,13 +251,13 @@ export default async function CourseDetailPage({
 
       {/* 基本資訊區塊 */}
       <div className="rounded-lg border p-5 space-y-3">
-        <h2 className="text-sm font-medium text-muted-foreground">基本資訊</h2>
+        <h2 className="text-sm font-medium text-muted-foreground">{t('course.detail.basicInfo')}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           {/* 授課老師 */}
           <div className="flex items-start gap-2">
             <IconUserCheck className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">授課老師</p>
+              <p className="text-xs text-muted-foreground">{t('course.detail.teacher')}</p>
               <p className="font-medium">{teacherName}</p>
               {courseSession.createdBy.email && (
                 <p className="text-xs text-muted-foreground">{courseSession.createdBy.email}</p>
@@ -266,7 +268,7 @@ export default async function CourseDetailPage({
           <div className="flex items-start gap-2">
             <IconCalendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">預計開課日期</p>
+              <p className="text-xs text-muted-foreground">{t('course.detail.expectedStartDate')}</p>
               <p className="font-medium">{courseSession.courseDate ?? '—'}</p>
             </div>
           </div>
@@ -274,7 +276,7 @@ export default async function CourseDetailPage({
           <div className="flex items-start gap-2">
             <IconClock className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">報名截止日期</p>
+              <p className="text-xs text-muted-foreground">{t('course.detail.enrollDeadline')}</p>
               <p className="font-medium">
                 {courseSession.expiredAt ? formatDate(courseSession.expiredAt) : '—'}
               </p>
@@ -284,9 +286,9 @@ export default async function CourseDetailPage({
           <div className="flex items-start gap-2">
             <IconUsers className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">報名人數</p>
+              <p className="text-xs text-muted-foreground">{t('course.detail.enrollCountLabel')}</p>
               <p className="font-medium">
-                {courseSession.approvedEnrollments.length} / {courseSession.maxCount} 人
+                {courseSession.approvedEnrollments.length} / {courseSession.maxCount} {t('course.detail.peopleSuffix')}
               </p>
             </div>
           </div>
@@ -301,10 +303,10 @@ export default async function CourseDetailPage({
       {/* 已核准學員名單 */}
       <div className="rounded-lg border p-5 space-y-4">
         <h2 className="text-sm font-medium text-muted-foreground">
-          已核准學員（{courseSession.approvedEnrollments.length} 人）
+          {t('course.detail.approvedCount', { count: courseSession.approvedEnrollments.length })}
         </h2>
         {courseSession.approvedEnrollments.length === 0 ? (
-          <p className="text-sm text-muted-foreground">尚無已核准學員</p>
+          <p className="text-sm text-muted-foreground">{t('course.detail.noApproved')}</p>
         ) : (
           <ul className="divide-y">
             {courseSession.approvedEnrollments.map((enrollment) => (
@@ -322,7 +324,7 @@ export default async function CourseDetailPage({
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${MATERIAL_COLORS[enrollment.materialChoice] ?? 'bg-gray-100 text-gray-600'
                       }`}
                   >
-                    {MATERIAL_LABELS[enrollment.materialChoice] ?? enrollment.materialChoice}
+                    {t(`course.material.${enrollment.materialChoice}`)}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {formatDate(enrollment.joinedAt)}

@@ -10,16 +10,29 @@ export const dynamic = 'force-dynamic'
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { IconArrowLeft, IconChalkboard } from '@tabler/icons-react'
 import { auth } from '@/lib/auth'
 import { getMyCourseSessions } from '@/lib/data/course-sessions'
 import { CourseSessionCard } from '@/components/course-session/course-session-card'
 
-export const metadata: Metadata = {
-  title: '開課查詢 — 啟動事工',
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'course' })
+  return { title: t('sessions.metaTitle') }
 }
 
-export default async function CourseSessionsPage() {
+export default async function CourseSessionsPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}) {
+  const { locale } = await params
+  const t = await getTranslations({ locale })
   const session = await auth()
   const sessions = session?.user?.id
     ? await getMyCourseSessions(session.user.id)
@@ -34,19 +47,19 @@ export default async function CourseSessionsPage() {
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <IconArrowLeft className="h-4 w-4" />
-          返回首頁
+          {t('common.backToHome')}
         </Link>
       </div>
 
       <div className="flex items-center gap-2">
         <IconChalkboard className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-semibold">開課查詢</h1>
+        <h1 className="text-2xl font-semibold">{t('course.sessions.title')}</h1>
       </div>
 
       {/* 開課列表 */}
       {sessions.length === 0 ? (
         <div className="rounded-lg border p-10 text-center text-sm text-muted-foreground">
-          尚無開課記錄
+          {t('course.sessions.empty')}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

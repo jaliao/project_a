@@ -2,6 +2,7 @@
   "common": {
     "appName": "啟動事工",
     "backToLogin": "返回登入",
+    "backToHome": "返回首頁",
     "save": "儲存",
     "cancel": "取消",
     "confirm": "確認",
@@ -163,6 +164,42 @@
     "enrollCount": "報名人數",
     "createdAt": "建立時間",
     "peopleCount": "{count} 人"
+  },
+  "course": {
+    "sessions": {
+      "metaTitle": "開課查詢 — 啟動事工",
+      "title": "開課查詢",
+      "empty": "尚無開課記錄"
+    },
+    "material": {
+      "none": "無須購買",
+      "traditional": "繁體教材",
+      "simplified": "簡體教材"
+    },
+    "detail": {
+      "metaTitle": "課程詳情 — 啟動事工",
+      "cancelReasonLabel": "取消原因：",
+      "gradInfo": "結業資訊",
+      "lastClassDate": "最後一堂課程日期：",
+      "graduatedCount": "已結業（{count} 人）",
+      "none": "無",
+      "nonGraduatedCount": "未結業（{count} 人）",
+      "reasonInsufficientTime": "時間不足",
+      "reasonOther": "其他",
+      "basicInfo": "基本資訊",
+      "teacher": "授課老師",
+      "expectedStartDate": "預計開課日期",
+      "enrollDeadline": "報名截止日期",
+      "enrollCountLabel": "報名人數",
+      "peopleSuffix": "人",
+      "approvedCount": "已核准學員（{count} 人）",
+      "noApproved": "尚無已核准學員"
+    },
+    "graduate": {
+      "metaTitle": "課程結業 — 啟動事工",
+      "backToDetail": "返回課程詳情",
+      "title": "課程結業"
+    }
   },
   "matchBoard": {
     "metaTitle": "媒合布告欄 — 啟動事工",

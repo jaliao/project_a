@@ -11,21 +11,29 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { IconArrowLeft } from '@tabler/icons-react'
 import { auth } from '@/lib/auth'
 import { getCourseSessionById } from '@/lib/data/course-sessions'
 import { GraduationForm } from './graduation-form'
 
-export const metadata: Metadata = {
-  title: '課程結業 — 啟動事工',
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'course' })
+  return { title: t('graduate.metaTitle') }
 }
 
 export default async function GraduatePage({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string; locale: string }>
 }) {
-  const { id } = await params
+  const { id, locale } = await params
+  const t = await getTranslations({ locale, namespace: 'course.graduate' })
   const numId = parseInt(id, 10)
   if (isNaN(numId)) notFound()
 
@@ -62,11 +70,11 @@ export default async function GraduatePage({
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <IconArrowLeft className="h-4 w-4" />
-        返回課程詳情
+        {t('backToDetail')}
       </Link>
 
       <div>
-        <h1 className="text-xl font-semibold">課程結業</h1>
+        <h1 className="text-xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted-foreground mt-1">{course.title}</p>
       </div>
 

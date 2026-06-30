@@ -2,6 +2,7 @@
   "common": {
     "appName": "啟動事工",
     "backToLogin": "Back to login",
+    "backToHome": "Back to home",
     "save": "Save",
     "cancel": "Cancel",
     "confirm": "Confirm",
@@ -163,6 +164,42 @@
     "enrollCount": "Enrolled",
     "createdAt": "Created at",
     "peopleCount": "{count}"
+  },
+  "course": {
+    "sessions": {
+      "metaTitle": "Course sessions — 啟動事工",
+      "title": "Course sessions",
+      "empty": "No course sessions yet"
+    },
+    "material": {
+      "none": "No purchase needed",
+      "traditional": "Traditional Chinese textbook",
+      "simplified": "Simplified Chinese textbook"
+    },
+    "detail": {
+      "metaTitle": "Course details — 啟動事工",
+      "cancelReasonLabel": "Cancellation reason:",
+      "gradInfo": "Graduation info",
+      "lastClassDate": "Last class date:",
+      "graduatedCount": "Graduated ({count})",
+      "none": "None",
+      "nonGraduatedCount": "Not graduated ({count})",
+      "reasonInsufficientTime": "Insufficient time",
+      "reasonOther": "Other",
+      "basicInfo": "Basic info",
+      "teacher": "Instructor",
+      "expectedStartDate": "Expected start date",
+      "enrollDeadline": "Enrollment deadline",
+      "enrollCountLabel": "Enrolled",
+      "peopleSuffix": "",
+      "approvedCount": "Approved students ({count})",
+      "noApproved": "No approved students yet"
+    },
+    "graduate": {
+      "metaTitle": "Course graduation — 啟動事工",
+      "backToDetail": "Back to course details",
+      "title": "Course graduation"
+    }
   },
   "matchBoard": {
     "metaTitle": "Match board — 啟動事工",

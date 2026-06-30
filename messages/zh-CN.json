@@ -3,6 +3,7 @@
   "common": {
     "appName": "启动事工",
     "backToLogin": "返回登入",
+    "backToHome": "返回首页",
     "save": "储存",
     "cancel": "取消",
     "confirm": "确认",
@@ -162,6 +163,42 @@
     "enrollCount": "报名人数",
     "createdAt": "建立时间",
     "peopleCount": "{count} 人"
+  },
+  "course": {
+    "sessions": {
+      "metaTitle": "开课查询 — 启动事工",
+      "title": "开课查询",
+      "empty": "尚无开课记录"
+    },
+    "material": {
+      "none": "无须购买",
+      "traditional": "繁体教材",
+      "simplified": "简体教材"
+    },
+    "detail": {
+      "metaTitle": "课程详情 — 启动事工",
+      "cancelReasonLabel": "取消原因：",
+      "gradInfo": "结业资讯",
+      "lastClassDate": "最后一堂课程日期：",
+      "graduatedCount": "已结业（{count} 人）",
+      "none": "无",
+      "nonGraduatedCount": "未结业（{count} 人）",
+      "reasonInsufficientTime": "时间不足",
+      "reasonOther": "其他",
+      "basicInfo": "基本资讯",
+      "teacher": "授课老师",
+      "expectedStartDate": "预计开课日期",
+      "enrollDeadline": "报名截止日期",
+      "enrollCountLabel": "报名人数",
+      "peopleSuffix": "人",
+      "approvedCount": "已核准学员（{count} 人）",
+      "noApproved": "尚无已核准学员"
+    },
+    "graduate": {
+      "metaTitle": "课程结业 — 启动事工",
+      "backToDetail": "返回课程详情",
+      "title": "课程结业"
+    }
   },
   "matchBoard": {
     "metaTitle": "媒合布告栏 — 启动事工",
