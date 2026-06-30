@@ -51,6 +51,13 @@ const SNAPSHOT_DATE = new Date('2026-06-05T00:00:00.000Z')
 const COURSE_DATE = '2026/06/01'
 const STARTER_CATALOG_ID = 1 // 啟動靈人
 
+// 黃國倫啟動靈人種子班（teacherNo A 開頭，班級日期 2025/1/1）
+const SEED_CLASS_TITLE = '黃國倫啟動靈人種子班'
+const SEED_CLASS_COURSE_DATE = '2025/01/01'
+const SEED_CLASS_DATE = new Date('2025-01-01T00:00:00.000Z')
+// 收容班（未對應且非 A 開頭的教師；A 開頭已移入種子班）
+const CATCH_ALL_TITLE = '黃國倫收容班'
+
 type RosterPerson = {
   key: string
   realName: string
@@ -322,10 +329,9 @@ async function main() {
   })
 
   // ── 6. 課程與報名（每個班級欄一筆課程）──────────────
-  // 冪等守衛：以收容班為哨兵，已存在則跳過課程/報名建立（避免重跑重複建課）
-  const CATCH_ALL_TITLE = '啟動靈人種子講師班'
+  // 冪等守衛：以種子班為哨兵，已存在則跳過課程/報名建立（避免重跑重複建課）
   const alreadySeeded = await prisma.courseInvite.findFirst({
-    where: { title: CATCH_ALL_TITLE },
+    where: { title: SEED_CLASS_TITLE },
     select: { id: true },
   })
   const enrollmentRows: EnrollmentRow[] = []
@@ -356,7 +362,39 @@ async function main() {
     }
   }
 
-  // ── 7. 對應不到的教師 → 黃國倫收容課程（學員皆教師 → 已結業）──────────────
+  // ── 6b. 黃國倫啟動靈人種子班（teacherNo A 開頭 → 學員皆教師 → 已結業，班級日期 2025/1/1）──
+  const seedClassKeys = (roster.seedClassKeys ?? []) as string[]
+  if (!alreadySeeded && seedClassKeys.length > 0) {
+    const seedClass = await prisma.courseInvite.create({
+      data: {
+        title: SEED_CLASS_TITLE,
+        courseCatalogId: STARTER_CATALOG_ID,
+        maxCount: seedClassKeys.length,
+        courseDate: SEED_CLASS_COURSE_DATE,
+        createdById: gordon.id,
+        startedAt: SEED_CLASS_DATE,
+        completedAt: SEED_CLASS_DATE,
+      },
+      select: { id: true },
+    })
+    courseCreated++
+    if (firstInviteId === null) firstInviteId = seedClass.id
+    for (const tKey of seedClassKeys) {
+      const tid = keyToId(tKey)
+      if (tid) {
+        enrollmentRows.push({
+          inviteId: seedClass.id,
+          userId: tid,
+          status: 'approved',
+          joinedAt: SEED_CLASS_DATE,
+          materialChoice: 'traditional',
+          graduatedAt: SEED_CLASS_DATE,
+        })
+      }
+    }
+  }
+
+  // ── 7. 對應不到的教師 → 黃國倫收容班（學員皆教師 → 已結業；A 開頭已移入種子班）──────────────
   const unmatched = roster.unmatchedTeacherKeys as string[]
   if (!alreadySeeded && unmatched.length > 0) {
     const catchAll = await prisma.courseInvite.create({
@@ -394,7 +432,7 @@ async function main() {
   // 批次建立報名（唯一鍵 [inviteId,userId]）
   await prisma.inviteEnrollment.createMany({ data: enrollmentRows, skipDuplicates: true })
   const graduatedCount = enrollmentRows.filter((e) => e.graduatedAt).length
-  console.log(`✅ 課程與報名初始化完成：課程 ${courseCreated} 筆、報名 ${enrollmentRows.length} 筆（含收容班 ${unmatched.length} 位教師）`)
+  console.log(`✅ 課程與報名初始化完成：課程 ${courseCreated} 筆、報名 ${enrollmentRows.length} 筆（種子班 ${seedClassKeys.length} 位、收容班 ${unmatched.length} 位教師）`)
   console.log(`   教材全繁體；結業報名 ${graduatedCount} 筆（教師學員 + 黃國倫）\n`)
 
   // ── 8. 同步 spiritIdCounter（避免與 generateSpiritId 衝突）──────

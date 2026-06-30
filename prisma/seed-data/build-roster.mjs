@@ -159,10 +159,25 @@ for (const r of rows) {
   })
 }
 
-// 3) 對應不到的教師（不在任何班級名單中）→ 黃國倫收容課程
+// 3) 種子班：teacherNo A 開頭的教師 → 黃國倫啟動靈人種子班
+const seedClassKeys = []
+for (const p of people.values()) {
+  if (p.roles.includes('teacher') && /^A/i.test(p.teacherNo || '') && !p.reserved) {
+    seedClassKeys.push(p.key)
+  }
+}
+const seedSet = new Set(seedClassKeys)
+
+// 4) 對應不到的教師（不在任何班級名單中）→ 黃國倫收容班
+//    與種子班重複者（A 開頭）剔除，僅保留非 A 開頭的未對應教師
 const unmatchedTeacherKeys = []
 for (const p of people.values()) {
-  if (p.roles.includes('teacher') && !enrolledKeys.has(p.key) && !p.reserved) {
+  if (
+    p.roles.includes('teacher') &&
+    !enrolledKeys.has(p.key) &&
+    !p.reserved &&
+    !seedSet.has(p.key)
+  ) {
     unmatchedTeacherKeys.push(p.key)
   }
 }
@@ -175,6 +190,7 @@ const roster = {
   churches: churchList,
   people: [...people.values()],
   courses,
+  seedClassKeys,
   unmatchedTeacherKeys,
 }
 
@@ -187,6 +203,7 @@ console.log('✅ roster.json 已產生：', OUT_PATH)
 console.log('  教會:', churchList.length, '→', churchList.join(' | '))
 console.log('  人員總數:', roster.people.length, '（教師', teachers.length, '/ 純學員', studentsOnly.length, '/ 含保留', roster.people.filter((p) => p.reserved).length, '）')
 console.log('  課程數:', courses.length)
-console.log('  對應不到教師（歸黃國倫）:', unmatchedTeacherKeys.length)
+console.log('  種子班（teacherNo A 開頭）:', seedClassKeys.length)
+console.log('  收容班（未對應且非 A，已剔除與種子班重複）:', unmatchedTeacherKeys.length)
 const dupTeachers = [...teacherNameCount.entries()].filter(([, c]) => c > 1)
 if (dupTeachers.length) console.log('  ⚠️ 同名教師（以編號區分）:', dupTeachers.map(([n, c]) => `${n}×${c}`).join(', '))
