@@ -35,6 +35,7 @@ interface Step2BasicInfoProps {
   courseCatalogId: number
   courseCatalogLabel: string
   instructorName: string
+  classMaxCapacity?: number
   defaultValues?: Partial<Step2FormValues>
   onNext: (values: Step2FormValues) => void
   onBack: () => void
@@ -44,6 +45,7 @@ export function Step2BasicInfo({
   courseCatalogId,
   courseCatalogLabel,
   instructorName,
+  classMaxCapacity = 7,
   defaultValues,
   onNext,
   onBack,
@@ -113,13 +115,13 @@ export function Step2BasicInfo({
               <Input
                 type="number"
                 min={1}
-                max={7}
+                max={classMaxCapacity}
                 {...field}
                 value={field.value ?? ''}
                 onChange={(e) => field.onChange(e.target.value)}
               />
             </FormControl>
-            <p className="text-xs text-muted-foreground">{t('maxHint')}</p>
+            <p className="text-xs text-muted-foreground">{t('maxHint', { max: classMaxCapacity })}</p>
             <FormMessage />
           </FormItem>
         )} />

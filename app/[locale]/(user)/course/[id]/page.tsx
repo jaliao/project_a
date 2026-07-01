@@ -22,7 +22,8 @@ import {
 } from '@tabler/icons-react'
 import { getTranslations } from 'next-intl/server'
 import { auth } from '@/lib/auth'
-import { canTeachAny } from '@/lib/auth-roles'
+import { canTeachAny, canAccessAdmin } from '@/lib/auth-roles'
+import { getAdminSetting, CLASS_MAX_CAPACITY_KEY, CLASS_MAX_CAPACITY_DEFAULT } from '@/lib/data/admin-settings'
 import { getCourseSessionById, getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
 import { evaluateCourseStartGate } from '@/lib/utils/course-start-gate'
 import { computeMaterialProgress } from '@/lib/utils/material-progress'
@@ -90,6 +91,13 @@ export default async function CourseDetailPage({
 
   const isInstructor = userSession?.user?.id === courseSession.createdBy.id
   const currentUserId = userSession?.user?.id
+  const isAdmin = canAccessAdmin(userSession?.user?.roles)
+  // 編輯課程資訊：課程建立者或管理者可操作；管理者可超過人數上限
+  const canEditInfo = isInstructor || isAdmin
+  const classMaxCapacity = Math.min(
+    99,
+    Math.max(1, parseInt(await getAdminSetting(CLASS_MAX_CAPACITY_KEY, CLASS_MAX_CAPACITY_DEFAULT), 10) || 7)
+  )
 
   // 結業資訊區塊可見性：僅管理者或講師可查閱（一般會員／學員不顯示）
   const canViewGraduation = canTeachAny(userSession?.user?.roles)
@@ -152,11 +160,13 @@ export default async function CourseDetailPage({
           {courseStatus && <CourseStatusBadge status={courseStatus} size="sm" />}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {/* 講師功能：編輯課程資訊（招生中）＋ 分享按鈕，置於右上 */}
-          {isInstructor && !courseSession.startedAt && !isCancelled && !isCompleted && (
+          {/* 講師/管理者功能：編輯課程資訊（招生中）＋ 分享按鈕，置於右上 */}
+          {canEditInfo && !courseSession.startedAt && !isCancelled && !isCompleted && (
             <EditCourseInfoDialog
               inviteId={courseSession.id}
               approvedCount={courseSession.approvedEnrollments.length}
+              capacity={classMaxCapacity}
+              isAdmin={isAdmin}
               initial={{
                 title: courseSession.title,
                 maxCount: courseSession.maxCount,

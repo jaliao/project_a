@@ -17,6 +17,8 @@ import {
   GRADUATION_EMAIL_BODY_KEY,
   GRADUATION_EMAIL_SUBJECT_DEFAULT,
   GRADUATION_EMAIL_BODY_DEFAULT,
+  CLASS_MAX_CAPACITY_KEY,
+  CLASS_MAX_CAPACITY_DEFAULT,
 } from '@/lib/data/admin-settings'
 import { getAllChurches, getChurchMemberCount } from '@/lib/data/churches'
 import { getAllCourses } from '@/lib/data/course-catalog'
@@ -39,8 +41,9 @@ export default async function AdminSettingsPage({
   const { tab } = await searchParams
   const activeTab = tab === 'churches' ? 'churches' : tab === 'courses' ? 'courses' : 'basic'
 
-  const [depthStr, remittanceAccount, graduationSubject, graduationBody, churches, courses] = await Promise.all([
+  const [depthStr, capacityStr, remittanceAccount, graduationSubject, graduationBody, churches, courses] = await Promise.all([
     getAdminSetting('hierarchy_depth', '3'),
+    getAdminSetting(CLASS_MAX_CAPACITY_KEY, CLASS_MAX_CAPACITY_DEFAULT),
     getAdminSetting(REMITTANCE_ACCOUNT_KEY, REMITTANCE_ACCOUNT_DEFAULT),
     getAdminSetting(GRADUATION_EMAIL_SUBJECT_KEY, GRADUATION_EMAIL_SUBJECT_DEFAULT),
     getAdminSetting(GRADUATION_EMAIL_BODY_KEY, GRADUATION_EMAIL_BODY_DEFAULT),
@@ -48,6 +51,7 @@ export default async function AdminSettingsPage({
     getAllCourses(),
   ])
   const currentDepth = Math.min(10, Math.max(1, parseInt(depthStr, 10) || 3))
+  const classMaxCapacity = Math.min(99, Math.max(1, parseInt(capacityStr, 10) || 7))
   const churchesWithCount = await Promise.all(
     churches.map(async (c) => ({
       ...c,
@@ -62,6 +66,7 @@ export default async function AdminSettingsPage({
         activeTab={activeTab}
         isSuperadmin={isSuperadmin(session?.user?.roles)}
         currentDepth={currentDepth}
+        classMaxCapacity={classMaxCapacity}
         remittanceAccount={remittanceAccount}
         graduationSubject={graduationSubject}
         graduationBody={graduationBody}

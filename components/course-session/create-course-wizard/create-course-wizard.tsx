@@ -24,6 +24,7 @@ interface CreateCourseWizardProps {
   // 使用者可開設的課程 id 陣列（由書籍講師身分推導，Server Component 傳入）
   teachableCatalogIds: number[]
   isAdmin: boolean
+  classMaxCapacity?: number
   onClose: () => void
 }
 
@@ -32,6 +33,7 @@ export function CreateCourseWizard({
   activeCourses,
   teachableCatalogIds,
   isAdmin,
+  classMaxCapacity = 7,
   onClose,
 }: CreateCourseWizardProps) {
   const t = useTranslations('course.wizard')
@@ -92,6 +94,7 @@ export function CreateCourseWizard({
           courseCatalogId={selectedCatalogId}
           courseCatalogLabel={activeCourses.find((c) => c.id === selectedCatalogId)?.label ?? ''}
           instructorName={instructorName}
+          classMaxCapacity={classMaxCapacity}
           defaultValues={formValues ?? undefined}
           onNext={(values) => {
             setFormValues(values)

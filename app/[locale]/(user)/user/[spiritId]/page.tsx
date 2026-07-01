@@ -32,6 +32,7 @@ import { CourseCardGrid } from '@/components/course-session/course-card-grid'
 import { CompletionCertificateCard } from '@/components/course-invite/completion-certificate-card'
 import { getMyEnrollments, getMyCourseSessions, getMyCompletionCertificates } from '@/lib/data/course-sessions'
 import { getActiveCourses } from '@/lib/data/course-catalog'
+import { getAdminSetting, CLASS_MAX_CAPACITY_KEY, CLASS_MAX_CAPACITY_DEFAULT } from '@/lib/data/admin-settings'
 
 export const metadata: Metadata = {
   title: '學員資料 — 啟動事工',
@@ -83,6 +84,11 @@ export default async function UserProfilePage({ params }: Props) {
     : []
   // 查詢可開設課程（開課精靈使用）
   const activeCourses = isOwnPageEarly ? await getActiveCourses() : []
+  // 班級人數上限（開課精靈顯示與驗證用）
+  const classMaxCapacity = Math.min(
+    99,
+    Math.max(1, parseInt(await getAdminSetting(CLASS_MAX_CAPACITY_KEY, CLASS_MAX_CAPACITY_DEFAULT), 10) || 7)
+  )
 
   const displayName = getMemberDisplayName(user)
 
@@ -284,6 +290,7 @@ export default async function UserProfilePage({ params }: Props) {
                 activeCourses={activeCourses}
                 teachableCatalogIds={teachableCatalogIds}
                 isAdmin={isAdmin}
+                classMaxCapacity={classMaxCapacity}
               />
             </Suspense>
             {/* 測試環境專用：一鍵建立測試授課 */}

@@ -16,6 +16,7 @@ import {
   REMITTANCE_ACCOUNT_KEY,
   GRADUATION_EMAIL_SUBJECT_KEY,
   GRADUATION_EMAIL_BODY_KEY,
+  CLASS_MAX_CAPACITY_KEY,
 } from '@/lib/data/admin-settings'
 
 export type ActionResponse = {
@@ -38,6 +39,22 @@ export async function updateHierarchyDepth(depth: number): Promise<ActionRespons
   }
 
   await upsertAdminSetting('hierarchy_depth', String(depth))
+  revalidatePath('/admin/settings')
+
+  return { success: true, message: '設定已儲存' }
+}
+
+export async function updateClassMaxCapacity(capacity: number): Promise<ActionResponse> {
+  const session = await auth()
+  if (!isSuperadmin(session?.user?.roles)) {
+    return { success: false, message: '權限不足' }
+  }
+
+  if (!Number.isInteger(capacity) || capacity < 1 || capacity > 99) {
+    return { success: false, errors: { capacity: ['請輸入 1–99 之間的整數'] } }
+  }
+
+  await upsertAdminSetting(CLASS_MAX_CAPACITY_KEY, String(capacity))
   revalidatePath('/admin/settings')
 
   return { success: true, message: '設定已儲存' }

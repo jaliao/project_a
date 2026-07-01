@@ -28,6 +28,8 @@ import { updateCourseInfo } from '@/app/actions/course-session'
 interface Props {
   inviteId: number
   approvedCount: number
+  capacity?: number // 班級人數上限（來自系統設定）
+  isAdmin?: boolean // 管理者可超過上限
   initial: {
     title: string
     maxCount: number
@@ -46,7 +48,7 @@ function toDateInput(date: Date | null): string {
   return `${y}-${m}-${d}`
 }
 
-export function EditCourseInfoDialog({ inviteId, approvedCount, initial }: Props) {
+export function EditCourseInfoDialog({ inviteId, approvedCount, capacity = 7, isAdmin = false, initial }: Props) {
   const t = useTranslations()
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -108,14 +110,15 @@ export function EditCourseInfoDialog({ inviteId, approvedCount, initial }: Props
             <Input
               type="number"
               min={1}
-              max={7}
+              max={isAdmin ? 999 : capacity}
               value={maxCount}
               onChange={(e) => setMaxCount(e.target.value)}
               disabled={isPending}
               className="w-28"
             />
             <p className="text-xs text-muted-foreground">
-              {t('course.editInfo.maxHint')}{approvedCount > 0 && t('course.editInfo.maxHintApproved', { count: approvedCount })}
+              {isAdmin ? t('course.editInfo.maxHintAdmin') : t('course.editInfo.maxHint', { max: capacity })}
+              {approvedCount > 0 && t('course.editInfo.maxHintApproved', { count: approvedCount })}
             </p>
           </div>
 

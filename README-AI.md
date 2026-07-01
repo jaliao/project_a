@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.109（2026-07-01）
+> 自動產生，版本 0.1.110（2026-07-01）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -375,6 +375,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260701-001` — 管理者可修改班級人數上限：新增系統設定 `class_max_capacity`（`AdminSetting`，預設 7，系統設定→基本設定維護）；開課/編輯課程之 maxCount 上限改讀設定值（共用 zod `.max(7)` 放寬為防呆硬頂 999，實際上限於 server action 依身分驗證）；一般使用者受上限、**管理者可超過**（`createCourseSession`/`updateCourseInfo`）；課程詳情「編輯課程資訊」入口對管理者顯示；開課精靈/編輯對話框 input `max`＋提示（i18n `maxHint` 改 `{max}` 參數）依設定值。無 DB migration
 - `cr-spec-260701-002` — 後台推薦講師管理＋儀錶板動態副標題：新增 `/admin/recommendations`，列老師講師推薦（`teacherRecommended=true`，依回饋時間、預設未處理）；狀態推導（已成為講師＝已具 `TEACHER_ROLE_BY_CATALOG` 對應書籍講師身分 > 暫不接受 > 未處理）；暫不接受記錄備註/時間/管理者（`InviteEnrollment.recommendDeferred*`，migration `add_recommend_deferral`）、可取消；每列另開視窗看會員。儀錶板功能卡動態副標題：推薦講師（待處理數）、教材作業（待批價/確認款項/出貨數，共用 `getMaterialOrderStatusKey`）；新增「推薦講師」卡
 - `cr-spec-260628-003` — 後台實體證書製作管理：新增 `/admin/certificates`，以「人×階層去重」（來源已結業報名）列出應製作證書；標記已完成製作（記錄製作日期＋製作管理者）、可還原（保留備註）、每張可備註；未完成（預設）/已完成篩選、人名搜尋、每頁 30 筆分頁。新增 `CertificateProduction` 模型（`userId×courseCatalogId` 唯一，migration `add_certificate_production`）＋ `lib/data/certificate.ts`＋`app/actions/certificate.ts`；後台功能格新增「證書製作」入口
 - `cr-spec-260623-008` — 結業流程優化：結業表單新增「本次學員整體學習狀況」＝**五星評分（1–5）＋見證**（皆選填，班級層級）；`CourseInvite` 新增 `gradRating`/`gradTestimony`（migration `add_graduation_feedback`）；`graduateCourse` 驗證並與 `completedAt` 同筆寫入；課程詳情「結業資訊」區（管理者＋老師）**有值才顯示**星等與見證；表單字串沿 `course.gradForm` i18n

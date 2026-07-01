@@ -13,7 +13,19 @@ import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { canAccessAdmin, canTeachAny, canTeachBook } from '@/lib/auth-roles'
 import { courseSessionSchema, editCourseInfoSchema } from '@/lib/schemas/course-session'
+import {
+  getAdminSetting,
+  CLASS_MAX_CAPACITY_KEY,
+  CLASS_MAX_CAPACITY_DEFAULT,
+  CLASS_MAX_CAPACITY_HARD_CAP,
+} from '@/lib/data/admin-settings'
 import { createNotification } from '@/app/actions/notification'
+
+// 依系統設定 class_max_capacity 與操作者身分推導有效人數上限（管理者放寬至硬頂）
+async function resolveMaxCapacity(isAdmin: boolean): Promise<{ capacity: number; effective: number }> {
+  const capacity = parseInt(await getAdminSetting(CLASS_MAX_CAPACITY_KEY, CLASS_MAX_CAPACITY_DEFAULT), 10) || 7
+  return { capacity, effective: isAdmin ? CLASS_MAX_CAPACITY_HARD_CAP : capacity }
+}
 
 type ActionResponse = {
   success: boolean
@@ -49,6 +61,13 @@ export async function createCourseSession(
 
   const d = parsed.data
 
+  // 人數上限：一般使用者受 class_max_capacity 限制，管理者可放寬（至硬頂）
+  const maxCountNum = parseInt(d.maxCount, 10)
+  const { capacity, effective } = await resolveMaxCapacity(canAccessAdmin(session.user.roles))
+  if (maxCountNum > effective) {
+    return { success: false, errors: { maxCount: [`每班最多 ${capacity} 人`] } }
+  }
+
   // 取得課程資料
   const course = await prisma.courseCatalog.findUnique({
     where: { id: d.courseCatalogId },
@@ -66,7 +85,7 @@ export async function createCourseSession(
     data: {
       title: d.title,
       courseCatalogId: d.courseCatalogId,
-      maxCount: parseInt(d.maxCount, 10),
+      maxCount: maxCountNum,
       expiredAt: d.expiredAt,
       courseDate: formatDateString(d.courseDate),
       notes: d.notes || null,
@@ -171,6 +190,12 @@ export async function updateCourseInfo(
     return { success: false, errors: parsed.error.flatten().fieldErrors }
   }
   const d = parsed.data
+
+  // 人數上限：一般使用者受 class_max_capacity；管理者可放寬（至硬頂）
+  const { capacity, effective } = await resolveMaxCapacity(canAccessAdmin(session.user.roles))
+  if (d.maxCount > effective) {
+    return { success: false, errors: { maxCount: [`每班最多 ${capacity} 人`] } }
+  }
 
   // 預計人數不得低於已核准學員數（以當下資料為準）
   const approvedCount = invite._count.enrollments

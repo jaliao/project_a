@@ -28,6 +28,7 @@ interface CourseSessionDialogProps {
   // 使用者可開設的課程 id 陣列（由書籍講師身分推導，Server Component 傳入）
   teachableCatalogIds?: number[]
   isAdmin?: boolean
+  classMaxCapacity?: number
 }
 
 export function CourseSessionDialog({
@@ -35,6 +36,7 @@ export function CourseSessionDialog({
   activeCourses = [],
   teachableCatalogIds = [],
   isAdmin = false,
+  classMaxCapacity = 7,
 }: CourseSessionDialogProps) {
   const t = useTranslations('course.sessionDialog')
   const [open, setOpen] = useState(false)
@@ -57,6 +59,7 @@ export function CourseSessionDialog({
           activeCourses={activeCourses}
           teachableCatalogIds={teachableCatalogIds}
           isAdmin={isAdmin}
+          classMaxCapacity={classMaxCapacity}
           onClose={() => setOpen(false)}
         />
       </DialogContent>

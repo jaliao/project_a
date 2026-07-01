@@ -11,6 +11,7 @@
 import { useRouter } from 'next/navigation'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { HierarchyDepthForm } from '@/components/admin/hierarchy-depth-form'
+import { ClassCapacityForm } from '@/components/admin/class-capacity-form'
 import { RemittanceAccountForm } from '@/components/admin/remittance-account-form'
 import { GraduationEmailForm } from '@/components/admin/graduation-email-form'
 import { ChurchList } from '@/components/admin/church-list'
@@ -29,6 +30,7 @@ interface SettingsTabsProps {
   activeTab: string
   isSuperadmin: boolean
   currentDepth: number
+  classMaxCapacity: number
   remittanceAccount: string
   graduationSubject: string
   graduationBody: string
@@ -36,7 +38,7 @@ interface SettingsTabsProps {
   courses: CourseCatalogEntry[]
 }
 
-export function SettingsTabs({ activeTab, isSuperadmin, currentDepth, remittanceAccount, graduationSubject, graduationBody, churches, courses }: SettingsTabsProps) {
+export function SettingsTabs({ activeTab, isSuperadmin, currentDepth, classMaxCapacity, remittanceAccount, graduationSubject, graduationBody, churches, courses }: SettingsTabsProps) {
   const router = useRouter()
 
   return (
@@ -57,6 +59,14 @@ export function SettingsTabs({ activeTab, isSuperadmin, currentDepth, remittance
               </p>
             </div>
             <HierarchyDepthForm currentDepth={currentDepth} />
+
+            <div className="border-t pt-4">
+              <h2 className="font-medium">班級人數上限</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                開課與編輯課程時，老師可設定的每班人數上限（1–99），預設為 7。管理者編輯個別班級時可超過此上限。
+              </p>
+            </div>
+            <ClassCapacityForm current={classMaxCapacity} />
 
             <div className="border-t pt-4">
               <h2 className="font-medium">教材匯款帳號</h2>

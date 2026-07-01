@@ -12,6 +12,12 @@ import { prisma } from '@/lib/prisma'
 export const REMITTANCE_ACCOUNT_KEY = 'remittance_account'
 export const REMITTANCE_ACCOUNT_DEFAULT = '08-2345-6789'
 
+// 班級人數上限（開課/編輯課程之一般使用者上限；管理者可覆寫超過）
+export const CLASS_MAX_CAPACITY_KEY = 'class_max_capacity'
+export const CLASS_MAX_CAPACITY_DEFAULT = '7'
+// 防呆硬頂（管理者亦不得超過此值）
+export const CLASS_MAX_CAPACITY_HARD_CAP = 999
+
 // 結業信範本（主旨／內文）；支援變數 {{studentName}} {{courseName}} {{graduationDate}} {{spiritId}}
 export const GRADUATION_EMAIL_SUBJECT_KEY = 'graduation_email_subject'
 export const GRADUATION_EMAIL_BODY_KEY = 'graduation_email_body'
