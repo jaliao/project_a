@@ -162,8 +162,9 @@ model MaterialShipmentItem {
   enrollmentId Int
   enrollment   InviteEnrollment @relation(fields: [enrollmentId], references: [id])
 
-  bookName String // 書本名字快照
-  version  String // 版本快照（traditional / simplified）
+  bookName    String // 書本名字快照
+  version     String // 版本快照（traditional / simplified）
+  studentName String @default("") // 學員名稱快照
 
   createdAt DateTime @default(now())
 

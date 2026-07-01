@@ -222,7 +222,7 @@ export async function applyMaterialOrder(
         await tx.materialShipmentItem.createMany({
           data: s.enrollmentIds.map((id) => {
             const it = itemById.get(id)!
-            return { shipmentId: ship.id, enrollmentId: id, bookName: it.bookName, version: it.version }
+            return { shipmentId: ship.id, enrollmentId: id, bookName: it.bookName, version: it.version, studentName: it.studentName }
           }),
         })
       }
@@ -234,11 +234,15 @@ export async function applyMaterialOrder(
   }
 
   // ── 單一地址模式 ────────────────────────────
-  // 單一地址自動帶入「尚未申請」的全部剩餘繁/簡（等同剩餘全部寄一處），講師不需手動填數量
+  // 單一地址＝其餘（尚未指派）書本全部寄至此處；為該訂單建立自身寄送批次與逐本項目
+  const singleItems = await getUnassignedBookItems(inviteId)
+  const singleTrad = singleItems.filter((i) => i.version === 'traditional').length
+  const singleSimp = singleItems.filter((i) => i.version === 'simplified').length
+
   const orderData = {
     ...snapshot,
-    traditionalQty: remaining.traditional,
-    simplifiedQty: remaining.simplified,
+    traditionalQty: singleTrad,
+    simplifiedQty: singleSimp,
     shipMode: 'single' as ShipMode,
     recipientName: d.recipientName?.trim() || invite.createdBy.realName || invite.createdBy.name || '',
     recipientPhone: d.recipientPhone?.trim() || user.phone || '',
@@ -248,9 +252,36 @@ export async function applyMaterialOrder(
     storeName: (d.deliveryMethod === 'sevenEleven' || d.deliveryMethod === 'familyMart') ? (d.storeName || null) : null,
   }
 
-  // 每次申請建立一筆新的 CourseOrder 並關聯至課程
-  const order = await prisma.courseOrder.create({
-    data: { ...orderData, courseInviteId: inviteId },
+  const order = await prisma.$transaction(async (tx) => {
+    const created = await tx.courseOrder.create({
+      data: { ...orderData, courseInviteId: inviteId },
+    })
+    // 單一地址亦建立一個寄送批次（鏡射地址）＋逐本項目，記錄本訂單涵蓋的書
+    const ship = await tx.materialShipment.create({
+      data: {
+        courseOrderId: created.id,
+        recipientName: orderData.recipientName,
+        recipientPhone: orderData.recipientPhone,
+        deliveryMethod: orderData.deliveryMethod,
+        deliveryAddress: orderData.deliveryAddress,
+        storeId: orderData.storeId,
+        storeName: orderData.storeName,
+        traditionalQty: singleTrad,
+        simplifiedQty: singleSimp,
+      },
+    })
+    if (singleItems.length > 0) {
+      await tx.materialShipmentItem.createMany({
+        data: singleItems.map((it) => ({
+          shipmentId: ship.id,
+          enrollmentId: it.enrollmentId,
+          bookName: it.bookName,
+          version: it.version,
+          studentName: it.studentName,
+        })),
+      })
+    }
+    return created
   })
   revalidatePath(`/course/${inviteId}`)
   return { success: true, message: '教材申請已送出', data: { id: order.id } }

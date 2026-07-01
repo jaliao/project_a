@@ -137,3 +137,14 @@ TBD - normalized for archive compatibility. Update Purpose for admin-material-ma
 - **WHEN** 管理者列印單一地址出貨單
 - **THEN** 出貨單含該訂單的書本清單
 
+### Requirement: 各批次書本清單顯示學員名稱
+後台教材申請詳情與出貨單列印，於各寄送批次（單一與多地址一致）之書本清單 SHALL 顯示「學員名稱＋書本名字＋版本（繁/簡）」，來源為該批次的 `MaterialShipmentItem`（含 `studentName` 快照）。單一地址訂單亦讀取其自身批次項目呈現。
+
+#### Scenario: 多地址各批顯示學員名
+- **WHEN** 管理者展開多地址訂單詳情或列印某批次出貨單
+- **THEN** 各批書本清單顯示學員名（書本名字）· 繁/簡
+
+#### Scenario: 單一地址顯示學員名
+- **WHEN** 管理者展開單一地址訂單詳情或列印其出貨單
+- **THEN** 顯示該訂單自身批次的書本清單（學員名（書本名字）· 繁/簡）
+

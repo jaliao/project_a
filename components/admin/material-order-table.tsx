@@ -212,7 +212,7 @@ function OrderDetail({
                 {s.items.length > 0 && (
                   <ul className="text-xs text-muted-foreground space-y-0.5">
                     {s.items.map((it) => (
-                      <li key={it.enrollmentId}>・{it.bookName}（{it.version === 'traditional' ? '繁' : '簡'}）</li>
+                      <li key={it.enrollmentId}>・{it.studentName}（{it.bookName}）· {it.version === 'traditional' ? '繁' : '簡'}</li>
                     ))}
                   </ul>
                 )}

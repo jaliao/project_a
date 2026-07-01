@@ -8,7 +8,6 @@
 
 import { prisma } from '@/lib/prisma'
 import { getMaterialOrderStatusKey } from '@/lib/utils/material-order-status'
-import { getCourseBookItems } from '@/lib/data/material-items'
 
 export type CourseOrderDetail = {
   id: number
@@ -49,6 +48,7 @@ export type ShipmentItemInfo = {
   enrollmentId: number
   bookName: string
   version: string // traditional / simplified
+  studentName: string // 學員名稱快照
 }
 
 export type ShipmentInfo = {
@@ -116,7 +116,7 @@ const shipmentSelect = {
   simplifiedQty: true,
   shippedAt: true,
   note: true,
-  items: { select: { enrollmentId: true, bookName: true, version: true } },
+  items: { select: { enrollmentId: true, bookName: true, version: true, studentName: true } },
 } as const
 
 /**
@@ -214,19 +214,16 @@ export async function getAllCourseOrdersWithInvite(): Promise<
       instructorName:
         invite?.createdBy.realName ?? invite?.createdBy.name ?? null,
       instructorEmail: invite?.createdBy.email ?? null,
-      bookItems: [] as OrderBookItem[],
+      // 單一地址：書本清單＝該訂單自身寄送批次之項目（精準對應本訂單）
+      bookItems:
+        order.shipMode === 'single'
+          ? order.shipments.flatMap((s) =>
+              s.items.map((i) => ({ studentName: i.studentName, bookName: i.bookName, version: i.version }))
+            )
+          : ([] as OrderBookItem[]),
     }
   })
 
-  // 單一地址：附上該課程書本清單（學員名＋書本名字＋版本）
-  await Promise.all(
-    mapped.map(async (o) => {
-      if (o.shipMode === 'single' && o.inviteId) {
-        const items = await getCourseBookItems(o.inviteId)
-        o.bookItems = items.map((i) => ({ studentName: i.studentName, bookName: i.bookName, version: i.version }))
-      }
-    })
-  )
   return mapped
 }
 
@@ -269,14 +266,12 @@ export async function getCourseOrderForPrint(
   if (!order) return null
 
   const invite = order.courseInvite
-  // 單一地址：附上課程書本清單
+  // 單一地址：書本清單＝該訂單自身寄送批次之項目
   const bookItems: OrderBookItem[] =
-    order.shipMode === 'single' && invite?.id
-      ? (await getCourseBookItems(invite.id)).map((i) => ({
-          studentName: i.studentName,
-          bookName: i.bookName,
-          version: i.version,
-        }))
+    order.shipMode === 'single'
+      ? order.shipments.flatMap((s) =>
+          s.items.map((i) => ({ studentName: i.studentName, bookName: i.bookName, version: i.version }))
+        )
       : []
   return {
     id: order.id,

@@ -48,7 +48,7 @@ export default async function PrintShippingOrderPage({
             enrollmentId: it.enrollmentId,
             bookName: it.bookName,
             version: it.version,
-            studentName: undefined as string | undefined,
+            studentName: it.studentName as string | undefined,
           })),
         }))
       : [
