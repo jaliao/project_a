@@ -126,17 +126,3 @@ export const materialOrderSchema = z
   })
 
 export type MaterialOrderFormValues = z.infer<typeof materialOrderSchema>
-
-// ── 管理者編輯教材申請 Schema ─────────────────────────────────────────
-export const adminMaterialOrderEditSchema = z.object({
-  buyerNameZh: z.string().min(1, '購買人中文姓名為必填'),
-  buyerNameEn: z.string().min(1, '購買人英文姓名為必填'),
-  teacherName: z.string().min(1, '教師姓名為必填'),
-  churchOrg: z.string().min(1, '所屬教會/單位為必填'),
-  email: z.string().email('請輸入有效的 Email 格式'),
-  phone: z.string().min(1, '聯絡電話為必填'),
-  courseDate: z.string().min(1, '預計開課日期為必填'),
-  taxId: z.string().optional(),
-})
-
-export type AdminMaterialOrderEditValues = z.infer<typeof adminMaterialOrderEditSchema>

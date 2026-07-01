@@ -12,7 +12,7 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { canAccessAdmin } from '@/lib/auth-roles'
-import { courseOrderSchema, materialOrderSchema, adminMaterialOrderEditSchema } from '@/lib/schemas/course-order'
+import { courseOrderSchema, materialOrderSchema } from '@/lib/schemas/course-order'
 import { getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
 import { getUnassignedBookItems } from '@/lib/data/material-items'
 import { computeMaterialProgress } from '@/lib/utils/material-progress'
@@ -418,45 +418,29 @@ export async function confirmReceipt(orderId: number): Promise<ActionResponse> {
 }
 
 /**
- * 管理者編輯教材申請快照欄位
+ * 老師取消教材訂單（限尚未回填匯款）：刪除訂單，連帶釋放其寄送批次與書本項目以重新申請
  */
-export async function updateMaterialOrderAdmin(
-  orderId: number,
-  formData: Record<string, string>
-): Promise<ActionResponse> {
+export async function cancelCourseOrder(orderId: number): Promise<ActionResponse> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
 
-  if (!canAccessAdmin(session.user.roles)) return { success: false, message: '無權限' }
-
-  const parsed = adminMaterialOrderEditSchema.safeParse(formData)
-  if (!parsed.success) {
-    return { success: false, errors: parsed.error.flatten().fieldErrors }
-  }
-
   const order = await prisma.courseOrder.findUnique({
     where: { id: orderId },
-    select: { id: true },
-  })
-  if (!order) return { success: false, message: '找不到申請記錄' }
-
-  const d = parsed.data
-  await prisma.courseOrder.update({
-    where: { id: orderId },
-    data: {
-      buyerNameZh: d.buyerNameZh,
-      buyerNameEn: d.buyerNameEn,
-      teacherName: d.teacherName,
-      churchOrg: d.churchOrg,
-      email: d.email,
-      phone: d.phone,
-      courseDate: d.courseDate,
-      taxId: d.taxId || null,
+    select: {
+      id: true,
+      paymentReportedAt: true,
+      courseInvite: { select: { id: true, createdById: true } },
     },
   })
+  if (!order || !order.courseInvite) return { success: false, message: '找不到訂單' }
+  if (order.courseInvite.createdById !== session.user.id) return { success: false, message: '無權限' }
+  if (order.paymentReportedAt) return { success: false, message: '已回填匯款，無法取消申請' }
 
-  revalidatePath('/admin/materials')
-  return { success: true, message: '已更新申請資料' }
+  // 刪除訂單（cascade 刪其 MaterialShipment 與 MaterialShipmentItem → 書本回到未指派）
+  await prisma.courseOrder.delete({ where: { id: orderId } })
+
+  revalidatePath(`/course/${order.courseInvite.id}`)
+  return { success: true, message: '已取消申請，可重新申請教材' }
 }
 
 /**

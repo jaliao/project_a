@@ -148,3 +148,10 @@ TBD - normalized for archive compatibility. Update Purpose for admin-material-ma
 - **WHEN** 管理者展開單一地址訂單詳情或列印其出貨單
 - **THEN** 顯示該訂單自身批次的書本清單（學員名（書本名字）· 繁/簡）
 
+### Requirement: 後台不提供教材訂單編輯
+後台教材申請管理 SHALL NOT 提供事後編輯訂單快照（收件人、寄送方式、數量等）的功能，以避免與申請時快照不一致。訂單詳情 SHALL NOT 顯示「編輯」按鈕。管理者仍可進行既有的批價、確認收款、確認寄送與地址內部備註等作業。
+
+#### Scenario: 訂單詳情無編輯按鈕
+- **WHEN** 管理者展開教材訂單詳情
+- **THEN** 不顯示「編輯」按鈕，亦無法修改訂單快照欄位
+

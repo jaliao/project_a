@@ -294,6 +294,7 @@ export type CourseSessionOrder = {
     traditionalQty: number
     simplifiedQty: number
     shippedAt: Date | null
+    items: { studentName: string; bookName: string; version: string }[]
   }[]
 }
 
@@ -379,6 +380,7 @@ export async function getCourseSessionById(
               traditionalQty: true,
               simplifiedQty: true,
               shippedAt: true,
+              items: { select: { studentName: true, bookName: true, version: true } },
             },
             orderBy: { id: 'asc' },
           },

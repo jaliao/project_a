@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.114（2026-07-01）
+> 自動產生，版本 0.1.115（2026-07-01）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -375,6 +375,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260630-005` — 教材申請 UX 調整：後台移除訂單「編輯」（刪 `material-order-edit-dialog`＋`updateMaterialOrderAdmin`）；前台移除「查看」對話框改**內嵌顯示**訂單資訊（書本數量、取貨方式、收件人·電話、寄送/收件時間；多地址逐地址含學員書本）；新增 `cancelCourseOrder`——老師於回填匯款前（`paymentReportedAt` null）可「取消申請」→ 刪除訂單 cascade 釋放書本 → 重新申請。無 migration
 - `cr-spec-260701-006` — 友善 404 頁：新增 `app/[locale]/not-found.tsx`（套 layout/i18n、置中卡片＋「回到首頁」`Link href="/"`）＋ `app/not-found.tsx` 根層備援（自帶最小 html/body、inline style、靜態繁體），取代預設「一片黑」404；新增 `notFound.*` i18n
 - `cr-spec-260701-005` — 教材寄送批次書本歸屬（治本）：每筆訂單（含單一地址）記錄其涵蓋書本——單一地址亦建立 `MaterialShipment`＋逐本 `MaterialShipmentItem`（涵蓋建立當下 `getUnassignedBookItems`）；`MaterialShipmentItem` 加 `studentName` 快照（migration `add_shipment_item_student_name`）；後台/列印一律讀「該訂單各批次 items」顯示「學員名（書本名字）· 繁/簡」，單/多地址一致、多筆先後寄送各自歸屬不混淆。取代 004 的 `getCourseBookItems` 顯示推導
 - `cr-spec-260701-004` — 單一地址教材訂單書本清單：延續 003，讓單一地址（`shipMode=single`）訂單於後台 `material-order-table` 詳情與出貨單列印顯示書本清單（學員名＋書本名字＋版本），由 `getCourseBookItems(courseInviteId)` 推導掛於 `bookItems`。無 migration（純顯示）

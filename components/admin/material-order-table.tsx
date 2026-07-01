@@ -11,13 +11,12 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { IconChevronDown, IconChevronRight, IconPrinter, IconEdit } from '@tabler/icons-react'
+import { IconChevronDown, IconChevronRight, IconPrinter } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { confirmShipment, confirmShipmentBatch, confirmMaterialPayment, updateMaterialAddressNote } from '@/app/actions/course-order'
 import type { CourseOrderWithInvite } from '@/lib/data/course-order'
 import { getMaterialOrderStatus, getMaterialOrderStatusKey } from '@/lib/utils/material-order-status'
-import { MaterialOrderEditDialog } from './material-order-edit-dialog'
 import { MaterialQuoteDialog } from './material-quote-dialog'
 
 // ── 購買性質標籤 ──────────────────────────
@@ -83,13 +82,11 @@ function AddressNoteEditor({
 // ── 詳情展開列 ───────────────────────────
 function OrderDetail({
   order,
-  onEditClick,
   onConfirmBatch,
   busyShipmentId,
   pending,
 }: {
   order: CourseOrderWithInvite
-  onEditClick: () => void
   onConfirmBatch: (shipmentId: number) => void
   busyShipmentId: number | null
   pending: boolean
@@ -98,10 +95,6 @@ function OrderDetail({
     <div className="p-4 bg-muted/30 border-t space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">購買人資料（自動快照）</p>
-        <Button size="sm" variant="outline" onClick={onEditClick} className="h-7 gap-1">
-          <IconEdit className="h-3.5 w-3.5" />
-          編輯
-        </Button>
       </div>
       <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
         <div>
@@ -291,13 +284,10 @@ interface MaterialOrderTableProps {
 export function MaterialOrderTable({ orders, defaultRemittanceAccount }: MaterialOrderTableProps) {
   const router = useRouter()
   const [expandedId, setExpandedId] = useState<number | null>(null)
-  const [editOrderId, setEditOrderId] = useState<number | null>(null)
   const [quoteOrderId, setQuoteOrderId] = useState<number | null>(null)
   const [pending, startTransition] = useTransition()
   const [loadingId, setLoadingId] = useState<number | null>(null)
   const [busyShipmentId, setBusyShipmentId] = useState<number | null>(null)
-
-  const editingOrder = editOrderId !== null ? orders.find((o) => o.id === editOrderId) ?? null : null
 
   function handleConfirmPayment(orderId: number) {
     setLoadingId(orderId)
@@ -480,7 +470,6 @@ export function MaterialOrderTable({ orders, defaultRemittanceAccount }: Materia
                   <td colSpan={10} className="p-0">
                     <OrderDetail
                       order={order}
-                      onEditClick={() => setEditOrderId(order.id)}
                       onConfirmBatch={handleConfirmBatch}
                       busyShipmentId={busyShipmentId}
                       pending={pending}
@@ -492,24 +481,6 @@ export function MaterialOrderTable({ orders, defaultRemittanceAccount }: Materia
           ))}
         </tbody>
       </table>
-
-      {editingOrder && (
-        <MaterialOrderEditDialog
-          open={editOrderId !== null}
-          onOpenChange={(open) => { if (!open) setEditOrderId(null) }}
-          orderId={editingOrder.id}
-          defaultValues={{
-            buyerNameZh: editingOrder.buyerNameZh,
-            buyerNameEn: editingOrder.buyerNameEn,
-            teacherName: editingOrder.teacherName,
-            churchOrg: editingOrder.churchOrg,
-            email: editingOrder.email,
-            phone: editingOrder.phone,
-            courseDate: editingOrder.courseDate,
-            taxId: editingOrder.taxId,
-          }}
-        />
-      )}
 
       {quoteOrderId !== null && (
         <MaterialQuoteDialog

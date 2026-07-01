@@ -19,7 +19,7 @@ import { CancelCourseDialog } from '@/components/course-session/cancel-course-di
 import { MaterialOrderDialog } from '@/components/course-session/material-order-dialog'
 import type { BookItem } from '@/lib/data/material-items'
 import { startCourseSession } from '@/app/actions/course-invite'
-import { confirmReceipt, reportMaterialPayment } from '@/app/actions/course-order'
+import { confirmReceipt, reportMaterialPayment, cancelCourseOrder } from '@/app/actions/course-order'
 import { getMaterialOrderStatus } from '@/lib/utils/material-order-status'
 import type { MaterialProgress } from '@/lib/utils/material-progress'
 import type { CourseSessionOrder } from '@/lib/data/course-sessions'
@@ -66,6 +66,66 @@ function bookLabel(trad: number, simp: number): string {
   return parts.length > 0 ? parts.join('、') : '繁 0、簡 0'
 }
 
+const DELIVERY_LABELS: Record<string, string> = {
+  sevenEleven: '7-11 超商',
+  familyMart: '全家超商',
+  delivery: '郵寄/宅配',
+}
+
+// 取貨方式一行文字（超商→門市（店號）；宅配→地址）
+function deliveryLine(m: {
+  deliveryMethod: string
+  deliveryAddress: string | null
+  storeId: string | null
+  storeName: string | null
+}): string {
+  const label = DELIVERY_LABELS[m.deliveryMethod] ?? m.deliveryMethod
+  if (m.deliveryMethod === 'delivery') {
+    return m.deliveryAddress ? `${label} — ${m.deliveryAddress}` : label
+  }
+  const store = m.storeName ? `${m.storeName}${m.storeId ? `（${m.storeId}）` : ''}` : m.deliveryAddress
+  return store ? `${label} — ${store}` : label
+}
+
+// 教材訂單內嵌資訊（取代原「查看」對話框）
+function MaterialOrderInfo({ order }: { order: CourseSessionOrder }) {
+  const fmt = (d: Date | null) => (d ? new Date(d).toLocaleString('zh-TW') : null)
+  if (order.shipMode === 'multiple') {
+    return (
+      <div className="space-y-2 text-sm text-muted-foreground">
+        {order.shipments.map((s, i) => (
+          <div key={s.id} className="rounded border px-3 py-2 space-y-0.5">
+            <p className="font-medium text-foreground">
+              地址 {i + 1}
+              <span className="ml-2 text-xs">{bookLabel(s.traditionalQty, s.simplifiedQty)}</span>
+            </p>
+            <p>取貨方式：{deliveryLine(s)}</p>
+            <p>收件人：{s.recipientName || '—'}　·　{s.recipientPhone || '—'}</p>
+            {s.items.length > 0 && (
+              <ul className="space-y-0.5">
+                {s.items.map((it, j) => (
+                  <li key={j}>・{it.studentName}（{it.bookName}）· {it.version === 'traditional' ? '繁' : '簡'}</li>
+                ))}
+              </ul>
+            )}
+            {fmt(s.shippedAt) && <p>寄送時間：{fmt(s.shippedAt)}</p>}
+          </div>
+        ))}
+        {fmt(order.receivedAt) && <p>收件時間：{fmt(order.receivedAt)}</p>}
+      </div>
+    )
+  }
+  return (
+    <div className="space-y-0.5 text-sm text-muted-foreground">
+      <p>書本數量：{bookLabel(order.traditionalQty, order.simplifiedQty)}</p>
+      <p>取貨方式：{deliveryLine(order)}</p>
+      <p>收件人：{order.recipientName || '—'}　·　{order.recipientPhone || '—'}</p>
+      {fmt(order.shippedAt) && <p>寄送時間：{fmt(order.shippedAt)}</p>}
+      {fmt(order.receivedAt) && <p>收件時間：{fmt(order.receivedAt)}</p>}
+    </div>
+  )
+}
+
 export function CourseDetailActions({
   inviteId,
   isCancelled,
@@ -81,24 +141,31 @@ export function CourseDetailActions({
 }: Props) {
   const router = useRouter()
   const [cancelOpen, setCancelOpen] = useState(false)
-  // 教材申請 Dialog：dialogOrder = null 代表「申請教材」（新訂單），否則檢視既有訂單
+  // 教材申請 Dialog：僅用於「申請教材」（新訂單）；既有訂單改於列內嵌顯示
   const [materialOpen, setMaterialOpen] = useState(false)
-  const [dialogOrder, setDialogOrder] = useState<CourseSessionOrder | null>(null)
   const [startLoading, setStartLoading] = useState(false)
   const [receiptPending, startReceiptTransition] = useTransition()
   const [paymentPending, startPaymentTransition] = useTransition()
+  const [cancelPending, startCancelTransition] = useTransition()
   const [last5Map, setLast5Map] = useState<Record<number, string>>({})
 
   const canAct = !isCancelled && !isCompleted
 
   function openNewOrder() {
-    setDialogOrder(null)
     setMaterialOpen(true)
   }
 
-  function openViewOrder(order: CourseSessionOrder) {
-    setDialogOrder(order)
-    setMaterialOpen(true)
+  function handleCancelOrder(orderId: number) {
+    if (!window.confirm('確定要取消此教材申請？取消後可重新申請。')) return
+    startCancelTransition(async () => {
+      const result = await cancelCourseOrder(orderId)
+      if (result.success) {
+        toast.success(result.message ?? '已取消申請')
+        router.refresh()
+      } else {
+        toast.error(result.message ?? '取消失敗，請稍後再試')
+      }
+    })
   }
 
   function handleReportPayment(orderId: number) {
@@ -184,6 +251,9 @@ export function CourseDetailActions({
                       <span className={cn('rounded px-2 py-0.5 text-xs', status.tone)}>{status.label}</span>
                     </div>
 
+                    {/* 內嵌顯示訂單寄送資訊 */}
+                    <MaterialOrderInfo order={order} />
+
                     {status.key === 'pending_payment' && (
                       <div className="text-sm bg-amber-50 border border-amber-200 rounded-md px-3 py-2 space-y-2">
                         <p className="text-amber-800">
@@ -206,9 +276,17 @@ export function CourseDetailActions({
                     )}
 
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Button variant="outline" size="sm" onClick={() => openViewOrder(order)}>
-                        查看教材申請
-                      </Button>
+                      {(status.key === 'pending_quote' || status.key === 'pending_payment') && canAct && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => handleCancelOrder(order.id)}
+                          disabled={cancelPending}
+                        >
+                          {cancelPending ? '取消中...' : '取消申請'}
+                        </Button>
+                      )}
                       {status.key === 'shipped' && (
                         <Button size="sm" onClick={() => handleConfirmReceipt(order.id)} disabled={receiptPending}>
                           {receiptPending ? '確認中...' : '我已收到教材'}
@@ -286,12 +364,12 @@ export function CourseDetailActions({
         onOpenChange={setCancelOpen}
       />
 
-      {/* 教材申請 Dialog（dialogOrder=null 為新訂單，否則檢視既有訂單） */}
+      {/* 教材申請 Dialog（僅用於新申請；既有訂單於列內嵌顯示） */}
       <MaterialOrderDialog
         open={materialOpen}
         onOpenChange={setMaterialOpen}
         inviteId={inviteId}
-        existingOrder={dialogOrder}
+        existingOrder={null}
         remaining={remaining}
         bookItems={bookItems}
         defaultRecipient={defaultRecipient}
