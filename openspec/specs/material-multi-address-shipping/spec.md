@@ -2,9 +2,7 @@
 
 ## Purpose
 TBD - normalized for archive compatibility. Update Purpose for material-multi-address-shipping.
-
 ## Requirements
-
 ### Requirement: 寄送模式選擇
 教材申請時，講師 SHALL 能選擇寄送模式為「單一地址」或「多個地址」。選擇「單一地址」時，系統行為 SHALL 與現行單一地址流程完全相同（不建立任何寄送批次子紀錄）。
 
@@ -43,19 +41,21 @@ TBD - normalized for archive compatibility. Update Purpose for material-multi-ad
 - **THEN** 各寄送批次各自儲存其收件人與連絡電話，互不影響
 
 ### Requirement: 依版本分配書本直到全部完成
-多地址模式下，所有寄送批次的繁體本數總和 SHALL 等於應寄繁體本數，簡體本數總和 SHALL 等於應寄簡體本數；應寄本數取自該課程 approved 學員的 `materialChoice` 統計（繁體 = `traditional` 人數、簡體 = `simplified` 人數）。未分配完畢前 SHALL NOT 允許送出。
+多地址教材寄送 SHALL 由「繁/簡數量拆分」改為「逐本書本項目指派」：老師先建立各寄送地址（收件人＋門市/宅配），再將書本項目（學員書本名字＋版本）指派至各地址。每個 `MaterialShipment` 的繁/簡本數 SHALL 由其已指派項目推導，不再由老師手動輸入數量。訂單送出前，所有書本項目 SHALL 皆被指派且僅屬一個地址。老師端寄送檢視 SHALL 顯示各地址的「學員名＋版本」清單。
 
-#### Scenario: 分配未完成時擋下送出
-- **WHEN** 多地址各批次本數總和未等於應寄繁體/簡體本數
-- **THEN** 系統拒絕送出並提示尚未分配完畢的剩餘本數
+（系統未上線、無舊資料：書本項目為單一真相，數量欄位為推導值。）
 
-#### Scenario: 分配剛好完成
-- **WHEN** 各批次繁體本數總和 = 應寄繁體本數，且簡體本數總和 = 應寄簡體本數
-- **THEN** 允許送出，建立對應寄送批次
+#### Scenario: 逐本指派取代數量輸入
+- **WHEN** 老師以多地址建立教材訂單
+- **THEN** 不再手動填各地址繁/簡數量，而是將書本項目指派到地址，數量由項目推導
 
-#### Scenario: 即時顯示剩餘本數
-- **WHEN** 講師於多地址清單調整各批次本數
-- **THEN** 介面即時顯示繁體／簡體尚待分配的剩餘本數
+#### Scenario: 各地址顯示學員清單
+- **WHEN** 檢視某多地址訂單
+- **THEN** 每個地址顯示其指派的學員名＋書本名字＋版本清單
+
+#### Scenario: 未指派完成不可送出
+- **WHEN** 仍有書本項目未指派任何地址
+- **THEN** 阻擋送出並提示待指派項目
 
 ### Requirement: 多地址逐批次寄送與完成判定
 多地址模式下，管理者 SHALL 能逐個寄送批次標記寄送（設該批次 `shippedAt`）。當該 `CourseOrder` 的所有寄送批次皆已寄送時，系統 SHALL 自動將 `CourseOrder.shippedAt` 設為最後一批次的寄送時間，使講師既有收件確認流程不變。
@@ -71,3 +71,4 @@ TBD - normalized for archive compatibility. Update Purpose for material-multi-ad
 #### Scenario: 尚有批次未寄送時訂單未完成
 - **WHEN** 仍有至少一個批次 `shippedAt` 為 null
 - **THEN** `CourseOrder.shippedAt` 維持 null（訂單尚未完成寄送）
+

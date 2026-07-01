@@ -34,5 +34,5 @@
 ## 7. 驗證
 
 - [x] 7.1 `npm run build`（✓ Compiled）、`npm run lint`（0 errors）、`npm run gen:zh-cn` 通過
-- [ ] 7.2 （執行階段）申購書本名字預設/編輯；老師地址優先指派、未全指派不可送出；各地址學員清單；後台/列印顯示
-- [ ] 7.3 （部署）DB 套用 migration：本機 `make prisma-dev-deploy`（或 `make dev-clean` 重置）；VPS3 `make prisma-vps3-deploy`
+- [x] 7.2 （執行階段）申購書本名字預設/編輯；老師地址優先指派、未全指派不可送出；各地址學員清單；後台/列印顯示
+- [x] 7.3 （部署）DB 套用 migration：本機 `make prisma-dev-deploy`（或 `make dev-clean` 重置）；VPS3 `make prisma-vps3-deploy`

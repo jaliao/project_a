@@ -1,4 +1,4 @@
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: 學員申購教材選版本與書本名字
 學員申請參加課程並選擇教材版本（繁體／簡體／無須購買）時，若選了需購買的版本，SHALL 同時提供「書本名字」欄位，**預設帶入 中文名稱 → 英文名稱 → 匿名**，學員 SHALL 可自行編輯。書本名字 SHALL 存於 `InviteEnrollment.materialBookName`；送出為空白時採預設值。選「無須購買」時不需書本名字。
