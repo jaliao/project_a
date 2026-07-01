@@ -27,6 +27,8 @@ export type CourseOrderDetail = {
   deliveryAddress: string | null
   storeId: string | null
   storeName: string | null
+  recipientName: string | null
+  recipientPhone: string | null
   quotedAmount: number | null
   remittanceAccount: string | null
   quotedAt: Date | null
@@ -38,6 +40,7 @@ export type CourseOrderDetail = {
   traditionalQty: number
   simplifiedQty: number
   createdAt: Date
+  note: string | null // 內部備註（單一地址）
 }
 
 export type ShipmentInfo = {
@@ -51,6 +54,7 @@ export type ShipmentInfo = {
   traditionalQty: number
   simplifiedQty: number
   shippedAt: Date | null
+  note: string | null // 內部備註（此收件地址）
 }
 
 export type CourseOrderWithInvite = CourseOrderDetail & {
@@ -82,6 +86,7 @@ export type CourseOrderForPrint = {
   catalogLabel: string | null
   shipMode: string
   shipments: ShipmentInfo[]
+  note: string | null // 內部備註（單一地址）
 }
 
 // 共用 Prisma select：寄送批次欄位
@@ -96,6 +101,7 @@ const shipmentSelect = {
   traditionalQty: true,
   simplifiedQty: true,
   shippedAt: true,
+  note: true,
 } as const
 
 /**
@@ -125,6 +131,8 @@ export async function getAllCourseOrdersWithInvite(): Promise<
       deliveryAddress: true,
       storeId: true,
       storeName: true,
+      recipientName: true,
+      recipientPhone: true,
       quotedAmount: true,
       remittanceAccount: true,
       quotedAt: true,
@@ -136,6 +144,7 @@ export async function getAllCourseOrdersWithInvite(): Promise<
       traditionalQty: true,
       simplifiedQty: true,
       createdAt: true,
+      note: true,
       shipMode: true,
       shipments: { select: shipmentSelect, orderBy: { id: 'asc' } },
       courseInvite: {
@@ -169,6 +178,8 @@ export async function getAllCourseOrdersWithInvite(): Promise<
       deliveryAddress: order.deliveryAddress,
       storeId: order.storeId,
       storeName: order.storeName,
+      recipientName: order.recipientName,
+      recipientPhone: order.recipientPhone,
       quotedAmount: order.quotedAmount,
       remittanceAccount: order.remittanceAccount,
       quotedAt: order.quotedAt,
@@ -180,6 +191,7 @@ export async function getAllCourseOrdersWithInvite(): Promise<
       traditionalQty: order.traditionalQty,
       simplifiedQty: order.simplifiedQty,
       createdAt: order.createdAt,
+      note: order.note,
       shipMode: order.shipMode,
       shipments: order.shipments,
       inviteId: invite?.id ?? null,
@@ -214,6 +226,7 @@ export async function getCourseOrderForPrint(
       shippedAt: true,
       traditionalQty: true,
       simplifiedQty: true,
+      note: true,
       shipMode: true,
       shipments: { select: shipmentSelect, orderBy: { id: 'asc' } },
       courseInvite: {
@@ -246,6 +259,7 @@ export async function getCourseOrderForPrint(
     simplifiedQty: order.simplifiedQty,
     shipMode: order.shipMode,
     shipments: order.shipments,
+    note: order.note,
     inviteId: invite?.id ?? null,
     inviteTitle: invite?.title ?? null,
     catalogLabel: invite?.courseCatalog?.label ?? null,

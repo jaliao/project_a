@@ -13,18 +13,12 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { IconChevronDown, IconChevronRight, IconPrinter, IconEdit } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
-import { confirmShipment, confirmShipmentBatch, confirmMaterialPayment } from '@/app/actions/course-order'
+import { Textarea } from '@/components/ui/textarea'
+import { confirmShipment, confirmShipmentBatch, confirmMaterialPayment, updateMaterialAddressNote } from '@/app/actions/course-order'
 import type { CourseOrderWithInvite } from '@/lib/data/course-order'
 import { getMaterialOrderStatus, getMaterialOrderStatusKey } from '@/lib/utils/material-order-status'
 import { MaterialOrderEditDialog } from './material-order-edit-dialog'
 import { MaterialQuoteDialog } from './material-quote-dialog'
-
-// ── 教材版本標籤 ──────────────────────────
-const MATERIAL_VERSION_LABELS: Record<string, string> = {
-  traditional: '繁體版',
-  simplified: '簡體版',
-  both: '繁體＋簡體',
-}
 
 // ── 購買性質標籤 ──────────────────────────
 const PURCHASE_TYPE_LABELS: Record<string, string> = {
@@ -41,6 +35,50 @@ const DELIVERY_METHOD_LABELS: Record<string, string> = {
 }
 
 // 狀態標籤已改由 lib/utils/material-order-status.ts 的 getMaterialOrderStatus 推導
+
+// ── 收件地址內部備註（工作人員紀錄用）────────
+function AddressNoteEditor({
+  target,
+  initialNote,
+}: {
+  target: { orderId: number } | { shipmentId: number }
+  initialNote: string | null
+}) {
+  const router = useRouter()
+  const [note, setNote] = useState(initialNote ?? '')
+  const [pending, startTransition] = useTransition()
+  const dirty = (note.trim() || null) !== (initialNote || null)
+
+  const save = () => {
+    startTransition(async () => {
+      const res = await updateMaterialAddressNote(target, note)
+      if (res.success) {
+        toast.success(res.message ?? '已儲存備註')
+        router.refresh()
+      } else {
+        toast.error(res.message ?? '操作失敗，請稍後再試')
+      }
+    })
+  }
+
+  return (
+    <div className="space-y-1">
+      <p className="text-xs text-muted-foreground">備註（內部）</p>
+      <Textarea
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        rows={2}
+        className="text-sm"
+        placeholder="工作人員紀錄…"
+      />
+      {dirty && (
+        <Button size="sm" variant="outline" className="h-7" disabled={pending} onClick={save}>
+          {pending ? '儲存中…' : '儲存備註'}
+        </Button>
+      )}
+    </div>
+  )
+}
 
 // ── 詳情展開列 ───────────────────────────
 function OrderDetail({
@@ -145,27 +183,33 @@ function OrderDetail({
                   ? `${s.storeName}（${s.storeId}）`
                   : '（未選門市）'
             return (
-              <div key={s.id} className="flex items-center justify-between gap-3 rounded-md border bg-background px-3 py-2">
-                <div className="text-sm">
-                  <span className="font-medium">地址 {i + 1}：</span>
-                  <span className="text-muted-foreground">{DELIVERY_METHOD_LABELS[s.deliveryMethod] ?? s.deliveryMethod} — {addr}</span>
-                  <span className="ml-2 text-xs text-muted-foreground">繁 {s.traditionalQty} / 簡 {s.simplifiedQty}</span>
+              <div key={s.id} className="rounded-md border bg-background px-3 py-2 space-y-1.5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm">
+                    <span className="font-medium">地址 {i + 1}：</span>
+                    <span className="text-muted-foreground">{DELIVERY_METHOD_LABELS[s.deliveryMethod] ?? s.deliveryMethod} — {addr}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">繁 {s.traditionalQty} / 簡 {s.simplifiedQty}</span>
+                  </div>
+                  {s.shippedAt ? (
+                    <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700 shrink-0">已寄送</span>
+                  ) : order.paymentConfirmedAt ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 shrink-0"
+                      disabled={pending && busyShipmentId === s.id}
+                      onClick={() => onConfirmBatch(s.id)}
+                    >
+                      {pending && busyShipmentId === s.id ? '處理中...' : '確認已寄送'}
+                    </Button>
+                  ) : (
+                    <span className="text-xs text-muted-foreground shrink-0">待確認收款</span>
+                  )}
                 </div>
-                {s.shippedAt ? (
-                  <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700 shrink-0">已寄送</span>
-                ) : order.paymentConfirmedAt ? (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 shrink-0"
-                    disabled={pending && busyShipmentId === s.id}
-                    onClick={() => onConfirmBatch(s.id)}
-                  >
-                    {pending && busyShipmentId === s.id ? '處理中...' : '確認已寄送'}
-                  </Button>
-                ) : (
-                  <span className="text-xs text-muted-foreground shrink-0">待確認收款</span>
-                )}
+                <div className="text-xs text-muted-foreground">
+                  收件人：{s.recipientName || '—'}　·　{s.recipientPhone || '—'}
+                </div>
+                <AddressNoteEditor target={{ shipmentId: s.id }} initialNote={s.note} />
               </div>
             )
           })}
@@ -177,37 +221,44 @@ function OrderDetail({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm pt-2 border-t">
-          <div>
-            <span className="text-muted-foreground">書本數量：</span>
-            繁 {order.traditionalQty} / 簡 {order.simplifiedQty}
-          </div>
-          <div>
-            <span className="text-muted-foreground">取貨方式：</span>
-            {DELIVERY_METHOD_LABELS[order.deliveryMethod] ?? order.deliveryMethod}
-            {order.deliveryMethod === 'sevenEleven' && (
-              <span className="ml-1 text-muted-foreground">
-                {order.storeName && order.storeId
-                  ? `— ${order.storeName}（${order.storeId}）`
-                  : order.deliveryAddress ? `— ${order.deliveryAddress}` : ''}
-              </span>
-            )}
-            {order.deliveryMethod !== 'sevenEleven' && order.deliveryAddress && (
-              <span className="ml-1 text-muted-foreground">— {order.deliveryAddress}</span>
-            )}
-          </div>
-          {order.shippedAt && (
+        <div className="space-y-3 pt-2 border-t">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
             <div>
-              <span className="text-muted-foreground">寄送時間：</span>
-              {order.shippedAt.toLocaleString('zh-TW')}
+              <span className="text-muted-foreground">書本數量：</span>
+              繁 {order.traditionalQty} / 簡 {order.simplifiedQty}
             </div>
-          )}
-          {order.receivedAt && (
             <div>
-              <span className="text-muted-foreground">收件時間：</span>
-              {order.receivedAt.toLocaleString('zh-TW')}
+              <span className="text-muted-foreground">取貨方式：</span>
+              {DELIVERY_METHOD_LABELS[order.deliveryMethod] ?? order.deliveryMethod}
+              {order.deliveryMethod === 'sevenEleven' && (
+                <span className="ml-1 text-muted-foreground">
+                  {order.storeName && order.storeId
+                    ? `— ${order.storeName}（${order.storeId}）`
+                    : order.deliveryAddress ? `— ${order.deliveryAddress}` : ''}
+                </span>
+              )}
+              {order.deliveryMethod !== 'sevenEleven' && order.deliveryAddress && (
+                <span className="ml-1 text-muted-foreground">— {order.deliveryAddress}</span>
+              )}
             </div>
-          )}
+            <div>
+              <span className="text-muted-foreground">收件人：</span>
+              {order.recipientName || '—'}　·　{order.recipientPhone || '—'}
+            </div>
+            {order.shippedAt && (
+              <div>
+                <span className="text-muted-foreground">寄送時間：</span>
+                {order.shippedAt.toLocaleString('zh-TW')}
+              </div>
+            )}
+            {order.receivedAt && (
+              <div>
+                <span className="text-muted-foreground">收件時間：</span>
+                {order.receivedAt.toLocaleString('zh-TW')}
+              </div>
+            )}
+          </div>
+          <AddressNoteEditor target={{ orderId: order.id }} initialNote={order.note} />
         </div>
       )}
     </div>
@@ -289,10 +340,9 @@ export function MaterialOrderTable({ orders, defaultRemittanceAccount }: Materia
             <th className="px-4 py-3 w-8"></th>
             <th className="px-4 py-3">編號</th>
             <th className="px-4 py-3">課程名稱</th>
+            <th className="px-4 py-3">課程編號</th>
             <th className="px-4 py-3">講師</th>
             <th className="px-4 py-3">購買人</th>
-            <th className="px-4 py-3">教材版本</th>
-            <th className="px-4 py-3">數量</th>
             <th className="px-4 py-3">申請時間</th>
             <th className="px-4 py-3">狀態</th>
             <th className="px-4 py-3">操作</th>
@@ -319,6 +369,9 @@ export function MaterialOrderTable({ orders, defaultRemittanceAccount }: Materia
                 </td>
                 <td className="px-4 py-3 font-medium">#{order.id}</td>
                 <td className="px-4 py-3">{order.inviteTitle ?? '—'}</td>
+                <td className="px-4 py-3 text-muted-foreground">
+                  {order.inviteId ? `#${order.inviteId}` : '—'}
+                </td>
                 <td className="px-4 py-3">
                   <div>{order.instructorName ?? '—'}</div>
                   {order.instructorEmail && (
@@ -328,13 +381,6 @@ export function MaterialOrderTable({ orders, defaultRemittanceAccount }: Materia
                   )}
                 </td>
                 <td className="px-4 py-3">{order.buyerNameZh}</td>
-                <td className="px-4 py-3">
-                  {MATERIAL_VERSION_LABELS[order.materialVersion] ??
-                    order.materialVersion}
-                </td>
-                <td className="px-4 py-3">
-                  {order.quantity > 0 ? `${order.quantity} 本` : order.quantityNote ?? '—'}
-                </td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {order.createdAt.toLocaleDateString('zh-TW')}
                 </td>
@@ -414,7 +460,7 @@ export function MaterialOrderTable({ orders, defaultRemittanceAccount }: Materia
               {/* 展開詳情列 */}
               {expandedId === order.id && (
                 <tr key={`detail-${order.id}`}>
-                  <td colSpan={11} className="p-0">
+                  <td colSpan={10} className="p-0">
                     <OrderDetail
                       order={order}
                       onEditClick={() => setEditOrderId(order.id)}

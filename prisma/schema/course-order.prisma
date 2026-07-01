@@ -84,6 +84,9 @@ model CourseOrder {
   recipientName  String? // 收件人姓名
   recipientPhone String? // 收件人連絡電話
 
+  // 內部備註（單一地址＝訂單本身；多地址改用各 MaterialShipment.note）；僅後台/工作人員可見
+  note String?
+
   // 提交者（選填關聯）
   submittedById String? @db.Uuid
   submittedBy   User?   @relation(fields: [submittedById], references: [id])
@@ -132,6 +135,9 @@ model MaterialShipment {
   // 各版本本數
   traditionalQty Int @default(0) // 繁體本數
   simplifiedQty  Int @default(0) // 簡體本數
+
+  // 內部備註（此收件地址專屬）；僅後台/工作人員可見
+  note String?
 
   shippedAt DateTime? // 此批次寄送時間（有值即已寄送）
   createdAt DateTime  @default(now())

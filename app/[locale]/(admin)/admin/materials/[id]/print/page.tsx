@@ -43,6 +43,7 @@ export default async function PrintShippingOrderPage({
           deliveryAddress: s.deliveryAddress,
           traditional: s.traditionalQty,
           simplified: s.simplifiedQty,
+          note: s.note,
         }))
       : [
           {
@@ -56,6 +57,7 @@ export default async function PrintShippingOrderPage({
             deliveryAddress: order.deliveryAddress,
             traditional: order.traditionalQty,
             simplified: order.simplifiedQty,
+            note: order.note,
           },
         ]
 
@@ -123,6 +125,12 @@ export default async function PrintShippingOrderPage({
                   <>
                     <span className="text-muted-foreground">收件地址</span>
                     <span>{slip.deliveryAddress || '（未填）'}</span>
+                  </>
+                )}
+                {slip.note && (
+                  <>
+                    <span className="text-muted-foreground">備註</span>
+                    <span className="whitespace-pre-wrap">{slip.note}</span>
                   </>
                 )}
               </div>

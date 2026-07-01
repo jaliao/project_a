@@ -256,6 +256,41 @@ export async function confirmShipment(orderId: number): Promise<ActionResponse> 
 }
 
 /**
+ * 管理者/工作人員更新某收件地址的內部備註
+ * single 模式傳 { orderId }（存 CourseOrder.note）；multiple 模式傳 { shipmentId }（存對應 MaterialShipment.note）
+ */
+export async function updateMaterialAddressNote(
+  target: { orderId: number } | { shipmentId: number },
+  note: string
+): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+  if (!canAccessAdmin(session.user.roles)) return { success: false, message: '無權限' }
+
+  const trimmed = note.trim()
+  const value = trimmed.length > 0 ? trimmed : null
+
+  if ('orderId' in target) {
+    const order = await prisma.courseOrder.findUnique({
+      where: { id: target.orderId },
+      select: { id: true },
+    })
+    if (!order) return { success: false, message: '找不到申請記錄' }
+    await prisma.courseOrder.update({ where: { id: target.orderId }, data: { note: value } })
+  } else {
+    const shipment = await prisma.materialShipment.findUnique({
+      where: { id: target.shipmentId },
+      select: { id: true },
+    })
+    if (!shipment) return { success: false, message: '找不到寄送地址' }
+    await prisma.materialShipment.update({ where: { id: target.shipmentId }, data: { note: value } })
+  }
+
+  revalidatePath('/admin/materials')
+  return { success: true, message: '已儲存備註' }
+}
+
+/**
  * 管理者確認單一寄送批次已寄送（多地址模式）
  * 全部批次皆寄送時，自動將 CourseOrder.shippedAt 設為最後批次時間
  */
