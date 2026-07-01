@@ -29,6 +29,7 @@ type Props = {
   courseDate?: string | null
   instructorName: string
   missingPrerequisites: { id: number; label: string }[]
+  defaultBookName?: string
 }
 
 export function StudentApplySection({
@@ -41,6 +42,7 @@ export function StudentApplySection({
   courseDate,
   instructorName,
   missingPrerequisites,
+  defaultBookName,
 }: Props) {
   const t = useTranslations('course.apply')
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -105,6 +107,7 @@ export function StudentApplySection({
           courseTitle={courseTitle}
           courseDate={courseDate}
           instructorName={instructorName}
+          defaultBookName={defaultBookName}
         />
       )}
     </div>

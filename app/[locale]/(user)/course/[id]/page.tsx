@@ -24,6 +24,7 @@ import { getTranslations } from 'next-intl/server'
 import { auth } from '@/lib/auth'
 import { canTeachAny, canAccessAdmin } from '@/lib/auth-roles'
 import { getAdminSetting, CLASS_MAX_CAPACITY_KEY, CLASS_MAX_CAPACITY_DEFAULT } from '@/lib/data/admin-settings'
+import { getDefaultBookNameForUser } from '@/lib/data/material-items'
 import { getCourseSessionById, getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
 import { evaluateCourseStartGate } from '@/lib/utils/course-start-gate'
 import { computeMaterialProgress } from '@/lib/utils/material-progress'
@@ -133,6 +134,10 @@ export default async function CourseDetailPage({
   const isCancelled = !!courseSession.cancelledAt
   const isCompleted = !!courseSession.completedAt
   const courseStatus = getCourseStatus(courseSession)
+
+  // 申購書本名字預設（學員申購對話框預帶）
+  const applicantBookNameDefault =
+    currentUserId && !isInstructor && !myEnrollment ? await getDefaultBookNameForUser(currentUserId) : ''
 
   // 學員先修資格檢查（講師本人、已有申請、已取消/結業時不需要）
   const missingPrerequisites =
@@ -381,6 +386,7 @@ export default async function CourseDetailPage({
           courseDate={courseSession.courseDate ?? null}
           instructorName={teacherName}
           missingPrerequisites={missingPrerequisites}
+          defaultBookName={applicantBookNameDefault}
         />
       )}
 

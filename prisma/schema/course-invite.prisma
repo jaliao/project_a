@@ -86,6 +86,10 @@ model InviteEnrollment {
 
   status         EnrollmentStatus @default(pending) // 申請狀態
   materialChoice MaterialChoice   @default(none) // 書籍選擇
+  materialBookName String? // 書本名字（申購時填，預設中文→英文→匿名）
+
+  // 教材逐本項目指派（此報名之書被指派至哪些寄送地址）
+  shipmentItems MaterialShipmentItem[]
 
   joinedAt          DateTime  @default(now())
   graduatedAt       DateTime? // 結業時間（有值即代表通過結業）

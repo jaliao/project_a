@@ -132,9 +132,12 @@ model MaterialShipment {
   storeId         String? // 超商門市店號
   storeName       String? // 超商門市名稱
 
-  // 各版本本數
+  // 各版本本數（由已指派書本項目推導）
   traditionalQty Int @default(0) // 繁體本數
   simplifiedQty  Int @default(0) // 簡體本數
+
+  // 逐本書本項目（指派至此地址的學員書）
+  items MaterialShipmentItem[]
 
   // 內部備註（此收件地址專屬）；僅後台/工作人員可見
   note String?
@@ -144,4 +147,27 @@ model MaterialShipment {
 
   @@index([courseOrderId])
   @@map("material_shipments")
+}
+
+// ==========================================
+// 教材書本項目（逐本指派：某學員的書 → 某寄送地址）
+// bookName/version 於指派時快照，避免學員事後改名影響已建訂單
+// ==========================================
+model MaterialShipmentItem {
+  id Int @id @default(autoincrement())
+
+  shipmentId Int
+  shipment   MaterialShipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+
+  enrollmentId Int
+  enrollment   InviteEnrollment @relation(fields: [enrollmentId], references: [id])
+
+  bookName String // 書本名字快照
+  version  String // 版本快照（traditional / simplified）
+
+  createdAt DateTime @default(now())
+
+  @@index([shipmentId])
+  @@index([enrollmentId])
+  @@map("material_shipment_items")
 }

@@ -18,6 +18,7 @@ import { sendGraduationEmail } from '@/lib/mailer'
 import { resolveContactEmail } from '@/lib/utils/contact-email'
 import { renderTemplate } from '@/lib/utils/render-template'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
+import { defaultBookName } from '@/lib/data/material-items'
 import { getAppUrl } from '@/lib/utils/app-url'
 import { evaluateCourseStartGate } from '@/lib/utils/course-start-gate'
 import { computeMaterialProgress } from '@/lib/utils/material-progress'
@@ -264,7 +265,8 @@ export async function getMyLearningRecords() {
 // ── 學員申請參加課程（含書籍選擇）────────────────────
 export async function applyToCourse(
   inviteId: number,
-  materialChoice: 'none' | 'traditional' | 'simplified'
+  materialChoice: 'none' | 'traditional' | 'simplified',
+  bookName?: string
 ): Promise<ActionResponse> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
@@ -294,8 +296,23 @@ export async function applyToCourse(
     }
   }
 
+  // 書本名字（僅需購買版本）：填寫值 → 預設 中文名→英文名→匿名
+  let materialBookName: string | null = null
+  if (materialChoice !== 'none') {
+    const trimmed = bookName?.trim()
+    if (trimmed) {
+      materialBookName = trimmed.slice(0, 100)
+    } else {
+      const u = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { realName: true, englishName: true },
+      })
+      materialBookName = defaultBookName({ realName: u?.realName ?? null, englishName: u?.englishName ?? null })
+    }
+  }
+
   await prisma.inviteEnrollment.create({
-    data: { inviteId, userId: session.user.id, status: 'pending', materialChoice },
+    data: { inviteId, userId: session.user.id, status: 'pending', materialChoice, materialBookName },
   })
 
   const { revalidatePath } = await import('next/cache')

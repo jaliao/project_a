@@ -1,19 +1,19 @@
 ## 1. 資料模型與 migration
 
-- [ ] 1.1 `prisma/schema/course-invite.prisma`：`InviteEnrollment` 新增 `materialBookName String?`
-- [ ] 1.2 `prisma/schema/course-order.prisma`：新增 `MaterialShipmentItem { id、shipmentId(FK→MaterialShipment, cascade)、enrollmentId(FK→InviteEnrollment)、bookName String、version String、createdAt }`；`MaterialShipment.items[]`、`InviteEnrollment` 反向關聯
-- [ ] 1.3 migration `add_material_book_items`（＋`materialBookName`）＋ `prisma generate`；系統未上線，必要時 `make dev-clean` 重置
+- [x] 1.1 `prisma/schema/course-invite.prisma`：`InviteEnrollment` 新增 `materialBookName String?`
+- [x] 1.2 `prisma/schema/course-order.prisma`：新增 `MaterialShipmentItem`（shipmentId cascade、enrollmentId、bookName、version）；`MaterialShipment.items[]`、`InviteEnrollment.shipmentItems[]`
+- [x] 1.3 migration `20260701030000_add_material_book_items` ＋ `prisma generate`（DB 套用見 7.3）
 
 ## 2. 資料層（書本項目）
 
-- [ ] 2.1 `lib/data/material-items.ts`（或 course-sessions/course-order）：`getCourseBookItems(inviteId)` → 已核准且 `materialChoice≠none` 報名清單 `{ enrollmentId, userId, studentDisplayName, bookName（materialBookName ?? 預設）, version }`
-- [ ] 2.2 `lib/data/course-order.ts`：`ShipmentInfo`/型別擴充 `items`（含 bookName/version/學員名）；select 補 `items`
-- [ ] 2.3 書本名字預設推導 helper（`realName || englishName || '匿名'`）
+- [x] 2.1 `lib/data/material-items.ts`：`getCourseBookItems(inviteId)`（已核准且 `materialChoice≠none`）
+- [ ] 2.2 `lib/data/course-order.ts`：`ShipmentInfo`/型別擴充 `items`；select 補 `items`（→ 併入顯示階段 task 5）
+- [x] 2.3 書本名字預設 helper `defaultBookName`＋`getDefaultBookNameForUser`
 
 ## 3. 學員申購書本名字
 
-- [ ] 3.1 `app/actions/course-invite.ts`：`applyToCourse(inviteId, materialChoice, bookName?)` 接收；trim 空則預設；`materialChoice==='none'` 不需；寫入 `materialBookName`
-- [ ] 3.2 `components/course-session/enrollment-application-dialog.tsx`：選繁/簡時顯示「書本名字」輸入欄，預帶預設（傳入或前端計算）；送出帶 bookName
+- [x] 3.1 `app/actions/course-invite.ts`：`applyToCourse(inviteId, materialChoice, bookName?)`（trim 空則預設、none 不需、寫入 `materialBookName`）
+- [x] 3.2 `enrollment-application-dialog.tsx`：選繁/簡顯示「書本名字」欄、預帶預設（course/[id] 頁計算傳入）、送出帶 bookName；新增 `course.enroll.bookName*` i18n
 
 ## 4. 老師教材訂購：地址優先指派
 

@@ -292,6 +292,8 @@
       "success": "申請已送出，等待講師審核",
       "fail": "申請失敗，請稍後再試",
       "chooseBook": "選擇書籍",
+      "bookNameLabel": "書本名字",
+      "bookNamePlaceholder": "印在書上的名字（留空則用你的姓名）",
       "teacherLabel": "講師：",
       "expectedStart": "預計開課：",
       "submitting": "送出中...",

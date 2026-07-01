@@ -19,6 +19,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import { applyToCourse } from '@/app/actions/course-invite'
@@ -32,9 +33,10 @@ type Props = {
   courseTitle: string
   courseDate?: string | null
   instructorName: string
+  defaultBookName?: string
 }
 
-export function EnrollmentApplicationDialog({ inviteId, open, onOpenChange, courseTitle, courseDate, instructorName }: Props) {
+export function EnrollmentApplicationDialog({ inviteId, open, onOpenChange, courseTitle, courseDate, instructorName, defaultBookName = '' }: Props) {
   const t = useTranslations()
   const MATERIAL_OPTIONS: { value: MaterialChoice; label: string; desc: string }[] = [
     { value: 'none', label: t('course.material.none'), desc: t('course.enroll.noneDesc') },
@@ -43,10 +45,12 @@ export function EnrollmentApplicationDialog({ inviteId, open, onOpenChange, cour
   ]
   const router = useRouter()
   const [selected, setSelected] = useState<MaterialChoice | ''>('')
+  const [bookName, setBookName] = useState(defaultBookName)
   const [loading, setLoading] = useState(false)
 
   function handleClose() {
     setSelected('')
+    setBookName(defaultBookName)
     onOpenChange(false)
   }
 
@@ -56,7 +60,7 @@ export function EnrollmentApplicationDialog({ inviteId, open, onOpenChange, cour
       return
     }
     setLoading(true)
-    const result = await applyToCourse(inviteId, selected)
+    const result = await applyToCourse(inviteId, selected, selected === 'none' ? undefined : bookName)
     setLoading(false)
     if (result.success) {
       toast.success(t('course.enroll.success'))
@@ -101,6 +105,19 @@ export function EnrollmentApplicationDialog({ inviteId, open, onOpenChange, cour
             </button>
           ))}
         </div>
+
+        {/* 書本名字（選了需購買版本才顯示）*/}
+        {(selected === 'traditional' || selected === 'simplified') && (
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">{t('course.enroll.bookNameLabel')}</label>
+            <Input
+              value={bookName}
+              onChange={(e) => setBookName(e.target.value)}
+              placeholder={t('course.enroll.bookNamePlaceholder')}
+              disabled={loading}
+            />
+          </div>
+        )}
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose} disabled={loading}>

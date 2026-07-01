@@ -291,6 +291,8 @@
       "success": "申请已送出，等待讲师审核",
       "fail": "申请失败，请稍后再试",
       "chooseBook": "选择书籍",
+      "bookNameLabel": "书本名字",
+      "bookNamePlaceholder": "印在书上的名字（留空则用你的姓名）",
       "teacherLabel": "讲师：",
       "expectedStart": "预计开课：",
       "submitting": "送出中...",
