@@ -10,11 +10,14 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import { isSuperadmin } from '@/lib/auth-roles'
+import { getPendingRecommendationCount } from '@/lib/data/recommendation'
+import { getMaterialTodoCount } from '@/lib/data/course-order'
 import {
   IconLayoutDashboard,
   IconSchool,
   IconPackage,
   IconCertificate,
+  IconUserStar,
   IconUsers,
   IconUserExclamation,
   IconSettings,
@@ -56,6 +59,13 @@ const ADMIN_FEATURES = [
     superadminOnly: false,
   },
   {
+    title: '推薦講師',
+    description: '檢視老師推薦並處理',
+    icon: IconUserStar,
+    href: '/admin/recommendations',
+    superadminOnly: false,
+  },
+  {
     title: '會員管理',
     description: '查看會員資料與重設密碼',
     icon: IconUsers,
@@ -81,7 +91,20 @@ const ADMIN_FEATURES = [
 export default async function AdminPage() {
   const session = await auth()
   const superadmin = isSuperadmin(session?.user?.roles)
-  const features = ADMIN_FEATURES.filter((f) => !f.superadminOnly || superadmin)
+  const [pendingRecommend, materialTodo] = await Promise.all([
+    getPendingRecommendationCount(),
+    getMaterialTodoCount(),
+  ])
+  // 功能卡動態副標題（待辦 > 0 顯示提示，否則預設）
+  const features = ADMIN_FEATURES.filter((f) => !f.superadminOnly || superadmin).map((f) => {
+    if (f.href === '/admin/recommendations' && pendingRecommend > 0) {
+      return { ...f, description: `有 ${pendingRecommend} 筆待處理推薦` }
+    }
+    if (f.href === '/admin/materials' && materialTodo > 0) {
+      return { ...f, description: `${materialTodo} 筆待批價/確認款項/出貨` }
+    }
+    return f
+  })
 
   return (
     <div className="space-y-6">

@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.108（2026-07-01）
+> 自動產生，版本 0.1.109（2026-07-01）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -375,6 +375,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260701-002` — 後台推薦講師管理＋儀錶板動態副標題：新增 `/admin/recommendations`，列老師講師推薦（`teacherRecommended=true`，依回饋時間、預設未處理）；狀態推導（已成為講師＝已具 `TEACHER_ROLE_BY_CATALOG` 對應書籍講師身分 > 暫不接受 > 未處理）；暫不接受記錄備註/時間/管理者（`InviteEnrollment.recommendDeferred*`，migration `add_recommend_deferral`）、可取消；每列另開視窗看會員。儀錶板功能卡動態副標題：推薦講師（待處理數）、教材作業（待批價/確認款項/出貨數，共用 `getMaterialOrderStatusKey`）；新增「推薦講師」卡
 - `cr-spec-260628-003` — 後台實體證書製作管理：新增 `/admin/certificates`，以「人×階層去重」（來源已結業報名）列出應製作證書；標記已完成製作（記錄製作日期＋製作管理者）、可還原（保留備註）、每張可備註；未完成（預設）/已完成篩選、人名搜尋、每頁 30 筆分頁。新增 `CertificateProduction` 模型（`userId×courseCatalogId` 唯一，migration `add_certificate_production`）＋ `lib/data/certificate.ts`＋`app/actions/certificate.ts`；後台功能格新增「證書製作」入口
 - `cr-spec-260623-008` — 結業流程優化：結業表單新增「本次學員整體學習狀況」＝**五星評分（1–5）＋見證**（皆選填，班級層級）；`CourseInvite` 新增 `gradRating`/`gradTestimony`（migration `add_graduation_feedback`）；`graduateCourse` 驗證並與 `completedAt` 同筆寫入；課程詳情「結業資訊」區（管理者＋老師）**有值才顯示**星等與見證；表單字串沿 `course.gradForm` i18n
 - `cr-spec-260630-004` — 教材申請管理優化：後台教材申請列表移除「教材版本／數量」欄、新增「課程編號（`#courseInviteId`）」欄；展開詳情單一與多地址皆顯示收件人姓名＋聯絡電話；新增**各收件地址內部備註**（single→`CourseOrder.note`、multiple→各 `MaterialShipment.note`），`updateMaterialAddressNote` server action 儲存、僅後台可見、列印出貨單帶出。migration `add_material_order_notes`（兩個 nullable note 欄，非破壞性）

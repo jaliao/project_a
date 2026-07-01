@@ -7,6 +7,7 @@
  */
 
 import { prisma } from '@/lib/prisma'
+import { getMaterialOrderStatusKey } from '@/lib/utils/material-order-status'
 
 export type CourseOrderDetail = {
   id: number
@@ -264,4 +265,22 @@ export async function getCourseOrderForPrint(
     inviteTitle: invite?.title ?? null,
     catalogLabel: invite?.courseCatalog?.label ?? null,
   }
+}
+
+/**
+ * 教材待辦筆數（管理者待處理：待批價／待確認收款／待寄送）
+ * 與教材列表狀態推導共用 getMaterialOrderStatusKey。
+ */
+export async function getMaterialTodoCount(): Promise<number> {
+  const orders = await prisma.courseOrder.findMany({
+    select: {
+      quotedAt: true,
+      paymentReportedAt: true,
+      paymentConfirmedAt: true,
+      shippedAt: true,
+      receivedAt: true,
+    },
+  })
+  const todo = new Set(['pending_quote', 'pending_confirm', 'pending_ship'])
+  return orders.filter((o) => todo.has(getMaterialOrderStatusKey(o))).length
 }

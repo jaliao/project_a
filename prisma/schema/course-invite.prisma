@@ -96,6 +96,12 @@ model InviteEnrollment {
   teacherFeedbackNote String? // 選填備註
   teacherFeedbackAt   DateTime? // 填寫/最後更新時間（亦作「已填」判斷依據）
 
+  // 後台對推薦的「暫不接受」決策（「已成為講師」則由是否具對應書籍講師身分推導，不落此欄）
+  recommendDeferredAt   DateTime? // 暫不接受時間（有值即代表暫不接受）
+  recommendDeferredById String?   @db.Uuid // 操作管理者
+  recommendDeferredBy   User?     @relation("RecommendDeferredBy", fields: [recommendDeferredById], references: [id])
+  recommendDeferralNote String? // 暫不接受備註
+
   @@unique([inviteId, userId])
   @@map("invite_enrollments")
 }
