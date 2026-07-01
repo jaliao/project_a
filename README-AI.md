@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.112（2026-07-01）
+> 自動產生，版本 0.1.114（2026-07-01）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -375,6 +375,8 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260701-006` — 友善 404 頁：新增 `app/[locale]/not-found.tsx`（套 layout/i18n、置中卡片＋「回到首頁」`Link href="/"`）＋ `app/not-found.tsx` 根層備援（自帶最小 html/body、inline style、靜態繁體），取代預設「一片黑」404；新增 `notFound.*` i18n
+- `cr-spec-260701-005` — 教材寄送批次書本歸屬（治本）：每筆訂單（含單一地址）記錄其涵蓋書本——單一地址亦建立 `MaterialShipment`＋逐本 `MaterialShipmentItem`（涵蓋建立當下 `getUnassignedBookItems`）；`MaterialShipmentItem` 加 `studentName` 快照（migration `add_shipment_item_student_name`）；後台/列印一律讀「該訂單各批次 items」顯示「學員名（書本名字）· 繁/簡」，單/多地址一致、多筆先後寄送各自歸屬不混淆。取代 004 的 `getCourseBookItems` 顯示推導
 - `cr-spec-260701-004` — 單一地址教材訂單書本清單：延續 003，讓單一地址（`shipMode=single`）訂單於後台 `material-order-table` 詳情與出貨單列印顯示書本清單（學員名＋書本名字＋版本），由 `getCourseBookItems(courseInviteId)` 推導掛於 `bookItems`。無 migration（純顯示）
 - `cr-spec-260701-003` — 學員書本名字＋教材逐本地址指派：學員申購填「書本名字」（`InviteEnrollment.materialBookName`，預設中文→英文→匿名可編輯）；教材改逐本項目（學員名＋版本，`getCourseBookItems`）；多地址寄送由數量制改「地址優先逐本指派」（`MaterialShipmentItem` 快照 bookName/version，`shipmentItemSchema` enrollmentIds，`applyMaterialOrder` 建 items＋推導 qty＋全指派驗證）；後台 `material-order-table`／列印各地址顯示書本清單。migration `add_material_book_items`。系統未上線、無舊資料，items 為單一真相
 - `cr-spec-260701-001` — 管理者可修改班級人數上限：新增系統設定 `class_max_capacity`（`AdminSetting`，預設 7，系統設定→基本設定維護）；開課/編輯課程之 maxCount 上限改讀設定值（共用 zod `.max(7)` 放寬為防呆硬頂 999，實際上限於 server action 依身分驗證）；一般使用者受上限、**管理者可超過**（`createCourseSession`/`updateCourseInfo`）；課程詳情「編輯課程資訊」入口對管理者顯示；開課精靈/編輯對話框 input `max`＋提示（i18n `maxHint` 改 `{max}` 參數）依設定值。無 DB migration

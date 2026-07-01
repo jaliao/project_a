@@ -12,6 +12,10 @@
     "loading": "載入中...",
     "search": "搜尋"
   },
+  "notFound": {
+    "title": "找不到頁面",
+    "desc": "您要找的頁面不存在或已被移除。"
+  },
   "nav": {
     "home": "回首頁",
     "profile": "個人資料",
