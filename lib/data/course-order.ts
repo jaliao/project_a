@@ -44,6 +44,12 @@ export type CourseOrderDetail = {
   note: string | null // 內部備註（單一地址）
 }
 
+export type ShipmentItemInfo = {
+  enrollmentId: number
+  bookName: string
+  version: string // traditional / simplified
+}
+
 export type ShipmentInfo = {
   id: number
   recipientName: string | null
@@ -56,6 +62,7 @@ export type ShipmentInfo = {
   simplifiedQty: number
   shippedAt: Date | null
   note: string | null // 內部備註（此收件地址）
+  items: ShipmentItemInfo[] // 指派至此地址的書本項目
 }
 
 export type CourseOrderWithInvite = CourseOrderDetail & {
@@ -103,6 +110,7 @@ const shipmentSelect = {
   simplifiedQty: true,
   shippedAt: true,
   note: true,
+  items: { select: { enrollmentId: true, bookName: true, version: true } },
 } as const
 
 /**

@@ -33,12 +33,14 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import {
   materialOrderSchema,
   type MaterialOrderFormValues,
 } from '@/lib/schemas/course-order'
 import { applyMaterialOrder } from '@/app/actions/course-order'
+import type { BookItem } from '@/lib/data/material-items'
 import { EcpayStoreSelector } from '@/components/ecpay-store-selector/store-selector'
 
 const DELIVERY_OPTIONS = [
@@ -58,6 +60,7 @@ interface Shipment {
   traditionalQty: number
   simplifiedQty: number
   shippedAt: Date | null
+  items?: { enrollmentId: number; bookName: string; version: string }[]
 }
 
 interface MaterialOrderDialogProps {
@@ -79,6 +82,8 @@ interface MaterialOrderDialogProps {
   } | null
   // 尚未申請之剩餘本數（本次申請上限；單一地址自動帶入此值）
   remaining: { traditional: number; simplified: number }
+  // 尚未指派的書本項目（多地址逐本指派用）
+  bookItems: BookItem[]
   // 單一地址收件人預設值（申請講師姓名 + 個人資料電話）
   defaultRecipient: { name: string; phone: string }
 }
@@ -89,6 +94,7 @@ export function MaterialOrderDialog({
   inviteId,
   existingOrder,
   remaining,
+  bookItems,
   defaultRecipient,
 }: MaterialOrderDialogProps) {
   const router = useRouter()
@@ -120,8 +126,7 @@ export function MaterialOrderDialog({
             deliveryAddress: s.deliveryAddress ?? '',
             storeId: s.storeId ?? '',
             storeName: s.storeName ?? '',
-            traditionalQty: s.traditionalQty,
-            simplifiedQty: s.simplifiedQty,
+            enrollmentIds: (s.items ?? []).map((i) => i.enrollmentId),
           })),
         }
       : {
@@ -156,17 +161,15 @@ export function MaterialOrderDialog({
     form.setValue('deliveryAddress', '')
   }
 
-  // ── 多地址：本次申請可分配的剩餘本數（上限＝尚未申請的 remaining）──
+  // ── 多地址：逐本指派（每本書指派到唯一地址，需全部指派完）──
   const watchedShipments = form.watch('shipments') ?? []
-  const allocTrad = watchedShipments.reduce((a, s) => a + (Number(s?.traditionalQty) || 0), 0)
-  const allocSimp = watchedShipments.reduce((a, s) => a + (Number(s?.simplifiedQty) || 0), 0)
-  const remainTrad = remaining.traditional - allocTrad
-  const remainSimp = remaining.simplified - allocSimp
-  const overAllocated = remainTrad < 0 || remainSimp < 0
-
-  // 多地址：至少 1 本、不可超過剩餘量（不要求全部分配完）
+  const assignedIds = new Set<number>()
+  watchedShipments.forEach((s) => (s?.enrollmentIds ?? []).forEach((id: number) => assignedIds.add(id)))
+  const totalItems = bookItems.length
+  const unassignedCount = totalItems - assignedIds.size
+  const anyEmptyRow = watchedShipments.some((s) => (s?.enrollmentIds ?? []).length === 0)
   const multipleSubmitDisabled =
-    isMultiple && (fields.length === 0 || allocTrad + allocSimp < 1 || overAllocated)
+    isMultiple && (fields.length === 0 || totalItems === 0 || unassignedCount !== 0 || anyEmptyRow)
 
   const onSubmit = (values: MaterialOrderFormValues) => {
     if (isReadonly) return
@@ -333,12 +336,11 @@ export function MaterialOrderDialog({
             {/* ════════ 多地址 ════════ */}
             {isMultiple && (
               <div className="space-y-4">
-                {/* 本次可申請（尚未申請）本數提示 */}
+                {/* 待指派提示 */}
                 <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm space-y-0.5">
-                  <p className="font-medium">本次可申請（尚未申請）：繁體 {remaining.traditional} 本、簡體 {remaining.simplified} 本</p>
-                  <p className={overAllocated ? 'text-red-600' : 'text-amber-700'}>
-                    尚可分配：繁體 {remainTrad} 本、簡體 {remainSimp} 本
-                    {overAllocated && '（已超過可申請數量）'}
+                  <p className="font-medium">本次待寄送書本：{totalItems} 本（繁 {remaining.traditional} / 簡 {remaining.simplified}）</p>
+                  <p className={unassignedCount > 0 ? 'text-amber-700' : 'text-green-600'}>
+                    {unassignedCount > 0 ? `尚有 ${unassignedCount} 本未指派地址` : '所有書本已指派 ✓'}
                   </p>
                 </div>
 
@@ -347,6 +349,7 @@ export function MaterialOrderDialog({
                     key={fieldItem.id}
                     form={form}
                     index={index}
+                    bookItems={bookItems}
                     onRemove={() => remove(index)}
                     disabled={isReadonly}
                   />
@@ -365,8 +368,7 @@ export function MaterialOrderDialog({
                         deliveryAddress: '',
                         storeId: '',
                         storeName: '',
-                        traditionalQty: 0,
-                        simplifiedQty: 0,
+                        enrollmentIds: [],
                       })
                     }
                   >
@@ -393,11 +395,13 @@ export function MaterialOrderDialog({
 function MultiAddressRow({
   form,
   index,
+  bookItems,
   onRemove,
   disabled,
 }: {
   form: UseFormReturn<MaterialOrderFormValues>
   index: number
+  bookItems: BookItem[]
   onRemove: () => void
   disabled: boolean
 }) {
@@ -502,39 +506,64 @@ function MultiAddressRow({
         )} />
       )}
 
-      {/* 本數 */}
-      <div className="flex gap-3">
-        <FormField control={form.control} name={`shipments.${index}.traditionalQty`} render={({ field }) => (
-          <FormItem className="flex-1">
-            <FormLabel className="text-xs">繁體本數</FormLabel>
-            <FormControl>
-              <Input
-                type="number"
-                min={0}
-                value={field.value ?? 0}
-                onChange={(e) => field.onChange(e.target.value === '' ? 0 : Number(e.target.value))}
-                disabled={disabled}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )} />
-        <FormField control={form.control} name={`shipments.${index}.simplifiedQty`} render={({ field }) => (
-          <FormItem className="flex-1">
-            <FormLabel className="text-xs">簡體本數</FormLabel>
-            <FormControl>
-              <Input
-                type="number"
-                min={0}
-                value={field.value ?? 0}
-                onChange={(e) => field.onChange(e.target.value === '' ? 0 : Number(e.target.value))}
-                disabled={disabled}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )} />
+      {/* 指派書本至此地址 */}
+      <BookAssignList form={form} index={index} bookItems={bookItems} disabled={disabled} />
+    </div>
+  )
+}
+
+// ── 書本項目指派清單（每本書指派到唯一地址）─────────────
+function BookAssignList({
+  form,
+  index,
+  bookItems,
+  disabled,
+}: {
+  form: UseFormReturn<MaterialOrderFormValues>
+  index: number
+  bookItems: BookItem[]
+  disabled: boolean
+}) {
+  const allShipments = form.watch('shipments') ?? []
+  const assignedTo = new Map<number, number>()
+  allShipments.forEach((s, i) => (s?.enrollmentIds ?? []).forEach((id: number) => assignedTo.set(id, i)))
+  const myIds: number[] = form.watch(`shipments.${index}.enrollmentIds`) ?? []
+
+  const toggle = (id: number, checked: boolean) => {
+    const next = checked ? [...myIds, id] : myIds.filter((x) => x !== id)
+    form.setValue(`shipments.${index}.enrollmentIds`, next, { shouldValidate: true })
+  }
+
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-medium">指派書本至此地址 *</p>
+      <div className="space-y-1 rounded-md border p-2 max-h-48 overflow-y-auto">
+        {bookItems.length === 0 ? (
+          <p className="text-xs text-muted-foreground">無待指派書本</p>
+        ) : (
+          bookItems.map((it) => {
+            const owner = assignedTo.get(it.enrollmentId)
+            const mine = owner === index
+            const elsewhere = owner != null && owner !== index
+            const versionLabel = it.version === 'traditional' ? '繁' : '簡'
+            return (
+              <label
+                key={it.enrollmentId}
+                className={`flex items-center gap-2 text-sm ${elsewhere ? 'opacity-40' : ''}`}
+              >
+                <Checkbox
+                  checked={mine}
+                  disabled={disabled || elsewhere}
+                  onCheckedChange={(c) => toggle(it.enrollmentId, !!c)}
+                />
+                <span>{it.studentName}（{it.bookName}）· {versionLabel}</span>
+                {elsewhere && <span className="text-xs text-muted-foreground">→ 地址 {owner! + 1}</span>}
+              </label>
+            )
+          })
+        )}
       </div>
+      <FormMessage>{form.formState.errors.shipments?.[index]?.enrollmentIds?.message}</FormMessage>
     </div>
   )
 }

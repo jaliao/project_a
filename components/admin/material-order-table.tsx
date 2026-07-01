@@ -209,6 +209,13 @@ function OrderDetail({
                 <div className="text-xs text-muted-foreground">
                   收件人：{s.recipientName || '—'}　·　{s.recipientPhone || '—'}
                 </div>
+                {s.items.length > 0 && (
+                  <ul className="text-xs text-muted-foreground space-y-0.5">
+                    {s.items.map((it) => (
+                      <li key={it.enrollmentId}>・{it.bookName}（{it.version === 'traditional' ? '繁' : '簡'}）</li>
+                    ))}
+                  </ul>
+                )}
                 <AddressNoteEditor target={{ shipmentId: s.id }} initialNote={s.note} />
               </div>
             )

@@ -24,7 +24,7 @@ import { getTranslations } from 'next-intl/server'
 import { auth } from '@/lib/auth'
 import { canTeachAny, canAccessAdmin } from '@/lib/auth-roles'
 import { getAdminSetting, CLASS_MAX_CAPACITY_KEY, CLASS_MAX_CAPACITY_DEFAULT } from '@/lib/data/admin-settings'
-import { getDefaultBookNameForUser } from '@/lib/data/material-items'
+import { getDefaultBookNameForUser, getUnassignedBookItems } from '@/lib/data/material-items'
 import { getCourseSessionById, getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
 import { evaluateCourseStartGate } from '@/lib/utils/course-start-gate'
 import { computeMaterialProgress } from '@/lib/utils/material-progress'
@@ -113,6 +113,8 @@ export default async function CourseDetailPage({
   const materialSummary = isInstructor
     ? await getEnrollmentMaterialSummary(courseSession.id)
     : { traditional: 0, simplified: 0 }
+  // 多地址逐本指派：尚未指派的書本項目
+  const unassignedBookItems = isInstructor ? await getUnassignedBookItems(courseSession.id) : []
 
   // 教材申請進度（總需求／已申請／尚未申請）
   const materialProgress = computeMaterialProgress(materialSummary, courseSession.orders)
@@ -406,6 +408,7 @@ export default async function CourseDetailPage({
             name: courseSession.createdBy.realName || courseSession.createdBy.name || '',
             phone: courseSession.createdBy.phone || '',
           }}
+          bookItems={unassignedBookItems}
         />
       )}
 

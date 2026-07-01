@@ -14,6 +14,7 @@ import { auth } from '@/lib/auth'
 import { canAccessAdmin } from '@/lib/auth-roles'
 import { courseOrderSchema, materialOrderSchema, adminMaterialOrderEditSchema } from '@/lib/schemas/course-order'
 import { getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
+import { getUnassignedBookItems } from '@/lib/data/material-items'
 import { computeMaterialProgress } from '@/lib/utils/material-progress'
 import { createNotification } from '@/app/actions/notification'
 import type { MaterialVersion, PurchaseType, DeliveryMethod, ShipMode } from '@prisma/client'
@@ -151,25 +152,42 @@ export async function applyMaterialOrder(
     submittedById: session.user.id,
   }
 
-  // ── 多地址模式 ──────────────────────────────────────────
+  // ── 多地址模式（逐本指派）──────────────────────────────────────────
   if (d.shipMode === 'multiple') {
     const shipments = d.shipments ?? []
     if (shipments.length === 0) {
       return { success: false, message: '請至少新增一個寄送地址' }
     }
 
-    // 各批次繁/簡加總即為本筆訂單數量；至少 1 本，且不可超過尚未申請之剩餘量
-    const sumTrad = shipments.reduce((a, s) => a + s.traditionalQty, 0)
-    const sumSimp = shipments.reduce((a, s) => a + s.simplifiedQty, 0)
-    if (sumTrad + sumSimp < 1) {
-      return { success: false, message: '請至少分配 1 本教材' }
+    // 可指派範圍＝尚未被指派的書本項目；驗證：有效、不重複、全數指派
+    const unassigned = await getUnassignedBookItems(inviteId)
+    const itemById = new Map(unassigned.map((i) => [i.enrollmentId, i]))
+    const assignedIds = shipments.flatMap((s) => s.enrollmentIds)
+    if (assignedIds.length === 0) {
+      return { success: false, message: '請至少指派 1 本教材' }
     }
-    if (sumTrad > remaining.traditional || sumSimp > remaining.simplified) {
-      return {
-        success: false,
-        message: `超過尚未申請數量（剩餘：繁 ${remaining.traditional}、簡 ${remaining.simplified}）`,
+    const seen = new Set<number>()
+    for (const id of assignedIds) {
+      if (!itemById.has(id)) return { success: false, message: '含無效或已指派的書本項目，請重新整理後再試' }
+      if (seen.has(id)) return { success: false, message: '同一本書被指派到多個地址' }
+      seen.add(id)
+    }
+    if (seen.size !== unassigned.length) {
+      return { success: false, message: `尚有 ${unassigned.length - seen.size} 本書未指派地址` }
+    }
+
+    // 各地址由指派項目推導繁/簡本數
+    const perShipQty = shipments.map((s) => {
+      let trad = 0
+      let simp = 0
+      for (const id of s.enrollmentIds) {
+        if (itemById.get(id)!.version === 'traditional') trad++
+        else simp++
       }
-    }
+      return { trad, simp }
+    })
+    const sumTrad = perShipQty.reduce((a, q) => a + q.trad, 0)
+    const sumSimp = perShipQty.reduce((a, q) => a + q.simp, 0)
 
     const orderData = {
       ...snapshot,
@@ -186,19 +204,28 @@ export async function applyMaterialOrder(
 
     const orderId = await prisma.$transaction(async (tx) => {
       const created = await tx.courseOrder.create({ data: orderData })
-      await tx.materialShipment.createMany({
-        data: shipments.map((s) => ({
-          courseOrderId: created.id,
-          recipientName: s.recipientName,
-          recipientPhone: s.recipientPhone,
-          deliveryMethod: s.deliveryMethod as DeliveryMethod,
-          deliveryAddress: s.deliveryMethod === 'delivery' ? (s.deliveryAddress || null) : null,
-          storeId: s.deliveryMethod !== 'delivery' ? (s.storeId || null) : null,
-          storeName: s.deliveryMethod !== 'delivery' ? (s.storeName || null) : null,
-          traditionalQty: s.traditionalQty,
-          simplifiedQty: s.simplifiedQty,
-        })),
-      })
+      for (let i = 0; i < shipments.length; i++) {
+        const s = shipments[i]
+        const ship = await tx.materialShipment.create({
+          data: {
+            courseOrderId: created.id,
+            recipientName: s.recipientName,
+            recipientPhone: s.recipientPhone,
+            deliveryMethod: s.deliveryMethod as DeliveryMethod,
+            deliveryAddress: s.deliveryMethod === 'delivery' ? (s.deliveryAddress || null) : null,
+            storeId: s.deliveryMethod !== 'delivery' ? (s.storeId || null) : null,
+            storeName: s.deliveryMethod !== 'delivery' ? (s.storeName || null) : null,
+            traditionalQty: perShipQty[i].trad,
+            simplifiedQty: perShipQty[i].simp,
+          },
+        })
+        await tx.materialShipmentItem.createMany({
+          data: s.enrollmentIds.map((id) => {
+            const it = itemById.get(id)!
+            return { shipmentId: ship.id, enrollmentId: id, bookName: it.bookName, version: it.version }
+          }),
+        })
+      }
       return created.id
     })
 

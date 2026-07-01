@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { CancelCourseDialog } from '@/components/course-session/cancel-course-dialog'
 import { MaterialOrderDialog } from '@/components/course-session/material-order-dialog'
+import type { BookItem } from '@/lib/data/material-items'
 import { startCourseSession } from '@/app/actions/course-invite'
 import { confirmReceipt, reportMaterialPayment } from '@/app/actions/course-order'
 import { getMaterialOrderStatus } from '@/lib/utils/material-order-status'
@@ -37,6 +38,8 @@ type Props = {
   startReasons: string[]
   // 單一地址收件人預設值（申請講師姓名 + 個人資料電話）
   defaultRecipient: { name: string; phone: string }
+  // 尚未指派的書本項目（多地址逐本指派用）
+  bookItems: BookItem[]
 }
 
 // 區塊外殼：標題 + 說明 + 動作
@@ -74,6 +77,7 @@ export function CourseDetailActions({
   canStart,
   startReasons,
   defaultRecipient,
+  bookItems,
 }: Props) {
   const router = useRouter()
   const [cancelOpen, setCancelOpen] = useState(false)
@@ -289,6 +293,7 @@ export function CourseDetailActions({
         inviteId={inviteId}
         existingOrder={dialogOrder}
         remaining={remaining}
+        bookItems={bookItems}
         defaultRecipient={defaultRecipient}
       />
     </div>

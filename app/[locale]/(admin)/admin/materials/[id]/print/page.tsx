@@ -44,6 +44,7 @@ export default async function PrintShippingOrderPage({
           traditional: s.traditionalQty,
           simplified: s.simplifiedQty,
           note: s.note,
+          items: s.items,
         }))
       : [
           {
@@ -58,6 +59,7 @@ export default async function PrintShippingOrderPage({
             traditional: order.traditionalQty,
             simplified: order.simplifiedQty,
             note: order.note,
+            items: [] as { enrollmentId: number; bookName: string; version: string }[],
           },
         ]
 
@@ -131,6 +133,18 @@ export default async function PrintShippingOrderPage({
                   <>
                     <span className="text-muted-foreground">備註</span>
                     <span className="whitespace-pre-wrap">{slip.note}</span>
+                  </>
+                )}
+                {slip.items.length > 0 && (
+                  <>
+                    <span className="text-muted-foreground">書本清單</span>
+                    <span>
+                      {slip.items.map((it) => (
+                        <span key={it.enrollmentId} className="block">
+                          {it.bookName}（{it.version === 'traditional' ? '繁' : '簡'}）
+                        </span>
+                      ))}
+                    </span>
                   </>
                 )}
               </div>

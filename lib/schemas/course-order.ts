@@ -64,6 +64,7 @@ export const courseOrderSchema = z
 export type CourseOrderFormValues = z.infer<typeof courseOrderSchema>
 
 // ── 單筆寄送地址（多地址模式用）──────────────────────────────────────
+// 逐本指派：每地址帶指派到此地址的書本項目（報名 id 陣列）；繁/簡本數由項目推導
 export const shipmentItemSchema = z
   .object({
     recipientName: z.string().min(1, '請填寫收件人'),
@@ -74,8 +75,7 @@ export const shipmentItemSchema = z
     deliveryAddress: z.string().optional(),
     storeId: z.string().optional(),
     storeName: z.string().optional(),
-    traditionalQty: z.number().int().min(0, '本數不可為負'),
-    simplifiedQty: z.number().int().min(0, '本數不可為負'),
+    enrollmentIds: z.array(z.number().int()).min(1, '請至少指派一本書至此地址'),
   })
   .superRefine((data, ctx) => {
     if (data.deliveryMethod === 'sevenEleven' || data.deliveryMethod === 'familyMart') {
