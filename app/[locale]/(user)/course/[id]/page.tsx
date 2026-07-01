@@ -17,6 +17,8 @@ import {
   IconUserCheck,
   IconCalendar,
   IconClock,
+  IconStar,
+  IconStarFilled,
 } from '@tabler/icons-react'
 import { getTranslations } from 'next-intl/server'
 import { auth } from '@/lib/auth'
@@ -198,6 +200,27 @@ export default async function CourseDetailPage({
                 {formatDate(courseSession.completedAt)}
               </span>
             </div>
+            {/* 整體學習狀況（老師結業回饋，有值才顯示）*/}
+            {courseSession.gradRating != null && courseSession.gradRating > 0 && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-green-700">{t('course.gradForm.ratingLabel')}：</span>
+                <span className="flex items-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map((n) =>
+                    n <= courseSession.gradRating! ? (
+                      <IconStarFilled key={n} className="h-4 w-4 text-amber-500" />
+                    ) : (
+                      <IconStar key={n} className="h-4 w-4 text-green-300" />
+                    )
+                  )}
+                </span>
+              </div>
+            )}
+            {courseSession.gradTestimony && (
+              <div className="text-sm">
+                <span className="text-green-700">{t('course.gradForm.testimonyLabel')}：</span>
+                <p className="mt-1 whitespace-pre-wrap text-green-900">{courseSession.gradTestimony}</p>
+              </div>
+            )}
             {/* 已結業學員 */}
             <div className="space-y-1">
               <p className="text-xs font-medium text-green-700">

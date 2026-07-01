@@ -409,7 +409,8 @@ export type EnrollmentResult = {
 export async function graduateCourse(
   inviteId: number,
   lastCourseDate: Date,
-  enrollmentResults: EnrollmentResult[]
+  enrollmentResults: EnrollmentResult[],
+  feedback?: { rating?: number | null; testimony?: string | null }
 ): Promise<ActionResponse> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
@@ -417,6 +418,14 @@ export async function graduateCourse(
   // 驗證未結業學員皆有原因
   const missingReason = enrollmentResults.some((r) => !r.graduated && !r.nonGraduateReason)
   if (missingReason) return { success: false, message: '請填寫未結業原因' }
+
+  // 整體回饋（皆選填）：五星僅接受 1–5，否則存 null；見證去空白後空存 null（上限 500 字）
+  const rawRating = feedback?.rating
+  const gradRating =
+    typeof rawRating === 'number' && rawRating >= 1 && rawRating <= 5
+      ? Math.round(rawRating)
+      : null
+  const gradTestimony = feedback?.testimony?.trim() ? feedback.testimony.trim().slice(0, 500) : null
 
   const invite = await prisma.courseInvite.findUnique({ where: { id: inviteId } })
   if (!invite) return { success: false, message: '找不到課程' }
@@ -449,10 +458,10 @@ export async function graduateCourse(
         data: { nonGraduateReason: r.nonGraduateReason },
       })
     ),
-    // 標記課程結業（以講師指定日期）
+    // 標記課程結業（以講師指定日期）＋整體回饋
     prisma.courseInvite.update({
       where: { id: inviteId },
-      data: { completedAt: lastCourseDate },
+      data: { completedAt: lastCourseDate, gradRating, gradTestimony },
     }),
   ])
 

@@ -234,6 +234,8 @@ export type CourseSessionDetail = {
   cancelledAt: Date | null
   cancelReason: string | null
   completedAt: Date | null
+  gradRating: number | null
+  gradTestimony: string | null
   isPublicMatch: boolean
   matchNote: string | null
   createdBy: {
@@ -314,6 +316,8 @@ export async function getCourseSessionById(
       cancelledAt: true,
       cancelReason: true,
       completedAt: true,
+      gradRating: true,
+      gradTestimony: true,
       courseDate: true,
       notes: true,
       isPublicMatch: true,
@@ -400,6 +404,8 @@ export async function getCourseSessionById(
     cancelledAt: invite.cancelledAt,
     cancelReason: invite.cancelReason,
     completedAt: invite.completedAt,
+    gradRating: invite.gradRating,
+    gradTestimony: invite.gradTestimony,
     isPublicMatch: invite.isPublicMatch,
     matchNote: invite.matchNote,
     createdBy: invite.createdBy,

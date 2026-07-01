@@ -226,7 +226,12 @@
       "unknownReason": "未知原因",
       "backToEdit": "返回修改",
       "processing": "處理中...",
-      "confirmSubmit": "確認送出"
+      "confirmSubmit": "確認送出",
+      "overallTitle": "本次學員整體學習狀況",
+      "overallOptional": "（選填）",
+      "ratingLabel": "整體評分",
+      "testimonyLabel": "見證",
+      "testimonyPlaceholder": "分享本次帶班的見證…"
     },
     "card": {
       "publicRecruiting": "公開媒合・招募中",

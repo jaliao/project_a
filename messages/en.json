@@ -226,7 +226,12 @@
       "unknownReason": "Unknown reason",
       "backToEdit": "Back to edit",
       "processing": "Processing...",
-      "confirmSubmit": "Confirm submit"
+      "confirmSubmit": "Confirm submit",
+      "overallTitle": "Overall learning status of this class",
+      "overallOptional": "(optional)",
+      "ratingLabel": "Overall rating",
+      "testimonyLabel": "Testimony",
+      "testimonyPlaceholder": "Share a testimony from leading this class…"
     },
     "card": {
       "publicRecruiting": "Public match · Recruiting",

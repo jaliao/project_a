@@ -12,9 +12,11 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
+import { IconStar, IconStarFilled } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -49,6 +51,26 @@ type Props = {
   students: Student[]
 }
 
+// ── 五星評分（onChange 省略＝唯讀）──────────────
+function StarRating({ value, onChange }: { value: number; onChange?: (v: number) => void }) {
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((n) => {
+        const filled = n <= value
+        const Icon = filled ? IconStarFilled : IconStar
+        if (!onChange) {
+          return <Icon key={n} className={`h-5 w-5 ${filled ? 'text-amber-500' : 'text-muted-foreground'}`} />
+        }
+        return (
+          <button key={n} type="button" onClick={() => onChange(value === n ? 0 : n)} className="p-0.5">
+            <Icon className={`h-6 w-6 ${filled ? 'text-amber-500' : 'text-muted-foreground hover:text-amber-400'}`} />
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export function GraduationForm({ inviteId, students }: Props) {
   const t = useTranslations('course.gradForm')
   // value 送至後端（保留），label 在地化
@@ -70,6 +92,9 @@ export function GraduationForm({ inviteId, students }: Props) {
   )
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
+  // 本次學員整體學習狀況（皆選填）：五星（0＝未評）＋見證
+  const [rating, setRating] = useState(0)
+  const [testimony, setTestimony] = useState('')
 
   // ── 填寫步驟操作 ──────────────────────────────
   function toggleGraduated(userId: string) {
@@ -136,7 +161,8 @@ export function GraduationForm({ inviteId, students }: Props) {
     const result = await graduateCourse(
       inviteId,
       new Date(lastCourseDate),
-      enrollmentResults
+      enrollmentResults,
+      { rating: rating || null, testimony }
     )
 
     setSubmitting(false)
@@ -250,6 +276,28 @@ export function GraduationForm({ inviteId, students }: Props) {
           )}
         </div>
 
+        {/* 本次學員整體學習狀況（選填） */}
+        <div className="rounded-lg border p-5 space-y-4">
+          <h2 className="text-sm font-medium">
+            {t('overallTitle')}
+            <span className="ml-1 text-xs font-normal text-muted-foreground">{t('overallOptional')}</span>
+          </h2>
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted-foreground">{t('ratingLabel')}</p>
+            <StarRating value={rating} onChange={setRating} />
+          </div>
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted-foreground">{t('testimonyLabel')}</p>
+            <Textarea
+              value={testimony}
+              onChange={(e) => setTestimony(e.target.value)}
+              rows={4}
+              maxLength={500}
+              placeholder={t('testimonyPlaceholder')}
+            />
+          </div>
+        </div>
+
         <div className="flex justify-end">
           <Button onClick={handleToPreview}>{t('nextPreview')}</Button>
         </div>
@@ -278,6 +326,20 @@ export function GraduationForm({ inviteId, students }: Props) {
           <span className="text-muted-foreground">{t('lastClassDateColon')}</span>
           <span className="font-medium">{lastCourseDate}</span>
         </div>
+
+        {/* 整體學習狀況（有值才顯示） */}
+        {rating > 0 && (
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">{t('ratingLabel')}：</span>
+            <StarRating value={rating} />
+          </div>
+        )}
+        {testimony.trim() && (
+          <div className="text-sm">
+            <span className="text-muted-foreground">{t('testimonyLabel')}：</span>
+            <p className="mt-1 whitespace-pre-wrap">{testimony.trim()}</p>
+          </div>
+        )}
 
         {/* 已結業 */}
         <div className="space-y-2">

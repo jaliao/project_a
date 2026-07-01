@@ -61,6 +61,10 @@ model CourseInvite {
   // 結業
   completedAt DateTime? // 結業時間（有值即代表已結業）
 
+  // 結業時老師對整班的整體回饋（皆選填）
+  gradRating    Int? // 本次學員整體學習狀況五星評分（1–5）
+  gradTestimony String? // 見證（文字）
+
   enrollments InviteEnrollment[]
 
   // 課程 FAQ 留言關聯
