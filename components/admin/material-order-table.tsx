@@ -265,6 +265,16 @@ function OrderDetail({
               </div>
             )}
           </div>
+          {order.bookItems.length > 0 && (
+            <div className="text-xs text-muted-foreground">
+              <span className="font-medium">書本清單：</span>
+              <ul className="mt-0.5 space-y-0.5">
+                {order.bookItems.map((it, i) => (
+                  <li key={i}>・{it.studentName}（{it.bookName}）· {it.version === 'traditional' ? '繁' : '簡'}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           <AddressNoteEditor target={{ orderId: order.id }} initialNote={order.note} />
         </div>
       )}

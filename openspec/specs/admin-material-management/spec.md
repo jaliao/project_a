@@ -126,3 +126,14 @@ TBD - normalized for archive compatibility. Update Purpose for admin-material-ma
 - **WHEN** 管理者列印某地址出貨單
 - **THEN** 出貨單含該地址的書本項目清單
 
+### Requirement: 單一地址訂單顯示書本清單
+後台教材申請詳情與出貨單列印，於單一地址訂單 SHALL 顯示書本清單（學員名稱＋書本名字＋版本繁/簡），以利管理者製作印上名字的書。清單由該課程書本項目推導。
+
+#### Scenario: 後台單一地址顯示書本清單
+- **WHEN** 管理者展開單一地址教材訂單詳情
+- **THEN** 於書本數量下方顯示書本清單（學員名（書本名字）· 繁/簡）
+
+#### Scenario: 列印單一地址帶書本清單
+- **WHEN** 管理者列印單一地址出貨單
+- **THEN** 出貨單含該訂單的書本清單
+

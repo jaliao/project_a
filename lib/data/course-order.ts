@@ -8,6 +8,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { getMaterialOrderStatusKey } from '@/lib/utils/material-order-status'
+import { getCourseBookItems } from '@/lib/data/material-items'
 
 export type CourseOrderDetail = {
   id: number
@@ -65,6 +66,9 @@ export type ShipmentInfo = {
   items: ShipmentItemInfo[] // 指派至此地址的書本項目
 }
 
+// 單一地址書本清單（由課程報名推導）
+export type OrderBookItem = { studentName: string; bookName: string; version: string }
+
 export type CourseOrderWithInvite = CourseOrderDetail & {
   inviteId: number | null
   inviteTitle: string | null
@@ -72,6 +76,7 @@ export type CourseOrderWithInvite = CourseOrderDetail & {
   instructorEmail: string | null
   shipMode: string
   shipments: ShipmentInfo[]
+  bookItems: OrderBookItem[] // 單一地址書本清單（多地址為空，改用 shipments[].items）
 }
 
 export type CourseOrderForPrint = {
@@ -95,6 +100,7 @@ export type CourseOrderForPrint = {
   shipMode: string
   shipments: ShipmentInfo[]
   note: string | null // 內部備註（單一地址）
+  bookItems: OrderBookItem[] // 單一地址書本清單
 }
 
 // 共用 Prisma select：寄送批次欄位
@@ -166,7 +172,7 @@ export async function getAllCourseOrdersWithInvite(): Promise<
     },
   })
 
-  return orders.map((order) => {
+  const mapped = orders.map((order) => {
     const invite = order.courseInvite
     return {
       id: order.id,
@@ -208,8 +214,20 @@ export async function getAllCourseOrdersWithInvite(): Promise<
       instructorName:
         invite?.createdBy.realName ?? invite?.createdBy.name ?? null,
       instructorEmail: invite?.createdBy.email ?? null,
+      bookItems: [] as OrderBookItem[],
     }
   })
+
+  // 單一地址：附上該課程書本清單（學員名＋書本名字＋版本）
+  await Promise.all(
+    mapped.map(async (o) => {
+      if (o.shipMode === 'single' && o.inviteId) {
+        const items = await getCourseBookItems(o.inviteId)
+        o.bookItems = items.map((i) => ({ studentName: i.studentName, bookName: i.bookName, version: i.version }))
+      }
+    })
+  )
+  return mapped
 }
 
 /**
@@ -251,6 +269,15 @@ export async function getCourseOrderForPrint(
   if (!order) return null
 
   const invite = order.courseInvite
+  // 單一地址：附上課程書本清單
+  const bookItems: OrderBookItem[] =
+    order.shipMode === 'single' && invite?.id
+      ? (await getCourseBookItems(invite.id)).map((i) => ({
+          studentName: i.studentName,
+          bookName: i.bookName,
+          version: i.version,
+        }))
+      : []
   return {
     id: order.id,
     buyerNameZh: order.buyerNameZh,
@@ -272,6 +299,7 @@ export async function getCourseOrderForPrint(
     inviteId: invite?.id ?? null,
     inviteTitle: invite?.title ?? null,
     catalogLabel: invite?.courseCatalog?.label ?? null,
+    bookItems,
   }
 }
 

@@ -44,7 +44,12 @@ export default async function PrintShippingOrderPage({
           traditional: s.traditionalQty,
           simplified: s.simplifiedQty,
           note: s.note,
-          items: s.items,
+          items: s.items.map((it) => ({
+            enrollmentId: it.enrollmentId,
+            bookName: it.bookName,
+            version: it.version,
+            studentName: undefined as string | undefined,
+          })),
         }))
       : [
           {
@@ -59,7 +64,12 @@ export default async function PrintShippingOrderPage({
             traditional: order.traditionalQty,
             simplified: order.simplifiedQty,
             note: order.note,
-            items: [] as { enrollmentId: number; bookName: string; version: string }[],
+            items: order.bookItems.map((b, i) => ({
+              enrollmentId: i,
+              bookName: b.bookName,
+              version: b.version,
+              studentName: b.studentName,
+            })),
           },
         ]
 
@@ -141,7 +151,8 @@ export default async function PrintShippingOrderPage({
                     <span>
                       {slip.items.map((it) => (
                         <span key={it.enrollmentId} className="block">
-                          {it.bookName}（{it.version === 'traditional' ? '繁' : '簡'}）
+                          {it.studentName ? `${it.studentName}（${it.bookName}）` : it.bookName}
+                          （{it.version === 'traditional' ? '繁' : '簡'}）
                         </span>
                       ))}
                     </span>
