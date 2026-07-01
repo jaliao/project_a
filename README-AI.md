@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.105（2026-06-30）
+> 自動產生，版本 0.1.108（2026-07-01）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -375,6 +375,9 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260628-003` — 後台實體證書製作管理：新增 `/admin/certificates`，以「人×階層去重」（來源已結業報名）列出應製作證書；標記已完成製作（記錄製作日期＋製作管理者）、可還原（保留備註）、每張可備註；未完成（預設）/已完成篩選、人名搜尋、每頁 30 筆分頁。新增 `CertificateProduction` 模型（`userId×courseCatalogId` 唯一，migration `add_certificate_production`）＋ `lib/data/certificate.ts`＋`app/actions/certificate.ts`；後台功能格新增「證書製作」入口
+- `cr-spec-260623-008` — 結業流程優化：結業表單新增「本次學員整體學習狀況」＝**五星評分（1–5）＋見證**（皆選填，班級層級）；`CourseInvite` 新增 `gradRating`/`gradTestimony`（migration `add_graduation_feedback`）；`graduateCourse` 驗證並與 `completedAt` 同筆寫入；課程詳情「結業資訊」區（管理者＋老師）**有值才顯示**星等與見證；表單字串沿 `course.gradForm` i18n
+- `cr-spec-260630-004` — 教材申請管理優化：後台教材申請列表移除「教材版本／數量」欄、新增「課程編號（`#courseInviteId`）」欄；展開詳情單一與多地址皆顯示收件人姓名＋聯絡電話；新增**各收件地址內部備註**（single→`CourseOrder.note`、multiple→各 `MaterialShipment.note`），`updateMaterialAddressNote` server action 儲存、僅後台可見、列印出貨單帶出。migration `add_material_order_notes`（兩個 nullable note 欄，非破壞性）
 - `cr-spec-260629-008` — 多語系課程網域（子批 2）：課程頁（course/[id] 詳情/graduate/course-sessions）、course-session 元件（卡片/dialogs/create-course-wizard/enrolled-list）、course-faq、graduation-form、課程詳情互動子元件（apply/match/feedback/pending/copy-link）全面 i18n；新增 course 命名空間（detail/sessions/material/graduate/card/wizard/faq/cancel/editInfo/enroll/apply/match/feedback/pending/copyLink/gradForm…，en 草稿 + zh-CN OpenCC）；ICU 計數。**排除**：material-order-dialog + course-detail-actions（教材訂購/付款）→ 009；course-catalog 後台 CRUD 與 course-status-select（後台）維持繁體；shared course-* schema 驗證訊息不動；course-session-form 為 dead code 未動
 - `cr-spec-260629-007` — 多語系會員前台批（子批 1）：未登入流程（login/register/forgot/reset/recover/onboarding 頁與表單）與小型會員頁（notifications/invites/learning/match-board）UI 文案在地化；新增 `account`/`onboarding`/`recover`/`notifications`/`invites`/`learning`/`matchBoard` 命名空間（en 草稿 + zh-CN OpenCC）；server 頁用 `getTranslations`+`generateMetadata`、client 用 `useTranslations`；動態文案用 ICU 參數。course 網域留 008、terms/privacy 法律長文與後台維持繁體
 - `cr-spec-260629-006` — 多語系第二階段（共用基礎批）：擴充訊息命名空間（common/nav/validation/status/role）；Zod 驗證訊息 key 化（`auth`/`profile` schema → `validation.*`），新增共用 `<FieldError>`（i18n）並遷移 8 個前台表單（login/register/forgot/reset/change-password/change-password-card/profile/onboarding）的錯誤呈現與 toast；課程狀態徽章 `course-status-badge` 改 i18n（`status` 命名空間，轉 client）；Topbar 導覽/品牌字串改 `nav`/`common`；保留 `ROLE_LABELS` map 供匯出；CLAUDE.md 第 12 條補驗證/標籤子規範。後台與信件維持繁體；其餘字串續漸進遷移
