@@ -121,6 +121,10 @@ model User {
   // 課程 FAQ 留言關聯
   courseMessages CourseMessage[]
 
+  // 實體證書製作關聯
+  certificates         CertificateProduction[] @relation("CertOwner")
+  producedCertificates CertificateProduction[] @relation("CertProducedBy")
+
   @@map("users")
 }
 

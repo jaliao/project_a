@@ -14,6 +14,7 @@ import {
   IconLayoutDashboard,
   IconSchool,
   IconPackage,
+  IconCertificate,
   IconUsers,
   IconUserExclamation,
   IconSettings,
@@ -45,6 +46,13 @@ const ADMIN_FEATURES = [
     description: '管理教材申請與出貨',
     icon: IconPackage,
     href: '/admin/materials',
+    superadminOnly: false,
+  },
+  {
+    title: '證書製作',
+    description: '管理實體結業證書製作',
+    icon: IconCertificate,
+    href: '/admin/certificates',
     superadminOnly: false,
   },
   {

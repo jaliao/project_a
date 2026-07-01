@@ -1,0 +1,30 @@
+/**
+ * ----------------------------------------------
+ * Prisma Schema - 實體結業證書製作
+ * 2026-07-01
+ * prisma/schema/certificate.prisma
+ * ----------------------------------------------
+ */
+
+// 實體結業證書製作紀錄（每人每階層一張；producedAt 有值＝已完成製作）
+model CertificateProduction {
+  id Int @id @default(autoincrement())
+
+  userId          String        @db.Uuid
+  user            User          @relation("CertOwner", fields: [userId], references: [id], onDelete: Cascade)
+  courseCatalogId Int
+  courseCatalog   CourseCatalog @relation(fields: [courseCatalogId], references: [id])
+
+  producedAt   DateTime? // 製作完成時間（有值即已完成製作）
+  producedById String?   @db.Uuid // 製作管理者
+  producedBy   User?     @relation("CertProducedBy", fields: [producedById], references: [id])
+
+  note String? // 內部備註（工作人員紀錄）
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, courseCatalogId])
+  @@index([producedAt])
+  @@map("certificate_productions")
+}
