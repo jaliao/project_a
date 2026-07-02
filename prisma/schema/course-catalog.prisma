@@ -24,5 +24,7 @@ model CourseCatalog {
 
   certificateProductions CertificateProduction[]
 
+  learningFeedbacks LearningRecordFeedback[]
+
   @@map("course_catalogs")
 }

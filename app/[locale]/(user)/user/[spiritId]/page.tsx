@@ -31,7 +31,10 @@ import { CourseSessionCard } from '@/components/course-session/course-session-ca
 import { CourseCardGrid } from '@/components/course-session/course-card-grid'
 import { CompletionCertificateCard } from '@/components/course-invite/completion-certificate-card'
 import { getMyEnrollments, getMyCourseSessions, getMyCompletionCertificates } from '@/lib/data/course-sessions'
-import { getActiveCourses } from '@/lib/data/course-catalog'
+import { getActiveCourses, getAllCourses } from '@/lib/data/course-catalog'
+import { getMyLearningRecords } from '@/app/actions/course-invite'
+import { getMyLearningFeedbacks } from '@/lib/data/learning-feedback'
+import { LearningRecordsPanel, type LearningRecord } from '@/components/learning/feedback-entry'
 import { getAdminSetting, CLASS_MAX_CAPACITY_KEY, CLASS_MAX_CAPACITY_DEFAULT } from '@/lib/data/admin-settings'
 
 export const metadata: Metadata = {
@@ -76,6 +79,12 @@ export default async function UserProfilePage({ params }: Props) {
   const myCourseSessions = isOwnPageEarly ? await getMyCourseSessions(user.id, 4) : []
   // 查詢結業證明（所有人可見）
   const certificates = await getMyCompletionCertificates(user.id)
+  // 本人：學習紀錄狀態 + 回饋（僅本人可見）
+  const ownLearning = isOwnPageEarly
+    ? await getMyLearningRecords()
+    : { enrollments: [] as Awaited<ReturnType<typeof getMyLearningRecords>>['enrollments'], invites: [] }
+  const myFeedbacks = isOwnPageEarly ? await getMyLearningFeedbacks(user.id) : []
+  const feedbackCourses = isOwnPageEarly ? await getAllCourses() : []
   // 可開設課程 id 集合：由本人持有的書籍講師身分推導（admin/superadmin 於精靈內另以 isAdmin 放行）
   const teachableCatalogIds = isOwnPageEarly
     ? (session?.user?.roles ?? [])
@@ -194,6 +203,31 @@ export default async function UserProfilePage({ params }: Props) {
         )}
       </div>
 
+      {/* 學習紀錄（本人可見）：課程結業狀態 + 未結業一鍵回報 */}
+      {isOwnPageEarly && (
+        <div className="rounded-lg border p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <IconHistory className="h-5 w-5 text-primary" />
+            <h2 className="text-base font-semibold">學習紀錄</h2>
+          </div>
+          <LearningRecordsPanel
+            records={ownLearning.enrollments.map<LearningRecord>((e) => ({
+              enrollmentId: e.id,
+              courseCatalogId: e.invite.courseCatalog.id,
+              title: e.invite.title,
+              teacherName: getMemberDisplayName(e.invite.createdBy),
+              status: e.graduatedAt
+                ? 'graduated'
+                : e.invite.completedAt
+                  ? 'not_graduated'
+                  : 'in_progress',
+            }))}
+            courses={feedbackCourses.map((c) => ({ id: c.id, label: c.label }))}
+            myFeedbacks={myFeedbacks}
+          />
+        </div>
+      )}
+
       {/* 結業證明區塊（有證明才顯示） */}
       {certificates.length > 0 && (
         <div className="rounded-lg border p-5 space-y-4">
@@ -215,8 +249,8 @@ export default async function UserProfilePage({ params }: Props) {
         </div>
       )}
 
-      {/* 學習紀錄預覽（有結業紀錄才顯示） */}
-      {certificates.length > 0 && (
+      {/* 學習紀錄預覽（他人視角、有結業紀錄才顯示；本人已於上方完整面板呈現） */}
+      {!isOwnPageEarly && certificates.length > 0 && (
         <div className="rounded-lg border p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">

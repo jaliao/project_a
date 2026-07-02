@@ -1,0 +1,54 @@
+/**
+ * ----------------------------------------------
+ * Prisma Schema - 學習歷程回饋（學員自助回報 + 管理者補資料）
+ * 2026-07-02
+ * prisma/schema/learning-feedback.prisma
+ * ----------------------------------------------
+ */
+
+// 回饋類別
+enum FeedbackCategory {
+  missing_record // 遺失學習歷程
+  wrong_teacher // 老師名稱錯誤
+  not_graduated // 應結業卻標未結業
+}
+
+// 回饋處理狀態
+enum FeedbackStatus {
+  pending // 待處理
+  approved // 已同意處理
+  rejected // 已婉拒
+}
+
+// 學員送出的學習歷程回饋（管理者於後台審核補資料）
+model LearningRecordFeedback {
+  id Int @id @default(autoincrement())
+
+  // 送出者
+  userId String @db.Uuid
+  user   User   @relation("FeedbackSubmitter", fields: [userId], references: [id], onDelete: Cascade)
+
+  category        FeedbackCategory
+  teacherName     String // 學員填寫的老師名稱（自由文字，僅供參考）
+  courseCatalogId Int
+  courseCatalog   CourseCatalog    @relation(fields: [courseCatalogId], references: [id])
+  note            String? // 學員選填備註
+
+  status FeedbackStatus @default(pending)
+
+  // 處理紀錄
+  resolvedById String?   @db.Uuid
+  resolvedBy   User?     @relation("FeedbackResolver", fields: [resolvedById], references: [id])
+  resolvedAt   DateTime?
+  adminNote    String? // 婉拒理由／處理備註
+
+  // 核准建檔所建立的課程（供稽核與冪等判斷）
+  resultInviteId Int?
+  resultInvite   CourseInvite? @relation(fields: [resultInviteId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@map("learning_record_feedbacks")
+}

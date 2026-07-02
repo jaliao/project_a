@@ -70,6 +70,9 @@ model CourseInvite {
   // 課程 FAQ 留言關聯
   messages CourseMessage[]
 
+  // 學習歷程回饋補建結果關聯
+  feedbackResults LearningRecordFeedback[]
+
   @@map("course_invites")
 }
 
@@ -84,8 +87,8 @@ model InviteEnrollment {
   invite CourseInvite @relation(fields: [inviteId], references: [id])
   user   User         @relation(fields: [userId], references: [id])
 
-  status         EnrollmentStatus @default(pending) // 申請狀態
-  materialChoice MaterialChoice   @default(none) // 書籍選擇
+  status           EnrollmentStatus @default(pending) // 申請狀態
+  materialChoice   MaterialChoice   @default(none) // 書籍選擇
   materialBookName String? // 書本名字（申購時填，預設中文→英文→匿名）
 
   // 教材逐本項目指派（此報名之書被指派至哪些寄送地址）

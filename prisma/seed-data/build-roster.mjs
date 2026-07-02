@@ -40,6 +40,15 @@ function pad4(n) {
   return String(n).padStart(4, '0')
 }
 
+// 清除姓名/編號中的隱藏字元（word joiner U+2060、零寬字元、BOM、方向控制字元）
+// 並去除前後空白；保留英文名內部空白（如 "Stella Poon"）。
+// Excel 來源偶有 U+2060 汙染，導致教師欄與班級名單同名卻比對失敗（誤入收容班）。
+function cleanName(v) {
+  return String(v ?? '')
+    .replace(/[\u200B-\u200F\u202A-\u202E\u2060\uFEFF]/g, '')
+    .trim()
+}
+
 // ── 解析 ──
 const wb = XLSX.read(readFileSync(XLSX_PATH), { type: 'buffer' })
 const rows = XLSX.utils
@@ -91,7 +100,7 @@ function ensurePerson(key, realName) {
 // 1) 先建立教師（資料優先）
 for (const r of rows) {
   const [no, nameRaw, unit, emailRaw, phoneRaw] = r
-  const realName = String(nameRaw || '').trim()
+  const realName = cleanName(nameRaw)
   if (!realName) continue
 
   // 同名教師：第二筆起以編號區分 registry key，避免誤併
@@ -101,7 +110,7 @@ for (const r of rows) {
 
   const p = ensurePerson(key, realName)
   if (!p.roles.includes('teacher')) p.roles.push('teacher')
-  p.teacherNo = String(no).trim()
+  p.teacherNo = cleanName(no)
   p.phone = phoneRaw ? String(phoneRaw).trim() : null
 
   // 教師 Email：採 Excel（去空白小寫），衝突則退回合成
@@ -125,11 +134,11 @@ const courses = []
 const enrolledKeys = new Set() // 出現在任何班級名單者
 for (const r of rows) {
   const [no, nameRaw, , , , ...classCols] = r
-  const teacherName = String(nameRaw || '').trim()
+  const teacherName = cleanName(nameRaw)
   // 找回該教師 key（同名以編號還原）
   let teacherKey = teacherName
   // 若該教師為同名第二筆，key 帶編號
-  if (!people.has(teacherKey) || people.get(teacherKey).teacherNo !== String(no).trim()) {
+  if (!people.has(teacherKey) || people.get(teacherKey).teacherNo !== cleanName(no)) {
     const alt = `${teacherName}##${no}`
     if (people.has(alt)) teacherKey = alt
   }
@@ -138,7 +147,7 @@ for (const r of rows) {
     if (!cell) return
     const names = String(cell)
       .split(',')
-      .map((s) => s.trim())
+      .map((s) => cleanName(s))
       .filter(Boolean)
     if (names.length === 0) return
     const studentKeys = []
@@ -151,7 +160,7 @@ for (const r of rows) {
     }
     courses.push({
       teacherKey,
-      teacherNo: String(no).trim(),
+      teacherNo: cleanName(no),
       classIndex: idx + 1,
       title: `${teacherName} 的 啟動靈人（班級${idx + 1}）`,
       studentKeys,

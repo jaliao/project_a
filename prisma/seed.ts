@@ -14,6 +14,8 @@ import bcrypt from 'bcryptjs'
 import { PrismaClient } from '../prisma/generated/prisma_client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import roster from './seed-data/roster.json'
+import prosperitySeed from './seed-data/prosperity-seed.json'
+import graduation from './seed-data/graduation.json'
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
 const prisma = new PrismaClient({ adapter })
@@ -51,10 +53,16 @@ const SNAPSHOT_DATE = new Date('2026-06-05T00:00:00.000Z')
 const COURSE_DATE = '2026/06/01'
 const STARTER_CATALOG_ID = 1 // 啟動靈人
 
-// 黃國倫啟動靈人種子班（teacherNo A 開頭，班級日期 2025/1/1）
+// 黃國倫啟動靈人種子班（teacherNo A 開頭，結業日 2025/03/08）
 const SEED_CLASS_TITLE = '黃國倫啟動靈人種子班'
-const SEED_CLASS_COURSE_DATE = '2025/01/01'
-const SEED_CLASS_DATE = new Date('2025-01-01T00:00:00.000Z')
+const SEED_CLASS_COURSE_DATE = '2025/03/08'
+const SEED_CLASS_DATE = new Date('2025-03-08T00:00:00.000Z')
+// 一般啟動靈人結業班（依證書名單自動判定）結業日 2025/09/01
+const STARTER_GRAD_COURSE_DATE = '2025/09/01'
+const STARTER_GRAD_DATE = new Date('2025-09-01T00:00:00.000Z')
+// 黃國倫啟動豐盛種子班 結業日 2026/03/08
+const PROSPERITY_SEED_COURSE_DATE = '2026/03/08'
+const PROSPERITY_SEED_DATE = new Date('2026-03-08T00:00:00.000Z')
 // 收容班（未對應且非 A 開頭的教師；A 開頭已移入種子班）
 const CATCH_ALL_TITLE = '黃國倫收容班'
 
@@ -307,10 +315,13 @@ async function main() {
   const teacherCount = people.filter((p) => p.roles.includes('teacher')).length
   console.log(`✅ 名冊人員初始化完成：${people.length} 人（教師 ${teacherCount} / 純學員 ${people.length - teacherCount}）\n`)
 
-  // 教師 key 集合（用於判定「學員是否為老師」→ 發結業證書 / 全老師班結業）
+  // 教師 key 集合（用於收容班安全網判定）
   const teacherKeys = new Set(people.filter((p) => p.roles.includes('teacher')).map((p) => p.key))
 
-  // 報名列：教師學員加 graduatedAt（啟動靈人結業證書）；所有報名皆繁體教材
+  // 完成啟動靈人的學員 key（依證書名單，graduation.json 由 build-graduation.mjs 產生）
+  const holderSet = new Set(graduation.holderKeys as string[])
+
+  // 報名列；所有報名皆繁體教材
   type EnrollmentRow = {
     inviteId: number
     userId: string
@@ -318,14 +329,16 @@ async function main() {
     joinedAt: Date
     materialChoice: 'traditional'
     graduatedAt?: Date
+    nonGraduateReason?: string
   }
+  // 收容班（安全網，現況為空）：教師學員視為結業
   const buildEnrollment = (inviteId: number, sKey: string, sid: string): EnrollmentRow => ({
     inviteId,
     userId: sid,
     status: 'approved',
-    joinedAt: SNAPSHOT_DATE,
+    joinedAt: SEED_CLASS_DATE,
     materialChoice: 'traditional',
-    ...(teacherKeys.has(sKey) ? { graduatedAt: SNAPSHOT_DATE } : {}),
+    ...(teacherKeys.has(sKey) ? { graduatedAt: SEED_CLASS_DATE } : {}),
   })
 
   // ── 6. 課程與報名（每個班級欄一筆課程）──────────────
@@ -336,29 +349,53 @@ async function main() {
   })
   const enrollmentRows: EnrollmentRow[] = []
   let courseCreated = 0
+  let completedCourses = 0
   let firstInviteId: number | null = null
   for (const c of alreadySeeded ? [] : (roster.courses as RosterCourse[])) {
     const teacherId = keyToId(c.teacherKey)
     if (!teacherId) continue
-    // 全老師班（至少 1 位學員且全為教師）→ 課程已結業
-    const isAllTeacher = c.studentKeys.length > 0 && c.studentKeys.every((s) => teacherKeys.has(s))
+    // 依證書名單：班上有 ≥1 位完成者 → 課程結業（2025/09/01）；否則維持進行中
+    const hasGraduate = c.studentKeys.some((s) => holderSet.has(s))
     const invite = await prisma.courseInvite.create({
       data: {
         title: c.title,
         courseCatalogId: STARTER_CATALOG_ID,
         maxCount: Math.max(1, c.studentKeys.length),
-        courseDate: COURSE_DATE,
+        courseDate: hasGraduate ? STARTER_GRAD_COURSE_DATE : COURSE_DATE,
         createdById: teacherId,
-        startedAt: SNAPSHOT_DATE,
-        ...(isAllTeacher ? { completedAt: SNAPSHOT_DATE } : {}),
+        startedAt: hasGraduate ? STARTER_GRAD_DATE : SNAPSHOT_DATE,
+        ...(hasGraduate ? { completedAt: STARTER_GRAD_DATE } : {}),
       },
       select: { id: true },
     })
     courseCreated++
+    if (hasGraduate) completedCourses++
     if (firstInviteId === null) firstInviteId = invite.id
     for (const sKey of c.studentKeys) {
       const sid = keyToId(sKey)
-      if (sid) enrollmentRows.push(buildEnrollment(invite.id, sKey, sid))
+      if (!sid) continue
+      if (hasGraduate) {
+        // 結業班：名單內＝已結業；其餘同班＝未結業（其他）
+        enrollmentRows.push({
+          inviteId: invite.id,
+          userId: sid,
+          status: 'approved',
+          joinedAt: STARTER_GRAD_DATE,
+          materialChoice: 'traditional',
+          ...(holderSet.has(sKey)
+            ? { graduatedAt: STARTER_GRAD_DATE }
+            : { nonGraduateReason: 'other' }),
+        })
+      } else {
+        // 進行中班級：報名但未結業
+        enrollmentRows.push({
+          inviteId: invite.id,
+          userId: sid,
+          status: 'approved',
+          joinedAt: SNAPSHOT_DATE,
+          materialChoice: 'traditional',
+        })
+      }
     }
   }
 
@@ -429,11 +466,51 @@ async function main() {
     })
   }
 
+  // ── 7c. 黃國倫啟動豐盛種子班（courseCatalogId=2；名單學員加 teacher_2 並結業）──────────
+  //    名單由 build-prosperity-seed.mjs 自 doc/啟動豐盛種子教師名單.xlsx 產生（prosperity-seed.json）
+  const prosperityKeys = (prosperitySeed.teacherKeys ?? []) as string[]
+  let prosperityEnrolled = 0
+  if (!alreadySeeded && prosperityKeys.length > 0) {
+    const prosperityClass = await prisma.courseInvite.create({
+      data: {
+        title: prosperitySeed.title,
+        courseCatalogId: prosperitySeed.courseCatalogId, // 2 啟動豐盛
+        maxCount: prosperityKeys.length,
+        courseDate: PROSPERITY_SEED_COURSE_DATE,
+        createdById: gordon.id,
+        startedAt: PROSPERITY_SEED_DATE,
+        completedAt: PROSPERITY_SEED_DATE,
+      },
+      select: { id: true },
+    })
+    courseCreated++
+    for (const tKey of prosperityKeys) {
+      const tid = keyToId(tKey)
+      if (!tid) continue
+      // 加上啟動豐盛講師身分（teacher_2），保留既有身分（如 teacher_1）
+      await prisma.user.update({
+        where: { id: tid },
+        data: { roles: { push: 'teacher_2' } },
+      })
+      enrollmentRows.push({
+        inviteId: prosperityClass.id,
+        userId: tid,
+        status: 'approved',
+        joinedAt: PROSPERITY_SEED_DATE,
+        materialChoice: 'traditional',
+        graduatedAt: PROSPERITY_SEED_DATE,
+      })
+      prosperityEnrolled++
+    }
+  }
+
   // 批次建立報名（唯一鍵 [inviteId,userId]）
   await prisma.inviteEnrollment.createMany({ data: enrollmentRows, skipDuplicates: true })
   const graduatedCount = enrollmentRows.filter((e) => e.graduatedAt).length
-  console.log(`✅ 課程與報名初始化完成：課程 ${courseCreated} 筆、報名 ${enrollmentRows.length} 筆（種子班 ${seedClassKeys.length} 位、收容班 ${unmatched.length} 位教師）`)
-  console.log(`   教材全繁體；結業報名 ${graduatedCount} 筆（教師學員 + 黃國倫）\n`)
+  const nonGradCount = enrollmentRows.filter((e) => e.nonGraduateReason).length
+  console.log(`✅ 課程與報名初始化完成：課程 ${courseCreated} 筆（結業 ${completedCourses} 班）、報名 ${enrollmentRows.length} 筆`)
+  console.log(`   種子班 ${seedClassKeys.length} 位、收容班 ${unmatched.length} 位；結業 ${graduatedCount} 筆、未結業(其他) ${nonGradCount} 筆`)
+  console.log(`   黃國倫啟動豐盛種子班：${prosperityEnrolled} 位（加 teacher_2 並結業）\n`)
 
   // ── 8. 同步 spiritIdCounter（避免與 generateSpiritId 衝突）──────
   const currentYear = new Date().getFullYear()

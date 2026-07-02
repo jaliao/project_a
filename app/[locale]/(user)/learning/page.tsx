@@ -17,8 +17,10 @@ import { auth } from '@/lib/auth'
 import { getMyLearningRecords } from '@/app/actions/course-invite'
 import { getMyCompletionCertificates } from '@/lib/data/course-sessions'
 import { getAllCourses, getGraduatedCatalogIds } from '@/lib/data/course-catalog'
+import { getMyLearningFeedbacks } from '@/lib/data/learning-feedback'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { LevelProgress } from '@/components/learning/level-progress'
+import { LearningRecordsPanel, type LearningRecord } from '@/components/learning/feedback-entry'
 
 export async function generateMetadata({
   params,
@@ -40,12 +42,14 @@ export default async function LearningPage({
   const session = await auth()
   const userId = session?.user?.id
 
-  const [{ enrollments, invites }, graduationRecords, allCourses, graduatedCatalogIds] = await Promise.all([
-    getMyLearningRecords(),
-    userId ? getMyCompletionCertificates(userId) : Promise.resolve([]),
-    getAllCourses(),
-    userId ? getGraduatedCatalogIds(userId) : Promise.resolve(new Set<number>()),
-  ])
+  const [{ enrollments, invites }, graduationRecords, allCourses, graduatedCatalogIds, myFeedbacks] =
+    await Promise.all([
+      getMyLearningRecords(),
+      userId ? getMyCompletionCertificates(userId) : Promise.resolve([]),
+      getAllCourses(),
+      userId ? getGraduatedCatalogIds(userId) : Promise.resolve(new Set<number>()),
+      userId ? getMyLearningFeedbacks(userId) : Promise.resolve([]),
+    ])
 
   return (
     <div className="space-y-6">
@@ -54,37 +58,20 @@ export default async function LearningPage({
       {/* 學習進度摘要 */}
       <LevelProgress allCourses={allCourses} graduatedCatalogIds={graduatedCatalogIds} />
 
-      {/* 已完成學習（學員） */}
+      {/* 我的課程狀態 + 學習歷程回饋（遺失/錯誤/未結業自助回報；僅本人可見） */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">{t('completedTitle')}</h2>
-        {enrollments.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t('completedEmpty')}</p>
-        ) : (
-          <div className="rounded-lg border overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50">
-                <tr className="text-muted-foreground text-left">
-                  <th className="px-4 py-2.5 font-medium">{t('course')}</th>
-                  <th className="px-4 py-2.5 font-medium">{t('teacher')}</th>
-                  <th className="px-4 py-2.5 font-medium">{t('completedAt')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {enrollments.map((e) => (
-                  <tr key={e.id}>
-                    <td className="px-4 py-3 font-medium">{e.invite.title}</td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {getMemberDisplayName(e.invite.createdBy)}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                      {formatDistanceToNow(e.joinedAt, { addSuffix: true, locale: zhTW })}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <LearningRecordsPanel
+          records={enrollments.map<LearningRecord>((e) => ({
+            enrollmentId: e.id,
+            courseCatalogId: e.invite.courseCatalog.id,
+            title: e.invite.title,
+            teacherName: getMemberDisplayName(e.invite.createdBy),
+            status: e.graduatedAt ? 'graduated' : e.invite.completedAt ? 'not_graduated' : 'in_progress',
+          }))}
+          courses={allCourses.map((c) => ({ id: c.id, label: c.label }))}
+          myFeedbacks={myFeedbacks}
+        />
       </section>
 
       {/* 結業紀錄 */}

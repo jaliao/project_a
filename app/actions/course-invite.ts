@@ -231,6 +231,7 @@ export async function getMyLearningRecords() {
           select: {
             id: true,
             title: true,
+            completedAt: true,
             courseCatalog: { select: { id: true, label: true } },
             createdBy: {
               select: {

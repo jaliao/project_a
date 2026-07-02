@@ -128,6 +128,10 @@ model User {
   // 推薦「暫不接受」操作關聯
   deferredRecommendations InviteEnrollment[] @relation("RecommendDeferredBy")
 
+  // 學習歷程回饋關聯
+  learningFeedbacks LearningRecordFeedback[] @relation("FeedbackSubmitter")
+  resolvedFeedbacks LearningRecordFeedback[] @relation("FeedbackResolver")
+
   @@map("users")
 }
 
