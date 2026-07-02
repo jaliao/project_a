@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * EnrollmentApplicationDialog - 學員申請參加 + 書籍選購
- * 2026-03-24
+ * 2026-03-24 (Updated: 2026-07-02)
  * components/course-session/enrollment-application-dialog.tsx
  * ----------------------------------------------
  */
@@ -59,6 +59,11 @@ export function EnrollmentApplicationDialog({ inviteId, open, onOpenChange, cour
       toast.error(t('course.enroll.selectBook'))
       return
     }
+    // 教材所屬姓名必填（選了需購買版本時）
+    if (selected !== 'none' && !bookName.trim()) {
+      toast.error(t('course.enroll.bookNameRequired'))
+      return
+    }
     setLoading(true)
     const result = await applyToCourse(inviteId, selected, selected === 'none' ? undefined : bookName)
     setLoading(false)
@@ -106,16 +111,20 @@ export function EnrollmentApplicationDialog({ inviteId, open, onOpenChange, cour
           ))}
         </div>
 
-        {/* 書本名字（選了需購買版本才顯示）*/}
+        {/* 教材所屬姓名（選了需購買版本才顯示；必填）*/}
         {(selected === 'traditional' || selected === 'simplified') && (
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">{t('course.enroll.bookNameLabel')}</label>
+            <label className="text-sm font-medium">
+              {t('course.enroll.bookNameLabel')}
+              <span className="text-destructive ml-0.5">*</span>
+            </label>
             <Input
               value={bookName}
               onChange={(e) => setBookName(e.target.value)}
               placeholder={t('course.enroll.bookNamePlaceholder')}
               disabled={loading}
             />
+            <p className="text-xs text-muted-foreground">{t('course.enroll.bookNameNote')}</p>
           </div>
         )}
 

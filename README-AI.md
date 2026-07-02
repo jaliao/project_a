@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.119（2026-07-02）
+> 自動產生，版本 0.1.120（2026-07-02）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -375,6 +375,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260702-005` — 教材所屬姓名必填與誤植聲明：學員申購對話框（`enrollment-application-dialog`）「書本名字」改名「**教材所屬姓名**」並**必填**（標籤星號；空白送出前端 toast 阻擋＋`applyToCourse` 伺服端拒絕、**移除留空自動帶預設 fallback**，`defaultBookName()` 僅供頁面預帶）；欄位下方新增聲明「若因姓名誤植而要重新申請，需先自行吸收誤植之教材費」；i18n `course.enroll.bookName*` 更新＋新增 `bookNameNote`/`bookNameRequired`（zh-TW/en，zh-CN OpenCC）。無 migration
 - `cr-spec-260702-003` — 學習歷程回饋（學員自助回報 + 管理者後台補資料）：新增 `LearningRecordFeedback` 模型（`category` missing_record/wrong_teacher/not_graduated、`teacherName` 文字、`courseCatalogId`、`status` pending/approved/rejected、`resolvedBy*`、`resultInviteId`；migration `add_learning_record_feedback`）。學員於學習紀錄頁入口「是否遺失您的學習歷程？請在這裡回饋」送出回饋（類別／老師名稱／課程目錄／備註，`learningFeedback` i18n）並查看自己狀態；後台 `(admin)/admin/learning-feedback` 逐筆處理——**同意建檔**（選現有老師→建課標題含「（補建）」、`completedAt=2025/09/01`＋學員 `graduatedAt=2025/09/01`）、**更正老師**（`$transaction` 移除後台定位的錯誤報名→於正確老師重建結業）、**更正結業**（既有報名 `graduatedAt=2025/09/01`＋清 `nonGraduateReason`，班未結業補 `completedAt`）、**婉拒**（記錄理由）。老師名稱為自由文字、由管理者選現有教師（`searchTeachersAction`）；冪等僅 pending 可處理；不通知學員。學習紀錄頁另顯示**本人**每門課的結業狀態（已/未結業/進行中，`getMyLearningRecords` 補 `completedAt` 推導），未結業列提供「這有誤？回報」一鍵開啟並預帶課程/老師（僅本人視角、不公開）。個人頁 `/user/{spiritId}` **本人視角**亦內嵌此學習紀錄面板（他人視角維持原結業預覽）。後台首頁新增「**學習歷程回饋**」功能卡（`getPendingFeedbackCount` 待處理數動態副標題）。`app/actions/learning-feedback.ts`＋`lib/data/learning-feedback.ts`
 - `cr-spec-260702-001` — 名冊/種子班/啟動靈人結業 seed 資料（無 UI/schema 變更）：修 `build-roster.mjs` 隱藏字元（新增 `cleanName()` 清 `U+2060` 等，教師欄與班級名單同名比對失敗→收容班誤判，修正後 `unmatchedTeacherKeys` 歸零）；新增 `build-prosperity-seed.mjs`→`prosperity-seed.json` 於 seed 建「黃國倫啟動豐盛種子班」（`courseCatalogId=2`，65 位成員疊加 `teacher_2` 並結業，結業日 2026/03/08，比對含 `黃宣志`→B006）；新增 `build-graduation.mjs`→`graduation.json`（解析兩份證書 docx 名單，**不寫入 `CertificateProduction`**）作為啟動靈人結業判定——班上 ≥1 名單學員→課程結業（2025/09/01）、名單內 `graduatedAt`/同班未在名單 `nonGraduateReason=other`、零名單班維持進行中；種子班全員結業（2025/03/08）；姓名比對採精確／OpenCC 簡→繁／確認別名（`李素貞`→`李素真`）。審閱清單 `doc/啟動靈人結業班級清單.md`、`doc/有證書沒有班級資料的學員.md`。冪等沿用種子班哨兵（僅全新 seed 生效）
 - `cr-spec-260630-005` — 教材申請 UX 調整：後台移除訂單「編輯」（刪 `material-order-edit-dialog`＋`updateMaterialOrderAdmin`）；前台移除「查看」對話框改**內嵌顯示**訂單資訊（書本數量、取貨方式、收件人·電話、寄送/收件時間；多地址逐地址含學員書本）；新增 `cancelCourseOrder`——老師於回填匯款前（`paymentReportedAt` null）可「取消申請」→ 刪除訂單 cascade 釋放書本 → 重新申請。無 migration

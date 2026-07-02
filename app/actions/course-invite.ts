@@ -18,7 +18,6 @@ import { sendGraduationEmail } from '@/lib/mailer'
 import { resolveContactEmail } from '@/lib/utils/contact-email'
 import { renderTemplate } from '@/lib/utils/render-template'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
-import { defaultBookName } from '@/lib/data/material-items'
 import { getAppUrl } from '@/lib/utils/app-url'
 import { evaluateCourseStartGate } from '@/lib/utils/course-start-gate'
 import { computeMaterialProgress } from '@/lib/utils/material-progress'
@@ -297,19 +296,14 @@ export async function applyToCourse(
     }
   }
 
-  // 書本名字（僅需購買版本）：填寫值 → 預設 中文名→英文名→匿名
+  // 教材所屬姓名（僅需購買版本）：必填，空白即拒絕（cr-spec-260702-005）
   let materialBookName: string | null = null
   if (materialChoice !== 'none') {
     const trimmed = bookName?.trim()
-    if (trimmed) {
-      materialBookName = trimmed.slice(0, 100)
-    } else {
-      const u = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: { realName: true, englishName: true },
-      })
-      materialBookName = defaultBookName({ realName: u?.realName ?? null, englishName: u?.englishName ?? null })
+    if (!trimmed) {
+      return { success: false, message: '請填寫教材所屬姓名' }
     }
+    materialBookName = trimmed.slice(0, 100)
   }
 
   await prisma.inviteEnrollment.create({
