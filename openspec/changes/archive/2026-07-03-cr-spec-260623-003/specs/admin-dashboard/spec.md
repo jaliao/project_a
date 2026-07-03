@@ -1,19 +1,6 @@
-# admin-dashboard Specification
+# admin-dashboard Delta（cr-spec-260623-003）
 
-## Purpose
-TBD - created by archiving change cr-spec-260611-001. Update Purpose after archive.
-## Requirements
-### Requirement: 後台儀錶板頁面
-系統 SHALL 提供 `/admin/dashboard` 頁面，供 admin/superadmin 查看系統整體統計。
-roles 不含 `admin`/`superadmin` 者 SHALL redirect 至 `/`。
-
-#### Scenario: 管理者進入儀錶板
-- **WHEN** admin 或 superadmin 訪問 `/admin/dashboard`
-- **THEN** 頁面顯示統計卡片
-
-#### Scenario: 一般使用者被拒絕
-- **WHEN** roles 僅為 `user` 的使用者訪問 `/admin/dashboard`
-- **THEN** 系統 redirect 至 `/`
+## MODIFIED Requirements
 
 ### Requirement: 統計數據卡片
 儀錶板統計 SHALL 以三個帶標題的區塊呈現：**學員分析**、**講師分析**、**課程分析**。
@@ -71,27 +58,3 @@ roles 不含 `admin`/`superadmin` 者 SHALL redirect 至 `/`。
 #### Scenario: 招募中取代開課中
 - **WHEN** 管理者檢視課程分析區塊
 - **THEN** 未開始且未取消未結業的課程卡片標籤顯示「招募中課程總數」
-
-### Requirement: 功能卡動態待辦副標題
-後台儀錶板功能卡 SHALL 依即時待辦數呈現動態副標題：
-- **推薦講師**卡：當有未處理推薦（狀態 pending）時，副標題 SHALL 顯示待處理筆數提示；為 0 時 SHALL 顯示預設說明。
-- **教材作業**卡：當有待管理者處理的教材訂單（狀態為待批價／待確認收款／待寄送）時，副標題 SHALL 顯示待辦筆數提示；為 0 時 SHALL 顯示預設說明。
-
-待辦計數 SHALL 與各自清單的狀態推導一致（教材沿用 `getMaterialOrderStatusKey`；推薦沿用推薦狀態推導）。
-
-#### Scenario: 有待處理推薦顯示提示
-- **WHEN** 存在未處理的講師推薦
-- **THEN** 「推薦講師」卡副標題顯示待處理推薦筆數
-
-#### Scenario: 無待處理推薦顯示預設
-- **WHEN** 無未處理推薦
-- **THEN** 「推薦講師」卡副標題顯示預設說明文字
-
-#### Scenario: 教材有待辦顯示提示
-- **WHEN** 存在狀態為待批價／待確認收款／待寄送的教材訂單
-- **THEN** 「教材作業」卡副標題顯示待辦筆數提示
-
-#### Scenario: 教材無待辦顯示預設
-- **WHEN** 無上述待辦訂單
-- **THEN** 「教材作業」卡副標題顯示預設說明文字
-
