@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 後台會員管理頁
- * 2026-04-01 (Updated: 2026-06-12)
+ * 2026-04-01 (Updated: 2026-07-03)
  * app/(user)/admin/members/page.tsx
  * ----------------------------------------------
  */
@@ -18,6 +18,7 @@ import { MemberResetButton } from '@/components/admin/member-reset-button'
 import { MembersFilter } from '@/components/admin/members-filter'
 import { MembersPagination } from '@/components/admin/members-pagination'
 import { CreateMemberDialog } from '@/components/admin/create-member-dialog'
+import { MaskedValue } from '@/components/admin/masked-value'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
@@ -115,7 +116,7 @@ export default async function AdminMembersPage({
                     <tr key={member.id} className={i < result.items.length - 1 ? 'border-b' : ''}>
                       <td className="px-4 py-3 font-mono text-xs">{member.spiritId ?? '—'}</td>
                       <td className="px-4 py-3 font-medium">{displayName}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{member.email}</td>
+                      <td className="px-4 py-3 text-muted-foreground"><MaskedValue value={member.email} label="Email" /></td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-1">
                           {(member.roles as UserRole[]).map((r) => (

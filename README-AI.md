@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.121（2026-07-02）
+> 自動產生，版本 0.1.123（2026-07-03）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -54,7 +54,6 @@ app/
 │   ├── notifications/   # 通知歷史頁面（分頁，每頁 20 則）
 │   ├── course/[id]/     # 課程詳情頁（訪客可達，由 GUEST_PAGES 放行）
 │   ├── course/[id]/graduate/  # 課程結業表單頁（填寫→預覽→送出）
-│   ├── learning/        # 學習紀錄頁面
 │   ├── profile/         # 舊路由相容：server redirect → /user/{spiritId}/profile
 │   └── user/[spiritId]/profile/  # 個人資料維護（新路由，含 profile-form.tsx）
 ├── (admin)/         # 需 admin 身分群組（URL 仍為 /admin/*）
@@ -123,7 +122,8 @@ components/
 ├── member/
 │   └── member-display-name.tsx  # 顯示名稱元件（薄包裝，呼叫 getMemberDisplayName）
 └── learning/
-    └── level-progress.tsx       # 學習等級進度視覺元件
+    ├── course-progress-cards.tsx # 學習進度三卡（個人首頁基本資料區塊，含結業時間）
+    └── feedback-entry.tsx        # 學習紀錄面板＋學習歷程回饋入口（Client）
 
 lib/
 ├── auth.ts          # NextAuth 設定（JWT + Google + Credentials）
@@ -375,6 +375,8 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260702-006` — 個人首頁整合學習進度與結業證明：個人首頁 `/user/[spiritId]` 基本資料區塊內固定三張課程進度卡（`components/learning/course-progress-cards.tsx` server 元件，目錄順序靈人→豐盛→得勝；已結業＝完成樣式＋學業完成時間〔每目錄最新 `graduatedAt`〕＋班名/老師小字，未結業＝虛線灰階；公開可見）。**刪除** `/learning` 整頁（不轉導、命中友善 404）、`LevelProgress`、`CompletionCertificateCard`、個人頁「結業證明」區塊與他人視角「學習紀錄預覽」、`learning.*` i18n；本人「學習紀錄」面板（回饋入口）保留、成唯一入口。`learning-feedback.ts` 五處 `revalidatePath('/learning')` 改 `revalidatePath('/[locale]/user/[spiritId]', 'page')`。資料沿用 `getAllCourses`＋`getMyCompletionCertificates`，無 migration
+- `cr-spec-260701-008` — 後台機敏資料遮蔽：新增 `components/admin/masked-value.tsx` client 元件（預設固定 `***` 不反映長度、點擊切換明文/再點恢復、空值顯示 `—` 不可點、`<button>` 語意＋IconEye/IconEyeOff＋aria-label 依狀態、明文可選取複製〔選取時不觸發切換〕）；套用於 `/admin/members` 清單 Email 欄、`/admin/members/[id]` 基本資料 Email＋**新增「電話」欄**（`phone` 原已 select、免改資料層）、`/admin/members/inactive` email 欄，逐筆獨立切換、不影響 Email 搜尋。顯示層旁窺防護（管理者本有權檢視，明文仍在 payload）；後台繁體、無 migration
 - `cr-spec-260623-003` — 後台儀錶板分區塊統計：`/admin/dashboard` 統計改三區塊——**學員分析**（學員總數、近期活躍學員數＝`lastLoginAt` 7 天內、各教會會員總數＝Top 5／Low 5 圓餅圖 client 元件〔shadcn chart/recharts，`church-distribution-charts.tsx`；≤5 間只顯示 Top 5；其他/未填註記 footer；`--chart-1..5` 換為通過 CVD/對比驗證色盤〕，資料 `groupBy(churchId)` 多到少；另有**會員性別圓餅圖**〔男/女/未設定〕與**各年齡柱狀圖**〔年齡＝當年−`birthYear`、固定七組距、未填註記，`member-demographics-charts.tsx`〕）、**講師分析**（啟動/豐盛/得勝講師＝roles teacher_1/2/3，標籤簡化）、**課程分析**（招募中〔原「開課中」更名〕/進行中/已結業〔補 `cancelledAt: null`〕/**已放棄**〔新增，`cancelledAt` 非空〕，四狀態互斥）。`lib/data/dashboard.ts` `DashboardStats` 擴充；後台維持繁體。無 migration
 - `cr-spec-260702-005` — 教材所屬姓名必填與誤植聲明：學員申購對話框（`enrollment-application-dialog`）「書本名字」改名「**教材所屬姓名**」並**必填**（標籤星號；空白送出前端 toast 阻擋＋`applyToCourse` 伺服端拒絕、**移除留空自動帶預設 fallback**，`defaultBookName()` 僅供頁面預帶）；欄位下方新增聲明「若因姓名誤植而要重新申請，需先自行吸收誤植之教材費」；i18n `course.enroll.bookName*` 更新＋新增 `bookNameNote`/`bookNameRequired`（zh-TW/en，zh-CN OpenCC）。無 migration
 - `cr-spec-260702-003` — 學習歷程回饋（學員自助回報 + 管理者後台補資料）：新增 `LearningRecordFeedback` 模型（`category` missing_record/wrong_teacher/not_graduated、`teacherName` 文字、`courseCatalogId`、`status` pending/approved/rejected、`resolvedBy*`、`resultInviteId`；migration `add_learning_record_feedback`）。學員於學習紀錄頁入口「是否遺失您的學習歷程？請在這裡回饋」送出回饋（類別／老師名稱／課程目錄／備註，`learningFeedback` i18n）並查看自己狀態；後台 `(admin)/admin/learning-feedback` 逐筆處理——**同意建檔**（選現有老師→建課標題含「（補建）」、`completedAt=2025/09/01`＋學員 `graduatedAt=2025/09/01`）、**更正老師**（`$transaction` 移除後台定位的錯誤報名→於正確老師重建結業）、**更正結業**（既有報名 `graduatedAt=2025/09/01`＋清 `nonGraduateReason`，班未結業補 `completedAt`）、**婉拒**（記錄理由）。老師名稱為自由文字、由管理者選現有教師（`searchTeachersAction`）；冪等僅 pending 可處理；不通知學員。學習紀錄頁另顯示**本人**每門課的結業狀態（已/未結業/進行中，`getMyLearningRecords` 補 `completedAt` 推導），未結業列提供「這有誤？回報」一鍵開啟並預帶課程/老師（僅本人視角、不公開）。個人頁 `/user/{spiritId}` **本人視角**亦內嵌此學習紀錄面板（他人視角維持原結業預覽）。後台首頁新增「**學習歷程回饋**」功能卡（`getPendingFeedbackCount` 待處理數動態副標題）。`app/actions/learning-feedback.ts`＋`lib/data/learning-feedback.ts`

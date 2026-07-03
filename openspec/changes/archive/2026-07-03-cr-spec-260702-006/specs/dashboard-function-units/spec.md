@@ -1,9 +1,6 @@
-# dashboard-function-units Specification
+# dashboard-function-units Delta（cr-spec-260702-006）
 
-## Purpose
-TBD - normalized for archive compatibility. Update Purpose for dashboard-function-units.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: 學習單元區塊
 Dashboard SHALL 僅對非管理者角色顯示「學習」功能單元，包含「加入學習」入口。`admin` 及 `superadmin` 角色不顯示學習單元。學習單元 SHALL NOT 提供導向 `/learning` 之連結（該頁面已移除；學習進度改於個人首頁基本資料區塊呈現）。

@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 後台會員詳情頁（四分頁：基本資料／學習階層／講師身分／特殊設定）
- * 2026-04-01 (Updated: 2026-06-22)
+ * 2026-04-01 (Updated: 2026-07-03)
  * app/(user)/admin/members/[id]/page.tsx
  * ----------------------------------------------
  */
@@ -27,6 +27,7 @@ import { MemberHierarchyTree } from '@/components/admin/member-hierarchy-tree'
 import { MemberTeacherRoles } from '@/components/admin/member-teacher-roles'
 import { MemberSpecialRoles } from '@/components/admin/member-special-roles'
 import { MemberSuspendSection } from '@/components/admin/member-suspend-section'
+import { MaskedValue } from '@/components/admin/masked-value'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -125,7 +126,8 @@ export default async function MemberDetailPage({
               <div><dt className="text-muted-foreground">暱稱</dt><dd>{member.nickname || '—'}</dd></div>
               <div><dt className="text-muted-foreground">性別</dt><dd>{member.gender === 'male' ? '男' : member.gender === 'female' ? '女' : '未設定'}</dd></div>
               <div><dt className="text-muted-foreground">顯示名稱</dt><dd>{displayName}</dd></div>
-              <div><dt className="text-muted-foreground">Email</dt><dd>{member.email}</dd></div>
+              <div><dt className="text-muted-foreground">Email</dt><dd><MaskedValue value={member.email} label="Email" /></dd></div>
+              <div><dt className="text-muted-foreground">電話</dt><dd><MaskedValue value={member.phone} label="電話" /></dd></div>
               <div><dt className="text-muted-foreground">啟動編號</dt><dd className="font-mono text-xs">{member.spiritId || '—'}</dd></div>
               <div><dt className="text-muted-foreground">授課老師編號</dt><dd className="font-mono text-xs">{member.teacherNo || '—'}</dd></div>
               <div className="col-span-2 sm:col-span-3">

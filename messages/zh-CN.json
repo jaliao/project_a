@@ -149,25 +149,6 @@
     "name": "姓名",
     "joinedAt": "加入时间"
   },
-  "learning": {
-    "metaTitle": "学习纪录 — 启动事工",
-    "title": "学习纪录",
-    "completedTitle": "已完成学习",
-    "completedEmpty": "尚无学习纪录",
-    "course": "课程",
-    "teacher": "授课教师",
-    "completedAt": "完成时间",
-    "gradTitle": "结业纪录",
-    "gradEmpty": "尚无结业纪录",
-    "courseName": "课程名称",
-    "level": "等级",
-    "gradDate": "结业日期",
-    "teachTitle": "已完成授课",
-    "teachEmpty": "尚无授课纪录",
-    "enrollCount": "报名人数",
-    "createdAt": "建立时间",
-    "peopleCount": "{count} 人"
-  },
   "course": {
     "sessions": {
       "metaTitle": "开课查询 — 启动事工",

@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * Server Actions - 學習歷程回饋（學員送出 + 管理者補資料）
- * 2026-07-02
+ * 2026-07-02 (Updated: 2026-07-03)
  * app/actions/learning-feedback.ts
  * ----------------------------------------------
  */
@@ -44,6 +44,11 @@ function revalidateAdmin() {
   revalidatePath('/admin')
 }
 
+// 個人首頁學習紀錄面板／進度三卡所在頁（/learning 已移除，改 revalidate 動態路由）
+function revalidateUserPage() {
+  revalidatePath('/[locale]/user/[spiritId]', 'page')
+}
+
 // ── 學員：送出學習歷程回饋 ──
 export async function submitLearningFeedback(
   formData: Record<string, unknown>
@@ -73,7 +78,7 @@ export async function submitLearningFeedback(
     },
   })
 
-  revalidatePath('/learning')
+  revalidateUserPage()
   revalidateAdmin()
   return { success: true, message: '已送出回饋，將由管理者審核' }
 }
@@ -158,7 +163,7 @@ export async function approveMissingRecord(
   }
 
   revalidateAdmin()
-  revalidatePath('/learning')
+  revalidateUserPage()
   return { success: true, message: '已建檔並標記結業' }
 }
 
@@ -203,7 +208,7 @@ export async function approveWrongTeacher(
   }
 
   revalidateAdmin()
-  revalidatePath('/learning')
+  revalidateUserPage()
   return { success: true, message: '已移除錯誤班級並重建結業' }
 }
 
@@ -246,7 +251,7 @@ export async function fixNotGraduated(
   }
 
   revalidateAdmin()
-  revalidatePath('/learning')
+  revalidateUserPage()
   return { success: true, message: '已更正為結業' }
 }
 
@@ -282,6 +287,6 @@ export async function rejectFeedback(feedbackId: number, note: string): Promise<
   })
 
   revalidateAdmin()
-  revalidatePath('/learning')
+  revalidateUserPage()
   return { success: true, message: '已婉拒' }
 }

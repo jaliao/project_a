@@ -148,25 +148,6 @@
     "name": "Name",
     "joinedAt": "Joined at"
   },
-  "learning": {
-    "metaTitle": "Learning records — 啟動事工",
-    "title": "Learning records",
-    "completedTitle": "Completed learning",
-    "completedEmpty": "No learning records yet",
-    "course": "Course",
-    "teacher": "Instructor",
-    "completedAt": "Completed at",
-    "gradTitle": "Graduation records",
-    "gradEmpty": "No graduation records yet",
-    "courseName": "Course name",
-    "level": "Level",
-    "gradDate": "Graduation date",
-    "teachTitle": "Completed teaching",
-    "teachEmpty": "No teaching records yet",
-    "enrollCount": "Enrolled",
-    "createdAt": "Created at",
-    "peopleCount": "{count}"
-  },
   "course": {
     "sessions": {
       "metaTitle": "Course sessions — 啟動事工",

@@ -1,8 +1,7 @@
-# admin-inactive-members Specification
+# admin-inactive-members Delta（cr-spec-260701-008）
 
-## Purpose
-TBD - created by archiving change cr-spec-260629-002. Update Purpose after archive.
-## Requirements
+## MODIFIED Requirements
+
 ### Requirement: 後台未啟用會員清單
 後台 SHALL 提供「未啟用會員」查詢清單，列出從未登入過（`lastLoginAt` 為 null）的會員，供管理者（admin／superadmin）追蹤尚未設定自己帳號資料的會員。一般會員 SHALL NOT 存取此清單。清單之 email 欄 SHALL 依機敏欄位遮蔽規則預設以 `***` 呈現、點擊逐筆切換檢視（見 admin-sensitive-masking）。
 
@@ -25,4 +24,3 @@ TBD - created by archiving change cr-spec-260629-002. Update Purpose after archi
 #### Scenario: Email 欄點擊檢視
 - **WHEN** 管理者點擊清單中某列遮蔽的 email 欄
 - **THEN** 僅該列切換為明文，其他列維持遮蔽
-

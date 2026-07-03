@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 後台未啟用會員清單
- * 2026-06-29
+ * 2026-06-29 (Updated: 2026-07-03)
  * app/(user)/admin/members/inactive/page.tsx
  *
  * 列出從未登入過（lastLoginAt 為 null）的會員，供管理者追蹤尚未設定帳號者。
@@ -15,6 +15,7 @@ import type { UserRole } from '@prisma/client'
 import { listInactiveMembers } from '@/lib/data/account-recovery'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { MaskedValue } from '@/components/admin/masked-value'
 
 export const dynamic = 'force-dynamic'
 
@@ -66,7 +67,7 @@ export default async function InactiveMembersPage() {
                 <tr key={m.id} className={i < members.length - 1 ? 'border-b' : ''}>
                   <td className="px-4 py-3 font-mono text-xs">{m.spiritId ?? '—'}</td>
                   <td className="px-4 py-3 font-medium">{m.displayName}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{m.email}</td>
+                  <td className="px-4 py-3 text-muted-foreground"><MaskedValue value={m.email} label="Email" /></td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
                       {(m.roles as UserRole[]).map((r) => (

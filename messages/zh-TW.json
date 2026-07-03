@@ -148,25 +148,6 @@
     "name": "姓名",
     "joinedAt": "加入時間"
   },
-  "learning": {
-    "metaTitle": "學習紀錄 — 啟動事工",
-    "title": "學習紀錄",
-    "completedTitle": "已完成學習",
-    "completedEmpty": "尚無學習紀錄",
-    "course": "課程",
-    "teacher": "授課教師",
-    "completedAt": "完成時間",
-    "gradTitle": "結業紀錄",
-    "gradEmpty": "尚無結業紀錄",
-    "courseName": "課程名稱",
-    "level": "等級",
-    "gradDate": "結業日期",
-    "teachTitle": "已完成授課",
-    "teachEmpty": "尚無授課紀錄",
-    "enrollCount": "報名人數",
-    "createdAt": "建立時間",
-    "peopleCount": "{count} 人"
-  },
   "course": {
     "sessions": {
       "metaTitle": "開課查詢 — 啟動事工",

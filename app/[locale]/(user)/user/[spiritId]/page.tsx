@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 學員專屬頁面
- * 2026-03-24
+ * 2026-03-24 (Updated: 2026-07-03)
  * app/(user)/user/[spiritId]/page.tsx
  * [spiritId] 為 Spirit ID 小寫（例：pa260001）
  * ----------------------------------------------
@@ -11,7 +11,7 @@ import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { IconUser, IconBook, IconChalkboard, IconShieldCheck, IconAward, IconHistory } from '@tabler/icons-react'
+import { IconUser, IconBook, IconChalkboard, IconShieldCheck, IconHistory } from '@tabler/icons-react'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import {
@@ -29,7 +29,7 @@ import { CourseSessionDialog } from '@/components/course-session/course-session-
 import { TestCourseSessionButton } from '@/components/course-session/test-course-session-button'
 import { CourseSessionCard } from '@/components/course-session/course-session-card'
 import { CourseCardGrid } from '@/components/course-session/course-card-grid'
-import { CompletionCertificateCard } from '@/components/course-invite/completion-certificate-card'
+import { CourseProgressCards } from '@/components/learning/course-progress-cards'
 import { getMyEnrollments, getMyCourseSessions, getMyCompletionCertificates } from '@/lib/data/course-sessions'
 import { getActiveCourses, getAllCourses } from '@/lib/data/course-catalog'
 import { getMyLearningRecords } from '@/app/actions/course-invite'
@@ -84,7 +84,8 @@ export default async function UserProfilePage({ params }: Props) {
     ? await getMyLearningRecords()
     : { enrollments: [] as Awaited<ReturnType<typeof getMyLearningRecords>>['enrollments'], invites: [] }
   const myFeedbacks = isOwnPageEarly ? await getMyLearningFeedbacks(user.id) : []
-  const feedbackCourses = isOwnPageEarly ? await getAllCourses() : []
+  // 課程目錄（基本資料區塊進度三卡固定顯示；本人回饋表單亦沿用）
+  const allCourses = await getAllCourses()
   // 可開設課程 id 集合：由本人持有的書籍講師身分推導（admin/superadmin 於精靈內另以 isAdmin 放行）
   const teachableCatalogIds = isOwnPageEarly
     ? (session?.user?.roles ?? [])
@@ -168,6 +169,12 @@ export default async function UserProfilePage({ params }: Props) {
               <span className="text-sm text-muted-foreground">—</span>
             )}
           </div>
+
+          {/* 學習進度三卡（公開；已結業顯示學業完成時間） */}
+          <div className="pt-1">
+            <span className="text-sm text-muted-foreground block mb-2">學習進度</span>
+            <CourseProgressCards allCourses={allCourses} certificates={certificates} />
+          </div>
         </div>
       </div>
 
@@ -222,57 +229,9 @@ export default async function UserProfilePage({ params }: Props) {
                   ? 'not_graduated'
                   : 'in_progress',
             }))}
-            courses={feedbackCourses.map((c) => ({ id: c.id, label: c.label }))}
+            courses={allCourses.map((c) => ({ id: c.id, label: c.label }))}
             myFeedbacks={myFeedbacks}
           />
-        </div>
-      )}
-
-      {/* 結業證明區塊（有證明才顯示） */}
-      {certificates.length > 0 && (
-        <div className="rounded-lg border p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <IconAward className="h-5 w-5 text-amber-500" />
-            <h2 className="text-base font-semibold">結業證明</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {certificates.map((cert) => (
-              <CompletionCertificateCard
-                key={cert.courseCatalogId}
-                courseCatalogLabel={cert.courseCatalogLabel}
-                title={cert.title}
-                teacherName={cert.teacherName}
-                graduatedAt={cert.graduatedAt}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 學習紀錄預覽（他人視角、有結業紀錄才顯示；本人已於上方完整面板呈現） */}
-      {!isOwnPageEarly && certificates.length > 0 && (
-        <div className="rounded-lg border p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <IconHistory className="h-5 w-5 text-primary" />
-              <h2 className="text-base font-semibold">學習紀錄</h2>
-            </div>
-            {certificates.length > 3 && (
-              <Link href="/learning" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                查看更多
-              </Link>
-            )}
-          </div>
-          <ul className="space-y-2">
-            {certificates.slice(0, 3).map((cert) => (
-              <li key={cert.courseCatalogId} className="flex items-center justify-between text-sm">
-                <span className="font-medium">{cert.title}</span>
-                <span className="text-muted-foreground text-xs">
-                  {cert.graduatedAt.getFullYear()}/{String(cert.graduatedAt.getMonth() + 1).padStart(2, '0')}/{String(cert.graduatedAt.getDate()).padStart(2, '0')}
-                </span>
-              </li>
-            ))}
-          </ul>
         </div>
       )}
 
