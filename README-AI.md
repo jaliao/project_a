@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.123（2026-07-03）
+> 自動產生，版本 0.1.125（2026-07-07）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -367,6 +367,7 @@ createdAt       DateTime
 - **表單**：Zod schema → React Hook Form → Server Action → ActionResponse → Sonner toast
 - **通知整合**：關鍵操作（開課完成、取消課程、學員核准、課程結業）成功後以 fire-and-forget 呼叫 `createNotification`，同步寫入 Inbox；toast 呈現不變
 - **外寄信件收件人**：對使用者的外寄信一律以 `resolveContactEmail(user)`（`lib/utils/contact-email.ts`）決定收件地址 —— 優先已驗證通訊 Email（`isCommVerified && commEmail`），否則帳號 `email`；通訊 Email 驗證信本身為例外，仍寄至待驗證地址
+- **SMTP 傳輸**：`lib/mailer.ts` 單例 Nodemailer，完全由 `SMTP_HOST/PORT/USER/PASS/FROM` 環境變數驅動（port 465 implicit TLS、其餘 STARTTLS），寄件人顯示「啟動事工 <SMTP_FROM>」；正式環境採 Mailchimp Transactional（Mandrill）：`smtp.mandrillapp.com:587`、帳號 `notice@kuaglobal.org`、寄件人 `no-reply@activate.kuaglobal.org`（網域須完成 SPF/DKIM），`SMTP_PASS`＝Mandrill API key、不進版控
 - **版本**：`config/version.json` 為唯一來源（patch +1 per `/opsx:apply`）
 - **Prisma import**：`@prisma/client`（tsconfig paths 已設定）
 
@@ -375,6 +376,8 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260707-002` — 設定 Mailchimp SMTP（正式環境寄信）：正式環境 SMTP 切換 Mailchimp Transactional（Mandrill）——`smtp.mandrillapp.com:587`（STARTTLS）、帳號 `notice@kuaglobal.org`、寄件人 `no-reply@activate.kuaglobal.org`、`SMTP_PASS`＝Mandrill API key（管理者於正式 `.env` 自行設定、不進版控）。新增 `smtp-transport-config` spec 正式化「SMTP 設定全由環境變數驅動」規則；程式碼零邏輯變更（`lib/mailer.ts` 僅註解一般化）、`.env.example` 改 Mandrill 示例。部署前置：Mandrill 後台完成 `activate.kuaglobal.org` SPF/DKIM 網域驗證。無 migration
+- `cr-spec-260706-001` — 教材申請多地址切回單一地址無法送出（驗證修正）：`materialOrderSchema` 的 `shipments` 逐項必填改以 `shipMode` 分流——基底改寬鬆版項目 schema（`shipmentItemLooseSchema`，形狀同嚴格版、無必填），multiple 模式於 `superRefine` 逐列 `shipmentItemSchema.safeParse` 轉發 issues（path 對回 `shipments[i].*`、訊息不變）；single 模式殘留多地址列不驗證、不阻擋送出，Server Action single 分支本不讀 `shipments`（不誤建批次）。表單元件零修改（切換保留已填列資料）。無 migration
 - `cr-spec-260702-006` — 個人首頁整合學習進度與結業證明：個人首頁 `/user/[spiritId]` 基本資料區塊內固定三張課程進度卡（`components/learning/course-progress-cards.tsx` server 元件，目錄順序靈人→豐盛→得勝；已結業＝完成樣式＋學業完成時間〔每目錄最新 `graduatedAt`〕＋班名/老師小字，未結業＝虛線灰階；公開可見）。**刪除** `/learning` 整頁（不轉導、命中友善 404）、`LevelProgress`、`CompletionCertificateCard`、個人頁「結業證明」區塊與他人視角「學習紀錄預覽」、`learning.*` i18n；本人「學習紀錄」面板（回饋入口）保留、成唯一入口。`learning-feedback.ts` 五處 `revalidatePath('/learning')` 改 `revalidatePath('/[locale]/user/[spiritId]', 'page')`。資料沿用 `getAllCourses`＋`getMyCompletionCertificates`，無 migration
 - `cr-spec-260701-008` — 後台機敏資料遮蔽：新增 `components/admin/masked-value.tsx` client 元件（預設固定 `***` 不反映長度、點擊切換明文/再點恢復、空值顯示 `—` 不可點、`<button>` 語意＋IconEye/IconEyeOff＋aria-label 依狀態、明文可選取複製〔選取時不觸發切換〕）；套用於 `/admin/members` 清單 Email 欄、`/admin/members/[id]` 基本資料 Email＋**新增「電話」欄**（`phone` 原已 select、免改資料層）、`/admin/members/inactive` email 欄，逐筆獨立切換、不影響 Email 搜尋。顯示層旁窺防護（管理者本有權檢視，明文仍在 payload）；後台繁體、無 migration
 - `cr-spec-260623-003` — 後台儀錶板分區塊統計：`/admin/dashboard` 統計改三區塊——**學員分析**（學員總數、近期活躍學員數＝`lastLoginAt` 7 天內、各教會會員總數＝Top 5／Low 5 圓餅圖 client 元件〔shadcn chart/recharts，`church-distribution-charts.tsx`；≤5 間只顯示 Top 5；其他/未填註記 footer；`--chart-1..5` 換為通過 CVD/對比驗證色盤〕，資料 `groupBy(churchId)` 多到少；另有**會員性別圓餅圖**〔男/女/未設定〕與**各年齡柱狀圖**〔年齡＝當年−`birthYear`、固定七組距、未填註記，`member-demographics-charts.tsx`〕）、**講師分析**（啟動/豐盛/得勝講師＝roles teacher_1/2/3，標籤簡化）、**課程分析**（招募中〔原「開課中」更名〕/進行中/已結業〔補 `cancelledAt: null`〕/**已放棄**〔新增，`cancelledAt` 非空〕，四狀態互斥）。`lib/data/dashboard.ts` `DashboardStats` 擴充；後台維持繁體。無 migration

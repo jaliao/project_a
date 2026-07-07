@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * Email 寄信工具（Nodemailer + SMTP）
- * 2026-03-23
+ * 2026-03-23 (Updated: 2026-07-07)
  * lib/mailer.ts
  * ----------------------------------------------
  */
@@ -19,7 +19,7 @@ const transporter = nodemailer.createTransport({
   },
 })
 
-// FROM 需使用在 Brevo 後台驗證過的寄件者 Email，不可用 SMTP_USER 帳號
+// FROM 需為 SMTP 服務商已完成寄件網域驗證（SPF/DKIM）的地址，未設定時退回 SMTP_USER
 const FROM_ADDRESS = `"啟動事工" <${process.env.SMTP_FROM ?? process.env.SMTP_USER}>`
 
 // ── 臨時密碼通知信 ────────────────────────────
