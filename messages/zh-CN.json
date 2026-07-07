@@ -173,6 +173,8 @@
       "basicInfo": "基本资讯",
       "teacher": "授课老师",
       "expectedStartDate": "预计开课日期",
+      "startedDate": "开始上课日期",
+      "completedDate": "结业日期",
       "enrollDeadline": "报名截止日期",
       "enrollCountLabel": "报名人数",
       "peopleSuffix": "人",

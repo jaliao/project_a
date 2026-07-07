@@ -168,18 +168,21 @@ export default async function CourseDetailPage({
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {/* 講師/管理者功能：編輯課程資訊（招生中）＋ 分享按鈕，置於右上 */}
-          {canEditInfo && !courseSession.startedAt && !isCancelled && !isCompleted && (
+          {canEditInfo && !isCancelled && (
             <EditCourseInfoDialog
               inviteId={courseSession.id}
               approvedCount={courseSession.approvedEnrollments.length}
               capacity={classMaxCapacity}
               isAdmin={isAdmin}
+              state={isCompleted ? 'completed' : courseSession.startedAt ? 'started' : 'recruiting'}
               initial={{
                 title: courseSession.title,
                 maxCount: courseSession.maxCount,
                 expiredAt: courseSession.expiredAt,
                 courseDate: courseSession.courseDate,
                 notes: courseSession.notes,
+                startedAt: courseSession.startedAt,
+                completedAt: courseSession.completedAt,
               }}
             />
           )}
@@ -312,6 +315,26 @@ export default async function CourseDetailPage({
               <p className="font-medium">{courseSession.courseDate ?? '—'}</p>
             </div>
           </div>
+          {/* 開始上課日期（已開始才顯示） */}
+          {courseSession.startedAt && (
+            <div className="flex items-start gap-2">
+              <IconCalendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs text-muted-foreground">{t('course.detail.startedDate')}</p>
+                <p className="font-medium">{formatDate(courseSession.startedAt)}</p>
+              </div>
+            </div>
+          )}
+          {/* 結業日期（已結業才顯示） */}
+          {courseSession.completedAt && (
+            <div className="flex items-start gap-2">
+              <IconCalendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs text-muted-foreground">{t('course.detail.completedDate')}</p>
+                <p className="font-medium">{formatDate(courseSession.completedAt)}</p>
+              </div>
+            </div>
+          )}
           {/* 報名截止日期 */}
           <div className="flex items-start gap-2">
             <IconClock className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
@@ -400,6 +423,7 @@ export default async function CourseDetailPage({
           isCompleted={isCompleted}
           isStarted={!!courseSession.startedAt}
           hasApprovedStudents={courseSession.approvedEnrollments.length > 0}
+          approvedCount={courseSession.approvedEnrollments.length}
           orders={courseSession.orders}
           progress={materialProgress}
           canStart={startGate.canStart}

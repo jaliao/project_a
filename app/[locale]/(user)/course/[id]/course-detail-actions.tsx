@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * CourseDetailActions - 講師操作區（三區塊：教材申請／開始上課／取消上課）
- * 2026-03-24 (Updated: 2026-06-28)
+ * 2026-03-24 (Updated: 2026-07-07)
  * app/(user)/course/[id]/course-detail-actions.tsx
  * ----------------------------------------------
  */
@@ -14,6 +14,13 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { CancelCourseDialog } from '@/components/course-session/cancel-course-dialog'
 import { MaterialOrderDialog } from '@/components/course-session/material-order-dialog'
@@ -30,6 +37,8 @@ type Props = {
   isCompleted: boolean
   isStarted: boolean
   hasApprovedStudents: boolean
+  // 已核准學員人數（開始上課確認視窗顯示用）
+  approvedCount: number
   orders: CourseSessionOrder[]
   // 教材申請進度（總需求／已申請／尚未申請）
   progress: MaterialProgress
@@ -126,12 +135,21 @@ function MaterialOrderInfo({ order }: { order: CourseSessionOrder }) {
   )
 }
 
+// 今天（本地時區）的 yyyy-mm-dd，供 <input type="date"> 預設與 max 使用
+function todayInput(): string {
+  const d = new Date()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${m}-${day}`
+}
+
 export function CourseDetailActions({
   inviteId,
   isCancelled,
   isCompleted,
   isStarted,
   hasApprovedStudents,
+  approvedCount,
   orders,
   progress,
   canStart,
@@ -144,6 +162,9 @@ export function CourseDetailActions({
   // 教材申請 Dialog：僅用於「申請教材」（新訂單）；既有訂單改於列內嵌顯示
   const [materialOpen, setMaterialOpen] = useState(false)
   const [startLoading, setStartLoading] = useState(false)
+  // 開始上課：所選開課日期（預設今天）與確認視窗
+  const [startDate, setStartDate] = useState(todayInput())
+  const [startConfirmOpen, setStartConfirmOpen] = useState(false)
   const [receiptPending, startReceiptTransition] = useTransition()
   const [paymentPending, startPaymentTransition] = useTransition()
   const [cancelPending, startCancelTransition] = useTransition()
@@ -195,8 +216,9 @@ export function CourseDetailActions({
 
   async function handleStart() {
     setStartLoading(true)
-    const result = await startCourseSession(inviteId)
+    const result = await startCourseSession(inviteId, startDate)
     setStartLoading(false)
+    setStartConfirmOpen(false)
     if (result.success) {
       toast.success('課程已開始')
       router.refresh()
@@ -329,9 +351,56 @@ export function CourseDetailActions({
               </ul>
             )}
           </div>
-          <Button onClick={handleStart} disabled={startLoading || !canStart}>
-            {startLoading ? '處理中...' : '開始上課'}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium" htmlFor="course-start-date">開始上課日期</label>
+            <Input
+              id="course-start-date"
+              type="date"
+              value={startDate}
+              max={todayInput()}
+              onChange={(e) => setStartDate(e.target.value)}
+              disabled={startLoading}
+              className="w-44"
+            />
+          </div>
+          <Button
+            onClick={() => {
+              if (!startDate) {
+                toast.error('請選擇開始上課日期')
+                return
+              }
+              setStartConfirmOpen(true)
+            }}
+            disabled={startLoading || !canStart}
+          >
+            開始上課
           </Button>
+
+          {/* 開始上課確認視窗：確認開課日期與人數後才執行 */}
+          <Dialog open={startConfirmOpen} onOpenChange={setStartConfirmOpen}>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle>確認開始上課</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-2 text-sm">
+                <p>
+                  開課日期：<span className="font-medium">{startDate.replace(/-/g, '/')}</span>
+                </p>
+                <p>
+                  上課人數：<span className="font-medium">{approvedCount} 位</span>（已核准學員）
+                </p>
+                <p className="text-muted-foreground">確認後課程狀態將變為「進行中」。</p>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setStartConfirmOpen(false)} disabled={startLoading}>
+                  取消
+                </Button>
+                <Button onClick={handleStart} disabled={startLoading}>
+                  {startLoading ? '處理中...' : '確認開始'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </Section>
       )}
 

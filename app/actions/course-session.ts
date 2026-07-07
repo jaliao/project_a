@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * Server Actions - 新增授課
- * 2026-03-23 (Updated: 2026-03-30)
+ * 2026-03-23 (Updated: 2026-07-07)
  * app/actions/course-session.ts
  * ----------------------------------------------
  */
@@ -12,7 +12,12 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { canAccessAdmin, canTeachAny, canTeachBook } from '@/lib/auth-roles'
-import { courseSessionSchema, editCourseInfoSchema } from '@/lib/schemas/course-session'
+import {
+  courseSessionSchema,
+  editCourseInfoSchema,
+  editStartedCourseInfoSchema,
+  editCompletedCourseInfoSchema,
+} from '@/lib/schemas/course-session'
 import {
   getAdminSetting,
   CLASS_MAX_CAPACITY_KEY,
@@ -148,16 +153,21 @@ export async function updateMatchSettings(
   return { success: true, message: input.isPublicMatch ? '已開啟公開媒合' : '已關閉公開媒合' }
 }
 
-// ── 招生階段編輯課程資訊（擁有者或管理者；僅招生中）──
-// 可改：名稱／預計人數／截止日／開課日／備註；不可改書本（courseCatalogId）
+// ── 依課程狀態編輯課程資訊（擁有者或管理者；已取消不可編輯）──
+// 欄位白名單以 DB 當下狀態決定（不信任 client 宣稱）：
+// 招生中：名稱／預計人數／截止日／開課日／備註；進行中：名稱＋開始上課日期；
+// 已結業：名稱＋開始上課日期＋結業日期（不連動學員個人 graduatedAt）
+// 一律不可改書本（courseCatalogId）
 export async function updateCourseInfo(
   inviteId: number,
   input: {
     title: string
-    maxCount: number | string
-    expiredAt: Date | string
-    courseDate: Date | string
+    maxCount?: number | string
+    expiredAt?: Date | string
+    courseDate?: Date | string
     notes?: string
+    startedAt?: Date | string
+    completedAt?: Date | string
   }
 ): Promise<ActionResponse> {
   const session = await auth()
@@ -180,11 +190,46 @@ export async function updateCourseInfo(
     return { success: false, message: '無權限' }
   }
 
-  // 僅招生中可編輯
-  if (invite.startedAt || invite.cancelledAt || invite.completedAt) {
-    return { success: false, message: '課程非招生中，無法編輯' }
+  if (invite.cancelledAt) {
+    return { success: false, message: '課程已取消，無法編輯' }
   }
 
+  // 已結業：名稱＋開始上課日期＋結業日期
+  if (invite.completedAt) {
+    const parsed = editCompletedCourseInfoSchema.safeParse(input)
+    if (!parsed.success) {
+      return { success: false, errors: parsed.error.flatten().fieldErrors }
+    }
+    await prisma.courseInvite.update({
+      where: { id: inviteId },
+      data: {
+        title: parsed.data.title,
+        startedAt: parsed.data.startedAt,
+        completedAt: parsed.data.completedAt,
+      },
+    })
+    revalidatePath(`/course/${inviteId}`)
+    return { success: true, message: '已更新課程資訊' }
+  }
+
+  // 進行中：名稱＋開始上課日期
+  if (invite.startedAt) {
+    const parsed = editStartedCourseInfoSchema.safeParse(input)
+    if (!parsed.success) {
+      return { success: false, errors: parsed.error.flatten().fieldErrors }
+    }
+    await prisma.courseInvite.update({
+      where: { id: inviteId },
+      data: {
+        title: parsed.data.title,
+        startedAt: parsed.data.startedAt,
+      },
+    })
+    revalidatePath(`/course/${inviteId}`)
+    return { success: true, message: '已更新課程資訊' }
+  }
+
+  // 招生中：維持現行欄位與人數規則
   const parsed = editCourseInfoSchema.safeParse(input)
   if (!parsed.success) {
     return { success: false, errors: parsed.error.flatten().fieldErrors }

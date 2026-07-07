@@ -172,6 +172,8 @@
       "basicInfo": "Basic info",
       "teacher": "Instructor",
       "expectedStartDate": "Expected start date",
+      "startedDate": "Course start date",
+      "completedDate": "Completion date",
       "enrollDeadline": "Enrollment deadline",
       "enrollCountLabel": "Enrolled",
       "peopleSuffix": "",

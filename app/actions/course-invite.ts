@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * Server Actions - 課程邀請
- * 2026-03-23 (Updated: 2026-03-30)
+ * 2026-03-23 (Updated: 2026-07-07)
  * app/actions/course-invite.ts
  * ----------------------------------------------
  */
@@ -330,9 +330,23 @@ export async function applyToCourse(
 }
 
 // ── 講師開始上課（招生中 → 進行中）──────────────────
-export async function startCourseSession(inviteId: number): Promise<ActionResponse> {
+// startDate：講師所選開課日期（YYYY-MM-DD），允許過去、不得晚於伺服器當日
+export async function startCourseSession(inviteId: number, startDate: string): Promise<ActionResponse> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+    return { success: false, message: '請選擇開始上課日期' }
+  }
+  const startedAt = new Date(`${startDate}T00:00:00`)
+  if (Number.isNaN(startedAt.getTime())) {
+    return { success: false, message: '開始上課日期無效' }
+  }
+  const todayEnd = new Date()
+  todayEnd.setHours(23, 59, 59, 999)
+  if (startedAt > todayEnd) {
+    return { success: false, message: '開始上課日期不可晚於今天' }
+  }
 
   const invite = await prisma.courseInvite.findUnique({
     where: { id: inviteId },
@@ -367,7 +381,7 @@ export async function startCourseSession(inviteId: number): Promise<ActionRespon
 
   await prisma.courseInvite.update({
     where: { id: inviteId },
-    data: { startedAt: new Date() },
+    data: { startedAt },
   })
 
   const { revalidatePath } = await import('next/cache')

@@ -172,6 +172,8 @@
       "basicInfo": "基本資訊",
       "teacher": "授課老師",
       "expectedStartDate": "預計開課日期",
+      "startedDate": "開始上課日期",
+      "completedDate": "結業日期",
       "enrollDeadline": "報名截止日期",
       "enrollCountLabel": "報名人數",
       "peopleSuffix": "人",
