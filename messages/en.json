@@ -463,6 +463,7 @@
   },
   "language": {
     "label": "Language",
+    "settings": "Language settings",
     "zh-TW": "繁體中文",
     "en": "English",
     "zh-CN": "简体中文"

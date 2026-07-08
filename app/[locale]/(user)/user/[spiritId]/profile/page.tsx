@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 個人資料頁面
- * 2026-03-23 (Updated: 2026-04-02)
+ * 2026-03-23 (Updated: 2026-07-08)
  * app/(user)/user/[spiritId]/profile/page.tsx
  * ----------------------------------------------
  */
@@ -9,6 +9,8 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
+import { LanguageSwitcher } from '@/components/i18n/language-switcher'
 import ProfileForm from './profile-form'
 import { ChangePasswordCard } from './change-password-card'
 import { SignOutSection } from '@/components/profile/sign-out-section'
@@ -24,6 +26,8 @@ export default async function ProfilePage({ searchParams }: Props) {
 
   const session = await auth()
   if (!session?.user?.id) redirect('/login')
+
+  const t = await getTranslations()
 
   const [user, activeChurches] = await Promise.all([
     prisma.user.findUnique({
@@ -88,6 +92,12 @@ export default async function ProfilePage({ searchParams }: Props) {
       />
 
       {hasPassword && <ChangePasswordCard />}
+
+      {/* 語言設定（語言切換器自 Topbar 移入此處） */}
+      <div className="rounded-lg border p-4 flex items-center justify-between gap-3">
+        <p className="text-sm font-medium">{t('language.settings')}</p>
+        <LanguageSwitcher />
+      </div>
 
       <SignOutSection />
     </div>

@@ -11,6 +11,7 @@ import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Topbar } from '@/components/layout/topbar'
+import { Footer } from '@/components/layout/footer'
 import { getUnreadNotificationCount } from '@/lib/data/notification'
 import { isGuestRoute } from '@/lib/auth/route-access'
 
@@ -68,6 +69,7 @@ export default async function UserLayout({
       <main className="flex-1 p-6">
         {children}
       </main>
+      <Footer />
     </div>
   )
 }

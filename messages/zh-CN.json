@@ -464,6 +464,7 @@
   },
   "language": {
     "label": "语言",
+    "settings": "语言设定",
     "zh-TW": "繁体中文",
     "en": "English",
     "zh-CN": "简体中文"

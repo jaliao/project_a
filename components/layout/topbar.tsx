@@ -14,7 +14,6 @@ import { IconUser, IconBell, IconHome, IconLayoutDashboard, IconClipboardList } 
 import { Button } from '@/components/ui/button'
 import { useTranslations } from 'next-intl'
 import { NotificationDrawer } from '@/components/notification/notification-drawer'
-import { LanguageSwitcher } from '@/components/i18n/language-switcher'
 import { canAccessAdmin } from '@/lib/auth-roles'
 
 interface TopbarProps {
@@ -71,9 +70,6 @@ export function Topbar({ unreadCount = 0, roles, spiritId }: TopbarProps) {
             <IconLayoutDashboard className="h-5 w-5" />
           </Button>
         )}
-
-        {/* 語言切換器 */}
-        <LanguageSwitcher />
 
         {/* 個人資料 */}
         <Button

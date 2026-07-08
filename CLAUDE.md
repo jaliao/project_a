@@ -251,9 +251,9 @@ export type ProjectStatus = keyof typeof PROJECT_STATUSES
 - Tabler Icons for iconography
 
 ### 7. Version Update
-- 每次 `/opsx:apply` 套用變更時，須自動將 `config/version.json` 的 patch 版本號 +1（例如 `0.1.0` → `0.1.1`）
+- 每次 `/opsx:apply` 套用變更時，須自動將 `config/version.json` 的 patch 版本號 +1（例如 `0.1.0` → `0.1.1`），並**同步更新 `updatedAt` 為當日日期**（YYYY-MM-DD）
 - 版本號格式為 SemVer（`major.minor.patch`）
-- `config/version.json` 是版本號的唯一來源，側邊欄底部會顯示對應版本
+- `config/version.json` 是版本號的唯一來源，登入後頁面 Footer 顯示對應版本與系統更新日期
 
 ### 8. README-AI.md Update
 - 每次 `/opsx:apply` 套用變更後，須依照 `.ai-rules.md` 的規範重新產生 `README-AI.md`

@@ -15,6 +15,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { canAccessAdmin } from '@/lib/auth-roles'
 import { Topbar } from '@/components/layout/topbar'
+import { Footer } from '@/components/layout/footer'
 import { getUnreadNotificationCount } from '@/lib/data/notification'
 
 export default async function AdminLayout({
@@ -61,6 +62,7 @@ export default async function AdminLayout({
       <main className="flex-1 p-6">
         {children}
       </main>
+      <Footer />
     </div>
   )
 }
