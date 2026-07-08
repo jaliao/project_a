@@ -149,11 +149,6 @@
     "joinedAt": "加入時間"
   },
   "course": {
-    "sessions": {
-      "metaTitle": "開課查詢 — 啟動事工",
-      "title": "開課查詢",
-      "empty": "尚無開課記錄"
-    },
     "material": {
       "none": "無須購買",
       "traditional": "繁體教材",

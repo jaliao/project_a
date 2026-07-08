@@ -149,11 +149,6 @@
     "joinedAt": "Joined at"
   },
   "course": {
-    "sessions": {
-      "metaTitle": "Course sessions — 啟動事工",
-      "title": "Course sessions",
-      "empty": "No course sessions yet"
-    },
     "material": {
       "none": "No purchase needed",
       "traditional": "Traditional Chinese textbook",

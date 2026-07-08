@@ -150,11 +150,6 @@
     "joinedAt": "加入时间"
   },
   "course": {
-    "sessions": {
-      "metaTitle": "开课查询 — 启动事工",
-      "title": "开课查询",
-      "empty": "尚无开课记录"
-    },
     "material": {
       "none": "无须购买",
       "traditional": "繁体教材",

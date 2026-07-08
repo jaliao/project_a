@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.126（2026-07-07）
+> 自動產生，版本 0.1.127（2026-07-08）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -50,7 +50,6 @@ app/
 │   ├── dashboard/       # redirect → /user/{id}（舊書籤相容）
 │   ├── user/[id]/       # 學員專屬頁面：基本資料 + 本人功能單元
 │   ├── user/[id]/courses/ # 我的開課列表（本人專屬，Spirit ID 小寫路由）
-│   ├── course-sessions/ # 開課查詢頁（保留，將逐步以 /user/[id]/courses 取代）
 │   ├── notifications/   # 通知歷史頁面（分頁，每頁 20 則）
 │   ├── course/[id]/     # 課程詳情頁（訪客可達，由 GUEST_PAGES 放行）
 │   ├── course/[id]/graduate/  # 課程結業表單頁（填寫→預覽→送出）
@@ -376,6 +375,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260623-001` — 廢除課程清單頁面 `/course-sessions`：刪除使用者端「開課查詢頁」（孤兒頁，站內無入口；功能由 `/user/[spiritId]/courses` 承接）＋移除 `course.sessions.*` i18n；命中網址走友善 404、不轉導。保留 `CourseSessionCard`、`lib/data/course-sessions.ts` 與後台 `/admin/course-sessions`。無 migration
 - `cr-spec-260703-001` — 紀錄開始上課日期＋課程時間顯示與編輯：開始上課改為講師自選**開課日期**（按鈕上方 date 欄位，預設今天、不可未來）＋**確認視窗**（顯示日期與已核准人數，確認才執行），`startCourseSession(inviteId, startDate)` 以所選日期寫入 `startedAt`；課程頁基本資訊區顯示**開始上課日期**（已開始）與**結業日期**（已結業，`course.detail.startedDate/completedDate` i18n）；「編輯課程資訊」由僅招生中改**依 DB 狀態白名單**——招生中五欄不變、進行中改名稱＋開始日期、已結業再加結業日期（`editStartedCourseInfoSchema`／`editCompletedCourseInfoSchema`：日期不可未來、結業不可早於開始）、已取消拒絕；不連動學員個人 `graduatedAt`。三份手冊同步。無 migration
 - `cr-spec-260707-002` — 設定 Mailchimp SMTP（正式環境寄信）：正式環境 SMTP 切換 Mailchimp Transactional（Mandrill）——`smtp.mandrillapp.com:587`（STARTTLS）、帳號 `notice@kuaglobal.org`、寄件人 `no-reply@activate.kuaglobal.org`、`SMTP_PASS`＝Mandrill API key（管理者於正式 `.env` 自行設定、不進版控）。新增 `smtp-transport-config` spec 正式化「SMTP 設定全由環境變數驅動」規則；程式碼零邏輯變更（`lib/mailer.ts` 僅註解一般化）、`.env.example` 改 Mandrill 示例。部署前置：Mandrill 後台完成 `activate.kuaglobal.org` SPF/DKIM 網域驗證。無 migration
 - `cr-spec-260706-001` — 教材申請多地址切回單一地址無法送出（驗證修正）：`materialOrderSchema` 的 `shipments` 逐項必填改以 `shipMode` 分流——基底改寬鬆版項目 schema（`shipmentItemLooseSchema`，形狀同嚴格版、無必填），multiple 模式於 `superRefine` 逐列 `shipmentItemSchema.safeParse` 轉發 issues（path 對回 `shipments[i].*`、訊息不變）；single 模式殘留多地址列不驗證、不阻擋送出，Server Action single 分支本不讀 `shipments`（不誤建批次）。表單元件零修改（切換保留已填列資料）。無 migration
