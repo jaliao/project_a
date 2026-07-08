@@ -12,6 +12,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
+import { IconSpeakerphone } from '@tabler/icons-react'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
@@ -48,7 +49,10 @@ export function MatchSettingsEditor({ inviteId, isPublicMatch, matchNote }: Prop
     <div className="rounded-lg border p-4 space-y-3">
       <div className="flex items-center justify-between">
         <div className="space-y-0.5">
-          <p className="text-sm font-medium">{t('course.wizard.publicMatch')}</p>
+          <div className="flex items-center gap-2">
+            <IconSpeakerphone className="h-5 w-5 text-primary" />
+            <h2 className="text-base font-semibold">{t('course.wizard.publicMatch')}</h2>
+          </div>
           <p className="text-xs text-muted-foreground">{t('course.wizard.publicMatchHint')}</p>
         </div>
         <Switch checked={isPublic} onCheckedChange={setIsPublic} disabled={isPending} />

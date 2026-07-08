@@ -171,10 +171,10 @@ export function CourseFaq({ inviteId, currentUserId, isInstructor, messages }: C
 
   return (
     <div className="rounded-lg border p-5 space-y-5">
-      <h2 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-        <IconMessageCircle className="h-4 w-4" />
-        {t('title')}
-      </h2>
+      <div className="flex items-center gap-2">
+        <IconMessageCircle className="h-5 w-5 text-primary" />
+        <h2 className="text-base font-semibold">{t('title')}</h2>
+      </div>
 
       {/* 提問表單（所有登入會員） */}
       <div className="space-y-2">

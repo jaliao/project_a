@@ -12,6 +12,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { IconBook, IconPlayerPlay, IconCertificate, IconBan } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -51,17 +52,22 @@ type Props = {
   bookItems: BookItem[]
 }
 
-// 區塊外殼：標題 + 說明 + 動作
+// 區塊外殼：標題（icon＋粗體，比照學員頁面標準）+ 說明 + 動作
 function Section({
   title,
+  icon,
   children,
 }: {
   title: string
+  icon?: React.ReactNode
   children: React.ReactNode
 }) {
   return (
     <div className="rounded-lg border p-4 space-y-3">
-      <h3 className="text-sm font-semibold">{title}</h3>
+      <div className="flex items-center gap-2">
+        {icon}
+        <h3 className="text-base font-semibold">{title}</h3>
+      </div>
       {children}
     </div>
   )
@@ -235,7 +241,7 @@ export function CourseDetailActions({
     <div className="space-y-3">
       {/* ── 區塊一：教材申請作業 ────────────────── */}
       {!isStarted && (
-        <Section title="教材申請作業">
+        <Section title="教材申請作業" icon={<IconBook className="h-5 w-5 text-primary" />}>
           {/* 說明：申請進度（總需求／已申請／尚未申請） */}
           <div className="rounded-md bg-muted/50 px-3 py-2 text-sm space-y-1">
             <div className="flex justify-between gap-2">
@@ -339,7 +345,7 @@ export function CourseDetailActions({
 
       {/* ── 區塊二：開始上課作業 ────────────────── */}
       {!isStarted && (
-        <Section title="開始上課作業">
+        <Section title="開始上課作業" icon={<IconPlayerPlay className="h-5 w-5 text-primary" />}>
           <div className="text-sm text-muted-foreground space-y-1">
             <p>注意事項：開始上課後課程狀態將變為「進行中」，並可開始辦理結業。</p>
             <p>需符合：①至少 1 位已核准學員；②所有教材訂單皆已收件。</p>
@@ -406,7 +412,7 @@ export function CourseDetailActions({
 
       {/* 進行中：結業作業 */}
       {isStarted && (
-        <Section title="結業作業">
+        <Section title="結業作業" icon={<IconCertificate className="h-5 w-5 text-primary" />}>
           {hasApprovedStudents ? (
             <Button variant="outline" asChild>
               <Link href={`/course/${inviteId}/graduate`}>結業</Link>
@@ -420,7 +426,7 @@ export function CourseDetailActions({
       )}
 
       {/* ── 區塊三：取消上課作業 ────────────────── */}
-      <Section title="取消上課作業">
+      <Section title="取消上課作業" icon={<IconBan className="h-5 w-5 text-primary" />}>
         <Button variant="destructive" onClick={() => setCancelOpen(true)}>
           取消授課
         </Button>

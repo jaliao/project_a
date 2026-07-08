@@ -54,9 +54,11 @@ export function PendingEnrollmentList({ enrollments }: Props) {
 
   return (
     <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 space-y-4">
-      <div className="flex items-center gap-2 text-sm font-medium text-amber-800">
-        <IconUserPlus className="h-4 w-4" />
-        {t('course.pending.title', { count: enrollments.length })}
+      <div className="flex items-center gap-2">
+        <IconUserPlus className="h-5 w-5 text-amber-700" />
+        <h2 className="text-base font-semibold">
+          {t('course.pending.title', { count: enrollments.length })}
+        </h2>
       </div>
       <ul className="divide-y divide-amber-100">
         {enrollments.map((enrollment) => (

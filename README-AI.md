@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.128（2026-07-08）
+> 自動產生，版本 0.1.130（2026-07-08）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -367,7 +367,7 @@ createdAt       DateTime
 - **通知整合**：關鍵操作（開課完成、取消課程、學員核准、課程結業）成功後以 fire-and-forget 呼叫 `createNotification`，同步寫入 Inbox；toast 呈現不變
 - **外寄信件收件人**：對使用者的外寄信一律以 `resolveContactEmail(user)`（`lib/utils/contact-email.ts`）決定收件地址 —— 優先已驗證通訊 Email（`isCommVerified && commEmail`），否則帳號 `email`；通訊 Email 驗證信本身為例外，仍寄至待驗證地址
 - **SMTP 傳輸**：`lib/mailer.ts` 單例 Nodemailer，完全由 `SMTP_HOST/PORT/USER/PASS/FROM` 環境變數驅動（port 465 implicit TLS、其餘 STARTTLS），寄件人顯示「啟動事工 <SMTP_FROM>」；正式環境採 Mailchimp Transactional（Mandrill）：`smtp.mandrillapp.com:587`、帳號 `notice@kuaglobal.org`、寄件人 `no-reply@activate.kuaglobal.org`（網域須完成 SPF/DKIM），`SMTP_PASS`＝Mandrill API key、不進版控
-- **版本**：`config/version.json` 為唯一來源（patch +1 per `/opsx:apply`）
+- **版本**：`config/version.json` 為唯一來源（patch +1 per `/opsx:apply`，`updatedAt` 同步更新）；登入後頁面 Footer（`components/layout/footer.tsx`）顯示 `v{version} · {updatedAt}`
 - **Prisma import**：`@prisma/client`（tsconfig paths 已設定）
 
 ---
@@ -375,6 +375,8 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260708-003` — 課程頁面字體大小標準化：課程詳情頁各區塊標題統一為學員頁面標準（icon `h-5 w-5 text-primary`＋`text-base font-semibold`）——課程基本資訊/結業資訊（icon 綠色系）/已核准學員/待審申請（amber）/講師操作區四塊（`Section` 加 `icon` prop）/公開媒合/FAQ；內文 `text-sm`、輔助與時間戳 `text-xs` muted。StudentApplySection 為狀態橫幅無標題、不動。純樣式、無 migration。spec：`course-session-detail` ADDED「區塊標題與內文字體標準」
+- `cr-spec-260708-001` — Footer 版本資訊＋語言切換移入個人資料：`version.json` 新增 `updatedAt`（隨 patch +1 同步更新）；新增 `components/layout/footer.tsx`（server 元件、`v{version} · {updatedAt}` 語言中立免 i18n）掛 `(user)`/`(admin)` layout（免登入頁與訪客精簡版面不顯示）；`LanguageSwitcher` 自 Topbar 移除、個人資料頁新增「語言設定」卡（`language.settings` key），登入頁保留；CLAUDE.md 第 7 點同步。spec：新 `footer-version-info`、`language-switcher` MODIFIED。無 migration
 - `cr-spec-260708-002` — 課程資訊頁手機版優化＋結業資訊可見性修正：**權限收斂**——課程詳情頁結業資訊由 `canTeachAny`（任一講師身分可見任何課程）改 `isInstructor || isAdmin`（僅該課授課老師/管理者；spec `course-graduation-info` 同步 MODIFIED）。手機版：頁首標題獨立成行（不被標籤/按鈕擠壓）、標籤與按鈕列下移同列兩端對齊；「基本資訊」改「課程基本資訊」＋欄位序（授課老師→報名人數→預計開課→報名截止→開始上課→課程結業日期，completedDate label 改「課程結業日期」）；已核准學員改卡片 grid（單/雙欄，**移除 Email**）；編輯按鈕改 IconEdit＋「編輯」（`common.edit`）。無 migration
 - `cr-spec-260623-001` — 廢除課程清單頁面 `/course-sessions`：刪除使用者端「開課查詢頁」（孤兒頁，站內無入口；功能由 `/user/[spiritId]/courses` 承接）＋移除 `course.sessions.*` i18n；命中網址走友善 404、不轉導。保留 `CourseSessionCard`、`lib/data/course-sessions.ts` 與後台 `/admin/course-sessions`。無 migration
 - `cr-spec-260703-001` — 紀錄開始上課日期＋課程時間顯示與編輯：開始上課改為講師自選**開課日期**（按鈕上方 date 欄位，預設今天、不可未來）＋**確認視窗**（顯示日期與已核准人數，確認才執行），`startCourseSession(inviteId, startDate)` 以所選日期寫入 `startedAt`；課程頁基本資訊區顯示**開始上課日期**（已開始）與**結業日期**（已結業，`course.detail.startedDate/completedDate` i18n）；「編輯課程資訊」由僅招生中改**依 DB 狀態白名單**——招生中五欄不變、進行中改名稱＋開始日期、已結業再加結業日期（`editStartedCourseInfoSchema`／`editCompletedCourseInfoSchema`：日期不可未來、結業不可早於開始）、已取消拒絕；不連動學員個人 `graduatedAt`。三份手冊同步。無 migration

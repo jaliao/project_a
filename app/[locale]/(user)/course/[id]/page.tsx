@@ -19,6 +19,8 @@ import {
   IconClock,
   IconStar,
   IconStarFilled,
+  IconInfoCircle,
+  IconCertificate,
 } from '@tabler/icons-react'
 import { getTranslations } from 'next-intl/server'
 import { auth } from '@/lib/auth'
@@ -215,7 +217,10 @@ export default async function CourseDetailPage({
         const nonGraduated = courseSession.approvedEnrollments.filter((e) => !e.graduatedAt)
         return (
           <div className="rounded-lg border border-green-200 bg-green-50 p-5 space-y-4">
-            <h2 className="text-sm font-medium text-green-800">{t('course.detail.gradInfo')}</h2>
+            <div className="flex items-center gap-2">
+              <IconCertificate className="h-5 w-5 text-green-700" />
+              <h2 className="text-base font-semibold">{t('course.detail.gradInfo')}</h2>
+            </div>
             {/* 最後一堂課程日期 */}
             <div className="text-sm">
               <span className="text-green-700">{t('course.detail.lastClassDate')}</span>
@@ -297,7 +302,10 @@ export default async function CourseDetailPage({
 
       {/* 基本資訊區塊 */}
       <div className="rounded-lg border p-5 space-y-3">
-        <h2 className="text-sm font-medium text-muted-foreground">{t('course.detail.basicInfo')}</h2>
+        <div className="flex items-center gap-2">
+          <IconInfoCircle className="h-5 w-5 text-primary" />
+          <h2 className="text-base font-semibold">{t('course.detail.basicInfo')}</h2>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           {/* 授課老師 */}
           <div className="flex items-start gap-2">
@@ -368,9 +376,12 @@ export default async function CourseDetailPage({
 
       {/* 已核准學員名單 */}
       <div className="rounded-lg border p-5 space-y-4">
-        <h2 className="text-sm font-medium text-muted-foreground">
-          {t('course.detail.approvedCount', { count: courseSession.approvedEnrollments.length })}
-        </h2>
+        <div className="flex items-center gap-2">
+          <IconUsers className="h-5 w-5 text-primary" />
+          <h2 className="text-base font-semibold">
+            {t('course.detail.approvedCount', { count: courseSession.approvedEnrollments.length })}
+          </h2>
+        </div>
         {courseSession.approvedEnrollments.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t('course.detail.noApproved')}</p>
         ) : (
