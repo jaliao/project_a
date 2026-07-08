@@ -22,7 +22,7 @@ import {
 } from '@tabler/icons-react'
 import { getTranslations } from 'next-intl/server'
 import { auth } from '@/lib/auth'
-import { canTeachAny, canAccessAdmin } from '@/lib/auth-roles'
+import { canAccessAdmin } from '@/lib/auth-roles'
 import { getAdminSetting, CLASS_MAX_CAPACITY_KEY, CLASS_MAX_CAPACITY_DEFAULT } from '@/lib/data/admin-settings'
 import { getDefaultBookNameForUser, getUnassignedBookItems } from '@/lib/data/material-items'
 import { getCourseSessionById, getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
@@ -100,8 +100,9 @@ export default async function CourseDetailPage({
     Math.max(1, parseInt(await getAdminSetting(CLASS_MAX_CAPACITY_KEY, CLASS_MAX_CAPACITY_DEFAULT), 10) || 7)
   )
 
-  // 結業資訊區塊可見性：僅管理者或講師可查閱（一般會員／學員不顯示）
-  const canViewGraduation = canTeachAny(userSession?.user?.roles)
+  // 結業資訊區塊可見性：僅該課程授課老師（建立者）或管理者可查閱
+  // （他班講師／持講師身分的學員／一般會員一律不顯示，勿用 canTeachAny）
+  const canViewGraduation = isInstructor || isAdmin
 
   // 課程 FAQ 留言（1 對 1 可見性：老師見全部、其他會員僅見自己的提問串）
   const faqMessages = await getCourseMessages(courseSession.id, {
@@ -158,37 +159,39 @@ export default async function CourseDetailPage({
         {t('common.backToHome')}
       </Link>
 
-      {/* 頁首：標題 + 狀態標籤 + 分享按鈕 */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h1 className="text-2xl font-semibold">{courseSession.title}</h1>
-          {/* TODO CourseCatalogBadge 和 CourseStatusBadge 大小要一樣， */}
-          <CourseCatalogBadge catalogId={courseSession.courseCatalogId} label={levelLabel} size="sm" />
-          {courseStatus && <CourseStatusBadge status={courseStatus} size="sm" />}
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {/* 講師/管理者功能：編輯課程資訊（招生中）＋ 分享按鈕，置於右上 */}
-          {canEditInfo && !isCancelled && (
-            <EditCourseInfoDialog
-              inviteId={courseSession.id}
-              approvedCount={courseSession.approvedEnrollments.length}
-              capacity={classMaxCapacity}
-              isAdmin={isAdmin}
-              state={isCompleted ? 'completed' : courseSession.startedAt ? 'started' : 'recruiting'}
-              initial={{
-                title: courseSession.title,
-                maxCount: courseSession.maxCount,
-                expiredAt: courseSession.expiredAt,
-                courseDate: courseSession.courseDate,
-                notes: courseSession.notes,
-                startedAt: courseSession.startedAt,
-                completedAt: courseSession.completedAt,
-              }}
-            />
-          )}
-          {isInstructor && (
-            <CopyInviteLinkButton courseId={courseSession.id} />
-          )}
+      {/* 頁首：標題獨立成行（不被標籤/按鈕擠壓折行），下一列標籤＋操作按鈕 */}
+      <div className="space-y-2">
+        <h1 className="text-2xl font-semibold">{courseSession.title}</h1>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* TODO CourseCatalogBadge 和 CourseStatusBadge 大小要一樣， */}
+            <CourseCatalogBadge catalogId={courseSession.courseCatalogId} label={levelLabel} size="sm" />
+            {courseStatus && <CourseStatusBadge status={courseStatus} size="sm" />}
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {/* 講師/管理者功能：編輯課程資訊＋分享按鈕 */}
+            {canEditInfo && !isCancelled && (
+              <EditCourseInfoDialog
+                inviteId={courseSession.id}
+                approvedCount={courseSession.approvedEnrollments.length}
+                capacity={classMaxCapacity}
+                isAdmin={isAdmin}
+                state={isCompleted ? 'completed' : courseSession.startedAt ? 'started' : 'recruiting'}
+                initial={{
+                  title: courseSession.title,
+                  maxCount: courseSession.maxCount,
+                  expiredAt: courseSession.expiredAt,
+                  courseDate: courseSession.courseDate,
+                  notes: courseSession.notes,
+                  startedAt: courseSession.startedAt,
+                  completedAt: courseSession.completedAt,
+                }}
+              />
+            )}
+            {isInstructor && (
+              <CopyInviteLinkButton courseId={courseSession.id} />
+            )}
+          </div>
         </div>
       </div>
 
@@ -307,12 +310,32 @@ export default async function CourseDetailPage({
               )}
             </div>
           </div>
+          {/* 報名人數 */}
+          <div className="flex items-start gap-2">
+            <IconUsers className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+            <div>
+              <p className="text-xs text-muted-foreground">{t('course.detail.enrollCountLabel')}</p>
+              <p className="font-medium">
+                {courseSession.approvedEnrollments.length} / {courseSession.maxCount} {t('course.detail.peopleSuffix')}
+              </p>
+            </div>
+          </div>
           {/* 預計開課日期 */}
           <div className="flex items-start gap-2">
             <IconCalendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
             <div>
               <p className="text-xs text-muted-foreground">{t('course.detail.expectedStartDate')}</p>
               <p className="font-medium">{courseSession.courseDate ?? '—'}</p>
+            </div>
+          </div>
+          {/* 報名截止日期 */}
+          <div className="flex items-start gap-2">
+            <IconClock className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+            <div>
+              <p className="text-xs text-muted-foreground">{t('course.detail.enrollDeadline')}</p>
+              <p className="font-medium">
+                {courseSession.expiredAt ? formatDate(courseSession.expiredAt) : '—'}
+              </p>
             </div>
           </div>
           {/* 開始上課日期（已開始才顯示） */}
@@ -325,7 +348,7 @@ export default async function CourseDetailPage({
               </div>
             </div>
           )}
-          {/* 結業日期（已結業才顯示） */}
+          {/* 課程結業日期（已結業才顯示） */}
           {courseSession.completedAt && (
             <div className="flex items-start gap-2">
               <IconCalendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
@@ -335,26 +358,6 @@ export default async function CourseDetailPage({
               </div>
             </div>
           )}
-          {/* 報名截止日期 */}
-          <div className="flex items-start gap-2">
-            <IconClock className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-            <div>
-              <p className="text-xs text-muted-foreground">{t('course.detail.enrollDeadline')}</p>
-              <p className="font-medium">
-                {courseSession.expiredAt ? formatDate(courseSession.expiredAt) : '—'}
-              </p>
-            </div>
-          </div>
-          {/* 人數 */}
-          <div className="flex items-start gap-2">
-            <IconUsers className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-            <div>
-              <p className="text-xs text-muted-foreground">{t('course.detail.enrollCountLabel')}</p>
-              <p className="font-medium">
-                {courseSession.approvedEnrollments.length} / {courseSession.maxCount} {t('course.detail.peopleSuffix')}
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -371,18 +374,14 @@ export default async function CourseDetailPage({
         {courseSession.approvedEnrollments.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t('course.detail.noApproved')}</p>
         ) : (
-          <ul className="divide-y">
+          /* 卡片式排版（手機單欄、寬視窗雙欄）；不顯示學員 Email */
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {courseSession.approvedEnrollments.map((enrollment) => (
-              <li key={enrollment.id} className="flex items-center justify-between py-3">
-                <div>
-                  <p className="text-sm font-medium">
-                    {getMemberDisplayName(enrollment.user)}
-                  </p>
-                  {enrollment.user.email && (
-                    <p className="text-xs text-muted-foreground">{enrollment.user.email}</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-3">
+              <li key={enrollment.id} className="rounded-lg border p-3 space-y-1.5">
+                <p className="text-sm font-medium">
+                  {getMemberDisplayName(enrollment.user)}
+                </p>
+                <div className="flex items-center justify-between gap-2">
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${MATERIAL_COLORS[enrollment.materialChoice] ?? 'bg-gray-100 text-gray-600'
                       }`}

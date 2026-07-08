@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.127（2026-07-08）
+> 自動產生，版本 0.1.128（2026-07-08）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -375,6 +375,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260708-002` — 課程資訊頁手機版優化＋結業資訊可見性修正：**權限收斂**——課程詳情頁結業資訊由 `canTeachAny`（任一講師身分可見任何課程）改 `isInstructor || isAdmin`（僅該課授課老師/管理者；spec `course-graduation-info` 同步 MODIFIED）。手機版：頁首標題獨立成行（不被標籤/按鈕擠壓）、標籤與按鈕列下移同列兩端對齊；「基本資訊」改「課程基本資訊」＋欄位序（授課老師→報名人數→預計開課→報名截止→開始上課→課程結業日期，completedDate label 改「課程結業日期」）；已核准學員改卡片 grid（單/雙欄，**移除 Email**）；編輯按鈕改 IconEdit＋「編輯」（`common.edit`）。無 migration
 - `cr-spec-260623-001` — 廢除課程清單頁面 `/course-sessions`：刪除使用者端「開課查詢頁」（孤兒頁，站內無入口；功能由 `/user/[spiritId]/courses` 承接）＋移除 `course.sessions.*` i18n；命中網址走友善 404、不轉導。保留 `CourseSessionCard`、`lib/data/course-sessions.ts` 與後台 `/admin/course-sessions`。無 migration
 - `cr-spec-260703-001` — 紀錄開始上課日期＋課程時間顯示與編輯：開始上課改為講師自選**開課日期**（按鈕上方 date 欄位，預設今天、不可未來）＋**確認視窗**（顯示日期與已核准人數，確認才執行），`startCourseSession(inviteId, startDate)` 以所選日期寫入 `startedAt`；課程頁基本資訊區顯示**開始上課日期**（已開始）與**結業日期**（已結業，`course.detail.startedDate/completedDate` i18n）；「編輯課程資訊」由僅招生中改**依 DB 狀態白名單**——招生中五欄不變、進行中改名稱＋開始日期、已結業再加結業日期（`editStartedCourseInfoSchema`／`editCompletedCourseInfoSchema`：日期不可未來、結業不可早於開始）、已取消拒絕；不連動學員個人 `graduatedAt`。三份手冊同步。無 migration
 - `cr-spec-260707-002` — 設定 Mailchimp SMTP（正式環境寄信）：正式環境 SMTP 切換 Mailchimp Transactional（Mandrill）——`smtp.mandrillapp.com:587`（STARTTLS）、帳號 `notice@kuaglobal.org`、寄件人 `no-reply@activate.kuaglobal.org`、`SMTP_PASS`＝Mandrill API key（管理者於正式 `.env` 自行設定、不進版控）。新增 `smtp-transport-config` spec 正式化「SMTP 設定全由環境變數驅動」規則；程式碼零邏輯變更（`lib/mailer.ts` 僅註解一般化）、`.env.example` 改 Mandrill 示例。部署前置：Mandrill 後台完成 `activate.kuaglobal.org` SPF/DKIM 網域驗證。無 migration

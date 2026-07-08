@@ -13,6 +13,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
+import { IconEdit } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -114,7 +115,8 @@ export function EditCourseInfoDialog({ inviteId, approvedCount, capacity = 7, is
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          {t('course.editInfo.title')}
+          <IconEdit className="h-4 w-4" />
+          {t('common.edit')}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
