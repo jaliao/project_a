@@ -71,18 +71,18 @@ export function CourseSessionCard({
         href && 'cursor-pointer transition-shadow hover:shadow-md'
       )}
     >
-      {/* 標題、等級、狀態 */}
-      <div className="flex items-start justify-between gap-2">
-        <p className={cn('font-semibold text-sm', variant === 'full' && 'text-base')}>
-          {title}
-        </p>
-        <div className="flex shrink-0 items-center gap-1.5">
+      {/* 標籤列（標題上方）、標題獨占一行不折行擠壓 */}
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {showMatchBadge && (
             <Badge className="bg-emerald-600 text-white hover:bg-emerald-600 text-xs">{t('publicRecruiting')}</Badge>
           )}
           <CourseCatalogBadge catalogId={courseCatalogId} label={courseCatalogLabel} size="sm" />
           {status && <CourseStatusBadge status={status} size="sm" />}
         </div>
+        <p className={cn('font-semibold text-sm', variant === 'full' && 'text-base')}>
+          {title}
+        </p>
       </div>
 
       {/* 資訊列 */}

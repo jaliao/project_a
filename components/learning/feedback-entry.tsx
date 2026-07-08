@@ -105,41 +105,30 @@ export function LearningRecordsPanel({
 
   return (
     <section className="space-y-3">
-      {/* 我的課程狀態（僅本人可見） */}
+      {/* 我的課程狀態（僅本人可見）：卡片式（手機可讀，取代表格） */}
       {records.length > 0 && (
-        <div className="overflow-hidden rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr className="text-left text-muted-foreground">
-                <th className="px-4 py-2.5 font-medium">{t('colCourse')}</th>
-                <th className="px-4 py-2.5 font-medium">{t('colTeacher')}</th>
-                <th className="px-4 py-2.5 font-medium">{t('colStatus')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {records.map((r) => (
-                <tr key={r.enrollmentId}>
-                  <td className="px-4 py-3 font-medium">{r.title}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{r.teacherName}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <RecordStatusBadge status={r.status} label={t(`recordStatus_${r.status}`)} />
-                      {r.status === 'not_graduated' && (
-                        <button
-                          type="button"
-                          onClick={() => openReport(r)}
-                          className="text-xs text-primary underline-offset-2 hover:underline"
-                        >
-                          {t('reportButton')}
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ul className="space-y-2">
+          {records.map((r) => (
+            <li key={r.enrollmentId} className="rounded-lg border p-3 space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-medium">{r.title}</p>
+                <RecordStatusBadge status={r.status} label={t(`recordStatus_${r.status}`)} />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-muted-foreground">{r.teacherName}</p>
+                {r.status === 'not_graduated' && (
+                  <button
+                    type="button"
+                    onClick={() => openReport(r)}
+                    className="text-xs text-primary underline-offset-2 hover:underline"
+                  >
+                    {t('reportButton')}
+                  </button>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
 
       {/* 遺失學習歷程入口 */}
@@ -150,35 +139,25 @@ export function LearningRecordsPanel({
         </Button>
       </div>
 
-      {/* 我送出的回饋 */}
+      {/* 我送出的回饋：卡片式（手機可讀，取代表格） */}
       {myFeedbacks.length > 0 && (
-        <div className="overflow-hidden rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr className="text-left text-muted-foreground">
-                <th className="px-4 py-2.5 font-medium">{t('colCategory')}</th>
-                <th className="px-4 py-2.5 font-medium">{t('colCourse')}</th>
-                <th className="px-4 py-2.5 font-medium">{t('colTeacher')}</th>
-                <th className="px-4 py-2.5 font-medium">{t('colStatus')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {myFeedbacks.map((f) => (
-                <tr key={f.id}>
-                  <td className="px-4 py-3">{t(`category_${f.category}`)}</td>
-                  <td className="px-4 py-3">{f.courseCatalogLabel}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{f.teacherName}</td>
-                  <td className="px-4 py-3">
-                    <FeedbackStatusBadge status={f.status} label={t(`status_${f.status}`)} />
-                    {f.status === 'rejected' && f.adminNote ? (
-                      <span className="mt-1 block text-xs text-muted-foreground">{f.adminNote}</span>
-                    ) : null}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ul className="space-y-2">
+          {myFeedbacks.map((f) => (
+            <li key={f.id} className="rounded-lg border p-3 space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-medium">
+                  {t(`category_${f.category}`)}
+                  <span className="ml-2 text-muted-foreground font-normal">{f.courseCatalogLabel}</span>
+                </p>
+                <FeedbackStatusBadge status={f.status} label={t(`status_${f.status}`)} />
+              </div>
+              <p className="text-xs text-muted-foreground">{f.teacherName}</p>
+              {f.status === 'rejected' && f.adminNote ? (
+                <p className="text-xs text-muted-foreground">{f.adminNote}</p>
+              ) : null}
+            </li>
+          ))}
+        </ul>
       )}
 
       {/* 回饋表單 */}

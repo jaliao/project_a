@@ -14,4 +14,4 @@
 ## 3. 驗證
 
 - [x] 3.1 `npm run lint` 與 `npm run build` 通過
-- [ ] 3.2 手動驗證：命中 `/course-sessions` 顯示友善 404；match-board、個人頁、我的授課（CourseSessionCard 使用處）正常
+- [x] 3.2 手動驗證：命中 `/course-sessions` 顯示友善 404；match-board、個人頁、我的授課（CourseSessionCard 使用處）正常

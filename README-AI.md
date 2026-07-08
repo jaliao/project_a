@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.130（2026-07-08）
+> 自動產生，版本 0.1.131（2026-07-08）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -375,6 +375,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260708-004` — 手機排版優化第二輪：`CourseSessionCard` 標籤列移標題**上方**、標題獨占一行不折行（三使用處同步受益）；學習紀錄面板兩個 `<table>`（結業狀態＋我的回饋）改卡片列（`feedback-entry.tsx`，行為與 i18n 不變）；課程頁頁首改「第一列標籤（sm）、第二列標題獨占一行」，**編輯/複製邀請連結按鈕移至課程基本資訊卡片內底部一列**（頁首不放按鈕）；「結業」改預設主色按鈕（與開始上課一致）、FAQ 送出提問/回覆改預設尺寸＋兩個 Textarea 限縮 text-sm（shadcn 手機預設 text-base 過大）。**排版定案：標籤列在標題上方（sm）、操作按鈕在基本資訊卡下方**。純樣式、無 migration。spec：course-session-card／course-session-detail（頁首 MODIFIED＋按鈕一致 ADDED）／learning-record-feedback
 - `cr-spec-260708-003` — 課程頁面字體大小標準化：課程詳情頁各區塊標題統一為學員頁面標準（icon `h-5 w-5 text-primary`＋`text-base font-semibold`）——課程基本資訊/結業資訊（icon 綠色系）/已核准學員/待審申請（amber）/講師操作區四塊（`Section` 加 `icon` prop）/公開媒合/FAQ；內文 `text-sm`、輔助與時間戳 `text-xs` muted。StudentApplySection 為狀態橫幅無標題、不動。純樣式、無 migration。spec：`course-session-detail` ADDED「區塊標題與內文字體標準」
 - `cr-spec-260708-001` — Footer 版本資訊＋語言切換移入個人資料：`version.json` 新增 `updatedAt`（隨 patch +1 同步更新）；新增 `components/layout/footer.tsx`（server 元件、`v{version} · {updatedAt}` 語言中立免 i18n）掛 `(user)`/`(admin)` layout（免登入頁與訪客精簡版面不顯示）；`LanguageSwitcher` 自 Topbar 移除、個人資料頁新增「語言設定」卡（`language.settings` key），登入頁保留；CLAUDE.md 第 7 點同步。spec：新 `footer-version-info`、`language-switcher` MODIFIED。無 migration
 - `cr-spec-260708-002` — 課程資訊頁手機版優化＋結業資訊可見性修正：**權限收斂**——課程詳情頁結業資訊由 `canTeachAny`（任一講師身分可見任何課程）改 `isInstructor || isAdmin`（僅該課授課老師/管理者；spec `course-graduation-info` 同步 MODIFIED）。手機版：頁首標題獨立成行（不被標籤/按鈕擠壓）、標籤與按鈕列下移同列兩端對齊；「基本資訊」改「課程基本資訊」＋欄位序（授課老師→報名人數→預計開課→報名截止→開始上課→課程結業日期，completedDate label 改「課程結業日期」）；已核准學員改卡片 grid（單/雙欄，**移除 Email**）；編輯按鈕改 IconEdit＋「編輯」（`common.edit`）。無 migration

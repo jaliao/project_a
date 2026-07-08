@@ -161,40 +161,13 @@ export default async function CourseDetailPage({
         {t('common.backToHome')}
       </Link>
 
-      {/* 頁首：標題獨立成行（不被標籤/按鈕擠壓折行），下一列標籤＋操作按鈕 */}
+      {/* 頁首：第一列標籤（標題上方），第二列標題獨占一行不折行擠壓；操作按鈕移至課程基本資訊卡片下方 */}
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold">{courseSession.title}</h1>
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* TODO CourseCatalogBadge 和 CourseStatusBadge 大小要一樣， */}
-            <CourseCatalogBadge catalogId={courseSession.courseCatalogId} label={levelLabel} size="sm" />
-            {courseStatus && <CourseStatusBadge status={courseStatus} size="sm" />}
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {/* 講師/管理者功能：編輯課程資訊＋分享按鈕 */}
-            {canEditInfo && !isCancelled && (
-              <EditCourseInfoDialog
-                inviteId={courseSession.id}
-                approvedCount={courseSession.approvedEnrollments.length}
-                capacity={classMaxCapacity}
-                isAdmin={isAdmin}
-                state={isCompleted ? 'completed' : courseSession.startedAt ? 'started' : 'recruiting'}
-                initial={{
-                  title: courseSession.title,
-                  maxCount: courseSession.maxCount,
-                  expiredAt: courseSession.expiredAt,
-                  courseDate: courseSession.courseDate,
-                  notes: courseSession.notes,
-                  startedAt: courseSession.startedAt,
-                  completedAt: courseSession.completedAt,
-                }}
-              />
-            )}
-            {isInstructor && (
-              <CopyInviteLinkButton courseId={courseSession.id} />
-            )}
-          </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <CourseCatalogBadge catalogId={courseSession.courseCatalogId} label={levelLabel} size="sm" />
+          {courseStatus && <CourseStatusBadge status={courseStatus} size="sm" />}
         </div>
+        <h1 className="text-2xl font-semibold">{courseSession.title}</h1>
       </div>
 
       {/* 取消原因 */}
@@ -367,6 +340,33 @@ export default async function CourseDetailPage({
             </div>
           )}
         </div>
+
+        {/* 操作按鈕：編輯課程資訊＋複製邀請連結（自頁首移入） */}
+        {((canEditInfo && !isCancelled) || isInstructor) && (
+          <div className="flex items-center gap-2 pt-1">
+            {canEditInfo && !isCancelled && (
+              <EditCourseInfoDialog
+                inviteId={courseSession.id}
+                approvedCount={courseSession.approvedEnrollments.length}
+                capacity={classMaxCapacity}
+                isAdmin={isAdmin}
+                state={isCompleted ? 'completed' : courseSession.startedAt ? 'started' : 'recruiting'}
+                initial={{
+                  title: courseSession.title,
+                  maxCount: courseSession.maxCount,
+                  expiredAt: courseSession.expiredAt,
+                  courseDate: courseSession.courseDate,
+                  notes: courseSession.notes,
+                  startedAt: courseSession.startedAt,
+                  completedAt: courseSession.completedAt,
+                }}
+              />
+            )}
+            {isInstructor && (
+              <CopyInviteLinkButton courseId={courseSession.id} />
+            )}
+          </div>
+        )}
       </div>
 
       {/* 講師：待審申請 */}

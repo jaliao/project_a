@@ -414,11 +414,11 @@ export function CourseDetailActions({
       {isStarted && (
         <Section title="結業作業" icon={<IconCertificate className="h-5 w-5 text-primary" />}>
           {hasApprovedStudents ? (
-            <Button variant="outline" asChild>
+            <Button asChild>
               <Link href={`/course/${inviteId}/graduate`}>結業</Link>
             </Button>
           ) : (
-            <Button variant="outline" onClick={() => toast.error('尚無已核准學員，無法結業')}>
+            <Button onClick={() => toast.error('尚無已核准學員，無法結業')}>
               結業
             </Button>
           )}

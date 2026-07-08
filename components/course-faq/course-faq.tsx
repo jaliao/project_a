@@ -134,9 +134,10 @@ function ReplyForm({ parentId }: { parentId: number }) {
         placeholder={t('replyPlaceholder')}
         rows={2}
         disabled={isPending}
+        className="text-sm"
       />
       <div className="flex justify-end">
-        <Button size="sm" onClick={handleSubmit} disabled={isPending}>
+        <Button onClick={handleSubmit} disabled={isPending}>
           {isPending ? t('submitting') : t('submitReply')}
         </Button>
       </div>
@@ -184,9 +185,10 @@ export function CourseFaq({ inviteId, currentUserId, isInstructor, messages }: C
           placeholder={t('askPlaceholder')}
           rows={3}
           disabled={isPending}
+          className="text-sm"
         />
         <div className="flex justify-end">
-          <Button size="sm" onClick={handleAsk} disabled={isPending}>
+          <Button onClick={handleAsk} disabled={isPending}>
             {isPending ? t('submitting') : t('submitAsk')}
           </Button>
         </div>
