@@ -3,14 +3,16 @@
 # ----------------------------------------------
 
 # 1) Base Image
-FROM node:22-alpine AS base
+# slim（Debian/glibc）而非 alpine：Next 16 Turbopack 需要原生 SWC binding，
+# alpine(musl) 下 npm 誤裝 gnu 版且 Turbopack 不支援 WASM fallback（build 必炸）；與 Dockerfile.dev 一致
+FROM node:22-slim AS base
 WORKDIR /app
 
-# Prisma on Alpine 常見需要的 runtime 依賴
-RUN apk add --no-cache \
-    libc6-compat \
+# Prisma 需要的 runtime 依賴
+RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
-    ca-certificates
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 # ========================================================
 # 2) 依賴安裝階段
@@ -53,13 +55,14 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
-# 建立系統使用者
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser  --system --uid 1001 nextjs
+# 建立系統使用者（Debian 語法）
+RUN groupadd --system --gid 1001 nodejs && \
+    useradd  --system --uid 1001 --gid nodejs nextjs
 
 # 時區（可選）
-RUN apk add --no-cache tzdata && \
-    cp /usr/share/zoneinfo/Asia/Taipei /etc/localtime
+RUN apt-get update && apt-get install -y --no-install-recommends tzdata \
+    && ln -sf /usr/share/zoneinfo/Asia/Taipei /etc/localtime \
+    && rm -rf /var/lib/apt/lists/*
 
 # Next standalone output
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
