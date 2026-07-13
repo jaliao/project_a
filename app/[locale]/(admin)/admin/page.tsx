@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 管理後台首頁
- * 2026-03-24 (Updated: 2026-04-01)
+ * 2026-03-24 (Updated: 2026-07-13)
  * app/(user)/admin/page.tsx
  * ----------------------------------------------
  */
@@ -93,7 +93,7 @@ const ADMIN_FEATURES = [
     description: '調整系統全域參數',
     icon: IconSettings,
     href: '/admin/settings',
-    superadminOnly: true,
+    superadminOnly: false,
   },
 ]
 

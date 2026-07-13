@@ -77,7 +77,7 @@ export default async function NotificationsPage({ params, searchParams }: PagePr
                     <p className={cn('text-sm font-medium', n.isRead && 'text-muted-foreground')}>
                       {n.title}
                     </p>
-                    <p className="text-sm text-muted-foreground mt-0.5">
+                    <p className="text-sm text-muted-foreground mt-0.5 whitespace-pre-wrap">
                       {n.body}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">

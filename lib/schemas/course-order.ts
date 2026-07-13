@@ -89,6 +89,21 @@ export const shipmentItemSchema = z
 
 export type ShipmentItemValues = z.infer<typeof shipmentItemSchema>
 
+// ── 寬鬆版寄送項目（僅定義欄位形狀，無必填/min 限制）──────────────────
+// 與 shipmentItemSchema 欄位一一對應（嚴格版為驗證的單一事實來源）。
+// materialOrderSchema 以此接收表單殘留資料：single 模式下切換模式殘留的
+// 多地址列不得觸發驗證；multiple 模式的逐列嚴格驗證改於 superRefine 內
+// 以 shipmentItemSchema.safeParse 執行（見下方 materialOrderSchema）
+const shipmentItemLooseSchema = z.object({
+  recipientName: z.string(),
+  recipientPhone: z.string(),
+  deliveryMethod: z.enum(['sevenEleven', 'familyMart', 'delivery']),
+  deliveryAddress: z.string().optional(),
+  storeId: z.string().optional(),
+  storeName: z.string().optional(),
+  enrollmentIds: z.array(z.number().int()),
+})
+
 // ── 教材申請 Schema（學員僅填取貨資訊，其餘由 Server Action 自動帶入）────
 // 支援 single（單一地址，現行流程）與 multiple（多地址批次）兩種寄送模式
 export const materialOrderSchema = z
@@ -103,14 +118,29 @@ export const materialOrderSchema = z
     deliveryAddress: z.string().optional(),
     storeId: z.string().optional(),
     storeName: z.string().optional(),
-    // 多地址批次
-    shipments: z.array(shipmentItemSchema).optional(),
+    // 多地址批次（寬鬆版：逐列必填驗證僅於 multiple 模式在 superRefine 執行）
+    shipments: z.array(shipmentItemLooseSchema).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.shipMode === 'multiple') {
       if (!data.shipments || data.shipments.length === 0) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: '請至少新增一個寄送地址', path: ['shipments'] })
+        return
       }
+      // 逐列以嚴格版驗證並轉發 issues（path 對回 shipments[i].<欄位>）；
+      // single 模式不進此分支，殘留列不驗證、不阻擋送出
+      data.shipments.forEach((item, i) => {
+        const result = shipmentItemSchema.safeParse(item)
+        if (!result.success) {
+          for (const issue of result.error.issues) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: issue.message,
+              path: ['shipments', i, ...issue.path],
+            })
+          }
+        }
+      })
       return
     }
     // single：取貨方式必填 + 對應門市/地址

@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * Server Actions - 後台系統設定
- * 2026-04-02
+ * 2026-04-02 (Updated: 2026-07-13)
  * app/actions/admin-settings.ts
  * ----------------------------------------------
  */
@@ -10,7 +10,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { auth } from '@/lib/auth'
-import { isSuperadmin } from '@/lib/auth-roles'
+import { canAccessAdmin } from '@/lib/auth-roles'
 import {
   upsertAdminSetting,
   REMITTANCE_ACCOUNT_KEY,
@@ -27,7 +27,7 @@ export type ActionResponse = {
 
 export async function updateHierarchyDepth(depth: number): Promise<ActionResponse> {
   const session = await auth()
-  if (!isSuperadmin(session?.user?.roles)) {
+  if (!canAccessAdmin(session?.user?.roles)) {
     return { success: false, message: '權限不足' }
   }
 
@@ -46,7 +46,7 @@ export async function updateHierarchyDepth(depth: number): Promise<ActionRespons
 
 export async function updateClassMaxCapacity(capacity: number): Promise<ActionResponse> {
   const session = await auth()
-  if (!isSuperadmin(session?.user?.roles)) {
+  if (!canAccessAdmin(session?.user?.roles)) {
     return { success: false, message: '權限不足' }
   }
 
@@ -62,7 +62,7 @@ export async function updateClassMaxCapacity(capacity: number): Promise<ActionRe
 
 export async function updateRemittanceAccount(account: string): Promise<ActionResponse> {
   const session = await auth()
-  if (!isSuperadmin(session?.user?.roles)) {
+  if (!canAccessAdmin(session?.user?.roles)) {
     return { success: false, message: '權限不足' }
   }
 
@@ -82,7 +82,7 @@ export async function updateGraduationEmailTemplate(
   body: string
 ): Promise<ActionResponse> {
   const session = await auth()
-  if (!isSuperadmin(session?.user?.roles)) {
+  if (!canAccessAdmin(session?.user?.roles)) {
     return { success: false, message: '權限不足' }
   }
 

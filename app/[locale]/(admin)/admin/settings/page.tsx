@@ -1,14 +1,12 @@
 /*
  * ----------------------------------------------
  * 後台系統設定頁
- * 2026-04-02 (Updated: 2026-04-03)
+ * 2026-04-02 (Updated: 2026-07-13)
  * app/(user)/admin/settings/page.tsx
  * ----------------------------------------------
  */
 
 import type { Metadata } from 'next'
-import { auth } from '@/lib/auth'
-import { isSuperadmin } from '@/lib/auth-roles'
 import {
   getAdminSetting,
   REMITTANCE_ACCOUNT_KEY,
@@ -35,9 +33,7 @@ export default async function AdminSettingsPage({
 }: {
   searchParams: Promise<{ tab?: string }>
 }) {
-  // 登入 + admin 守衛由 (admin)/layout.tsx 處理；此處 session 供 superadmin 分頁判定
-  const session = await auth()
-
+  // 登入 + admin 守衛由 (admin)/layout.tsx 處理
   const { tab } = await searchParams
   const activeTab = tab === 'churches' ? 'churches' : tab === 'courses' ? 'courses' : 'basic'
 
@@ -64,7 +60,6 @@ export default async function AdminSettingsPage({
       <h1 className="text-2xl font-semibold">系統設定</h1>
       <SettingsTabs
         activeTab={activeTab}
-        isSuperadmin={isSuperadmin(session?.user?.roles)}
         currentDepth={currentDepth}
         classMaxCapacity={classMaxCapacity}
         remittanceAccount={remittanceAccount}

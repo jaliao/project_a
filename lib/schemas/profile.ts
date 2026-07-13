@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * Zod 驗證 Schema - 個人資料相關
- * 2026-03-23
+ * 2026-03-23 (Updated: 2026-07-13)
  * lib/schemas/profile.ts
  * ----------------------------------------------
  */
@@ -9,6 +9,9 @@
 import { z } from 'zod'
 
 // 驗證訊息為 i18n key（validation.* 命名空間），由呈現端 t() 翻譯（見 CLAUDE.md 第 12 點）
+
+// 手機號碼：台灣 09 開頭 10 碼，或 E.164 國際格式（+ 開頭、國碼首位 1–9、共 8–15 位數字）
+const PHONE_REGEX = /^(09\d{8}|\+[1-9]\d{7,14})$/
 
 // 出生年合理區間：西元 1900 ~ 當年
 const BIRTH_YEAR_MIN = 1900
@@ -31,7 +34,7 @@ export const updateProfileSchema = z
     nickname: z.string().max(20, 'validation.nicknameMax20').optional(),
     phone: z
       .string()
-      .regex(/^(09\d{8}|\+8869\d{8})$/, 'validation.phoneInvalid')
+      .regex(PHONE_REGEX, 'validation.phoneInvalid')
       .optional()
       .or(z.literal('')),
     address: z.string().optional(),
@@ -61,7 +64,7 @@ export const onboardingProfileSchema = z
     phone: z
       .string()
       .trim()
-      .regex(/^(09\d{8}|\+8869\d{8})$/, 'validation.phoneInvalid'),
+      .regex(PHONE_REGEX, 'validation.phoneInvalid'),
     // 性別必填：須為男/女，不接受未指定
     gender: z.enum(['male', 'female'], { message: 'validation.genderRequired' }),
     // 出生年必填：合理西元年整數

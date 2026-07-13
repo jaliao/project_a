@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
- * 匯款帳號設定表單（教材繳費批價用）
- * 2026-06-21
+ * 匯款帳號資訊設定表單（教材繳費批價用）
+ * 2026-06-21 (Updated: 2026-07-13)
  * components/admin/remittance-account-form.tsx
  * ----------------------------------------------
  */
@@ -10,7 +10,7 @@
 
 import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { updateRemittanceAccount } from '@/app/actions/admin-settings'
 
 export function RemittanceAccountForm({ currentAccount }: { currentAccount: string }) {
@@ -27,7 +27,7 @@ export function RemittanceAccountForm({ currentAccount }: { currentAccount: stri
     startTransition(async () => {
       const result = await updateRemittanceAccount(value)
       if (result.success) {
-        setMessage(result.message ?? '匯款帳號已儲存')
+        setMessage(result.message ?? '匯款帳號資訊已儲存')
       } else {
         setError(result.errors?.account?.[0] ?? result.message ?? '儲存失敗')
       }
@@ -37,12 +37,12 @@ export function RemittanceAccountForm({ currentAccount }: { currentAccount: stri
   return (
     <form onSubmit={handleSubmit} className="flex items-end gap-3">
       <div className="space-y-1">
-        <Input
-          type="text"
+        <Textarea
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="w-56"
-          placeholder="例：08-2345-6789"
+          rows={4}
+          className="w-80"
+          placeholder={'例：\n第一銀行淡水分行\n戶名：希望之聲文化有限公司\n銀行代碼：007\n帳號：218-10-002087'}
         />
         {error && <p className="text-xs text-destructive">{error}</p>}
         {message && <p className="text-xs text-green-600">{message}</p>}

@@ -485,7 +485,7 @@ export async function quoteMaterialOrder(
     await createNotification(
       teacherId,
       '教材批價完成，請繳費',
-      `「${courseTitle}」教材費用為 NT$${amount}，請匯款至 ${account}，完成後回填匯款後五碼。`
+      `「${courseTitle}」教材費用為 NT$${amount}，請匯款至：\n${account}\n完成後請回填匯款後五碼。`
     )
   }
 

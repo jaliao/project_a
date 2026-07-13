@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
- * MaterialQuoteDialog - 教材批價對話框（金額＋匯款帳號）
- * 2026-06-21
+ * MaterialQuoteDialog - 教材批價對話框（金額＋匯款帳號資訊）
+ * 2026-06-21 (Updated: 2026-07-13)
  * components/admin/material-quote-dialog.tsx
  * ----------------------------------------------
  */
@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { quoteMaterialOrder } from '@/app/actions/course-order'
 
@@ -80,12 +81,12 @@ export function MaterialQuoteDialog({
             {errors.amount && <p className="text-xs text-destructive">{errors.amount}</p>}
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-medium">匯款帳號 *</label>
-            <Input
-              type="text"
+            <label className="text-sm font-medium">匯款帳號資訊 *</label>
+            <Textarea
               value={account}
               onChange={(e) => setAccount(e.target.value)}
-              placeholder="例：08-2345-6789"
+              rows={4}
+              placeholder={'例：\n第一銀行淡水分行\n戶名：希望之聲文化有限公司\n銀行代碼：007\n帳號：218-10-002087'}
             />
             {errors.account && <p className="text-xs text-destructive">{errors.account}</p>}
           </div>

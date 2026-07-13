@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.131（2026-07-08）
+> 自動產生，版本 0.1.137（2026-07-13）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -375,6 +375,10 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260713-005` — 略過 seed 合成信箱寄信：`lib/mailer.ts` 新增寄送守門 `sendMailSafe`＋匯出 `isUndeliverableEmail`——收件地址以 `@seed.iwillshare.org.tw` 結尾（名冊 seed 純學員合成信箱，必退信）時略過寄送記 log、不拋錯，五種信件（臨時密碼/通訊驗證/密碼重設/結業信/講師授權）統一涵蓋、呼叫端零修改；`resolveContactEmail` 不動——seed 帳號驗證真實通訊 Email 後信件自動恢復。無 migration。spec：新 `mail-skip-synthetic`
+- `cr-spec-260713-004` — 電話驗證支援國際號碼：`lib/schemas/profile.ts` 兩處 phone regex（個人資料選填＋onboarding Step 2 必填）抽共用常數 `PHONE_REGEX = /^(09\d{8}|\+[1-9]\d{7,14})$/`——台灣 09 格式 ∪ E.164（原 `+8869...` 分支被吸收），解除海外會員（如 `+12025550123`）onboarding 卡死；`validation.phoneInvalid`／`profile.phonePlaceholder` 文案更新（zh-TW/en，zh-CN 重新產生）。教材訂單聯絡電話本就僅驗非空、不動。無 migration。spec：新 `phone-validation`
+- `cr-spec-260713-002` — 後台基本設定開放 admin：`/admin/settings`「基本設定」四項（`hierarchy_depth`／`class_max_capacity`／`remittance_account`／結業信範本）由僅 superadmin 改 admin/superadmin 皆可——`admin-settings.ts` 四個 action `isSuperadmin`→`canAccessAdmin`；`settings-tabs.tsx` 移除 `isSuperadmin` prop 與分頁守衛（`(admin)` layout 為唯一守衛）；`page.tsx` 移除 `auth()`/`isSuperadmin`；後台首頁 `/admin`「系統設定」功能卡 `superadminOnly` 改 `false`（驗證發現的入口遺漏，v0.1.136 補修）。superadmin 僅存差異＝可授權 superadmin 身分。無 migration。spec：新 `admin-settings-access`、`graduation-email`／`material-order-payment` MODIFIED（歸檔順序須 -001 在前）
+- `cr-spec-260713-001` — 匯款帳號改多行「匯款帳號資訊」：`remittance_account` 設定與批價欄位由單行 Input 改 `Textarea`（rows=4），支援銀行分行/戶名/銀行代碼/帳號多行格式；預設值更新為第一銀行淡水分行（戶名：希望之聲文化有限公司、代碼 007、帳號 218-10-002087）；呈現端保留換行（`whitespace-pre-wrap`）——老師課程頁待付款區塊改獨立區塊、後台 `material-order-table` 詳情 label 上內容下、通知列表頁 body；批價通知內文改換行附帳號資訊。無 migration（String 欄直存多行）。spec：`material-order-payment`／`admin-material-management` MODIFIED
 - `cr-spec-260708-004` — 手機排版優化第二輪：`CourseSessionCard` 標籤列移標題**上方**、標題獨占一行不折行（三使用處同步受益）；學習紀錄面板兩個 `<table>`（結業狀態＋我的回饋）改卡片列（`feedback-entry.tsx`，行為與 i18n 不變）；課程頁頁首改「第一列標籤（sm）、第二列標題獨占一行」，**編輯/複製邀請連結按鈕移至課程基本資訊卡片內底部一列**（頁首不放按鈕）；「結業」改預設主色按鈕（與開始上課一致）、FAQ 送出提問/回覆改預設尺寸＋兩個 Textarea 限縮 text-sm（shadcn 手機預設 text-base 過大）。**排版定案：標籤列在標題上方（sm）、操作按鈕在基本資訊卡下方**。純樣式、無 migration。spec：course-session-card／course-session-detail（頁首 MODIFIED＋按鈕一致 ADDED）／learning-record-feedback
 - `cr-spec-260708-003` — 課程頁面字體大小標準化：課程詳情頁各區塊標題統一為學員頁面標準（icon `h-5 w-5 text-primary`＋`text-base font-semibold`）——課程基本資訊/結業資訊（icon 綠色系）/已核准學員/待審申請（amber）/講師操作區四塊（`Section` 加 `icon` prop）/公開媒合/FAQ；內文 `text-sm`、輔助與時間戳 `text-xs` muted。StudentApplySection 為狀態橫幅無標題、不動。純樣式、無 migration。spec：`course-session-detail` ADDED「區塊標題與內文字體標準」
 - `cr-spec-260708-001` — Footer 版本資訊＋語言切換移入個人資料：`version.json` 新增 `updatedAt`（隨 patch +1 同步更新）；新增 `components/layout/footer.tsx`（server 元件、`v{version} · {updatedAt}` 語言中立免 i18n）掛 `(user)`/`(admin)` layout（免登入頁與訪客精簡版面不顯示）；`LanguageSwitcher` 自 Topbar 移除、個人資料頁新增「語言設定」卡（`language.settings` key），登入頁保留；CLAUDE.md 第 7 點同步。spec：新 `footer-version-info`、`language-switcher` MODIFIED。無 migration

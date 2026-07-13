@@ -18,6 +18,6 @@
 
 ## 4. 部署（管理者手動，非程式碼任務）
 
-- [ ] 4.1 Mandrill 後台完成 `activate.kuaglobal.org` 寄件網域 SPF/DKIM 驗證，取得 API key
-- [ ] 4.2 正式環境 `.env` 設定五個 `SMTP_*` 變數（密碼由管理者自行填入）並重啟服務
-- [ ] 4.3 觸發一封實際信件（如密碼重設）驗證寄達、寄件人顯示為「啟動事工 <no-reply@activate.kuaglobal.org>」且未進垃圾信
+- [x] 4.1 Mandrill 後台完成 `activate.kuaglobal.org` 寄件網域 SPF/DKIM 驗證，取得 API key
+- [x] 4.2 正式環境 `.env` 設定五個 `SMTP_*` 變數（密碼由管理者自行填入）並重啟服務
+- [x] 4.3 觸發一封實際信件（如密碼重設）驗證寄達、寄件人顯示為「啟動事工 <no-reply@activate.kuaglobal.org>」且未進垃圾信

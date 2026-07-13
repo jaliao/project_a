@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 系統設定 Tabs 元件（Client Component）
- * 2026-04-03 (Updated: 2026-04-03)
+ * 2026-04-03 (Updated: 2026-07-13)
  * app/(user)/admin/settings/settings-tabs.tsx
  * ----------------------------------------------
  */
@@ -28,7 +28,6 @@ type Church = {
 
 interface SettingsTabsProps {
   activeTab: string
-  isSuperadmin: boolean
   currentDepth: number
   classMaxCapacity: number
   remittanceAccount: string
@@ -38,7 +37,7 @@ interface SettingsTabsProps {
   courses: CourseCatalogEntry[]
 }
 
-export function SettingsTabs({ activeTab, isSuperadmin, currentDepth, classMaxCapacity, remittanceAccount, graduationSubject, graduationBody, churches, courses }: SettingsTabsProps) {
+export function SettingsTabs({ activeTab, currentDepth, classMaxCapacity, remittanceAccount, graduationSubject, graduationBody, churches, courses }: SettingsTabsProps) {
   const router = useRouter()
 
   return (
@@ -50,43 +49,39 @@ export function SettingsTabs({ activeTab, isSuperadmin, currentDepth, classMaxCa
       </TabsList>
 
       <TabsContent value="basic" className="mt-6">
-        {isSuperadmin ? (
-          <div className="rounded-lg border p-5 space-y-4 max-w-md">
-            <div>
-              <h2 className="font-medium">學習階層展開深度</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                會員詳情頁「學習階層」分頁向下展開的層數（1–10），預設為 3。
-              </p>
-            </div>
-            <HierarchyDepthForm currentDepth={currentDepth} />
-
-            <div className="border-t pt-4">
-              <h2 className="font-medium">班級人數上限</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                開課與編輯課程時，老師可設定的每班人數上限（1–99），預設為 7。管理者編輯個別班級時可超過此上限。
-              </p>
-            </div>
-            <ClassCapacityForm current={classMaxCapacity} />
-
-            <div className="border-t pt-4">
-              <h2 className="font-medium">教材匯款帳號</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                教材繳費批價時提供給老師的匯款帳號，批價表單會預設帶入此值。
-              </p>
-            </div>
-            <RemittanceAccountForm currentAccount={remittanceAccount} />
-
-            <div className="border-t pt-4">
-              <h2 className="font-medium">結業信範本</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                老師確認結業時，自動寄給結業學員的信件主旨與內文。
-              </p>
-            </div>
-            <GraduationEmailForm currentSubject={graduationSubject} currentBody={graduationBody} />
+        <div className="rounded-lg border p-5 space-y-4 max-w-md">
+          <div>
+            <h2 className="font-medium">學習階層展開深度</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              會員詳情頁「學習階層」分頁向下展開的層數（1–10），預設為 3。
+            </p>
           </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">此設定需 superadmin 權限。</p>
-        )}
+          <HierarchyDepthForm currentDepth={currentDepth} />
+
+          <div className="border-t pt-4">
+            <h2 className="font-medium">班級人數上限</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              開課與編輯課程時，老師可設定的每班人數上限（1–99），預設為 7。管理者編輯個別班級時可超過此上限。
+            </p>
+          </div>
+          <ClassCapacityForm current={classMaxCapacity} />
+
+          <div className="border-t pt-4">
+            <h2 className="font-medium">教材匯款帳號資訊</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              教材繳費批價時提供給老師的匯款帳號資訊（銀行、戶名、代碼、帳號等，可多行），批價表單會預設帶入此值。
+            </p>
+          </div>
+          <RemittanceAccountForm currentAccount={remittanceAccount} />
+
+          <div className="border-t pt-4">
+            <h2 className="font-medium">結業信範本</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              老師確認結業時，自動寄給結業學員的信件主旨與內文。
+            </p>
+          </div>
+          <GraduationEmailForm currentSubject={graduationSubject} currentBody={graduationBody} />
+        </div>
       </TabsContent>
 
       <TabsContent value="churches" className="mt-6">

@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * Email 寄信工具（Nodemailer + SMTP）
- * 2026-03-23 (Updated: 2026-07-07)
+ * 2026-03-23 (Updated: 2026-07-13)
  * lib/mailer.ts
  * ----------------------------------------------
  */
@@ -22,13 +22,31 @@ const transporter = nodemailer.createTransport({
 // FROM 需為 SMTP 服務商已完成寄件網域驗證（SPF/DKIM）的地址，未設定時退回 SMTP_USER
 const FROM_ADDRESS = `"啟動事工" <${process.env.SMTP_FROM ?? process.env.SMTP_USER}>`
 
+// 名冊 seed 帳號的合成信箱網域（{spiritId}@seed.iwillshare.org.tw，見 member-roster-seed spec）——信箱不存在，寄送必退信
+const SYNTHETIC_EMAIL_DOMAIN = '@seed.iwillshare.org.tw'
+
+// 判定地址是否為不可送達的合成 seed 信箱（供寄送守門與 UI 提示重用）
+export function isUndeliverableEmail(email: string): boolean {
+  return email.trim().toLowerCase().endsWith(SYNTHETIC_EMAIL_DOMAIN)
+}
+
+// 寄送守門：合成 seed 信箱略過不寄（記 log、不拋錯，對呼叫端等同寄送成功）
+async function sendMailSafe(options: Parameters<typeof transporter.sendMail>[0]) {
+  const to = String(options.to ?? '')
+  if (isUndeliverableEmail(to)) {
+    console.info(`[mailer] 略過合成 seed 信箱，不寄送：${to}`)
+    return
+  }
+  await transporter.sendMail(options)
+}
+
 // ── 臨時密碼通知信 ────────────────────────────
 export async function sendTempPasswordEmail(
   to: string,
   spiritId: string,
   tempPassword: string
 ) {
-  await transporter.sendMail({
+  await sendMailSafe({
     from: FROM_ADDRESS,
     to,
     subject: '【啟動事工】您的帳號已建立 — 請查收臨時密碼',
@@ -48,7 +66,7 @@ export async function sendCommEmailVerification(
   to: string,
   verifyUrl: string
 ) {
-  await transporter.sendMail({
+  await sendMailSafe({
     from: FROM_ADDRESS,
     to,
     subject: '【啟動事工】請驗證您的通訊 Email',
@@ -67,7 +85,7 @@ export async function sendPasswordResetEmail(
   to: string,
   resetUrl: string
 ) {
-  await transporter.sendMail({
+  await sendMailSafe({
     from: FROM_ADDRESS,
     to,
     subject: '【啟動事工】密碼重設連結',
@@ -86,7 +104,7 @@ export async function sendGraduationEmail(
   subject: string,
   html: string
 ) {
-  await transporter.sendMail({
+  await sendMailSafe({
     from: FROM_ADDRESS,
     to,
     subject,
@@ -99,7 +117,7 @@ export async function sendTeacherRoleGrantedEmail(
   to: string,
   bookLabel: string
 ) {
-  await transporter.sendMail({
+  await sendMailSafe({
     from: FROM_ADDRESS,
     to,
     subject: `【啟動事工】您已獲授權為「${bookLabel}」講師`,

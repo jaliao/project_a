@@ -286,7 +286,9 @@ export function CourseDetailActions({
                       <div className="text-sm bg-amber-50 border border-amber-200 rounded-md px-3 py-2 space-y-2">
                         <p className="text-amber-800">
                           教材費用 <strong>NT${order.quotedAmount}</strong>，請匯款至：
-                          <strong>{order.remittanceAccount}</strong>
+                        </p>
+                        <p className="whitespace-pre-wrap font-medium text-amber-900">
+                          {order.remittanceAccount}
                         </p>
                         <div className="flex items-center gap-2">
                           <Input

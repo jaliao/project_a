@@ -139,8 +139,8 @@ function OrderDetail({
             NT${order.quotedAmount}
           </div>
           <div>
-            <span className="text-muted-foreground">匯款帳號：</span>
-            {order.remittanceAccount ?? '—'}
+            <span className="text-muted-foreground">匯款帳號資訊：</span>
+            <p className="whitespace-pre-wrap mt-0.5">{order.remittanceAccount ?? '—'}</p>
           </div>
           {order.paymentLast5 && (
             <div>

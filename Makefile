@@ -20,6 +20,7 @@ DB_IMAGE=$(DOCKERHUB_USER)/$(PROJECT_NAME)-db
 # 注意：這裡使用單引號避免 Shell 在傳遞前錯誤解析
 PRISMA_DEV_DB = DATABASE_URL="$(DATABASE_URL_DEV)"
 PRISMA_VPS3_DB = DATABASE_URL="$(DATABASE_URL_VPS3)"
+PRISMA_GCP_DB = DATABASE_URL="$(DATABASE_URL_GCP)"
 
 # SCHEMA_NAME 用於快速更新流程
 # 支援 make schema-update name=xxx 或 make schema-update SCHEMA_NAME=xxx
@@ -424,7 +425,7 @@ format: ## ✨ 格式化程式碼
 tunnel-vps3: ## 開啟 VPS3 Postgres SSH Tunnel（localhost:15432）
 	@/home/psyduck/devops-toolkit/remote-admin/tunnel/pg-tunnel-vps3.sh
 
-tunnel-deploy: ## 開啟 VPS3 Deploy Docker
+tunnel-deploy-vps3: ## 開啟 VPS3 Deploy Docker
 	@/home/psyduck/devops-toolkit/remote-admin/tunnel/project-a-tunnel-deploy.sh
 
 prisma-vps3-status: ## 檢查 VPS3 Migration 狀態（建議先跑）
@@ -487,3 +488,30 @@ prisma-dev-studio:
 	@echo "Prisma Studio (DEV) http://localhost:5555"
 	$(DEV_COMPOSE) --profile studio up studio
 	
+
+# ==================================================
+#  Prisma 透過 tunnel deploy remote GCP
+# ==================================================
+
+tunnel-gcp: ## 開啟 GCP SSH Tunnel
+	@/home/psyduck/devops-toolkit/remote-admin/tunnel/pg-tunnel-gcp-activate.sh
+
+tunnel-deploy-gcp: ## 開啟 GCP Deploy Docker
+	@/home/psyduck/devops-toolkit/remote-admin/tunnel/project-a-tunnel-deploy-gcp.sh
+
+prisma-gcp-status: ## 檢查 GCP Migration 狀態（建議先跑）
+	@echo "Prisma migrate status (GCP)..."
+	@$(PRISMA_GCP_DB) npx prisma migrate status
+
+prisma-gcp-deploy: ## 部署 migrations 到 GCP（正式/遠端 DB 用）
+	@echo "Prisma migrate deploy (GCP)..."
+	@$(PRISMA_GCP_DB) npx prisma migrate deploy
+
+prisma-gcp-seed: ## 部署 migrations 到 GCP（正式/遠端 DB 用）
+	@echo "初始化 GCP 種子資料..."
+	@if [ -f prisma/seed.ts ]; then \
+		$(PRISMA_GCP_DB) npx tsx prisma/seed.ts; \
+		echo "✅ 種子資料已建立"; \
+	else \
+		echo "❌ 找不到 prisma/seed.ts"; \
+	fi

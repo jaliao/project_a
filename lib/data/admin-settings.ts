@@ -8,9 +8,12 @@
 
 import { prisma } from '@/lib/prisma'
 
-// 匯款帳號設定（教材繳費批價用）；測試環境預設值
+// 匯款帳號資訊設定（教材繳費批價用，多行文字）；測試環境預設值
 export const REMITTANCE_ACCOUNT_KEY = 'remittance_account'
-export const REMITTANCE_ACCOUNT_DEFAULT = '08-2345-6789'
+export const REMITTANCE_ACCOUNT_DEFAULT = `第一銀行淡水分行
+戶名：希望之聲文化有限公司
+銀行代碼：007
+帳號：218-10-002087`
 
 // 班級人數上限（開課/編輯課程之一般使用者上限；管理者可覆寫超過）
 export const CLASS_MAX_CAPACITY_KEY = 'class_max_capacity'
