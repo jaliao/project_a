@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.140（2026-07-14）
+> 自動產生，版本 0.1.141（2026-07-14）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -129,6 +129,7 @@ lib/
 ├── prisma.ts        # Prisma client singleton
 ├── spirit-id.ts     # Spirit ID 產生器
 ├── member-creation.ts # 建立可登入會員共用邏輯（spiritId＋臨時密碼＋白名單；createMember 與班級新增學員共用，可於 tx 內呼叫）
+├── account-email-change.ts # 登入帳號 email 變更共用邏輯（正規化＋唯一性＋交易三步：改 email/停用舊白名單/新白名單啟用；本人與管理者 action 共用）
 ├── schemas/         # Zod 驗證 schema
 ├── utils/
 │   └── member-display.ts    # getMemberDisplayName(user) 純函式（系統標準：暱稱→中文名稱→英文名稱，三模式括號省略；名稱不含 name/email）
@@ -186,7 +187,7 @@ prerequisites CourseCatalog[]（多對多自關聯，_CoursePrerequisites join t
 ### User
 ```
 id            UUID（主鍵）
-email         String（唯一，登入帳號）
+email         String（唯一，登入帳號；可經帳號修改功能變更——本人（密碼確認）或管理者，見 account-email-change）
 name          String?
 roles         UserRole[] (多重身分；user 基線 + teacher_1~teacher_3（三個書籍講師）/admin/superadmin，預設 [user])
 spiritId      String?（唯一，格式 PA+YY+XXXX）
@@ -395,6 +396,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260714-006` — 會員帳號（登入 Email）修改：新增 `lib/account-email-change.ts` 共用核心（正規化＋唯一性＋交易三步：`User.email` 更新／舊 email 白名單停用／新 email 白名單 upsert；不動 `commEmail`、`Account`、課程資料，不寄信）；本人 action `changeMyAccountEmail`（bcrypt 密碼確認，Google-only 拒絕）＋管理者 action `changeMemberEmailAdmin`（`canAccessAdmin`，可代改 Google-only）；個人資料頁 Spirit ID 卡下半新增「啟動帳號資訊」（登入 email＋登入方式）、`ChangeAccountCard`（變更密碼上方；Google-only 顯示請洽管理員說明卡）；後台特殊設定分頁新增「帳號修改」區塊（`MemberEmailForm`）；JWT else 分支補同步 `token.email`。無 migration。spec：新 `account-email-change`、`admin-member-management` MODIFIED
 - `cr-spec-260714-003` — 班級管理前台化：共用 `CourseSessionCard` 新增必要 prop `inviteId`，標籤列最前顯示 `#編號`（所有使用處，含學員視角）；課程頁「已核准學員」區塊抽成 client 元件 `ApprovedStudentsSection`——標題列右側「新增學員」「移除學員」按鈕（**管理者＋該課講師**，`canManageInvite`＝admin 或 createdById；移除採模式切換、卡片加顯啟動編號）；`lookupMemberByEmail` 加 `inviteId` 參數以課程歸屬授權（防 email 枚舉）；`graduateCourse`／`cancelCourseSession`／結業頁守衛放行管理者；新增 `reopenRecruitment`（重新招募作業區塊：進行中退回招生中，清 `startedAt`，講師＋管理者）；課程頁新增「課程操作 LOG」區塊（server 渲染最近 30 筆，`isInstructor || isAdmin` 可見）；`CourseDetailActions` 分區塊權限（教材申請/開始上課僅講師）。後台退場：開課管理「⋯」選單與編號列、`/admin/course-sessions/[id]/students`、`/admin/operation-logs`、dashboard 操作紀錄功能格、`setCourseStatusAdmin`、`getInviteStudentsAdmin` 全數移除（後台不再提供已取消→招生中回退）。無 migration。spec：`course-session-card`／`course-session-detail`／`admin-enrollment-management`／`admin-operation-log`／`admin-course-sessions`／`course-graduation`／`cancel-course-session`
 - `cr-spec-260714-002` — 後台班級學員管理＋操作紀錄：新增 `AdminActionLog` model（migration `add_admin_action_log`；optional FK SetNull＋actorName/targetName/inviteTitle 快照欄）；開課管理卡片上方顯示班級編號 `#id`＋右上角「⋯」選單（新增學員/移除學員/變更課程狀態/查詢 LOG，連獨立頁面者 `target="_blank"` 另開視窗），狀態變更由 inline 下拉改選單觸發 dialog（規則不變，刪除 `course-status-select.tsx`）；新頁 `/admin/course-sessions/[id]/students`（頁首班級資訊＋學員卡片；`?action=add` 自動開新增表單）與 `/admin/operation-logs`（30 筆分頁、`?inviteId=` 過濾、dashboard 功能格入口）；`addStudentToInvite`（email 既有帳號→掛帳號〔UI 確認列〕、查無→沿用 `createMember` 機制建帳號〔臨時密碼一次性顯示、不寄信〕；可勾已結業→`graduatedAt=joinedAt=結業日`、班未結業同交易補 `completedAt`；重複報名擋下）／`removeStudentFromInvite`（有教材寄送項目拒絕；已結業 UI 醒目警示；實體刪除）皆與 log 寫入同交易；`createMember` 建帳號邏輯抽至 `lib/member-creation.ts` 共用；新增 `ui/dropdown-menu` primitive、`config/admin-log-action.ts`。spec：新 `admin-enrollment-management`／`admin-operation-log`、`admin-course-sessions` MODIFIED
 - `cr-spec-260714-001` — 證書製作卡片化＋真實姓名連動：`/admin/certificates` 由 9 欄表格改響應式卡片（`md:grid-cols-2 xl:grid-cols-3`，手機單欄）；主標題＝真實姓名中英並列（`realName`＋`englishName`，證書製作依據；皆未填顯示紅色「未填真實姓名」警示、不阻擋操作），次要列顯示名稱＋啟動編號，身分確認列性別＋單位（`church.name ?? churchOther`，比照會員匯出）；`CertificateListItem` 新增 `realName`/`englishName`/`gender`/`churchLabel`；搜尋擴為真實姓名（中/英）＋顯示名稱＋啟動編號。無 migration。spec：`admin-certificate-production` MODIFIED

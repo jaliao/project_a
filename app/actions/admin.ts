@@ -18,6 +18,7 @@ import { canAccessAdmin, normalizeRoles, canAssignRole, isSuperadmin, BOOK_LABEL
 import { sendTempPasswordEmail, sendTeacherRoleGrantedEmail } from '@/lib/mailer'
 import { resolveContactEmail } from '@/lib/utils/contact-email'
 import { createLoginableMember, generateTempPassword } from '@/lib/member-creation'
+import { validateNewAccountEmail, applyAccountEmailChange } from '@/lib/account-email-change'
 
 type ActionResponse<T = undefined> = {
   success: boolean
@@ -301,4 +302,31 @@ export async function deleteMember(userId: string): Promise<ActionResponse> {
   await prisma.user.delete({ where: { id: userId } })
 
   return { success: true, message: '會員已刪除' }
+}
+
+/**
+ * 管理者修改會員登入帳號 Email：免密碼確認、可對 Google-only 會員操作
+ * 行為依 account-email-change 共通規則（唯一性＋白名單汰換）
+ */
+export async function changeMemberEmailAdmin(
+  userId: string,
+  newEmail: string
+): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+  if (!canAccessAdmin(session.user.roles)) return { success: false, message: '無權限' }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, email: true },
+  })
+  if (!user) return { success: false, message: '找不到此會員' }
+
+  const check = await validateNewAccountEmail(user.id, user.email, newEmail)
+  if (!check.ok) return { success: false, errors: check.errors }
+
+  await applyAccountEmailChange(user.id, user.email, check.email)
+
+  revalidatePath(`/admin/members/${userId}`)
+  return { success: true, message: `帳號已更新為 ${check.email}` }
 }

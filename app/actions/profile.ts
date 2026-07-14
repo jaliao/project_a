@@ -9,12 +9,14 @@
 'use server'
 
 import { randomBytes } from 'crypto'
+import bcrypt from 'bcryptjs'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { sendCommEmailVerification } from '@/lib/mailer'
 import { updateProfileSchema, commEmailSchema } from '@/lib/schemas/profile'
 import { getAppUrl } from '@/lib/utils/app-url'
+import { validateNewAccountEmail, applyAccountEmailChange } from '@/lib/account-email-change'
 
 type ActionResponse = {
   success: boolean
@@ -201,4 +203,37 @@ export async function unlinkGoogleAccount(): Promise<ActionResponse> {
 
   revalidatePath('/(user)/profile')
   return { success: true, message: 'Google 帳號已解除連結' }
+}
+
+// ── 本人修改登入帳號 Email ──────────────────────
+// Google-only（無密碼）不開放自改；需以目前密碼確認身分
+export async function changeMyAccountEmail(
+  newEmail: string,
+  currentPassword: string
+): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { id: true, email: true, passwordHash: true },
+  })
+  if (!user) return { success: false, message: '帳號不存在' }
+
+  if (!user.passwordHash) {
+    return { success: false, message: 'Google 登入帳號請洽管理員協助修改' }
+  }
+
+  const passwordOk = await bcrypt.compare(currentPassword, user.passwordHash)
+  if (!passwordOk) {
+    return { success: false, errors: { currentPassword: ['密碼不正確'] } }
+  }
+
+  const check = await validateNewAccountEmail(user.id, user.email, newEmail)
+  if (!check.ok) return { success: false, errors: check.errors }
+
+  await applyAccountEmailChange(user.id, user.email, check.email)
+
+  revalidatePath('/', 'layout')
+  return { success: true, message: `帳號已更新為 ${check.email}，下次登入請使用新帳號` }
 }

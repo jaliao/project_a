@@ -22,6 +22,7 @@ import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { getAdminSetting } from '@/lib/data/admin-settings'
 import { getGraduatedCatalogIds } from '@/lib/data/course-catalog'
 import { MemberResetButton } from '@/components/admin/member-reset-button'
+import { MemberEmailForm } from '@/components/admin/member-email-form'
 import { MemberDeleteButton } from '@/components/admin/member-delete-button'
 import { MemberHierarchyTree } from '@/components/admin/member-hierarchy-tree'
 import { MemberTeacherRoles } from '@/components/admin/member-teacher-roles'
@@ -298,6 +299,12 @@ export default async function MemberDetailPage({
           <div className="rounded-lg border p-5 space-y-3">
             <h2 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">補發密碼</h2>
             <MemberResetButton userId={member.id} memberName={displayName} />
+          </div>
+
+          {/* 帳號修改（變更登入 email） */}
+          <div className="rounded-lg border p-5 space-y-3">
+            <h2 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">帳號修改</h2>
+            <MemberEmailForm userId={member.id} currentEmail={member.email} />
           </div>
 
           {/* 特殊身分授權 */}

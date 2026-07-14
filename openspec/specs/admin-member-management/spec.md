@@ -246,11 +246,15 @@ TBD - normalized for archive compatibility. Update Purpose for admin-member-mana
 - **THEN** 身分不變更
 
 ### Requirement: 特殊設定分頁
-特殊設定分頁 SHALL 提供：**暫停會員／恢復會員**（見 member-suspension）、**補發密碼**（重設臨時密碼並重新顯示）、**特殊身分授權**（授予/移除 `admin`、`superadmin`，依 member-roles 權限分級）。
+特殊設定分頁 SHALL 提供：**暫停會員／恢復會員**（見 member-suspension）、**補發密碼**（重設臨時密碼並重新顯示）、**帳號修改**（變更會員登入 email，顯示目前帳號、輸入新 email、確認視窗後生效，行為依 `account-email-change` 共通規則）、**特殊身分授權**（授予/移除 `admin`、`superadmin`，依 member-roles 權限分級）。
 
 #### Scenario: 補發密碼
 - **WHEN** 管理者於特殊設定點「補發密碼」並確認
 - **THEN** 重設臨時密碼並重新顯示一次，會員下次登入須重設
+
+#### Scenario: 帳號修改
+- **WHEN** 管理者於特殊設定輸入新 email 並於確認視窗（新舊 email 並列）確認
+- **THEN** 該會員登入 email 依 `account-email-change` 共通規則變更，畫面更新顯示新帳號
 
 #### Scenario: 特殊身分授權依權限分級
 - **WHEN** 管理者於特殊設定授予/移除 `admin`／`superadmin`

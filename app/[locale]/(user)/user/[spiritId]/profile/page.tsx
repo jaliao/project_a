@@ -13,6 +13,7 @@ import { getTranslations } from 'next-intl/server'
 import { LanguageSwitcher } from '@/components/i18n/language-switcher'
 import ProfileForm from './profile-form'
 import { ChangePasswordCard } from './change-password-card'
+import { ChangeAccountCard } from './change-account-card'
 import { SignOutSection } from '@/components/profile/sign-out-section'
 import { getActiveChurches } from '@/lib/data/churches'
 
@@ -56,10 +57,22 @@ export default async function ProfilePage({ searchParams }: Props) {
         </div>
       )}
 
-      {/* Spirit ID 唯讀顯示 */}
-      <div className="rounded-lg border p-4 space-y-1">
-        <p className="text-sm text-muted-foreground">啟動事工編號</p>
-        <p className="text-lg font-mono font-semibold">{user.spiritId ?? '—'}</p>
+      {/* Spirit ID＋啟動帳號資訊 唯讀顯示 */}
+      <div className="rounded-lg border p-4 space-y-3">
+        <div className="space-y-1">
+          <p className="text-sm text-muted-foreground">啟動事工編號</p>
+          <p className="text-lg font-mono font-semibold">{user.spiritId ?? '—'}</p>
+        </div>
+        <div className="space-y-1 border-t pt-3">
+          <p className="text-sm text-muted-foreground">啟動帳號資訊</p>
+          <p className="font-medium break-all">{user.email}</p>
+          <p className="text-xs text-muted-foreground">
+            登入方式：
+            {[hasPassword ? '密碼登入' : null, linkedProviders.includes('google') ? 'Google 登入' : null]
+              .filter(Boolean)
+              .join('、') || '—'}
+          </p>
+        </div>
       </div>
 
       {/* 需要補填提示 */}
@@ -90,6 +103,9 @@ export default async function ProfilePage({ searchParams }: Props) {
         linkedProviders={linkedProviders}
         spiritId={user.spiritId ?? ''}
       />
+
+      {/* 帳號修改（變更密碼上方；Google-only 顯示說明卡） */}
+      <ChangeAccountCard currentEmail={user.email} hasPassword={hasPassword} />
 
       {hasPassword && <ChangePasswordCard />}
 
