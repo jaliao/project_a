@@ -14,6 +14,7 @@ import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { IconArrowLeft } from '@tabler/icons-react'
 import { auth } from '@/lib/auth'
+import { canAccessAdmin } from '@/lib/auth-roles'
 import { getCourseSessionById } from '@/lib/data/course-sessions'
 import { GraduationForm } from './graduation-form'
 
@@ -41,8 +42,11 @@ export default async function GraduatePage({
 
   if (!course) notFound()
 
-  // 權限：僅課程建立者可操作
-  if (!userSession?.user?.id || userSession.user.id !== course.createdBy.id) {
+  // 權限：課程建立者或管理者可操作
+  if (
+    !userSession?.user?.id ||
+    (userSession.user.id !== course.createdBy.id && !canAccessAdmin(userSession.user.roles))
+  ) {
     redirect(`/course/${numId}`)
   }
 

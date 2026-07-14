@@ -55,6 +55,7 @@ export default async function MatchBoardPage({
         <CourseCardGrid>
           {items.map((item) => (
             <CourseSessionCard
+              inviteId={item.id}
               key={item.id}
               title={item.title}
               courseCatalogId={item.courseCatalogId}

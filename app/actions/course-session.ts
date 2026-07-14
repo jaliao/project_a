@@ -264,40 +264,28 @@ export async function updateCourseInfo(
   return { success: true, message: '已更新課程資訊' }
 }
 
-// ── 後台變更課程狀態（僅管理者）──
-// target 限招生中／進行中／已取消；不提供已結業（結業仍由講師走逐學員結業頁）
-// 自由任意轉換（含回退），不發送通知（屬行政更正）
-export async function setCourseStatusAdmin(
-  inviteId: number,
-  target: 'recruiting' | 'started' | 'cancelled'
-): Promise<ActionResponse> {
+// ── 重新招募作業（進行中退回招生中）──
+// 該課建立者或管理者可操作；僅清除 startedAt，既有報名與教材紀錄不受影響
+// 不發送通知、不寫入操作紀錄（LOG 範圍維持學員增刪）
+export async function reopenRecruitment(inviteId: number): Promise<ActionResponse> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
-  if (!canAccessAdmin(session.user.roles)) return { success: false, message: '無權限' }
-
-  if (!['recruiting', 'started', 'cancelled'].includes(target)) {
-    return { success: false, message: '不支援的狀態' }
-  }
 
   const invite = await prisma.courseInvite.findUnique({
     where: { id: inviteId },
-    select: { id: true },
+    select: { id: true, createdById: true, startedAt: true, completedAt: true, cancelledAt: true },
   })
   if (!invite) return { success: false, message: '找不到課程' }
+  if (invite.createdById !== session.user.id && !canAccessAdmin(session.user.roles)) {
+    return { success: false, message: '無權限' }
+  }
+  if (!invite.startedAt || invite.completedAt || invite.cancelledAt) {
+    return { success: false, message: '僅進行中的課程可退回招生中' }
+  }
 
-  // 依目標狀態設定／清除旗標
-  const data =
-    target === 'recruiting'
-      ? { startedAt: null, cancelledAt: null, completedAt: null, cancelReason: null }
-      : target === 'started'
-        ? { startedAt: new Date(), cancelledAt: null, completedAt: null, cancelReason: null }
-        : { cancelledAt: new Date(), cancelReason: '（管理者後台調整）' }
-
-  await prisma.courseInvite.update({ where: { id: inviteId }, data })
+  await prisma.courseInvite.update({ where: { id: inviteId }, data: { startedAt: null } })
 
   revalidatePath('/admin/course-sessions')
   revalidatePath(`/course/${inviteId}`)
-
-  const label = target === 'recruiting' ? '招生中' : target === 'started' ? '進行中' : '已取消'
-  return { success: true, message: `已變更為「${label}」` }
+  return { success: true, message: '已退回招生中' }
 }

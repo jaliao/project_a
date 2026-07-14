@@ -1,11 +1,12 @@
 /*
  * ----------------------------------------------
- * Server Actions - 後台班級學員管理
- * 2026-07-14
+ * Server Actions - 課程學員管理（課程頁）
+ * 2026-07-14 (Updated: 2026-07-14)
  * app/actions/invite-students.ts
  *
  * 新增學員（掛既有帳號或建新帳號、可補登結業）、移除學員，
  * 皆於單一交易內完成並寫入管理操作紀錄（AdminActionLog）。
+ * 操作權限：管理者或該課建立者（canManageInvite）。
  * 不寄信、不發 Inbox 通知。
  * ----------------------------------------------
  */
@@ -41,15 +42,33 @@ function targetSnapshot(realName: string | null, email: string): string {
   return `${realName ?? '（未填）'}（${email}）`
 }
 
+/** 管理者或該課建立者才可管理課程學員 */
+function canManageInvite(
+  roles: Parameters<typeof canAccessAdmin>[0],
+  userId: string,
+  invite: { createdById: string }
+): boolean {
+  return canAccessAdmin(roles) || invite.createdById === userId
+}
+
 /**
  * 以 email 查既有會員（新增學員表單的確認列用）
+ * 以 inviteId 綁定課程歸屬授權（管理者或該課建立者），避免任意講師枚舉會員 email
  */
 export async function lookupMemberByEmail(
+  inviteId: number,
   email: string
 ): Promise<ActionResponse<{ member: MemberByEmail | null }>> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
-  if (!canAccessAdmin(session.user.roles)) return { success: false, message: '無權限' }
+
+  const invite = await prisma.courseInvite.findUnique({
+    where: { id: inviteId },
+    select: { createdById: true },
+  })
+  if (!invite || !canManageInvite(session.user.roles, session.user.id, invite)) {
+    return { success: false, message: '無權限' }
+  }
 
   const parsed = z.string().trim().toLowerCase().email().safeParse(email)
   if (!parsed.success) return { success: true, data: { member: null } }
@@ -88,7 +107,6 @@ export async function addStudentToInvite(input: {
 }): Promise<ActionResponse<{ tempPassword?: string; spiritId?: string }>> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
-  if (!canAccessAdmin(session.user.roles)) return { success: false, message: '無權限' }
 
   const parsed = addStudentSchema.safeParse(input)
   if (!parsed.success) {
@@ -99,9 +117,12 @@ export async function addStudentToInvite(input: {
 
   const invite = await prisma.courseInvite.findUnique({
     where: { id: inviteId },
-    select: { id: true, title: true, completedAt: true, cancelledAt: true },
+    select: { id: true, title: true, completedAt: true, cancelledAt: true, createdById: true },
   })
   if (!invite) return { success: false, message: '找不到此班級' }
+  if (!canManageInvite(session.user.roles, session.user.id, invite)) {
+    return { success: false, message: '無權限' }
+  }
   if (invite.cancelledAt) return { success: false, message: '已取消的班級無法新增學員' }
 
   // 操作管理者快照
@@ -184,7 +205,7 @@ export async function addStudentToInvite(input: {
     })
 
     revalidatePath('/admin/course-sessions')
-    revalidatePath(`/admin/course-sessions/${inviteId}/students`)
+    revalidatePath(`/course/${inviteId}`)
     return {
       success: true,
       message: existingUser ? '已將既有會員加入班級' : '已建立帳號並加入班級',
@@ -203,19 +224,21 @@ export async function addStudentToInvite(input: {
 export async function removeStudentFromInvite(enrollmentId: number): Promise<ActionResponse> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
-  if (!canAccessAdmin(session.user.roles)) return { success: false, message: '無權限' }
 
   const enrollment = await prisma.inviteEnrollment.findUnique({
     where: { id: enrollmentId },
     select: {
       id: true,
       graduatedAt: true,
-      invite: { select: { id: true, title: true } },
+      invite: { select: { id: true, title: true, createdById: true } },
       user: { select: { id: true, realName: true, email: true } },
       _count: { select: { shipmentItems: true } },
     },
   })
   if (!enrollment) return { success: false, message: '找不到此報名' }
+  if (!canManageInvite(session.user.roles, session.user.id, enrollment.invite)) {
+    return { success: false, message: '無權限' }
+  }
   if (enrollment._count.shipmentItems > 0) {
     return { success: false, message: '該報名已有教材寄送紀錄，請先至教材管理處理' }
   }
@@ -246,7 +269,7 @@ export async function removeStudentFromInvite(enrollmentId: number): Promise<Act
     })
 
     revalidatePath('/admin/course-sessions')
-    revalidatePath(`/admin/course-sessions/${enrollment.invite.id}/students`)
+    revalidatePath(`/course/${enrollment.invite.id}`)
     return { success: true, message: '已移除學員' }
   } catch (err) {
     console.error('[removeStudentFromInvite] 移除失敗：', err)

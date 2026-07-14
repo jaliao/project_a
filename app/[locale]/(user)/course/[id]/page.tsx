@@ -40,6 +40,8 @@ import { CopyInviteLinkButton } from './copy-invite-link-button'
 import { StudentApplySection } from './student-apply-section'
 import { PendingEnrollmentList } from './pending-enrollment-list'
 import { InstructorFeedbackButton } from './instructor-feedback-button'
+import { ApprovedStudentsSection } from './approved-students-section'
+import { CourseOperationLog } from './course-operation-log'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { CourseStatusBadge } from '@/components/course-session/course-status-badge'
 import { getCourseStatus } from '@/components/course-session/course-status'
@@ -61,12 +63,6 @@ function formatDate(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, '0')
   const d = String(date.getDate()).padStart(2, '0')
   return `${y}/${m}/${d}`
-}
-
-const MATERIAL_COLORS: Record<string, string> = {
-  none: 'bg-gray-100 text-gray-600',
-  traditional: 'bg-blue-100 text-blue-700',
-  simplified: 'bg-green-100 text-green-700',
 }
 
 export default async function CourseDetailPage({
@@ -374,40 +370,21 @@ export default async function CourseDetailPage({
         <PendingEnrollmentList enrollments={courseSession.pendingEnrollments} />
       )}
 
-      {/* 已核准學員名單 */}
-      <div className="rounded-lg border p-5 space-y-4">
-        <div className="flex items-center gap-2">
-          <IconUsers className="h-5 w-5 text-primary" />
-          <h2 className="text-base font-semibold">
-            {t('course.detail.approvedCount', { count: courseSession.approvedEnrollments.length })}
-          </h2>
-        </div>
-        {courseSession.approvedEnrollments.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t('course.detail.noApproved')}</p>
-        ) : (
-          /* 卡片式排版（手機單欄、寬視窗雙欄）；不顯示學員 Email */
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {courseSession.approvedEnrollments.map((enrollment) => (
-              <li key={enrollment.id} className="rounded-lg border p-3 space-y-1.5">
-                <p className="text-sm font-medium">
-                  {getMemberDisplayName(enrollment.user)}
-                </p>
-                <div className="flex items-center justify-between gap-2">
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${MATERIAL_COLORS[enrollment.materialChoice] ?? 'bg-gray-100 text-gray-600'
-                      }`}
-                  >
-                    {t(`course.material.${enrollment.materialChoice}`)}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatDate(enrollment.joinedAt)}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      {/* 已核准學員名單（管理者／講師可於此新增、移除學員） */}
+      <ApprovedStudentsSection
+        inviteId={courseSession.id}
+        inviteCompleted={isCompleted}
+        canManage={(isInstructor || isAdmin) === true}
+        students={courseSession.approvedEnrollments.map((enrollment) => ({
+          enrollmentId: enrollment.id,
+          displayName: getMemberDisplayName(enrollment.user),
+          spiritId: enrollment.user.spiritId,
+          materialChoice: enrollment.materialChoice,
+          joinedAt: enrollment.joinedAt,
+          graduated: enrollment.graduatedAt != null,
+          hasShipmentItems: enrollment._count.shipmentItems > 0,
+        }))}
+      />
 
       {/* 學員：申請狀態 / 申請按鈕 */}
       {!isInstructor && (
@@ -425,10 +402,11 @@ export default async function CourseDetailPage({
         />
       )}
 
-      {/* 講師：操作按鈕（教材申請、結業、取消授課） */}
-      {isInstructor && (
+      {/* 課程操作區（教材/開始上課僅講師；結業/重新招募/取消＝講師與管理者） */}
+      {(isInstructor || isAdmin) && (
         <CourseDetailActions
           inviteId={courseSession.id}
+          isInstructor={isInstructor}
           isCancelled={isCancelled}
           isCompleted={isCompleted}
           isStarted={!!courseSession.startedAt}
@@ -454,6 +432,9 @@ export default async function CourseDetailPage({
           matchNote={courseSession.matchNote}
         />
       )}
+
+      {/* 課程操作 LOG（僅管理者與該課講師可見） */}
+      {(isInstructor || isAdmin) && <CourseOperationLog inviteId={courseSession.id} />}
 
       {/* 課程 FAQ 留言問答 */}
       <CourseFaq

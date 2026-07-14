@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.139（2026-07-14）
+> 自動產生，版本 0.1.140（2026-07-14）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -51,7 +51,7 @@ app/
 │   ├── user/[id]/       # 學員專屬頁面：基本資料 + 本人功能單元
 │   ├── user/[id]/courses/ # 我的開課列表（本人專屬，Spirit ID 小寫路由）
 │   ├── notifications/   # 通知歷史頁面（分頁，每頁 20 則）
-│   ├── course/[id]/     # 課程詳情頁（訪客可達，由 GUEST_PAGES 放行）
+│   ├── course/[id]/     # 課程詳情頁（訪客可達，由 GUEST_PAGES 放行；管理者/該課講師可於「已核准學員」區塊增刪學員、操作重新招募/結業/取消作業、檢視課程操作 LOG）
 │   ├── course/[id]/graduate/  # 課程結業表單頁（填寫→預覽→送出）
 │   ├── profile/         # 舊路由相容：server redirect → /user/{spiritId}/profile
 │   └── user/[spiritId]/profile/  # 個人資料維護（新路由，含 profile-form.tsx）
@@ -59,9 +59,7 @@ app/
 │   ├── layout.tsx   # (user) 守衛 + canAccessAdmin；後台各頁不再自行守衛
 │   └── admin/           # 管理後台：功能網格（儀錶板/課程/授課/教材/會員/教會/系統設定）
 │       ├── dashboard/       # 後台儀錶板（統計卡片 7 個）
-│       ├── course-sessions/ # 開課管理（全站；搜尋 + 篩選；班級編號 + 卡片「⋯」選單：新增/移除學員、狀態 dialog、查詢 LOG）
-│       ├── course-sessions/[id]/students/ # 班級學員管理（新增學員掛/建帳號＋補登結業、移除學員；?action=add 自動開表單）
-│       ├── operation-logs/  # 管理操作紀錄（enrollment_add/remove；30 筆分頁；?inviteId= 過濾）
+│       ├── course-sessions/ # 開課管理（全站；搜尋 + 篩選；純卡片列表——學員增刪/狀態/LOG 皆於前台課程頁操作）
 │       ├── members/         # 會員管理清單（搜尋/篩選/翻頁/重設密碼/查看詳情）
 │       ├── members/[id]/    # 會員詳情（Tabs：基本資料/學習階層/講師身分/特殊設定）
 │       ├── members/inactive/ # 未啟用會員清單（lastLoginAt 為 null）
@@ -145,8 +143,8 @@ lib/
 │   ├── admin-settings.ts    # 後台設定查詢（getAdminSetting, upsertAdminSetting）
 │   ├── churches.ts          # 教會管理查詢（getActiveChurches, getAllChurches, createChurch, updateChurch, toggleChurchActive, deleteChurch）
 │   ├── notification.ts      # 通知查詢（getNotifications, getUnreadNotificationCount, getNotificationsPaginated）
-│   ├── invite-students.ts   # 班級學員管理查詢（getInviteStudentsAdmin：班級資訊＋報名學員含教材寄送數；findMemberByEmail：email 查既有會員）
-│   ├── admin-logs.ts        # 管理操作紀錄查詢（getAdminLogs：最新在前、每頁 30 筆、inviteId 過濾；只讀快照欄不 join）
+│   ├── invite-students.ts   # findMemberByEmail：email 查既有會員（課程頁新增學員確認列用）
+│   ├── admin-logs.ts        # 管理操作紀錄查詢（getAdminLogs：最新在前、每頁 30 筆、inviteId 過濾；只讀快照欄不 join；供課程頁 LOG 區塊）
 │   └── course-message.ts    # 課程 FAQ 留言查詢（getCourseMessages(inviteId, viewer)：1 對 1 可見性—老師見全部、會員僅見自己的串；提問升序＋回覆內嵌）
 ├── ecpay/
 │   └── logistics.ts         # ECPay 物流工具（calcLogisticsCheckMacValue，MD5，物流 CMV-MD5 規格）
@@ -397,6 +395,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260714-003` — 班級管理前台化：共用 `CourseSessionCard` 新增必要 prop `inviteId`，標籤列最前顯示 `#編號`（所有使用處，含學員視角）；課程頁「已核准學員」區塊抽成 client 元件 `ApprovedStudentsSection`——標題列右側「新增學員」「移除學員」按鈕（**管理者＋該課講師**，`canManageInvite`＝admin 或 createdById；移除採模式切換、卡片加顯啟動編號）；`lookupMemberByEmail` 加 `inviteId` 參數以課程歸屬授權（防 email 枚舉）；`graduateCourse`／`cancelCourseSession`／結業頁守衛放行管理者；新增 `reopenRecruitment`（重新招募作業區塊：進行中退回招生中，清 `startedAt`，講師＋管理者）；課程頁新增「課程操作 LOG」區塊（server 渲染最近 30 筆，`isInstructor || isAdmin` 可見）；`CourseDetailActions` 分區塊權限（教材申請/開始上課僅講師）。後台退場：開課管理「⋯」選單與編號列、`/admin/course-sessions/[id]/students`、`/admin/operation-logs`、dashboard 操作紀錄功能格、`setCourseStatusAdmin`、`getInviteStudentsAdmin` 全數移除（後台不再提供已取消→招生中回退）。無 migration。spec：`course-session-card`／`course-session-detail`／`admin-enrollment-management`／`admin-operation-log`／`admin-course-sessions`／`course-graduation`／`cancel-course-session`
 - `cr-spec-260714-002` — 後台班級學員管理＋操作紀錄：新增 `AdminActionLog` model（migration `add_admin_action_log`；optional FK SetNull＋actorName/targetName/inviteTitle 快照欄）；開課管理卡片上方顯示班級編號 `#id`＋右上角「⋯」選單（新增學員/移除學員/變更課程狀態/查詢 LOG，連獨立頁面者 `target="_blank"` 另開視窗），狀態變更由 inline 下拉改選單觸發 dialog（規則不變，刪除 `course-status-select.tsx`）；新頁 `/admin/course-sessions/[id]/students`（頁首班級資訊＋學員卡片；`?action=add` 自動開新增表單）與 `/admin/operation-logs`（30 筆分頁、`?inviteId=` 過濾、dashboard 功能格入口）；`addStudentToInvite`（email 既有帳號→掛帳號〔UI 確認列〕、查無→沿用 `createMember` 機制建帳號〔臨時密碼一次性顯示、不寄信〕；可勾已結業→`graduatedAt=joinedAt=結業日`、班未結業同交易補 `completedAt`；重複報名擋下）／`removeStudentFromInvite`（有教材寄送項目拒絕；已結業 UI 醒目警示；實體刪除）皆與 log 寫入同交易；`createMember` 建帳號邏輯抽至 `lib/member-creation.ts` 共用；新增 `ui/dropdown-menu` primitive、`config/admin-log-action.ts`。spec：新 `admin-enrollment-management`／`admin-operation-log`、`admin-course-sessions` MODIFIED
 - `cr-spec-260714-001` — 證書製作卡片化＋真實姓名連動：`/admin/certificates` 由 9 欄表格改響應式卡片（`md:grid-cols-2 xl:grid-cols-3`，手機單欄）；主標題＝真實姓名中英並列（`realName`＋`englishName`，證書製作依據；皆未填顯示紅色「未填真實姓名」警示、不阻擋操作），次要列顯示名稱＋啟動編號，身分確認列性別＋單位（`church.name ?? churchOther`，比照會員匯出）；`CertificateListItem` 新增 `realName`/`englishName`/`gender`/`churchLabel`；搜尋擴為真實姓名（中/英）＋顯示名稱＋啟動編號。無 migration。spec：`admin-certificate-production` MODIFIED
 - `cr-spec-260713-005` — 略過 seed 合成信箱寄信：`lib/mailer.ts` 新增寄送守門 `sendMailSafe`＋匯出 `isUndeliverableEmail`——收件地址以 `@seed.iwillshare.org.tw` 結尾（名冊 seed 純學員合成信箱，必退信）時略過寄送記 log、不拋錯，五種信件（臨時密碼/通訊驗證/密碼重設/結業信/講師授權）統一涵蓋、呼叫端零修改；`resolveContactEmail` 不動——seed 帳號驗證真實通訊 Email 後信件自動恢復。無 migration。spec：新 `mail-skip-synthetic`

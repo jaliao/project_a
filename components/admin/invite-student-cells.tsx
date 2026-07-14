@@ -56,10 +56,14 @@ export function AddStudentDialog({
   inviteId,
   inviteCompleted,
   autoOpen,
+  triggerVariant = 'default',
+  triggerSize = 'default',
 }: {
   inviteId: number
   inviteCompleted: boolean
   autoOpen: boolean
+  triggerVariant?: 'default' | 'outline'
+  triggerSize?: 'default' | 'sm'
 }) {
   const router = useRouter()
   const [open, setOpen] = useState(autoOpen)
@@ -86,7 +90,7 @@ export function AddStudentDialog({
           setLookup({ kind: 'idle' })
           return
         }
-        const res = await lookupMemberByEmail(value)
+        const res = await lookupMemberByEmail(inviteId, value)
         if (seq !== lookupSeq.current) return // 過期查詢結果丟棄
         const member = res.success ? res.data?.member : null
         setLookup(member ? { kind: 'existing', displayName: member.displayName, spiritId: member.spiritId } : { kind: 'new' })
@@ -139,7 +143,7 @@ export function AddStudentDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <Button onClick={() => setOpen(true)}>
+      <Button variant={triggerVariant} size={triggerSize} onClick={() => setOpen(true)}>
         <IconUserPlus className="h-4 w-4" />
         新增學員
       </Button>

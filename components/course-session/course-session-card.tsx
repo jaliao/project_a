@@ -18,6 +18,7 @@ import { CourseCatalogBadge } from '@/components/course-session/course-catalog-b
 import { Badge } from '@/components/ui/badge'
 
 type CourseSessionCardProps = {
+  inviteId: number // 課程編號（所有使用處一律顯示 #編號）
   title: string
   courseCatalogId: number
   courseCatalogLabel: string
@@ -43,6 +44,7 @@ function formatDate(date: Date): string {
 }
 
 export function CourseSessionCard({
+  inviteId,
   title,
   courseCatalogId,
   courseCatalogLabel,
@@ -74,6 +76,7 @@ export function CourseSessionCard({
       {/* 標籤列（標題上方）、標題獨占一行不折行擠壓 */}
       <div className="space-y-1.5">
         <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="font-mono text-xs text-muted-foreground">#{inviteId}</span>
           {showMatchBadge && (
             <Badge className="bg-emerald-600 text-white hover:bg-emerald-600 text-xs">{t('publicRecruiting')}</Badge>
           )}

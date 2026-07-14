@@ -59,6 +59,8 @@ TBD - normalized for archive compatibility. Update Purpose for course-session-de
 
 ### Requirement: 已核准學員清單
 課程詳情頁 SHALL 以**卡片式**顯示所有 `status=approved` 的 InviteEnrollment 學員：每張卡片包含姓名、書籍選擇（materialChoice 標籤）、加入時間；SHALL NOT 顯示學員 Email。手機單欄、較寬視窗雙欄排列。
+區塊標題列右側 SHALL 對**管理者或該課講師**顯示兩顆操作按鈕（樣式比照課程基本資訊「編輯」按鈕）：**新增學員**與**移除學員**；一般學員視角 SHALL 與無按鈕時完全相同。
+「新增學員」SHALL 開啟既有新增學員 dialog（email 掛既有帳號／建新帳號＋臨時密碼一次性顯示、可補登結業）。「移除學員」SHALL 切換**移除模式**：各學員卡出現移除按鈕（沿用醒目警示與教材防呆確認流程），且卡片加顯**啟動編號**輔助辨識（仍不顯示 Email）；再次點擊退出移除模式。
 
 #### Scenario: 有已核准學員
 - **WHEN** 課程有至少一筆 status=approved 的 InviteEnrollment
@@ -67,6 +69,18 @@ TBD - normalized for archive compatibility. Update Purpose for course-session-de
 #### Scenario: 尚無已核准學員
 - **WHEN** 課程無任何 status=approved 記錄
 - **THEN** 顯示「尚無已核准學員」空狀態
+
+#### Scenario: 管理者與講師可見操作按鈕
+- **WHEN** 管理者或該課講師開啟課程詳情頁
+- **THEN** 已核准學員區塊標題列顯示「新增學員」「移除學員」按鈕
+
+#### Scenario: 一般學員不可見操作按鈕
+- **WHEN** 非管理者且非該課講師的使用者開啟課程詳情頁
+- **THEN** 已核准學員區塊無任何管理按鈕，呈現與現行相同
+
+#### Scenario: 移除模式
+- **WHEN** 管理者或講師點擊「移除學員」
+- **THEN** 各學員卡出現移除按鈕並加顯啟動編號；再次點擊「移除學員」退出模式
 
 ### Requirement: 講師專屬：複製邀請連結
 講師（CourseInvite.createdById == 當前使用者）SHALL 在**課程基本資訊卡片下方**看到「複製邀請連結」按鈕，點擊後複製 `/invite/{token}` 連結至剪貼簿。
@@ -80,26 +94,30 @@ TBD - normalized for archive compatibility. Update Purpose for course-session-de
 - **THEN** 複製邀請連結按鈕顯示於課程基本資訊卡片內的底部一列，與「編輯」按鈕同排
 
 ### Requirement: 講師專屬：結業按鈕顯示條件
-結業按鈕 SHALL 僅在課程處於進行中狀態時顯示，招生中、已取消、已結業時均不顯示。
+結業按鈕 SHALL 僅在課程處於進行中狀態時顯示，招生中、已取消、已結業時均不顯示；SHALL 對**該課講師與管理者**顯示。
 
 #### Scenario: 課程進行中時顯示結業按鈕
-- **WHEN** 講師查看課程詳情頁，且 isStarted = true、isCancelled = false、isCompleted = false
+- **WHEN** 該課講師或管理者查看課程詳情頁，且 isStarted = true、isCancelled = false、isCompleted = false
 - **THEN** 顯示「結業」按鈕
 
 #### Scenario: 課程招生中時不顯示結業按鈕
-- **WHEN** 講師查看課程詳情頁，且 CourseInvite.startedAt 為 null
+- **WHEN** 講師或管理者查看課程詳情頁，且 CourseInvite.startedAt 為 null
 - **THEN** 不顯示「結業」按鈕
 
 #### Scenario: 課程已取消或已結業時不顯示結業按鈕
 - **WHEN** isCancelled = true 或 isCompleted = true
-- **THEN** 整個操作區塊不渲染（既有行為不變）
+- **THEN** 結業作業區塊不渲染
 
 ### Requirement: 講師專屬：取消授課
-沿用 cr-spec-260324-011 實作，系統 SHALL 僅在課程未取消且未結業時顯示「取消授課」按鈕。
+系統 SHALL 僅在課程未取消且未結業時顯示「取消授課」按鈕，對**該課講師與管理者**顯示。教材申請與開始上課區塊 SHALL 維持僅該課講師可見。
 
 #### Scenario: 取消授課按鈕可見條件
-- **WHEN** 使用者為講師且課程未取消、未結業
+- **WHEN** 使用者為該課講師或管理者，且課程未取消、未結業
 - **THEN** 顯示「取消授課」按鈕
+
+#### Scenario: 管理者不可見講師專屬區塊
+- **WHEN** 管理者（非該課講師）查看課程詳情頁
+- **THEN** 教材申請與開始上課區塊不顯示
 
 ### Requirement: 講師專屬：公開媒合設定
 課程詳情頁 SHALL 讓課程講師（`createdById === 目前使用者`）或管理者切換「公開媒合」開關並編輯／清除「公開招募備註」，透過 Server Action `updateMatchSettings(inviteId, { isPublicMatch, matchNote })`。關閉公開媒合時 SHALL 保留既有 `matchNote`（不清空），僅不再於布告欄顯示。
@@ -185,3 +203,14 @@ TBD - normalized for archive compatibility. Update Purpose for course-session-de
 - **WHEN** 使用者檢視 FAQ 送出提問／送出回覆按鈕
 - **THEN** 按鈕為預設尺寸與主色樣式，與頁面其他主要操作按鈕一致
 
+
+### Requirement: 課程操作 LOG 區塊
+課程詳情頁 SHALL 對**管理者或該課講師**顯示「課程操作 LOG」區塊（一般學員不可見），列出該課程的管理操作紀錄（時間、操作者、動作、對象、摘要，最新在前、最多 30 筆並註記），內容以紀錄快照欄呈現。
+
+#### Scenario: 管理者與講師可見 LOG
+- **WHEN** 管理者或該課講師開啟課程詳情頁且該課有操作紀錄
+- **THEN** 顯示「課程操作 LOG」區塊列出該課紀錄（最新在前）
+
+#### Scenario: 學員不可見 LOG
+- **WHEN** 一般學員開啟課程詳情頁
+- **THEN** 不渲染課程操作 LOG 區塊

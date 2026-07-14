@@ -191,6 +191,7 @@ export default async function UserProfilePage({ params }: Props) {
           <CourseCardGrid>
             {enrollments.map((e) => (
               <CourseSessionCard
+                inviteId={e.inviteId}
                 key={e.enrollmentId}
                 title={e.title}
                 courseCatalogId={e.courseCatalogId}
@@ -251,6 +252,7 @@ export default async function UserProfilePage({ params }: Props) {
               {myCourseSessions.slice(0, 3).map((item) => (
                 <CourseSessionCard
                   key={item.id}
+                  inviteId={item.id}
                   title={item.title}
                   courseCatalogId={item.courseCatalogId}
                   courseCatalogLabel={item.courseCatalogLabel}

@@ -219,7 +219,10 @@ type EnrollmentRecord = {
     englishName: string | null
     nickname: string | null
     displayNameMode: DisplayNameMode
+    spiritId: string | null
   }
+  // 教材寄送項目數（課程頁移除學員防呆用）
+  _count: { shipmentItems: number }
 }
 
 export type CourseSessionDetail = {
@@ -335,7 +338,8 @@ export async function getCourseSessionById(
           teacherRecommended: true,
           teacherFeedbackNote: true,
           teacherFeedbackAt: true,
-          user: { select: displayNameUserSelect },
+          user: { select: { ...displayNameUserSelect, spiritId: true } },
+          _count: { select: { shipmentItems: true } },
         },
         orderBy: { joinedAt: 'asc' },
       },

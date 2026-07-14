@@ -10,7 +10,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
-import { canTeachAny, canTeachBook } from '@/lib/auth-roles'
+import { canAccessAdmin, canTeachAny, canTeachBook } from '@/lib/auth-roles'
 import { createInviteSchema, instructorFeedbackSchema } from '@/lib/schemas/course-invite'
 import { checkPrerequisites } from '@/lib/data/course-catalog'
 import { createNotification } from '@/app/actions/notification'
@@ -187,7 +187,8 @@ export async function cancelCourseSession(
 
   const invite = await prisma.courseInvite.findUnique({ where: { id } })
   if (!invite) return { success: false, message: '找不到課程' }
-  if (invite.createdById !== session.user.id) {
+  // 該課建立者或管理者可取消（管理者可代講師操作）
+  if (invite.createdById !== session.user.id && !canAccessAdmin(session.user.roles)) {
     return { success: false, message: '無權限取消此課程' }
   }
   if (invite.cancelledAt) {
@@ -455,7 +456,8 @@ export async function graduateCourse(
 
   const invite = await prisma.courseInvite.findUnique({ where: { id: inviteId } })
   if (!invite) return { success: false, message: '找不到課程' }
-  if (invite.createdById !== session.user.id) {
+  // 該課建立者或管理者可辦理結業（管理者可代講師操作）
+  if (invite.createdById !== session.user.id && !canAccessAdmin(session.user.roles)) {
     return { success: false, message: '無權限執行此操作' }
   }
   if (invite.completedAt) return { success: false, message: '課程已結業' }

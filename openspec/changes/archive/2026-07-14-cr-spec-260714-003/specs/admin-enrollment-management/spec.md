@@ -1,9 +1,11 @@
-# admin-enrollment-management Specification
+# admin-enrollment-management Delta（cr-spec-260714-003）
 
-## Purpose
-班級學員管理：管理者或該課講師於課程頁對班級新增／移除報名，修復名冊問題（遺漏學員、重複帳號搬課、同名拆帳、換班）。
+## REMOVED Requirements
 
-## Requirements
+### Requirement: 班級學員管理頁
+**移除原因**：後台獨立頁 `/admin/course-sessions/[id]/students` 退場，學員增刪改於前台課程頁 `/course/[id]` 的「已核准學員」區塊操作（入口需求見 `course-session-detail`）。
+
+## MODIFIED Requirements
 
 ### Requirement: 新增學員（掛既有帳號或建新帳號）
 
@@ -30,22 +32,6 @@ email 查詢既有會員之介面（lookup）SHALL 以課程歸屬授權（帶 `
 #### Scenario: 非該課講師的講師無法操作
 - **WHEN** 具講師身分但非該課建立者、亦非管理者的使用者呼叫新增學員或 email 查詢
 - **THEN** 回傳 `{ success: false, message: '無權限' }`
-
-### Requirement: 補登結業
-
-新增學員勾選「已結業」時，系統 SHALL 將該報名 `graduatedAt` 與 `joinedAt` 皆設為指定結業日（避免入班晚於結業）；若該班級 `completedAt` 為空，SHALL 於同一交易補為同日，且 UI SHALL 於勾選時提示「班級未結業將一併標記結業」。未勾選時 `joinedAt` 為當下時間、SHALL NOT 變更班級狀態。
-
-#### Scenario: 對未結業班級補登結業
-- **WHEN** 管理者新增學員並勾選已結業（結業日 D），且該班 `completedAt` 為空
-- **THEN** 報名 `graduatedAt=D`、`joinedAt=D`，班級 `completedAt=D`
-
-#### Scenario: 對已結業班級補登結業
-- **WHEN** 管理者對 `completedAt` 已有值的班級新增已結業學員（結業日 D）
-- **THEN** 報名 `graduatedAt=D`、`joinedAt=D`，班級 `completedAt` 維持不變
-
-#### Scenario: 未勾選已結業
-- **WHEN** 管理者新增學員未勾選已結業
-- **THEN** 報名無 `graduatedAt`、`joinedAt` 為當下時間，班級狀態不變
 
 ### Requirement: 移除學員
 

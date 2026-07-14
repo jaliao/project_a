@@ -1,9 +1,11 @@
-# admin-operation-log Specification
+# admin-operation-log Delta（cr-spec-260714-003）
 
-## Purpose
-管理操作紀錄：記錄班級學員新增／移除操作（操作者為管理者或該課講師），快照保存確保可追溯；查詢由課程頁「課程操作 LOG」區塊承擔（見 course-session-detail）。
+## REMOVED Requirements
 
-## Requirements
+### Requirement: 操作紀錄查詢頁
+**移除原因**：後台 `/admin/operation-logs` 頁與 dashboard 功能格退場，查詢改由前台課程頁「課程操作 LOG」區塊承擔（見 `course-session-detail`），依課程過濾、對管理者與該課講師可見。
+
+## MODIFIED Requirements
 
 ### Requirement: 管理操作紀錄寫入
 

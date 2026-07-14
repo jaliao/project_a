@@ -1,54 +1,6 @@
-# cancel-course-session Specification
+# cancel-course-session Delta（cr-spec-260714-003）
 
-## Purpose
-TBD - normalized for archive compatibility. Update Purpose for cancel-course-session.
-
-## Requirements
-
-### Requirement: 取消課程按鈕
-課程詳情頁底部 SHALL 顯示「取消課程」按鈕，僅在課程未取消時顯示。
-
-#### Scenario: 課程未取消時顯示按鈕
-- **WHEN** CourseInvite.cancelledAt 為 null
-- **THEN** 頁面底部顯示「取消課程」按鈕
-
-#### Scenario: 課程已取消時隱藏按鈕
-- **WHEN** CourseInvite.cancelledAt 不為 null
-- **THEN** 頁面不顯示「取消課程」按鈕
-
-### Requirement: 取消課程確認 Dialog
-點擊「取消課程」SHALL 彈出確認 Dialog，要求填寫取消原因後方可送出。
-
-#### Scenario: 開啟取消 Dialog
-- **WHEN** 使用者點擊「取消課程」按鈕
-- **THEN** 系統彈出確認 Dialog，標題為「確認取消課程」
-
-#### Scenario: 未填寫取消原因時無法送出
-- **WHEN** 使用者未選擇或未填寫取消原因即點擊確認
-- **THEN** 系統顯示「請填寫取消原因」提示，不執行取消
-
-#### Scenario: 點擊取消關閉 Dialog
-- **WHEN** 使用者點擊 Dialog 中的「取消」或關閉按鈕
-- **THEN** Dialog 關閉，課程不受影響
-
-### Requirement: 取消原因輸入
-Dialog SHALL 提供下拉選單供選擇預設原因，選擇「其他」時顯示 textarea 自行填寫。
-
-#### Scenario: 選擇預設原因「人數不足」
-- **WHEN** 使用者從下拉選單選擇「人數不足」
-- **THEN** 不顯示 textarea，最終存入資料庫的 cancelReason 為「人數不足」
-
-#### Scenario: 選擇預設原因「時間因素」
-- **WHEN** 使用者從下拉選單選擇「時間因素」
-- **THEN** 不顯示 textarea，最終存入資料庫的 cancelReason 為「時間因素」
-
-#### Scenario: 選擇「其他」顯示 textarea
-- **WHEN** 使用者從下拉選單選擇「其他」
-- **THEN** 頁面顯示 textarea，使用者可自行填寫原因
-
-#### Scenario: 「其他」未填寫 textarea 無法送出
-- **WHEN** 使用者選擇「其他」但 textarea 為空即點擊確認
-- **THEN** 系統顯示「請填寫取消原因」提示，不執行取消
+## MODIFIED Requirements
 
 ### Requirement: 執行取消課程
 確認送出後，系統 SHALL 將 `cancelledAt` 設為當前時間、`cancelReason` 寫入取消原因文字，並重新整理頁面。取消 Server Action 的守衛 SHALL 為「該課建立者或 `canAccessAdmin`」（管理者可代講師取消）。
@@ -64,6 +16,8 @@ Dialog SHALL 提供下拉選單供選擇預設原因，選擇「其他」時顯�
 #### Scenario: 無權限者無法取消
 - **WHEN** 非該課建立者且非管理者呼叫取消 Server Action
 - **THEN** 回傳無權限錯誤，課程狀態不變
+
+## ADDED Requirements
 
 ### Requirement: 重新招募作業
 課程詳情頁 SHALL 於課程**進行中**（`startedAt != null` 且未結業、未取消）時，對**該課講師與管理者**顯示「重新招募作業」區塊（樣式比照結業作業）：說明文字＋「退回招生中」按鈕，點擊後 SHALL 以確認 dialog 提示影響（退回後可再邀請／核准學員；既有學員報名與教材紀錄不受影響），確認後系統 SHALL 清除 `startedAt`（課程回到招生中）。此操作 SHALL NOT 發送通知、SHALL NOT 寫入操作紀錄（LOG 範圍維持學員增刪）。Server Action 守衛 SHALL 為「該課建立者或 `canAccessAdmin`」，且僅於進行中狀態可執行。

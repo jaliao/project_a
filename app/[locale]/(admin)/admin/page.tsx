@@ -23,7 +23,6 @@ import {
   IconUserExclamation,
   IconSettings,
   IconHistory,
-  IconClipboardList,
 } from '@tabler/icons-react'
 
 export const dynamic = 'force-dynamic'
@@ -87,13 +86,6 @@ const ADMIN_FEATURES = [
     description: '查詢從未登入過的會員',
     icon: IconUserExclamation,
     href: '/admin/members/inactive',
-    superadminOnly: false,
-  },
-  {
-    title: '操作紀錄',
-    description: '班級學員新增/移除紀錄',
-    icon: IconClipboardList,
-    href: '/admin/operation-logs',
     superadminOnly: false,
   },
   {

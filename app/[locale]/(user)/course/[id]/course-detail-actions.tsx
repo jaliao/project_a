@@ -1,8 +1,11 @@
 /*
  * ----------------------------------------------
- * CourseDetailActions - 講師操作區（三區塊：教材申請／開始上課／取消上課）
- * 2026-03-24 (Updated: 2026-07-07)
+ * CourseDetailActions - 課程操作區
+ * 2026-03-24 (Updated: 2026-07-14)
  * app/(user)/course/[id]/course-detail-actions.tsx
+ *
+ * 分區塊權限：教材申請／開始上課僅該課講師；
+ * 結業作業／重新招募作業／取消上課作業＝講師與管理者皆可
  * ----------------------------------------------
  */
 
@@ -12,7 +15,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { IconBook, IconPlayerPlay, IconCertificate, IconBan } from '@tabler/icons-react'
+import { IconBook, IconPlayerPlay, IconCertificate, IconBan, IconRefresh } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -27,6 +30,7 @@ import { CancelCourseDialog } from '@/components/course-session/cancel-course-di
 import { MaterialOrderDialog } from '@/components/course-session/material-order-dialog'
 import type { BookItem } from '@/lib/data/material-items'
 import { startCourseSession } from '@/app/actions/course-invite'
+import { reopenRecruitment } from '@/app/actions/course-session'
 import { confirmReceipt, reportMaterialPayment, cancelCourseOrder } from '@/app/actions/course-order'
 import { getMaterialOrderStatus } from '@/lib/utils/material-order-status'
 import type { MaterialProgress } from '@/lib/utils/material-progress'
@@ -34,6 +38,8 @@ import type { CourseSessionOrder } from '@/lib/data/course-sessions'
 
 type Props = {
   inviteId: number
+  // 是否為該課講師（教材申請／開始上課僅講師可見；其餘作業講師與管理者皆可）
+  isInstructor: boolean
   isCancelled: boolean
   isCompleted: boolean
   isStarted: boolean
@@ -151,6 +157,7 @@ function todayInput(): string {
 
 export function CourseDetailActions({
   inviteId,
+  isInstructor,
   isCancelled,
   isCompleted,
   isStarted,
@@ -171,6 +178,9 @@ export function CourseDetailActions({
   // 開始上課：所選開課日期（預設今天）與確認視窗
   const [startDate, setStartDate] = useState(todayInput())
   const [startConfirmOpen, setStartConfirmOpen] = useState(false)
+  // 重新招募：確認視窗與處理中狀態
+  const [reopenOpen, setReopenOpen] = useState(false)
+  const [reopenLoading, setReopenLoading] = useState(false)
   const [receiptPending, startReceiptTransition] = useTransition()
   const [paymentPending, startPaymentTransition] = useTransition()
   const [cancelPending, startCancelTransition] = useTransition()
@@ -220,6 +230,19 @@ export function CourseDetailActions({
     })
   }
 
+  async function handleReopen() {
+    setReopenLoading(true)
+    const result = await reopenRecruitment(inviteId)
+    setReopenLoading(false)
+    setReopenOpen(false)
+    if (result.success) {
+      toast.success(result.message ?? '已退回招生中')
+      router.refresh()
+    } else {
+      toast.error(result.message ?? '操作失敗，請稍後再試')
+    }
+  }
+
   async function handleStart() {
     setStartLoading(true)
     const result = await startCourseSession(inviteId, startDate)
@@ -239,8 +262,8 @@ export function CourseDetailActions({
 
   return (
     <div className="space-y-3">
-      {/* ── 區塊一：教材申請作業 ────────────────── */}
-      {!isStarted && (
+      {/* ── 區塊一：教材申請作業（僅講師） ────────────────── */}
+      {!isStarted && isInstructor && (
         <Section title="教材申請作業" icon={<IconBook className="h-5 w-5 text-primary" />}>
           {/* 說明：申請進度（總需求／已申請／尚未申請） */}
           <div className="rounded-md bg-muted/50 px-3 py-2 text-sm space-y-1">
@@ -345,8 +368,8 @@ export function CourseDetailActions({
         </Section>
       )}
 
-      {/* ── 區塊二：開始上課作業 ────────────────── */}
-      {!isStarted && (
+      {/* ── 區塊二：開始上課作業（僅講師） ────────────────── */}
+      {!isStarted && isInstructor && (
         <Section title="開始上課作業" icon={<IconPlayerPlay className="h-5 w-5 text-primary" />}>
           <div className="text-sm text-muted-foreground space-y-1">
             <p>注意事項：開始上課後課程狀態將變為「進行中」，並可開始辦理結業。</p>
@@ -412,7 +435,7 @@ export function CourseDetailActions({
         </Section>
       )}
 
-      {/* 進行中：結業作業 */}
+      {/* 進行中：結業作業（講師與管理者） */}
       {isStarted && (
         <Section title="結業作業" icon={<IconCertificate className="h-5 w-5 text-primary" />}>
           {hasApprovedStudents ? (
@@ -427,7 +450,42 @@ export function CourseDetailActions({
         </Section>
       )}
 
-      {/* ── 區塊三：取消上課作業 ────────────────── */}
+      {/* 進行中：重新招募作業（講師與管理者） */}
+      {isStarted && (
+        <Section title="重新招募作業" icon={<IconRefresh className="h-5 w-5 text-primary" />}>
+          <p className="text-sm text-muted-foreground">
+            將課程由「進行中」退回「招生中」，可再邀請／核准學員；既有學員報名與教材紀錄不受影響。
+          </p>
+          <Button variant="outline" onClick={() => setReopenOpen(true)}>
+            退回招生中
+          </Button>
+
+          {/* 重新招募確認視窗 */}
+          <Dialog open={reopenOpen} onOpenChange={setReopenOpen}>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle>確認退回招生中</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-2 text-sm">
+                <p>課程狀態將由「進行中」退回「招生中」。</p>
+                <p className="text-muted-foreground">
+                  退回後可再邀請／核准學員；既有學員報名與教材紀錄不受影響，重新開始上課時仍須符合開課門檻。
+                </p>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setReopenOpen(false)} disabled={reopenLoading}>
+                  取消
+                </Button>
+                <Button onClick={handleReopen} disabled={reopenLoading}>
+                  {reopenLoading ? '處理中...' : '確認退回'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </Section>
+      )}
+
+      {/* ── 區塊三：取消上課作業（講師與管理者） ────────────────── */}
       <Section title="取消上課作業" icon={<IconBan className="h-5 w-5 text-primary" />}>
         <Button variant="destructive" onClick={() => setCancelOpen(true)}>
           取消授課
