@@ -1,8 +1,11 @@
 /*
  * ----------------------------------------------
  * 後台實體證書製作管理頁
- * 2026-07-01
+ * 2026-07-01 (Updated: 2026-07-14)
  * app/[locale]/(admin)/admin/certificates/page.tsx
+ *
+ * 卡片式清單：主標題＝真實姓名中英並列（證書製作依據），
+ * 附顯示名稱/啟動編號與性別/單位等身分確認資訊。
  * ----------------------------------------------
  */
 
@@ -10,7 +13,7 @@ export const dynamic = 'force-dynamic'
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
+import { IconChevronLeft, IconChevronRight, IconGenderAgender, IconGenderFemale, IconGenderMale } from '@tabler/icons-react'
 import { getCertificateProductionList, type CertificateStatus } from '@/lib/data/certificate'
 import { CertificateFilter } from '@/components/admin/certificate-filter'
 import { CertificateProduceButton, CertificateNoteCell } from '@/components/admin/certificate-cells'
@@ -23,6 +26,17 @@ export const metadata: Metadata = {
 
 function fmtDate(d: Date): string {
   return new Date(d).toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' })
+}
+
+// 性別以 icon 呈現於姓名旁（未指定用中性 icon、淡色）
+function GenderIcon({ gender }: { gender: string }) {
+  if (gender === 'male') {
+    return <IconGenderMale className="size-4 shrink-0 text-blue-500" aria-label="男" />
+  }
+  if (gender === 'female') {
+    return <IconGenderFemale className="size-4 shrink-0 text-rose-500" aria-label="女" />
+  }
+  return <IconGenderAgender className="size-4 shrink-0 text-muted-foreground/50" aria-label="未指定" />
 }
 
 export default async function AdminCertificatesPage({
@@ -61,47 +75,63 @@ export default async function AdminCertificatesPage({
         </div>
       ) : (
         <>
-          <div className="rounded-lg border overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
-                  <th className="px-4 py-3">啟動編號</th>
-                  <th className="px-4 py-3">姓名</th>
-                  <th className="px-4 py-3">階層</th>
-                  <th className="px-4 py-3">結業日</th>
-                  <th className="px-4 py-3">狀態</th>
-                  <th className="px-4 py-3">製作日期</th>
-                  <th className="px-4 py-3">製作管理者</th>
-                  <th className="px-4 py-3">備註</th>
-                  <th className="px-4 py-3">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {result.items.map((it) => (
-                  <tr key={`${it.userId}:${it.courseCatalogId}`} className="border-b align-top">
-                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{it.spiritId ?? '—'}</td>
-                    <td className="px-4 py-3 font-medium">{it.displayName}</td>
-                    <td className="px-4 py-3">{it.courseCatalogLabel}</td>
-                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{fmtDate(it.graduatedAt)}</td>
-                    <td className="px-4 py-3">
-                      {it.producedAt ? (
-                        <Badge className="bg-green-100 text-green-700 hover:bg-green-100">已完成</Badge>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {result.items.map((it) => {
+              // 真實姓名中英並列；兩者皆未填顯示警示
+              const realNameText = [it.realName, it.englishName].filter(Boolean).join(' ')
+              return (
+                <div key={`${it.userId}:${it.courseCatalogId}`} className="flex flex-col gap-3 rounded-lg border p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      {realNameText ? (
+                        <p className="text-base font-semibold break-words">{realNameText}</p>
                       ) : (
-                        <Badge variant="outline" className="text-muted-foreground">未完成</Badge>
+                        <p className="text-base font-semibold text-destructive">未填真實姓名</p>
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{it.producedAt ? fmtDate(it.producedAt) : '—'}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{it.producedByName ?? '—'}</td>
-                    <td className="px-4 py-3">
-                      <CertificateNoteCell userId={it.userId} courseCatalogId={it.courseCatalogId} initialNote={it.note} />
-                    </td>
-                    <td className="px-4 py-3">
+                      <GenderIcon gender={it.gender} />
+                    </div>
+                    {it.producedAt ? (
+                      <Badge className="shrink-0 bg-green-100 text-green-700 hover:bg-green-100">已完成</Badge>
+                    ) : (
+                      <Badge variant="outline" className="shrink-0 text-muted-foreground">未完成</Badge>
+                    )}
+                  </div>
+
+                  {/* 欄位依序：啟動編號、顯示名稱、單位、階層－結業時間（行距一致；中英文姓名已在主標題） */}
+                  <div className="space-y-1.5 text-sm">
+                    <p>
+                      <span className="text-muted-foreground">啟動編號：</span>
+                      {it.spiritId ? <span className="font-mono">{it.spiritId}</span> : '—'}
+                    </p>
+                    <p className="break-words">
+                      <span className="text-muted-foreground">顯示名稱：</span>
+                      {it.displayName}
+                    </p>
+                    <p className="break-words">
+                      <span className="text-muted-foreground">單位：</span>
+                      {it.churchLabel ?? '—'}
+                    </p>
+                    <p>
+                      <span className="text-muted-foreground">{it.courseCatalogLabel} 結業：</span>
+                      {fmtDate(it.graduatedAt)}
+                    </p>
+                    {it.producedAt && (
+                      <p className="text-muted-foreground">
+                        製作：{fmtDate(it.producedAt)}
+                        {it.producedByName ? ` · ${it.producedByName}` : ''}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-auto space-y-3">
+                    <CertificateNoteCell userId={it.userId} courseCatalogId={it.courseCatalogId} initialNote={it.note} />
+                    <div className="flex justify-end">
                       <CertificateProduceButton userId={it.userId} courseCatalogId={it.courseCatalogId} produced={it.producedAt != null} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
 
           {result.totalPages > 1 && (

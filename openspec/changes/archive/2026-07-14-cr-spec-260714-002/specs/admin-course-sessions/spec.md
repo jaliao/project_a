@@ -1,9 +1,9 @@
-# admin-course-sessions Specification
+# admin-course-sessions Delta（cr-spec-260714-002）
 
-## Purpose
-TBD - created by archiving change cr-spec-260611-003. Update Purpose after archive.
-## Requirements
+## MODIFIED Requirements
+
 ### Requirement: 後台課程狀態變更
+
 後台開課管理頁 `/admin/course-sessions` 的每筆課程 SHALL 由卡片「⋯」操作選單之「變更課程狀態」項**原地開啟 dialog** 變更該課程狀態（取代原 inline 狀態下拉）。
 可選目標狀態 SHALL 為「招生中」「進行中」「已取消」，且 SHALL 允許任意方向轉換（含回退）。
 dialog SHALL NOT 提供「已結業」為可選目標；當課程目前為「已結業」時，SHALL 以停用方式顯示「已結業」當前狀態。
@@ -38,7 +38,10 @@ dialog SHALL NOT 提供「已結業」為可選目標；當課程目前為「已
 - **WHEN** 不具 `admin`/`superadmin` 身分者嘗試呼叫狀態變更
 - **THEN** 系統拒絕並回傳無權限
 
+## ADDED Requirements
+
 ### Requirement: 班級編號顯示
+
 開課管理頁每筆課程 SHALL 顯示班級編號（`CourseInvite.id`，如 `#123`），桌機與行動裝置版面皆須呈現。
 
 #### Scenario: 列表顯示班級編號
@@ -46,6 +49,7 @@ dialog SHALL NOT 提供「已結業」為可選目標；當課程目前為「已
 - **THEN** 每筆課程顯示其班級編號
 
 ### Requirement: 卡片操作選單
+
 開課管理頁每筆課程卡片右上角 SHALL 提供「⋯」操作選單，選單項依序為：**新增學員**、**移除學員**、**變更課程狀態**、**查詢 LOG**。連往獨立頁面之選單項 SHALL 以另開視窗（`target="_blank"`）開啟：
 
 - 新增學員 → `/admin/course-sessions/[id]/students?action=add`
@@ -61,4 +65,3 @@ dialog SHALL NOT 提供「已結業」為可選目標；當課程目前為「已
 #### Scenario: 變更課程狀態原地開啟
 - **WHEN** 管理者點選「變更課程狀態」
 - **THEN** 於當前頁面開啟狀態變更 dialog，不另開視窗
-

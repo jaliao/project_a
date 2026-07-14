@@ -1,12 +1,13 @@
 /*
  * ----------------------------------------------
  * Data Layer - 實體結業證書製作清單
- * 2026-07-01
+ * 2026-07-01 (Updated: 2026-07-14)
  * lib/data/certificate.ts
  *
  * 證書單位＝每人每階層一張（userId × courseCatalogId）：
  * 由已結業報名（graduatedAt 不為 null）去重（取最新結業日），
  * 左接 CertificateProduction 取製作狀態/日期/管理者/備註。
+ * 附身分確認欄位（真實姓名中英/性別/單位）供管理者核對證書姓名。
  * ----------------------------------------------
  */
 
@@ -25,11 +26,17 @@ const displaySelect = {
 
 export type CertificateStatus = 'pending' | 'done'
 
+export type CertificateGender = 'male' | 'female' | 'unspecified'
+
 export type CertificateListItem = {
   userId: string
   courseCatalogId: number
   courseCatalogLabel: string
   displayName: string
+  realName: string | null
+  englishName: string | null
+  gender: CertificateGender
+  churchLabel: string | null
   spiritId: string | null
   graduatedAt: Date
   producedAt: Date | null
@@ -66,7 +73,17 @@ export async function getCertificateProductionList(opts: {
     where: { graduatedAt: { not: null } },
     select: {
       graduatedAt: true,
-      user: { select: { id: true, spiritId: true, ...displaySelect } },
+      user: {
+        select: {
+          id: true,
+          spiritId: true,
+          gender: true,
+          churchType: true,
+          churchOther: true,
+          church: { select: { name: true } },
+          ...displaySelect,
+        },
+      },
       invite: { select: { courseCatalogId: true, courseCatalog: { select: { label: true } } } },
     },
   })
@@ -76,6 +93,8 @@ export async function getCertificateProductionList(opts: {
     courseCatalogId: number
     courseCatalogLabel: string
     user: DisplayUser
+    gender: CertificateGender
+    churchLabel: string | null
     spiritId: string | null
     graduatedAt: Date
   }
@@ -89,6 +108,9 @@ export async function getCertificateProductionList(opts: {
         courseCatalogId: e.invite.courseCatalogId,
         courseCatalogLabel: e.invite.courseCatalog.label,
         user: e.user,
+        gender: e.user.gender,
+        // 單位：清單教會名 → 自填其他 → 無（比照會員匯出解析順序）
+        churchLabel: e.user.church?.name ?? e.user.churchOther ?? null,
         spiritId: e.user.spiritId,
         graduatedAt: e.graduatedAt!,
       })
@@ -115,6 +137,10 @@ export async function getCertificateProductionList(opts: {
       courseCatalogId: c.courseCatalogId,
       courseCatalogLabel: c.courseCatalogLabel,
       displayName: getMemberDisplayName(c.user),
+      realName: c.user.realName ?? null,
+      englishName: c.user.englishName ?? null,
+      gender: c.gender,
+      churchLabel: c.churchLabel,
       spiritId: c.spiritId,
       graduatedAt: c.graduatedAt,
       producedAt: p?.producedAt ?? null,
@@ -126,10 +152,15 @@ export async function getCertificateProductionList(opts: {
   // 4) 狀態篩選（未完成＝producedAt 為 null；已完成＝not null）
   rows = rows.filter((r) => (status === 'done' ? r.producedAt != null : r.producedAt == null))
 
-  // 5) 人名搜尋
+  // 5) 人名搜尋（真實姓名中/英、顯示名稱、啟動編號）
   if (q) {
+    const qLower = q.toLowerCase()
     rows = rows.filter(
-      (r) => r.displayName.includes(q) || (r.spiritId ?? '').toLowerCase().includes(q.toLowerCase())
+      (r) =>
+        (r.realName ?? '').includes(q) ||
+        (r.englishName ?? '').toLowerCase().includes(qLower) ||
+        r.displayName.includes(q) ||
+        (r.spiritId ?? '').toLowerCase().includes(qLower)
     )
   }
 

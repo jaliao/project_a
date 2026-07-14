@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.137（2026-07-13）
+> 自動產生，版本 0.1.139（2026-07-14）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -59,7 +59,9 @@ app/
 │   ├── layout.tsx   # (user) 守衛 + canAccessAdmin；後台各頁不再自行守衛
 │   └── admin/           # 管理後台：功能網格（儀錶板/課程/授課/教材/會員/教會/系統設定）
 │       ├── dashboard/       # 後台儀錶板（統計卡片 7 個）
-│       ├── course-sessions/ # 開課管理（全站；搜尋 + 篩選；inline 狀態變更）
+│       ├── course-sessions/ # 開課管理（全站；搜尋 + 篩選；班級編號 + 卡片「⋯」選單：新增/移除學員、狀態 dialog、查詢 LOG）
+│       ├── course-sessions/[id]/students/ # 班級學員管理（新增學員掛/建帳號＋補登結業、移除學員；?action=add 自動開表單）
+│       ├── operation-logs/  # 管理操作紀錄（enrollment_add/remove；30 筆分頁；?inviteId= 過濾）
 │       ├── members/         # 會員管理清單（搜尋/篩選/翻頁/重設密碼/查看詳情）
 │       ├── members/[id]/    # 會員詳情（Tabs：基本資料/學習階層/講師身分/特殊設定）
 │       ├── members/inactive/ # 未啟用會員清單（lastLoginAt 為 null）
@@ -128,6 +130,7 @@ lib/
 ├── auth.ts          # NextAuth 設定（JWT + Google + Credentials）
 ├── prisma.ts        # Prisma client singleton
 ├── spirit-id.ts     # Spirit ID 產生器
+├── member-creation.ts # 建立可登入會員共用邏輯（spiritId＋臨時密碼＋白名單；createMember 與班級新增學員共用，可於 tx 內呼叫）
 ├── schemas/         # Zod 驗證 schema
 ├── utils/
 │   └── member-display.ts    # getMemberDisplayName(user) 純函式（系統標準：暱稱→中文名稱→英文名稱，三模式括號省略；名稱不含 name/email）
@@ -142,6 +145,8 @@ lib/
 │   ├── admin-settings.ts    # 後台設定查詢（getAdminSetting, upsertAdminSetting）
 │   ├── churches.ts          # 教會管理查詢（getActiveChurches, getAllChurches, createChurch, updateChurch, toggleChurchActive, deleteChurch）
 │   ├── notification.ts      # 通知查詢（getNotifications, getUnreadNotificationCount, getNotificationsPaginated）
+│   ├── invite-students.ts   # 班級學員管理查詢（getInviteStudentsAdmin：班級資訊＋報名學員含教材寄送數；findMemberByEmail：email 查既有會員）
+│   ├── admin-logs.ts        # 管理操作紀錄查詢（getAdminLogs：最新在前、每頁 30 筆、inviteId 過濾；只讀快照欄不 join）
 │   └── course-message.ts    # 課程 FAQ 留言查詢（getCourseMessages(inviteId, viewer)：1 對 1 可見性—老師見全部、會員僅見自己的串；提問升序＋回覆內嵌）
 ├── ecpay/
 │   └── logistics.ts         # ECPay 物流工具（calcLogisticsCheckMacValue，MD5，物流 CMV-MD5 規格）
@@ -156,11 +161,13 @@ prisma/
 │   ├── course-message.prisma # CourseMessage（課程 FAQ 留言；parentId 自關聯，提問/回覆同表，cascade）
 │   ├── course-catalog.prisma # CourseCatalog（id, label, description?, isActive, sortOrder, prerequisites 自關聯）
 │   ├── admin-setting.prisma  # AdminSetting（key/value store；hierarchy_depth 預設 3）
+│   ├── admin-log.prisma      # AdminActionLog（管理操作紀錄；optional FK SetNull＋文字快照欄）
 │   └── church.prisma         # Church（id, name @unique, isActive, sortOrder）+ ChurchType enum（church|other|none）
 └── seed.ts
 
 config/
 ├── version.json          # 版本號（SemVer 唯一來源）
+├── admin-log-action.ts   # 操作紀錄動作常數（enrollment_add/enrollment_remove＋標籤）
 └── project-status.ts, project-type.ts
 ```
 
@@ -279,6 +286,21 @@ churchId    Int?（關聯 Church，onDelete: SetNull）
 churchOther String?（churchType = other 時的自填文字）
 ```
 
+### AdminActionLog
+```
+id           Int（主鍵，autoincrement）
+action       String（動作代碼，值域見 config/admin-log-action.ts：enrollment_add | enrollment_remove）
+actorId      String?（操作管理者 UUID，onDelete: SetNull）
+targetUserId String?（對象學員 UUID，onDelete: SetNull）
+inviteId     Int?（班級，onDelete: SetNull）
+actorName    String（快照：操作者姓名）
+targetName   String（快照：對象姓名＋email）
+inviteTitle  String（快照：#班級編號＋課程名稱）
+detail       String?（摘要，如「補登結業 2025/09/01」）
+createdAt    DateTime
+```
+管理操作紀錄（本階段僅班級學員新增/移除）。FK 全 optional＋SetNull＋文字快照：對象會員/班級日後被刪除時紀錄仍完整可讀；寫入與對應操作同一交易（失敗回滾不留紀錄）。
+
 ### AdminSetting
 ```
 key   String（主鍵，@unique）
@@ -375,6 +397,8 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260714-002` — 後台班級學員管理＋操作紀錄：新增 `AdminActionLog` model（migration `add_admin_action_log`；optional FK SetNull＋actorName/targetName/inviteTitle 快照欄）；開課管理卡片上方顯示班級編號 `#id`＋右上角「⋯」選單（新增學員/移除學員/變更課程狀態/查詢 LOG，連獨立頁面者 `target="_blank"` 另開視窗），狀態變更由 inline 下拉改選單觸發 dialog（規則不變，刪除 `course-status-select.tsx`）；新頁 `/admin/course-sessions/[id]/students`（頁首班級資訊＋學員卡片；`?action=add` 自動開新增表單）與 `/admin/operation-logs`（30 筆分頁、`?inviteId=` 過濾、dashboard 功能格入口）；`addStudentToInvite`（email 既有帳號→掛帳號〔UI 確認列〕、查無→沿用 `createMember` 機制建帳號〔臨時密碼一次性顯示、不寄信〕；可勾已結業→`graduatedAt=joinedAt=結業日`、班未結業同交易補 `completedAt`；重複報名擋下）／`removeStudentFromInvite`（有教材寄送項目拒絕；已結業 UI 醒目警示；實體刪除）皆與 log 寫入同交易；`createMember` 建帳號邏輯抽至 `lib/member-creation.ts` 共用；新增 `ui/dropdown-menu` primitive、`config/admin-log-action.ts`。spec：新 `admin-enrollment-management`／`admin-operation-log`、`admin-course-sessions` MODIFIED
+- `cr-spec-260714-001` — 證書製作卡片化＋真實姓名連動：`/admin/certificates` 由 9 欄表格改響應式卡片（`md:grid-cols-2 xl:grid-cols-3`，手機單欄）；主標題＝真實姓名中英並列（`realName`＋`englishName`，證書製作依據；皆未填顯示紅色「未填真實姓名」警示、不阻擋操作），次要列顯示名稱＋啟動編號，身分確認列性別＋單位（`church.name ?? churchOther`，比照會員匯出）；`CertificateListItem` 新增 `realName`/`englishName`/`gender`/`churchLabel`；搜尋擴為真實姓名（中/英）＋顯示名稱＋啟動編號。無 migration。spec：`admin-certificate-production` MODIFIED
 - `cr-spec-260713-005` — 略過 seed 合成信箱寄信：`lib/mailer.ts` 新增寄送守門 `sendMailSafe`＋匯出 `isUndeliverableEmail`——收件地址以 `@seed.iwillshare.org.tw` 結尾（名冊 seed 純學員合成信箱，必退信）時略過寄送記 log、不拋錯，五種信件（臨時密碼/通訊驗證/密碼重設/結業信/講師授權）統一涵蓋、呼叫端零修改；`resolveContactEmail` 不動——seed 帳號驗證真實通訊 Email 後信件自動恢復。無 migration。spec：新 `mail-skip-synthetic`
 - `cr-spec-260713-004` — 電話驗證支援國際號碼：`lib/schemas/profile.ts` 兩處 phone regex（個人資料選填＋onboarding Step 2 必填）抽共用常數 `PHONE_REGEX = /^(09\d{8}|\+[1-9]\d{7,14})$/`——台灣 09 格式 ∪ E.164（原 `+8869...` 分支被吸收），解除海外會員（如 `+12025550123`）onboarding 卡死；`validation.phoneInvalid`／`profile.phonePlaceholder` 文案更新（zh-TW/en，zh-CN 重新產生）。教材訂單聯絡電話本就僅驗非空、不動。無 migration。spec：新 `phone-validation`
 - `cr-spec-260713-002` — 後台基本設定開放 admin：`/admin/settings`「基本設定」四項（`hierarchy_depth`／`class_max_capacity`／`remittance_account`／結業信範本）由僅 superadmin 改 admin/superadmin 皆可——`admin-settings.ts` 四個 action `isSuperadmin`→`canAccessAdmin`；`settings-tabs.tsx` 移除 `isSuperadmin` prop 與分頁守衛（`(admin)` layout 為唯一守衛）；`page.tsx` 移除 `auth()`/`isSuperadmin`；後台首頁 `/admin`「系統設定」功能卡 `superadminOnly` 改 `false`（驗證發現的入口遺漏，v0.1.136 補修）。superadmin 僅存差異＝可授權 superadmin 身分。無 migration。spec：新 `admin-settings-access`、`graduation-email`／`material-order-payment` MODIFIED（歸檔順序須 -001 在前）

@@ -8,7 +8,6 @@
 
 'use server'
 
-import { randomBytes } from 'crypto'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
@@ -16,23 +15,15 @@ import type { UserRole, SuspendReason } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { canAccessAdmin, normalizeRoles, canAssignRole, isSuperadmin, BOOK_LABEL_BY_TEACHER_ROLE, type TeacherRole } from '@/lib/auth-roles'
-import { generateSpiritId } from '@/lib/spirit-id'
 import { sendTempPasswordEmail, sendTeacherRoleGrantedEmail } from '@/lib/mailer'
 import { resolveContactEmail } from '@/lib/utils/contact-email'
+import { createLoginableMember, generateTempPassword } from '@/lib/member-creation'
 
 type ActionResponse<T = undefined> = {
   success: boolean
   message?: string
   data?: T
   errors?: Record<string, string[]>
-}
-
-function generateTempPassword(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  const bytes = randomBytes(12)
-  return Array.from(bytes)
-    .map((b) => chars[b % chars.length])
-    .join('')
 }
 
 /**
@@ -110,30 +101,10 @@ export async function createMember(input: {
   // 身分集合（恆含 user 基線）
   const finalRoles = normalizeRoles(roles)
 
-  // 核發 spiritId 與臨時密碼
-  const spiritId = await generateSpiritId()
-  const tempPassword = generateTempPassword()
-  const passwordHash = await bcrypt.hash(tempPassword, 12)
-
-  await prisma.$transaction(async (tx) => {
-    await tx.user.create({
-      data: {
-        email,
-        realName,
-        nickname: realName,
-        spiritId,
-        roles: finalRoles,
-        passwordHash,
-        isTempPassword: true,
-      },
-    })
-    // 加入白名單（可登入）
-    await tx.whitelistedEmail.upsert({
-      where: { email },
-      update: { isActive: true },
-      create: { email, isActive: true },
-    })
-  })
+  // 建帳號共用邏輯（spiritId＋臨時密碼＋白名單）
+  const { spiritId, tempPassword } = await prisma.$transaction((tx) =>
+    createLoginableMember(tx, { realName, email, roles: finalRoles })
+  )
 
   revalidatePath('/admin/members')
   return {

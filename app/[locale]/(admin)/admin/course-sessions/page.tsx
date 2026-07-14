@@ -1,8 +1,11 @@
 /*
  * ----------------------------------------------
  * 後台開課管理頁
- * 2026-04-03 (Updated: 2026-06-29)
+ * 2026-04-03 (Updated: 2026-07-14)
  * app/(admin)/admin/course-sessions/page.tsx
+ *
+ * 每筆課程顯示班級編號＋「⋯」操作選單
+ * （新增/移除學員、變更狀態、查詢 LOG）
  * ----------------------------------------------
  */
 
@@ -11,7 +14,7 @@ import { Suspense } from 'react'
 import { getAllCourseSessionsAdmin } from '@/lib/data/course-sessions'
 import { getAllCourses } from '@/lib/data/course-catalog'
 import { CourseSessionCard } from '@/components/course-session/course-session-card'
-import { CourseStatusSelect } from '@/components/course-session/course-status-select'
+import { CourseSessionActionsMenu } from '@/components/course-session/course-session-actions-menu'
 import { CourseSessionsFilter } from './course-sessions-filter'
 
 export const dynamic = 'force-dynamic'
@@ -91,7 +94,12 @@ export default async function AdminCourseSessionsPage({
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((item) => (
-              <div key={item.id} className="space-y-2">
+              <div key={item.id} className="space-y-1">
+                {/* 班級編號＋操作選單（卡片右上角） */}
+                <div className="flex items-center justify-between pl-1">
+                  <span className="font-mono text-sm text-muted-foreground">#{item.id}</span>
+                  <CourseSessionActionsMenu inviteId={item.id} current={deriveStatus(item)} />
+                </div>
                 <CourseSessionCard
                   title={item.title}
                   courseCatalogId={item.courseCatalogId}
@@ -107,7 +115,6 @@ export default async function AdminCourseSessionsPage({
                   href={`/course/${item.id}`}
                   newTab
                 />
-                <CourseStatusSelect inviteId={item.id} current={deriveStatus(item)} />
               </div>
             ))}
           </div>

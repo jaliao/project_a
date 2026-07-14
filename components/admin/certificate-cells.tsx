@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
- * 證書製作列元件：標記完成/還原 + 備註
- * 2026-07-01
+ * 證書製作卡片元件：標記完成/還原 + 備註
+ * 2026-07-01 (Updated: 2026-07-14)
  * components/admin/certificate-cells.tsx
  * ----------------------------------------------
  */
@@ -61,7 +61,7 @@ export function CertificateNoteCell({ initialNote, ...key }: Key & { initialNote
     })
 
   return (
-    <div className="min-w-[10rem] space-y-1">
+    <div className="space-y-1">
       <Textarea
         value={note}
         onChange={(e) => setNote(e.target.value)}

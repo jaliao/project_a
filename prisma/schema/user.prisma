@@ -132,6 +132,10 @@ model User {
   learningFeedbacks LearningRecordFeedback[] @relation("FeedbackSubmitter")
   resolvedFeedbacks LearningRecordFeedback[] @relation("FeedbackResolver")
 
+  // 管理操作紀錄關聯
+  adminLogsActed    AdminActionLog[] @relation("AdminLogActor")
+  adminLogsTargeted AdminActionLog[] @relation("AdminLogTarget")
+
   @@map("users")
 }
 
