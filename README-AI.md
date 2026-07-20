@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.147（2026-07-20）
+> 自動產生，版本 0.1.148（2026-07-20）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -396,6 +396,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260717-001` — 課程頁新增學員改為僅限既有會員（安全性強化）：`addStudentToInvite` 移除 `createLoginableMember` 建帳號分支，查無對應會員時直接拒絕（`errors.identifier`），不建立任何帳號；`lib/data/invite-students.ts` 新增 `findMemberByIdentifier`（含 `@` 視為 Email、否則視為 `spiritId`，皆精確比對）取代 `findMemberByEmail`；`lookupMemberByEmail` 更名 `lookupMemberByIdentifier`；`AddStudentDialog` 移除姓名欄與臨時密碼一次性顯示畫面，查找欄位改「Email 或啟動編號」單一輸入，查無會員時送出按鈕停用。無 migration。spec：`admin-enrollment-management` MODIFIED
 - `cr-spec-260720-002` — 後台會員詳情顯示招生中課程：`getMemberDetail`（`lib/data/members.ts`）學習紀錄 `where` 由 `invite.startedAt not null` 改為 `status: 'approved'`（含招生中，排除 pending）；授課紀錄移除 `startedAt` 過濾（含招生中與已取消）；兩者排序改 `startedAt: { sort: 'desc', nulls: 'first' }`（招生中在前）。無 migration、UI 零修改（卡片欄位既有）。spec：`admin-member-management` MODIFIED
 - `cr-spec-260720-004` — 已完成申請按鈕優化：`finalizeMaterialOrders` 增加前置條件——課程存在未收件訂單（`receivedAt == null`）時拒絕；UI「已完成申請」按鈕於有進行中訂單時停用（`hasActiveOrders`），停用規則寫入申請注意事項（新 key `noteFinalizeBlocked`）；完成狀態列（✓ 教材申請已完成＋重新開放申請）自進度單元移至申請作業單元；申請注意事項改 `list-disc` 清單、移除外框。無 migration。spec：`course-multi-material-order` MODIFIED（最終狀態，歸檔順序 001 → 003 → 004）
 - `cr-spec-260720-003` — 教材申請作業 UI 優化（三單元化）：`course-detail-actions.tsx` 教材申請作業區塊分三個具標題單元——①學員教材需求統計（總需求＋參考註記）②教材申請進度（已申請/尚未申請＋完成狀態列＋訂單清單）③申請作業（申請注意事項＋逐顆功能按鈕說明＋按鈕列「申請教材」｜「已完成申請」）；完成標記按鈕定名「**已完成申請**」（廢除短暫的「無須額外申請」＋引導文字案）；i18n `course.material.*` 新增 `sectionDemand`/`sectionProgress`/`sectionApply`/`applyNotesTitle`/`noteApplyButton`/`noteFinalizeButton`、移除 `finalizeLeadIn`。純 UI、無 migration。spec：`course-multi-material-order` MODIFIED（最終狀態，歸檔順序 001 → 003）

@@ -1,11 +1,11 @@
 /*
  * ----------------------------------------------
  * 後台班級學員管理 - 新增/移除學員元件
- * 2026-07-14
+ * 2026-07-14 (Updated: 2026-07-17)
  * components/admin/invite-student-cells.tsx
  *
- * AddStudentDialog：姓名＋email（既有會員確認列）＋補登結業，
- * 建新帳號成功時一次性顯示臨時密碼。
+ * AddStudentDialog：Email 或啟動編號查找既有會員（確認列）＋補登結業，
+ * 僅限既有會員，查無則不可送出。
  * RemoveStudentButton：已結業報名醒目警示確認後移除。
  * ----------------------------------------------
  */
@@ -19,7 +19,7 @@ import { IconUserPlus, IconAlertTriangle } from '@tabler/icons-react'
 import {
   addStudentToInvite,
   removeStudentFromInvite,
-  lookupMemberByEmail,
+  lookupMemberByIdentifier,
 } from '@/app/actions/invite-students'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -69,45 +69,39 @@ export function AddStudentDialog({
   const [open, setOpen] = useState(autoOpen)
   const [isPending, startTransition] = useTransition()
 
-  const [realName, setRealName] = useState('')
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [graduated, setGraduated] = useState(false)
   const [graduatedAt, setGraduatedAt] = useState('')
   const [lookup, setLookup] = useState<LookupState>({ kind: 'idle' })
   const [errors, setErrors] = useState<Record<string, string[]>>({})
-  // 建新帳號成功後的一次性顯示資訊
-  const [created, setCreated] = useState<{ tempPassword: string; spiritId: string } | null>(null)
   const lookupSeq = useRef(0)
 
-  // email 輸入後查詢既有會員（確認列）；格式無效時延後重置避免 effect 內同步 setState
+  // 輸入後查詢既有會員（確認列）；空白時延後重置避免 effect 內同步 setState
   useEffect(() => {
-    const value = email.trim().toLowerCase()
-    const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+    const value = identifier.trim()
     const seq = ++lookupSeq.current
     const timer = setTimeout(
       async () => {
-        if (!isValid) {
+        if (!value) {
           setLookup({ kind: 'idle' })
           return
         }
-        const res = await lookupMemberByEmail(inviteId, value)
+        const res = await lookupMemberByIdentifier(inviteId, value)
         if (seq !== lookupSeq.current) return // 過期查詢結果丟棄
         const member = res.success ? res.data?.member : null
         setLookup(member ? { kind: 'existing', displayName: member.displayName, spiritId: member.spiritId } : { kind: 'new' })
       },
-      isValid ? 400 : 0
+      value ? 400 : 0
     )
     return () => clearTimeout(timer)
-  }, [email])
+  }, [identifier, inviteId])
 
   const resetForm = () => {
-    setRealName('')
-    setEmail('')
+    setIdentifier('')
     setGraduated(false)
     setGraduatedAt('')
     setLookup({ kind: 'idle' })
     setErrors({})
-    setCreated(null)
   }
 
   const handleOpenChange = (next: boolean) => {
@@ -120,20 +114,14 @@ export function AddStudentDialog({
     startTransition(async () => {
       const res = await addStudentToInvite({
         inviteId,
-        realName,
-        email,
+        identifier,
         graduated,
         graduatedAt: graduated ? graduatedAt : undefined,
       })
       if (res.success) {
         toast.success(res.message ?? '已新增學員')
         router.refresh()
-        if (res.data?.tempPassword && res.data?.spiritId) {
-          // 建新帳號：留在 dialog 一次性顯示臨時密碼
-          setCreated({ tempPassword: res.data.tempPassword, spiritId: res.data.spiritId })
-        } else {
-          handleOpenChange(false)
-        }
+        handleOpenChange(false)
       } else {
         if (res.errors) setErrors(res.errors)
         if (res.message) toast.error(res.message)
@@ -148,105 +136,71 @@ export function AddStudentDialog({
         新增學員
       </Button>
       <DialogContent className="sm:max-w-md">
-        {created ? (
-          <>
-            <DialogHeader>
-              <DialogTitle>帳號已建立</DialogTitle>
-              <DialogDescription>
-                臨時密碼僅顯示這一次，請立即轉交學員（系統不寄信）。
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-2 rounded-md border bg-muted/50 p-4 text-sm">
-              <p>
-                啟動編號：<span className="font-mono font-semibold">{created.spiritId}</span>
+        <DialogHeader>
+          <DialogTitle>新增學員</DialogTitle>
+          <DialogDescription>
+            以 Email 或啟動編號查找既有會員並加入班級；查無帳號時請先至會員管理新增。
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="student-identifier">Email 或啟動編號</Label>
+            <Input
+              id="student-identifier"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="student@example.com 或 PA260001"
+            />
+            {errors.identifier?.[0] && <p className="text-sm text-destructive">{errors.identifier[0]}</p>}
+            {/* 既有會員確認列 */}
+            {lookup.kind === 'existing' && (
+              <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                將加入既有會員：<span className="font-semibold">{lookup.displayName}</span>
+                {lookup.spiritId && <span className="font-mono">（{lookup.spiritId}）</span>}
+                ，不會變更其帳號資料
               </p>
-              <p>
-                臨時密碼：<span className="font-mono font-semibold">{created.tempPassword}</span>
+            )}
+            {lookup.kind === 'new' && (
+              <p className="rounded-md border bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+                查無此會員，請確認 Email 或啟動編號
               </p>
-              <p className="text-muted-foreground">學員以 email＋臨時密碼登入後，將被要求變更密碼。</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="student-graduated"
+                checked={graduated}
+                onCheckedChange={(v) => setGraduated(v === true)}
+              />
+              <Label htmlFor="student-graduated">已結業（補登歷史資料）</Label>
             </div>
-            <Button onClick={() => handleOpenChange(false)}>完成</Button>
-          </>
-        ) : (
-          <>
-            <DialogHeader>
-              <DialogTitle>新增學員</DialogTitle>
-              <DialogDescription>
-                以 email 判斷：既有會員直接加入班級；查無帳號則建立新帳號（臨時密碼轉交）。
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="student-name">姓名（真實姓名）</Label>
+            {graduated && (
+              <div className="space-y-1.5 pl-6">
                 <Input
-                  id="student-name"
-                  value={realName}
-                  onChange={(e) => setRealName(e.target.value)}
-                  placeholder="王小明"
+                  type="date"
+                  value={graduatedAt}
+                  onChange={(e) => setGraduatedAt(e.target.value)}
+                  className="w-fit"
                 />
-                {errors.realName?.[0] && <p className="text-sm text-destructive">{errors.realName[0]}</p>}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="student-email">Email</Label>
-                <Input
-                  id="student-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="student@example.com"
-                />
-                {errors.email?.[0] && <p className="text-sm text-destructive">{errors.email[0]}</p>}
-                {/* 既有會員確認列 */}
-                {lookup.kind === 'existing' && (
-                  <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                    將加入既有會員：<span className="font-semibold">{lookup.displayName}</span>
-                    {lookup.spiritId && <span className="font-mono">（{lookup.spiritId}）</span>}
-                    ，不會變更其帳號資料
-                  </p>
+                {errors.graduatedAt?.[0] && (
+                  <p className="text-sm text-destructive">{errors.graduatedAt[0]}</p>
                 )}
-                {lookup.kind === 'new' && (
-                  <p className="rounded-md border bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
-                    查無此 email 帳號，送出後將建立新帳號
-                  </p>
+                {!inviteCompleted && (
+                  <p className="text-sm text-amber-700">⚠️ 本班級尚未結業，送出後班級將一併標記結業</p>
                 )}
               </div>
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="student-graduated"
-                    checked={graduated}
-                    onCheckedChange={(v) => setGraduated(v === true)}
-                  />
-                  <Label htmlFor="student-graduated">已結業（補登歷史資料）</Label>
-                </div>
-                {graduated && (
-                  <div className="space-y-1.5 pl-6">
-                    <Input
-                      type="date"
-                      value={graduatedAt}
-                      onChange={(e) => setGraduatedAt(e.target.value)}
-                      className="w-fit"
-                    />
-                    {errors.graduatedAt?.[0] && (
-                      <p className="text-sm text-destructive">{errors.graduatedAt[0]}</p>
-                    )}
-                    {!inviteCompleted && (
-                      <p className="text-sm text-amber-700">⚠️ 本班級尚未結業，送出後班級將一併標記結業</p>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isPending}>
-                  取消
-                </Button>
-                <Button onClick={handleSubmit} disabled={isPending}>
-                  {isPending ? '處理中…' : '新增'}
-                </Button>
-              </div>
-            </div>
-          </>
-        )}
+            )}
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isPending}>
+              取消
+            </Button>
+            <Button onClick={handleSubmit} disabled={isPending || lookup.kind !== 'existing'}>
+              {isPending ? '處理中…' : '新增'}
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   )

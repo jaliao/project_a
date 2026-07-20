@@ -1,10 +1,10 @@
 /*
  * ----------------------------------------------
  * Server Actions - 課程學員管理（課程頁）
- * 2026-07-14 (Updated: 2026-07-14)
+ * 2026-07-14 (Updated: 2026-07-17)
  * app/actions/invite-students.ts
  *
- * 新增學員（掛既有帳號或建新帳號、可補登結業）、移除學員，
+ * 新增學員（僅限既有會員，以 Email 或啟動編號查找、可補登結業）、移除學員，
  * 皆於單一交易內完成並寫入管理操作紀錄（AdminActionLog）。
  * 操作權限：管理者或該課建立者（canManageInvite）。
  * 不寄信、不發 Inbox 通知。
@@ -18,8 +18,7 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { canAccessAdmin } from '@/lib/auth-roles'
-import { createLoginableMember } from '@/lib/member-creation'
-import { findMemberByEmail, type MemberByEmail } from '@/lib/data/invite-students'
+import { findMemberByIdentifier, type MemberByIdentifier } from '@/lib/data/invite-students'
 
 type ActionResponse<T = undefined> = {
   success: boolean
@@ -52,13 +51,13 @@ function canManageInvite(
 }
 
 /**
- * 以 email 查既有會員（新增學員表單的確認列用）
- * 以 inviteId 綁定課程歸屬授權（管理者或該課建立者），避免任意講師枚舉會員 email
+ * 以 Email 或啟動編號查既有會員（新增學員表單的確認列用）
+ * 以 inviteId 綁定課程歸屬授權（管理者或該課建立者），避免任意講師枚舉會員資料
  */
-export async function lookupMemberByEmail(
+export async function lookupMemberByIdentifier(
   inviteId: number,
-  email: string
-): Promise<ActionResponse<{ member: MemberByEmail | null }>> {
+  identifier: string
+): Promise<ActionResponse<{ member: MemberByIdentifier | null }>> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
 
@@ -70,18 +69,17 @@ export async function lookupMemberByEmail(
     return { success: false, message: '無權限' }
   }
 
-  const parsed = z.string().trim().toLowerCase().email().safeParse(email)
-  if (!parsed.success) return { success: true, data: { member: null } }
+  const value = identifier.trim()
+  if (!value) return { success: true, data: { member: null } }
 
-  const member = await findMemberByEmail(parsed.data)
+  const member = await findMemberByIdentifier(value)
   return { success: true, data: { member } }
 }
 
 const addStudentSchema = z
   .object({
     inviteId: z.number().int().positive(),
-    realName: z.string().trim().min(1, '請輸入姓名'),
-    email: z.string().trim().toLowerCase().email('Email 格式不正確'),
+    identifier: z.string().trim().min(1, '請輸入 Email 或啟動編號'),
     graduated: z.boolean().default(false),
     graduatedAt: z
       .string()
@@ -94,17 +92,15 @@ const addStudentSchema = z
   })
 
 /**
- * 對班級新增學員：email 既有帳號→直接掛報名；查無→沿用後台新增會員機制建帳號
- * （spiritId＋臨時密碼＋白名單），臨時密碼一次性回傳供轉交。
+ * 對班級新增學員：僅限既有會員，以 Email 或啟動編號查找並直接掛報名；查無則拒絕、不建立帳號。
  * 勾選已結業時 graduatedAt=joinedAt=結業日；班級未結業則同交易補 completedAt。
  */
 export async function addStudentToInvite(input: {
   inviteId: number
-  realName: string
-  email: string
+  identifier: string
   graduated: boolean
   graduatedAt?: string
-}): Promise<ActionResponse<{ tempPassword?: string; spiritId?: string }>> {
+}): Promise<ActionResponse> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
 
@@ -112,7 +108,7 @@ export async function addStudentToInvite(input: {
   if (!parsed.success) {
     return { success: false, errors: parsed.error.flatten().fieldErrors }
   }
-  const { inviteId, realName, email, graduated } = parsed.data
+  const { inviteId, identifier, graduated } = parsed.data
   const graduatedDate = graduated ? new Date(`${parsed.data.graduatedAt}T00:00:00`) : null
 
   const invite = await prisma.courseInvite.findUnique({
@@ -125,6 +121,12 @@ export async function addStudentToInvite(input: {
   }
   if (invite.cancelledAt) return { success: false, message: '已取消的班級無法新增學員' }
 
+  // 僅限既有會員：查無時直接拒絕，不建立任何新帳號
+  const existingUser = await findMemberByIdentifier(identifier)
+  if (!existingUser) {
+    return { success: false, errors: { identifier: ['查無此會員，請確認 Email 或啟動編號'] } }
+  }
+
   // 操作管理者快照
   const actor = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -132,42 +134,20 @@ export async function addStudentToInvite(input: {
   })
   const actorName = actor?.realName || actor?.name || session.user.email || '管理者'
 
-  // email 查既有帳號
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
-    select: { id: true, realName: true },
-  })
-
   // 重複報名事前檢查（unique 約束為最終防線）
-  if (existingUser) {
-    const dup = await prisma.inviteEnrollment.findUnique({
-      where: { inviteId_userId: { inviteId, userId: existingUser.id } },
-      select: { id: true },
-    })
-    if (dup) return { success: false, errors: { email: ['該學員已在此班級'] } }
-  }
+  const dup = await prisma.inviteEnrollment.findUnique({
+    where: { inviteId_userId: { inviteId, userId: existingUser.userId } },
+    select: { id: true },
+  })
+  if (dup) return { success: false, errors: { identifier: ['該學員已在此班級'] } }
 
   try {
-    const result = await prisma.$transaction(async (tx) => {
-      // 掛既有帳號或建新帳號（不變更既有帳號資料）
-      let userId: string
-      let targetRealName: string | null
-      let created: { tempPassword: string; spiritId: string } | undefined
-      if (existingUser) {
-        userId = existingUser.id
-        targetRealName = existingUser.realName
-      } else {
-        const member = await createLoginableMember(tx, { realName, email, roles: ['user'] })
-        userId = member.userId
-        targetRealName = realName
-        created = { tempPassword: member.tempPassword, spiritId: member.spiritId }
-      }
-
+    await prisma.$transaction(async (tx) => {
       // 建立報名（補登結業時 joinedAt 對齊結業日，避免入班晚於結業）
       await tx.inviteEnrollment.create({
         data: {
           inviteId,
-          userId,
+          userId: existingUser.userId,
           status: 'approved',
           ...(graduatedDate ? { joinedAt: graduatedDate, graduatedAt: graduatedDate } : {}),
         },
@@ -186,13 +166,13 @@ export async function addStudentToInvite(input: {
         data: {
           action: 'enrollment_add',
           actorId: session.user.id,
-          targetUserId: userId,
+          targetUserId: existingUser.userId,
           inviteId,
           actorName,
-          targetName: targetSnapshot(targetRealName, email),
+          targetName: targetSnapshot(existingUser.realName, existingUser.email),
           inviteTitle: inviteSnapshot(invite.id, invite.title),
           detail: [
-            existingUser ? '掛既有帳號' : '建立新帳號',
+            '掛既有帳號',
             graduatedDate ? `補登結業 ${fmtDate(graduatedDate)}` : null,
             graduatedDate && !invite.completedAt ? '班級一併標記結業' : null,
           ]
@@ -200,17 +180,11 @@ export async function addStudentToInvite(input: {
             .join('；'),
         },
       })
-
-      return created
     })
 
     revalidatePath('/admin/course-sessions')
     revalidatePath(`/course/${inviteId}`)
-    return {
-      success: true,
-      message: existingUser ? '已將既有會員加入班級' : '已建立帳號並加入班級',
-      data: result ? { tempPassword: result.tempPassword, spiritId: result.spiritId } : {},
-    }
+    return { success: true, message: '已將既有會員加入班級' }
   } catch (err) {
     console.error('[addStudentToInvite] 新增失敗：', err)
     return { success: false, message: '新增失敗，請稍後再試' }
