@@ -120,11 +120,10 @@ export async function getMemberDetail(id: string) {
       suspendedById: true,
       suspendReason: true,
       suspendReasonNote: true,
-      // 學習紀錄：參加的課程（已開始）
+      // 學習紀錄：已核准報名的課程（含招生中）
       inviteEnrollments: {
-        where: {
-          invite: { startedAt: { not: null } },
-        },
+        where: { status: 'approved' },
+        orderBy: { invite: { startedAt: { sort: 'desc', nulls: 'first' } } },
         select: {
           graduatedAt: true,
           teacherRecommended: true,
@@ -158,9 +157,8 @@ export async function getMemberDetail(id: string) {
           },
         },
       },
-      // 授課紀錄：自己建立的課程（已開始）
+      // 授課紀錄：自己建立的所有課程（含招生中與已取消）
       courseInvites: {
-        where: { startedAt: { not: null } },
         select: {
           id: true,
           title: true,
@@ -176,7 +174,7 @@ export async function getMemberDetail(id: string) {
           _count: { select: { enrollments: true } },
           orders: { select: { courseDate: true }, orderBy: { createdAt: 'asc' }, take: 1 },
         },
-        orderBy: { startedAt: 'desc' },
+        orderBy: [{ startedAt: { sort: 'desc', nulls: 'first' } }, { createdAt: 'desc' }],
       },
     },
   })
