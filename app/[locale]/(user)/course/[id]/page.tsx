@@ -108,21 +108,25 @@ export default async function CourseDetailPage({
     isInstructor,
   })
 
-  // 多地址寄送所需：應寄繁/簡本數（依 approved 學員 materialChoice 統計）
-  const materialSummary = isInstructor
+  // 教材申請作業：講師本人或管理者可見可操作（比照班級管理前台化）
+  const canManageMaterials = isInstructor || isAdmin
+
+  // 多地址寄送所需：應寄繁/簡本數（依 approved 學員 materialChoice 統計，參考值）
+  const materialSummary = canManageMaterials
     ? await getEnrollmentMaterialSummary(courseSession.id)
     : { traditional: 0, simplified: 0 }
-  // 多地址逐本指派：尚未指派的書本項目
-  const unassignedBookItems = isInstructor ? await getUnassignedBookItems(courseSession.id) : []
+  // 逐本清單／多地址逐本指派：尚未指派的書本項目
+  const unassignedBookItems = canManageMaterials ? await getUnassignedBookItems(courseSession.id) : []
 
-  // 教材申請進度（總需求／已申請／尚未申請）
+  // 教材申請進度（總需求／已申請／尚未申請；參考統計）
   const materialProgress = computeMaterialProgress(materialSummary, courseSession.orders)
 
-  // 開課門檻判定（≥1 已核准學員 + 尚未申請=0 + 教材全部收件）
+  // 開課門檻判定（≥1 已核准學員 + 教材需求已處理（尚未申請=0 或已標記完成）+ 教材全部收件）
   const startGate = evaluateCourseStartGate({
     approvedCount: courseSession.approvedEnrollments.length,
     remaining: materialProgress.remaining,
     orders: courseSession.orders,
+    materialFinalized: !!courseSession.materialFinalizedAt,
   })
 
   // 當前使用者的申請記錄
@@ -402,11 +406,12 @@ export default async function CourseDetailPage({
         />
       )}
 
-      {/* 課程操作區（教材/開始上課僅講師；結業/重新招募/取消＝講師與管理者） */}
+      {/* 課程操作區（教材申請＝講師與管理者；開始上課僅講師；結業/重新招募/取消＝講師與管理者） */}
       {(isInstructor || isAdmin) && (
         <CourseDetailActions
           inviteId={courseSession.id}
           isInstructor={isInstructor}
+          canManageMaterials={canManageMaterials}
           isCancelled={isCancelled}
           isCompleted={isCompleted}
           isStarted={!!courseSession.startedAt}
@@ -414,6 +419,7 @@ export default async function CourseDetailPage({
           approvedCount={courseSession.approvedEnrollments.length}
           orders={courseSession.orders}
           progress={materialProgress}
+          materialFinalizedAt={courseSession.materialFinalizedAt}
           canStart={startGate.canStart}
           startReasons={startGate.reasons}
           defaultRecipient={{

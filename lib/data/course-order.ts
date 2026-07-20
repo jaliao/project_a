@@ -45,7 +45,7 @@ export type CourseOrderDetail = {
 }
 
 export type ShipmentItemInfo = {
-  enrollmentId: number
+  enrollmentId: number | null // 額外加購項目為 null
   bookName: string
   version: string // traditional / simplified
   studentName: string // 學員名稱快照

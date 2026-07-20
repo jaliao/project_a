@@ -159,8 +159,9 @@ model MaterialShipmentItem {
   shipmentId Int
   shipment   MaterialShipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
 
-  enrollmentId Int
-  enrollment   InviteEnrollment @relation(fields: [enrollmentId], references: [id])
+  // 學員報名關聯（額外加購項目為 null）
+  enrollmentId Int?
+  enrollment   InviteEnrollment? @relation(fields: [enrollmentId], references: [id])
 
   bookName    String // 書本名字快照
   version     String // 版本快照（traditional / simplified）

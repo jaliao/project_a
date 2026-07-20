@@ -356,6 +356,7 @@ export async function startCourseSession(inviteId: number, startDate: string): P
       cancelledAt: true,
       completedAt: true,
       startedAt: true,
+      materialFinalizedAt: true,
       orders: { select: { receivedAt: true, traditionalQty: true, simplifiedQty: true } },
       _count: { select: { enrollments: { where: { status: 'approved' } } } },
     },
@@ -368,13 +369,14 @@ export async function startCourseSession(inviteId: number, startDate: string): P
   if (invite.completedAt) return { success: false, message: '課程已結業' }
   if (invite.startedAt) return { success: false, message: '課程已在進行中' }
 
-  // 開課門檻：≥1 已核准學員 + 尚未申請=0 + 所有訂單已收件（以當下資料重算，與 UI 共用判定）
+  // 開課門檻：≥1 已核准學員 + 教材需求已處理（尚未申請=0 或已標記完成）+ 所有訂單已收件（以當下資料重算，與 UI 共用判定）
   const total = await getEnrollmentMaterialSummary(inviteId)
   const { remaining } = computeMaterialProgress(total, invite.orders)
   const gate = evaluateCourseStartGate({
     approvedCount: invite._count.enrollments,
     remaining,
     orders: invite.orders,
+    materialFinalized: !!invite.materialFinalizedAt,
   })
   if (!gate.canStart) {
     return { success: false, message: `尚不能開始上課：${gate.reasons.join('、')}` }

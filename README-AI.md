@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.141（2026-07-14）
+> 自動產生，版本 0.1.143（2026-07-20）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -108,7 +108,7 @@ components/
 │   ├── course-session-card.tsx    # 開課卡片共用元件（compact / full variant，支援 href 連結）
 │   ├── course-card-grid.tsx       # 課程卡片響應式網格容器（1→2→3→4 欄 RWD）
 │   ├── cancel-course-dialog.tsx   # 取消課程確認 Dialog（下拉選單 + 自填 textarea）
-│   ├── material-order-dialog.tsx  # 教材申請 Dialog（預填資料、EcpayStoreSelector（7-11/全家）、已寄送唯讀模式）
+│   ├── material-order-dialog.tsx  # 教材申請 Dialog（逐本清單編輯：改版本/取消勾選/加購；EcpayStoreSelector（7-11/全家）、已寄送唯讀模式）
 │   ├── enrolled-students-list.tsx # 已接受邀請學員清單（Server Component）
 │   └── create-course-wizard/
 │       ├── create-course-wizard.tsx   # 精靈主容器（step 1|2|3|'invite' 狀態機）
@@ -331,13 +331,13 @@ storeName       String?（超商門市名稱，透過 ECPay MapCVS 選擇器取�
 submittedById   String?（提交者 UUID，選填關聯 User）
 shippedAt       DateTime?（管理者確認寄送時間）
 receivedAt      DateTime?（講師確認收件時間）
-traditionalQty  Int（本筆申請繁體本數；單一地址自動帶尚未申請剩餘、多地址為批次加總）
+traditionalQty  Int（本筆申請繁體本數；由送出書本項目推導，單/多地址皆逐本清單）
 simplifiedQty   Int（本筆申請簡體本數）
 courseInviteId  Int?（一對多：關聯 CourseInvite；獨立訂單為 null）
 createdAt       DateTime
 ```
-> 開課門檻（`lib/utils/course-start-gate.ts`）：≥1 已核准學員 + **尚未申請教材需求為 0**（`remaining` 繁/簡皆 0）+ 所有教材訂單 `receivedAt != null`；全班不需教材（總需求 0、無訂單）時後兩項自動成立。`startCourseSession` 與課程詳情頁「開始上課」按鈕共用此判定（server 端以 `getEnrollmentMaterialSummary`＋訂單繁/簡加總重算 remaining），未達門檻按鈕停用並列出原因。
-> 教材申請進度（`lib/utils/material-progress.ts`）：總需求＝已核准學員 materialChoice 統計、已申請＝訂單繁/簡加總、尚未申請＝差值；單一地址申請自動帶剩餘全部、多地址手動分配且不可超額；講師操作區為三區塊（教材申請／開始上課／取消上課）。
+> 開課門檻（`lib/utils/course-start-gate.ts`）：≥1 已核准學員 + **教材需求已處理**（`remaining` 繁/簡皆 0 **或** `CourseInvite.materialFinalizedAt != null`）+ 所有教材訂單 `receivedAt != null`；全班不需教材（總需求 0、無訂單）時後兩項自動成立。`startCourseSession` 與課程詳情頁「開始上課」按鈕共用此判定（server 端以 `getEnrollmentMaterialSummary`＋訂單繁/簡加總重算 remaining），未達門檻按鈕停用並列出原因。
+> 教材申請進度（`lib/utils/material-progress.ts`）：總需求＝已核准學員 materialChoice 統計、已申請＝訂單繁/簡加總、尚未申請＝差值——**參考統計、不設上限**。申請採**逐本清單**（單一地址預設全選未指派書、可改版本/取消勾選；多地址逐本指派、未指派＝本次不申請）＋**加購項目**（`MaterialShipmentItem.enrollmentId = null`，書名預設「額外加購」）；版本覆寫只寫入訂單快照、不回寫 `materialChoice`。教材作業授權為**講師或管理者**（購買人快照一律取課程講師，`submittedById` 記操作者）；「完成教材申請」`finalizeMaterialOrders`/`reopenMaterialOrders`（寫 `materialFinalizedAt`＋AdminActionLog）完成時停用申請並豁免開課教材需求。講師操作區為三區塊（教材申請／開始上課／取消上課）。
 
 ---
 
@@ -396,6 +396,8 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260720-001` — 教材申請內容可修改＋完成教材申請可開課：`MaterialShipmentItem.enrollmentId` 改 nullable（加購項目）＋`CourseInvite.materialFinalizedAt`（migration `material_apply_editable`，放寬型＋additive、正式資料相容）；申請 payload 改逐本清單 `items[]`（`OrderBookItemInput`：enrollment 可覆寫版本／extra 加購，多地址 `shipments[].items` 取代 `enrollmentIds`）；`applyMaterialOrder` 移除剩餘量上限與全數指派檢查（改「至少 1 本」＋防並發重複）、授權擴為講師或管理者、購買人快照改取課程講師；`finalizeMaterialOrders`/`reopenMaterialOrders`（限開課前、記 AdminActionLog `material_finalize`/`material_reopen`）；`evaluateCourseStartGate` 教材需求條件加 `materialFinalized` 豁免；對話框單一地址逐本清單（勾選＋版本下拉＋加購列）、多地址每列版本下拉＋各地址加購；課程頁教材申請作業區塊開放管理者、「申請教材」不再因尚未申請=0 停用、新增「完成教材申請」/「重新開放申請」＋確認視窗；新 i18n `course.material.*`。spec：`material-book-items`／`course-multi-material-order`／`course-status` MODIFIED
+- `cr-spec-260714-007` — 後台學員頁面優化：會員詳情基本資料新增「年齡」欄（`birthYear` 以「當年 − 出生年」估算顯示 `NN 歲`，未填 `—`，僅顯示不進邏輯）；學習紀錄／授課紀錄由三欄表格改共用 `CourseSessionCard` 卡片牆（`variant="compact"`、`grid sm:grid-cols-2`、`href=/course/{inviteId}`，空狀態文案不變）；`getMemberDetail` 補 select `birthYear` 與 invite 卡片欄位（`courseDate`/`maxCount`/`expiredAt`/`cancelledAt`/`completedAt`/`_count.enrollments`/`orders[0].courseDate` fallback，計數比照 `course-sessions.ts`）。無 migration。spec：`admin-member-management` MODIFIED
 - `cr-spec-260714-006` — 會員帳號（登入 Email）修改：新增 `lib/account-email-change.ts` 共用核心（正規化＋唯一性＋交易三步：`User.email` 更新／舊 email 白名單停用／新 email 白名單 upsert；不動 `commEmail`、`Account`、課程資料，不寄信）；本人 action `changeMyAccountEmail`（bcrypt 密碼確認，Google-only 拒絕）＋管理者 action `changeMemberEmailAdmin`（`canAccessAdmin`，可代改 Google-only）；個人資料頁 Spirit ID 卡下半新增「啟動帳號資訊」（登入 email＋登入方式）、`ChangeAccountCard`（變更密碼上方；Google-only 顯示請洽管理員說明卡）；後台特殊設定分頁新增「帳號修改」區塊（`MemberEmailForm`）；JWT else 分支補同步 `token.email`。無 migration。spec：新 `account-email-change`、`admin-member-management` MODIFIED
 - `cr-spec-260714-003` — 班級管理前台化：共用 `CourseSessionCard` 新增必要 prop `inviteId`，標籤列最前顯示 `#編號`（所有使用處，含學員視角）；課程頁「已核准學員」區塊抽成 client 元件 `ApprovedStudentsSection`——標題列右側「新增學員」「移除學員」按鈕（**管理者＋該課講師**，`canManageInvite`＝admin 或 createdById；移除採模式切換、卡片加顯啟動編號）；`lookupMemberByEmail` 加 `inviteId` 參數以課程歸屬授權（防 email 枚舉）；`graduateCourse`／`cancelCourseSession`／結業頁守衛放行管理者；新增 `reopenRecruitment`（重新招募作業區塊：進行中退回招生中，清 `startedAt`，講師＋管理者）；課程頁新增「課程操作 LOG」區塊（server 渲染最近 30 筆，`isInstructor || isAdmin` 可見）；`CourseDetailActions` 分區塊權限（教材申請/開始上課僅講師）。後台退場：開課管理「⋯」選單與編號列、`/admin/course-sessions/[id]/students`、`/admin/operation-logs`、dashboard 操作紀錄功能格、`setCourseStatusAdmin`、`getInviteStudentsAdmin` 全數移除（後台不再提供已取消→招生中回退）。無 migration。spec：`course-session-card`／`course-session-detail`／`admin-enrollment-management`／`admin-operation-log`／`admin-course-sessions`／`course-graduation`／`cancel-course-session`
 - `cr-spec-260714-002` — 後台班級學員管理＋操作紀錄：新增 `AdminActionLog` model（migration `add_admin_action_log`；optional FK SetNull＋actorName/targetName/inviteTitle 快照欄）；開課管理卡片上方顯示班級編號 `#id`＋右上角「⋯」選單（新增學員/移除學員/變更課程狀態/查詢 LOG，連獨立頁面者 `target="_blank"` 另開視窗），狀態變更由 inline 下拉改選單觸發 dialog（規則不變，刪除 `course-status-select.tsx`）；新頁 `/admin/course-sessions/[id]/students`（頁首班級資訊＋學員卡片；`?action=add` 自動開新增表單）與 `/admin/operation-logs`（30 筆分頁、`?inviteId=` 過濾、dashboard 功能格入口）；`addStudentToInvite`（email 既有帳號→掛帳號〔UI 確認列〕、查無→沿用 `createMember` 機制建帳號〔臨時密碼一次性顯示、不寄信〕；可勾已結業→`graduatedAt=joinedAt=結業日`、班未結業同交易補 `completedAt`；重複報名擋下）／`removeStudentFromInvite`（有教材寄送項目拒絕；已結業 UI 醒目警示；實體刪除）皆與 log 寫入同交易；`createMember` 建帳號邏輯抽至 `lib/member-creation.ts` 共用；新增 `ui/dropdown-menu` primitive、`config/admin-log-action.ts`。spec：新 `admin-enrollment-management`／`admin-operation-log`、`admin-course-sessions` MODIFIED

@@ -58,6 +58,9 @@ model CourseInvite {
   // 課程進行中
   startedAt DateTime? // 開始授課時間（有值即代表進行中）
 
+  // 教材申請完成標記（有值即不需再申請教材，開課門檻豁免教材需求條件）
+  materialFinalizedAt DateTime?
+
   // 結業
   completedAt DateTime? // 結業時間（有值即代表已結業）
 

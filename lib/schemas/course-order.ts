@@ -63,8 +63,25 @@ export const courseOrderSchema = z
 
 export type CourseOrderFormValues = z.infer<typeof courseOrderSchema>
 
+// ── 申請書本項目（單一/多地址共用）──────────────────────────────────
+// enrollment：學員書（版本可覆寫，繁↔簡）；extra：額外加購（不綁學員）
+export const orderBookItemInputSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('enrollment'),
+    enrollmentId: z.number().int(),
+    version: z.enum(['traditional', 'simplified'], { error: '請選擇版本' }),
+  }),
+  z.object({
+    kind: z.literal('extra'),
+    version: z.enum(['traditional', 'simplified'], { error: '請選擇版本' }),
+    bookName: z.string().optional(),
+  }),
+])
+
+export type OrderBookItemInput = z.infer<typeof orderBookItemInputSchema>
+
 // ── 單筆寄送地址（多地址模式用）──────────────────────────────────────
-// 逐本指派：每地址帶指派到此地址的書本項目（報名 id 陣列）；繁/簡本數由項目推導
+// 逐本指派：每地址帶指派到此地址的書本項目（含版本覆寫與加購）；繁/簡本數由項目推導
 export const shipmentItemSchema = z
   .object({
     recipientName: z.string().min(1, '請填寫收件人'),
@@ -75,7 +92,7 @@ export const shipmentItemSchema = z
     deliveryAddress: z.string().optional(),
     storeId: z.string().optional(),
     storeName: z.string().optional(),
-    enrollmentIds: z.array(z.number().int()).min(1, '請至少指派一本書至此地址'),
+    items: z.array(orderBookItemInputSchema).min(1, '請至少指派一本書至此地址'),
   })
   .superRefine((data, ctx) => {
     if (data.deliveryMethod === 'sevenEleven' || data.deliveryMethod === 'familyMart') {
@@ -101,7 +118,7 @@ const shipmentItemLooseSchema = z.object({
   deliveryAddress: z.string().optional(),
   storeId: z.string().optional(),
   storeName: z.string().optional(),
-  enrollmentIds: z.array(z.number().int()),
+  items: z.array(orderBookItemInputSchema),
 })
 
 // ── 教材申請 Schema（學員僅填取貨資訊，其餘由 Server Action 自動帶入）────
@@ -118,6 +135,8 @@ export const materialOrderSchema = z
     deliveryAddress: z.string().optional(),
     storeId: z.string().optional(),
     storeName: z.string().optional(),
+    // 單一地址：本次申請的書本項目清單（勾選的學員書＋加購）
+    items: z.array(orderBookItemInputSchema).optional(),
     // 多地址批次（寬鬆版：逐列必填驗證僅於 multiple 模式在 superRefine 執行）
     shipments: z.array(shipmentItemLooseSchema).optional(),
   })
@@ -142,6 +161,10 @@ export const materialOrderSchema = z
         }
       })
       return
+    }
+    // single：至少申請 1 本（勾選學員書或加購）
+    if (!data.items || data.items.length === 0) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: '請至少申請 1 本教材', path: ['items'] })
     }
     // single：取貨方式必填 + 對應門市/地址
     if (!data.deliveryMethod) {

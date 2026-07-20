@@ -60,8 +60,9 @@ export async function getCourseBookItems(inviteId: number): Promise<BookItem[]> 
 // 尚未被任何訂單地址指派的書本項目（本次多地址申請可指派範圍）
 export async function getUnassignedBookItems(inviteId: number): Promise<BookItem[]> {
   const items = await getCourseBookItems(inviteId)
+  // 加購項目 enrollmentId 為 null，不佔用學員書本項目，明確排除
   const assigned = await prisma.materialShipmentItem.findMany({
-    where: { enrollment: { inviteId } },
+    where: { enrollmentId: { not: null }, enrollment: { inviteId } },
     select: { enrollmentId: true },
   })
   const assignedSet = new Set(assigned.map((a) => a.enrollmentId))

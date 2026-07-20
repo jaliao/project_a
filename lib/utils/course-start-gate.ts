@@ -4,7 +4,8 @@
  * 2026-06-28
  * lib/utils/course-start-gate.ts
  *
- * 開課條件：≥1 已核准學員 + 尚未申請教材需求為 0 + 所有教材訂單已收件。
+ * 開課條件：≥1 已核准學員 + 教材需求已處理 + 所有教材訂單已收件。
+ * 教材需求已處理＝尚未申請需求為 0，或課程已標記「教材申請已完成」（materialFinalized）。
  * 全班皆不需教材（總需求=0、無訂單）時，後兩項視為成立。
  * 回傳 canStart 與未達成原因清單（供按鈕停用提示與 server 拒絕共用）。
  * ----------------------------------------------
@@ -23,6 +24,8 @@ export function evaluateCourseStartGate(input: {
   approvedCount: number
   remaining: { traditional: number; simplified: number }
   orders: CourseStartGateOrder[]
+  // 教材申請已完成標記（CourseInvite.materialFinalizedAt != null）：豁免教材需求條件
+  materialFinalized?: boolean
 }): CourseStartGate {
   const reasons: string[] = []
 
@@ -30,9 +33,9 @@ export function evaluateCourseStartGate(input: {
     reasons.push('尚無已核准學員')
   }
 
-  // 尚有教材需求未申請（有需求卻無訂單，或訂單涵蓋不足）
+  // 尚有教材需求未申請（有需求卻無訂單，或訂單涵蓋不足）；已標記完成教材申請則豁免
   const { traditional, simplified } = input.remaining
-  if (traditional + simplified > 0) {
+  if (!input.materialFinalized && traditional + simplified > 0) {
     reasons.push(`尚有教材未申請（繁 ${traditional}、簡 ${simplified}）`)
   }
 

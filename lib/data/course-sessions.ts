@@ -239,6 +239,8 @@ export type CourseSessionDetail = {
   completedAt: Date | null
   gradRating: number | null
   gradTestimony: string | null
+  // 教材申請完成標記（有值＝不需再申請教材）
+  materialFinalizedAt: Date | null
   isPublicMatch: boolean
   matchNote: string | null
   createdBy: {
@@ -322,6 +324,7 @@ export async function getCourseSessionById(
       completedAt: true,
       gradRating: true,
       gradTestimony: true,
+      materialFinalizedAt: true,
       courseDate: true,
       notes: true,
       isPublicMatch: true,
@@ -412,6 +415,7 @@ export async function getCourseSessionById(
     completedAt: invite.completedAt,
     gradRating: invite.gradRating,
     gradTestimony: invite.gradTestimony,
+    materialFinalizedAt: invite.materialFinalizedAt,
     isPublicMatch: invite.isPublicMatch,
     matchNote: invite.matchNote,
     createdBy: invite.createdBy,

@@ -1,10 +1,10 @@
 /*
  * ----------------------------------------------
  * CourseDetailActions - 課程操作區
- * 2026-03-24 (Updated: 2026-07-14)
+ * 2026-03-24 (Updated: 2026-07-20)
  * app/(user)/course/[id]/course-detail-actions.tsx
  *
- * 分區塊權限：教材申請／開始上課僅該課講師；
+ * 分區塊權限：教材申請＝講師與管理者；開始上課僅該課講師；
  * 結業作業／重新招募作業／取消上課作業＝講師與管理者皆可
  * ----------------------------------------------
  */
@@ -14,8 +14,9 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
-import { IconBook, IconPlayerPlay, IconCertificate, IconBan, IconRefresh } from '@tabler/icons-react'
+import { IconBook, IconPlayerPlay, IconCertificate, IconBan, IconRefresh, IconChecks } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -31,15 +32,23 @@ import { MaterialOrderDialog } from '@/components/course-session/material-order-
 import type { BookItem } from '@/lib/data/material-items'
 import { startCourseSession } from '@/app/actions/course-invite'
 import { reopenRecruitment } from '@/app/actions/course-session'
-import { confirmReceipt, reportMaterialPayment, cancelCourseOrder } from '@/app/actions/course-order'
+import {
+  confirmReceipt,
+  reportMaterialPayment,
+  cancelCourseOrder,
+  finalizeMaterialOrders,
+  reopenMaterialOrders,
+} from '@/app/actions/course-order'
 import { getMaterialOrderStatus } from '@/lib/utils/material-order-status'
 import type { MaterialProgress } from '@/lib/utils/material-progress'
 import type { CourseSessionOrder } from '@/lib/data/course-sessions'
 
 type Props = {
   inviteId: number
-  // 是否為該課講師（教材申請／開始上課僅講師可見；其餘作業講師與管理者皆可）
+  // 是否為該課講師（開始上課僅講師可見；其餘作業講師與管理者皆可）
   isInstructor: boolean
+  // 教材申請作業：講師本人或管理者可見可操作
+  canManageMaterials: boolean
   isCancelled: boolean
   isCompleted: boolean
   isStarted: boolean
@@ -47,9 +56,11 @@ type Props = {
   // 已核准學員人數（開始上課確認視窗顯示用）
   approvedCount: number
   orders: CourseSessionOrder[]
-  // 教材申請進度（總需求／已申請／尚未申請）
+  // 教材申請進度（總需求／已申請／尚未申請；依學員申請統計之參考值）
   progress: MaterialProgress
-  // 開課門檻（≥1 已核准學員 + 教材全部收件）
+  // 教材申請完成標記（有值＝不需再申請教材）
+  materialFinalizedAt: Date | null
+  // 開課門檻（≥1 已核准學員 + 教材需求已處理 + 教材全部收件）
   canStart: boolean
   startReasons: string[]
   // 單一地址收件人預設值（申請講師姓名 + 個人資料電話）
@@ -158,6 +169,7 @@ function todayInput(): string {
 export function CourseDetailActions({
   inviteId,
   isInstructor,
+  canManageMaterials,
   isCancelled,
   isCompleted,
   isStarted,
@@ -165,15 +177,20 @@ export function CourseDetailActions({
   approvedCount,
   orders,
   progress,
+  materialFinalizedAt,
   canStart,
   startReasons,
   defaultRecipient,
   bookItems,
 }: Props) {
   const router = useRouter()
+  const t = useTranslations('course.material')
   const [cancelOpen, setCancelOpen] = useState(false)
   // 教材申請 Dialog：僅用於「申請教材」（新訂單）；既有訂單改於列內嵌顯示
   const [materialOpen, setMaterialOpen] = useState(false)
+  // 完成教材申請：確認視窗與處理中狀態
+  const [finalizeOpen, setFinalizeOpen] = useState(false)
+  const [finalizePending, startFinalizeTransition] = useTransition()
   const [startLoading, setStartLoading] = useState(false)
   // 開始上課：所選開課日期（預設今天）與確認視窗
   const [startDate, setStartDate] = useState(todayInput())
@@ -243,6 +260,31 @@ export function CourseDetailActions({
     }
   }
 
+  function handleFinalize() {
+    startFinalizeTransition(async () => {
+      const result = await finalizeMaterialOrders(inviteId)
+      setFinalizeOpen(false)
+      if (result.success) {
+        toast.success(result.message ?? t('finalizeDone'))
+        router.refresh()
+      } else {
+        toast.error(result.message ?? '操作失敗，請稍後再試')
+      }
+    })
+  }
+
+  function handleReopenMaterial() {
+    startFinalizeTransition(async () => {
+      const result = await reopenMaterialOrders(inviteId)
+      if (result.success) {
+        toast.success(result.message ?? t('reopenDone'))
+        router.refresh()
+      } else {
+        toast.error(result.message ?? '操作失敗，請稍後再試')
+      }
+    })
+  }
+
   async function handleStart() {
     setStartLoading(true)
     const result = await startCourseSession(inviteId, startDate)
@@ -259,13 +301,14 @@ export function CourseDetailActions({
   if (!canAct) return null
 
   const { total, applied, remaining, canApplyMore } = progress
+  const isFinalized = materialFinalizedAt != null
 
   return (
     <div className="space-y-3">
-      {/* ── 區塊一：教材申請作業（僅講師） ────────────────── */}
-      {!isStarted && isInstructor && (
+      {/* ── 區塊一：教材申請作業（講師與管理者） ────────────────── */}
+      {!isStarted && canManageMaterials && (
         <Section title="教材申請作業" icon={<IconBook className="h-5 w-5 text-primary" />}>
-          {/* 說明：申請進度（總需求／已申請／尚未申請） */}
+          {/* 說明：申請進度（總需求／已申請／尚未申請；依學員申請統計之參考值） */}
           <div className="rounded-md bg-muted/50 px-3 py-2 text-sm space-y-1">
             <div className="flex justify-between gap-2">
               <span className="text-muted-foreground">總需求</span>
@@ -281,7 +324,21 @@ export function CourseDetailActions({
                 {bookLabel(remaining.traditional, remaining.simplified)}
               </span>
             </div>
+            <p className="text-xs text-muted-foreground">{t('progressRefHint')}</p>
           </div>
+
+          {/* 教材申請已完成：狀態顯示＋重新開放 */}
+          {isFinalized && (
+            <div className="flex items-center justify-between gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm">
+              <span className="flex items-center gap-1.5 text-green-800">
+                <IconChecks className="h-4 w-4" />
+                {t('finalizeDone')}
+              </span>
+              <Button variant="outline" size="sm" onClick={handleReopenMaterial} disabled={finalizePending}>
+                {finalizePending ? t('processing') : t('reopenButton')}
+              </Button>
+            </div>
+          )}
 
           {/* 訂單清單（每筆顯示書籍種類與數量＋狀態＋動作） */}
           {orders.length === 0 ? (
@@ -352,19 +409,53 @@ export function CourseDetailActions({
             </ul>
           )}
 
-          {/* 動作：申請教材（僅尚未申請 > 0 可按） */}
+          {/* 動作：申請教材（未標記完成即可按；學員統計僅為參考）＋完成教材申請 */}
           <div className="space-y-1">
-            <Button variant="outline" size="sm" onClick={openNewOrder} disabled={!canApplyMore}>
-              申請教材
-            </Button>
-            {!canApplyMore && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button variant="outline" size="sm" onClick={openNewOrder} disabled={isFinalized}>
+                申請教材
+              </Button>
+              {!isFinalized && (
+                <Button variant="outline" size="sm" onClick={() => setFinalizeOpen(true)} disabled={finalizePending}>
+                  <IconChecks className="mr-1 h-4 w-4" />
+                  {t('finalizeButton')}
+                </Button>
+              )}
+            </div>
+            {isFinalized ? (
+              <p className="text-xs text-muted-foreground">{t('applyDisabledFinalized')}</p>
+            ) : !canApplyMore ? (
               <p className="text-xs text-muted-foreground">
-                {total.traditional + total.simplified === 0
-                  ? '尚無已核准學員的選書需求。'
-                  : '教材已全部申請。'}
+                {total.traditional + total.simplified === 0 ? t('noDemandHint') : t('allAppliedHint')}
               </p>
-            )}
+            ) : null}
           </div>
+
+          {/* 完成教材申請確認視窗 */}
+          <Dialog open={finalizeOpen} onOpenChange={setFinalizeOpen}>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle>{t('finalizeConfirmTitle')}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-2 text-sm">
+                <p>
+                  {t('finalizeConfirmRemaining', {
+                    trad: remaining.traditional,
+                    simp: remaining.simplified,
+                  })}
+                </p>
+                <p className="text-muted-foreground">{t('finalizeConfirmDesc')}</p>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setFinalizeOpen(false)} disabled={finalizePending}>
+                  {t('cancel')}
+                </Button>
+                <Button onClick={handleFinalize} disabled={finalizePending}>
+                  {finalizePending ? t('processing') : t('finalizeConfirmAction')}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </Section>
       )}
 
@@ -373,7 +464,7 @@ export function CourseDetailActions({
         <Section title="開始上課作業" icon={<IconPlayerPlay className="h-5 w-5 text-primary" />}>
           <div className="text-sm text-muted-foreground space-y-1">
             <p>注意事項：開始上課後課程狀態將變為「進行中」，並可開始辦理結業。</p>
-            <p>需符合：①至少 1 位已核准學員；②所有教材訂單皆已收件。</p>
+            <p>{t('startGateHint')}</p>
             {!canStart && startReasons.length > 0 && (
               <ul className="list-disc pl-5 text-amber-700">
                 {startReasons.map((r, i) => (

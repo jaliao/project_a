@@ -1,20 +1,22 @@
 /*
  * ----------------------------------------------
  * MaterialOrderDialog - 教材申請 Dialog
- * 2026-03-30 (Updated: 2026-06-04)
+ * 2026-03-30 (Updated: 2026-07-20)
  * components/course-session/material-order-dialog.tsx
  *
- * 支援單一地址（現行流程）與多地址寄送：
- * 多地址依教材版本（繁/簡）分配本數，分配完才能送出。
+ * 支援單一地址與多地址寄送，皆以「逐本清單」編輯本次申請內容：
+ * 學員書依報名選版帶入（可改版本、取消勾選），並可新增額外加購；
+ * 學員申請統計僅為參考，不作為數量上限。
  * ----------------------------------------------
  */
 
 'use client'
 
-import { useTransition } from 'react'
+import { useEffect, useTransition } from 'react'
 import { useForm, useFieldArray, type UseFormReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { IconPlus, IconTrash } from '@tabler/icons-react'
 import {
@@ -31,6 +33,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -38,6 +47,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import {
   materialOrderSchema,
   type MaterialOrderFormValues,
+  type OrderBookItemInput,
 } from '@/lib/schemas/course-order'
 import { applyMaterialOrder } from '@/app/actions/course-order'
 import type { BookItem } from '@/lib/data/material-items'
@@ -60,7 +70,7 @@ interface Shipment {
   traditionalQty: number
   simplifiedQty: number
   shippedAt: Date | null
-  items?: { enrollmentId: number; bookName: string; version: string }[]
+  items?: { enrollmentId: number | null; bookName: string; version: string }[]
 }
 
 interface MaterialOrderDialogProps {
@@ -80,12 +90,29 @@ interface MaterialOrderDialogProps {
     shipMode: string
     shipments: Shipment[]
   } | null
-  // 尚未申請之剩餘本數（本次申請上限；單一地址自動帶入此值）
+  // 學員申請尚未申請之本數（參考值，非上限）
   remaining: { traditional: number; simplified: number }
-  // 尚未指派的書本項目（多地址逐本指派用）
+  // 尚未指派的書本項目（逐本清單／多地址指派用）
   bookItems: BookItem[]
   // 單一地址收件人預設值（申請講師姓名 + 個人資料電話）
   defaultRecipient: { name: string; phone: string }
+}
+
+// 既有訂單項目 → 表單項目（唯讀顯示用）
+function toFormItems(items: Shipment['items']): OrderBookItemInput[] {
+  return (items ?? []).map((i) =>
+    i.enrollmentId != null
+      ? { kind: 'enrollment' as const, enrollmentId: i.enrollmentId, version: i.version as 'traditional' | 'simplified' }
+      : { kind: 'extra' as const, version: i.version as 'traditional' | 'simplified', bookName: i.bookName }
+  )
+}
+
+// 書本項目繁/簡合計
+function countItems(items: OrderBookItemInput[]): { trad: number; simp: number } {
+  return {
+    trad: items.filter((i) => i.version === 'traditional').length,
+    simp: items.filter((i) => i.version === 'simplified').length,
+  }
 }
 
 export function MaterialOrderDialog({
@@ -98,6 +125,7 @@ export function MaterialOrderDialog({
   defaultRecipient,
 }: MaterialOrderDialogProps) {
   const router = useRouter()
+  const t = useTranslations('course.material')
   const [isPending, startTransition] = useTransition()
 
   // 多訂單模式：既有訂單一律唯讀（不再編輯舊訂單，欲變更請「再申請一筆教材」建立新訂單）
@@ -119,6 +147,7 @@ export function MaterialOrderDialog({
           deliveryAddress: existingOrder.deliveryAddress ?? '',
           storeId: existingOrder.storeId ?? '',
           storeName: existingOrder.storeName ?? '',
+          items: [],
           shipments: existingOrder.shipments.map((s) => ({
             recipientName: s.recipientName ?? '',
             recipientPhone: s.recipientPhone ?? '',
@@ -126,7 +155,7 @@ export function MaterialOrderDialog({
             deliveryAddress: s.deliveryAddress ?? '',
             storeId: s.storeId ?? '',
             storeName: s.storeName ?? '',
-            enrollmentIds: (s.items ?? []).map((i) => i.enrollmentId),
+            items: toFormItems(s.items),
           })),
         }
       : {
@@ -137,9 +166,26 @@ export function MaterialOrderDialog({
           deliveryAddress: '',
           storeId: '',
           storeName: '',
+          items: bookItems.map((it) => ({
+            kind: 'enrollment' as const,
+            enrollmentId: it.enrollmentId,
+            version: it.version,
+          })),
           shipments: [],
         },
   })
+
+  // 開啟時以當下書本項目重設單一地址清單（頁面 refresh 後 props 更新，defaultValues 不會自動更新）
+  useEffect(() => {
+    if (open && !existingOrder) {
+      form.setValue(
+        'items',
+        bookItems.map((it) => ({ kind: 'enrollment' as const, enrollmentId: it.enrollmentId, version: it.version })),
+        { shouldValidate: false }
+      )
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -161,15 +207,17 @@ export function MaterialOrderDialog({
     form.setValue('deliveryAddress', '')
   }
 
-  // ── 多地址：逐本指派（每本書指派到唯一地址，需全部指派完）──
+  // ── 本次申請項目合計（單一：items；多地址：各地址 items 加總）──
+  const watchedItems = form.watch('items') ?? []
   const watchedShipments = form.watch('shipments') ?? []
-  const assignedIds = new Set<number>()
-  watchedShipments.forEach((s) => (s?.enrollmentIds ?? []).forEach((id: number) => assignedIds.add(id)))
-  const totalItems = bookItems.length
-  const unassignedCount = totalItems - assignedIds.size
-  const anyEmptyRow = watchedShipments.some((s) => (s?.enrollmentIds ?? []).length === 0)
-  const multipleSubmitDisabled =
-    isMultiple && (fields.length === 0 || totalItems === 0 || unassignedCount !== 0 || anyEmptyRow)
+  const allItems: OrderBookItemInput[] = isMultiple
+    ? watchedShipments.flatMap((s) => s?.items ?? [])
+    : watchedItems
+  const totals = countItems(allItems)
+  const anyEmptyRow = watchedShipments.some((s) => (s?.items ?? []).length === 0)
+  const submitDisabled = isMultiple
+    ? fields.length === 0 || anyEmptyRow || allItems.length < 1
+    : allItems.length < 1
 
   const onSubmit = (values: MaterialOrderFormValues) => {
     if (isReadonly) return
@@ -243,11 +291,9 @@ export function MaterialOrderDialog({
             {/* ════════ 單一地址 ════════ */}
             {!isMultiple && (
               <>
-                {/* 單一地址自動帶入尚未申請的全部本數 */}
+                {/* 逐本清單：依學員申請帶入，可調整版本／取消勾選／加購 */}
                 {!existingOrder && (
-                  <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">
-                    本次將申請（系統自動帶入尚未申請的全部）：繁體 {remaining.traditional} 本、簡體 {remaining.simplified} 本
-                  </div>
+                  <SingleBookList form={form} bookItems={bookItems} disabled={isReadonly} />
                 )}
 
                 {/* 收件人（預設帶入申請講師，可修改） */}
@@ -336,12 +382,12 @@ export function MaterialOrderDialog({
             {/* ════════ 多地址 ════════ */}
             {isMultiple && (
               <div className="space-y-4">
-                {/* 待指派提示 */}
+                {/* 指派提示（未指派＝本次不申請） */}
                 <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm space-y-0.5">
-                  <p className="font-medium">本次待寄送書本：{totalItems} 本（繁 {remaining.traditional} / 簡 {remaining.simplified}）</p>
-                  <p className={unassignedCount > 0 ? 'text-amber-700' : 'text-green-600'}>
-                    {unassignedCount > 0 ? `尚有 ${unassignedCount} 本未指派地址` : '所有書本已指派 ✓'}
+                  <p className="font-medium">
+                    {t('multiSummary', { count: bookItems.length })}
                   </p>
+                  <p className="text-muted-foreground">{t('unassignedHint')}</p>
                 </div>
 
                 {fields.map((fieldItem, index) => (
@@ -368,7 +414,7 @@ export function MaterialOrderDialog({
                         deliveryAddress: '',
                         storeId: '',
                         storeName: '',
-                        enrollmentIds: [],
+                        items: [],
                       })
                     }
                   >
@@ -379,8 +425,21 @@ export function MaterialOrderDialog({
               </div>
             )}
 
+            {/* 合計對照列（本次申請 vs 學員申請參考） */}
             {!isReadonly && (
-              <Button type="submit" className="w-full" disabled={isPending || multipleSubmitDisabled}>
+              <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm space-y-0.5">
+                <p className="font-medium">{t('totalLine', { trad: totals.trad, simp: totals.simp })}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t('studentRefLine', { trad: remaining.traditional, simp: remaining.simplified })}
+                </p>
+                {allItems.length < 1 && (
+                  <p className="text-xs text-amber-700">{t('atLeastOne')}</p>
+                )}
+              </div>
+            )}
+
+            {!isReadonly && (
+              <Button type="submit" className="w-full" disabled={isPending || submitDisabled}>
                 {isPending ? '送出中…' : existingOrder ? '更新申請' : '送出申請'}
               </Button>
             )}
@@ -388,6 +447,155 @@ export function MaterialOrderDialog({
         </Form>
       </DialogContent>
     </Dialog>
+  )
+}
+
+// ── 版本下拉（繁/簡）─────────────────────────────────────
+function VersionSelect({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: 'traditional' | 'simplified'
+  onChange: (v: 'traditional' | 'simplified') => void
+  disabled?: boolean
+}) {
+  const t = useTranslations('course.material')
+  return (
+    <Select value={value} onValueChange={(v) => onChange(v as 'traditional' | 'simplified')} disabled={disabled}>
+      <SelectTrigger size="sm" className="w-20 shrink-0">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="traditional">{t('versionShortTraditional')}</SelectItem>
+        <SelectItem value="simplified">{t('versionShortSimplified')}</SelectItem>
+      </SelectContent>
+    </Select>
+  )
+}
+
+// ── 加購項目列（版本＋書名，可移除）──────────────────────
+function ExtraItemRow({
+  item,
+  onChange,
+  onRemove,
+  disabled,
+}: {
+  item: Extract<OrderBookItemInput, { kind: 'extra' }>
+  onChange: (next: Extract<OrderBookItemInput, { kind: 'extra' }>) => void
+  onRemove: () => void
+  disabled?: boolean
+}) {
+  const t = useTranslations('course.material')
+  return (
+    <div className="flex items-center gap-2">
+      <VersionSelect value={item.version} onChange={(v) => onChange({ ...item, version: v })} disabled={disabled} />
+      <Input
+        value={item.bookName ?? ''}
+        onChange={(e) => onChange({ ...item, bookName: e.target.value })}
+        placeholder={t('extraNamePlaceholder')}
+        className="h-8 flex-1 text-sm"
+        disabled={disabled}
+      />
+      {!disabled && (
+        <Button type="button" variant="ghost" size="sm" onClick={onRemove} className="h-7 px-2 text-destructive">
+          <IconTrash className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  )
+}
+
+// ── 單一地址逐本清單（勾選＋版本調整＋加購）───────────────
+function SingleBookList({
+  form,
+  bookItems,
+  disabled,
+}: {
+  form: UseFormReturn<MaterialOrderFormValues>
+  bookItems: BookItem[]
+  disabled: boolean
+}) {
+  const t = useTranslations('course.material')
+  const items: OrderBookItemInput[] = form.watch('items') ?? []
+  const setItems = (next: OrderBookItemInput[]) =>
+    form.setValue('items', next, { shouldValidate: true })
+
+  const findEnrollment = (enrollmentId: number) =>
+    items.find((i) => i.kind === 'enrollment' && i.enrollmentId === enrollmentId) as
+      | Extract<OrderBookItemInput, { kind: 'enrollment' }>
+      | undefined
+
+  const toggle = (it: BookItem, checked: boolean) => {
+    if (checked) {
+      setItems([...items, { kind: 'enrollment', enrollmentId: it.enrollmentId, version: it.version }])
+    } else {
+      setItems(items.filter((i) => !(i.kind === 'enrollment' && i.enrollmentId === it.enrollmentId)))
+    }
+  }
+  const setVersion = (enrollmentId: number, version: 'traditional' | 'simplified') => {
+    setItems(
+      items.map((i) => (i.kind === 'enrollment' && i.enrollmentId === enrollmentId ? { ...i, version } : i))
+    )
+  }
+  // 加購項目：以 items 內索引操作
+  const extraIndexes = items
+    .map((i, idx) => (i.kind === 'extra' ? idx : -1))
+    .filter((idx) => idx >= 0)
+
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium">{t('listTitle')}</p>
+      <div className="space-y-1.5 rounded-md border p-2 max-h-56 overflow-y-auto">
+        {bookItems.length === 0 ? (
+          <p className="text-xs text-muted-foreground">{t('noStudentBooks')}</p>
+        ) : (
+          bookItems.map((it) => {
+            const selected = findEnrollment(it.enrollmentId)
+            return (
+              <div key={it.enrollmentId} className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={!!selected}
+                  disabled={disabled}
+                  onCheckedChange={(c) => toggle(it, !!c)}
+                />
+                <span className="flex-1 truncate">{it.studentName}（{it.bookName}）</span>
+                <VersionSelect
+                  value={selected?.version ?? it.version}
+                  onChange={(v) => setVersion(it.enrollmentId, v)}
+                  disabled={disabled || !selected}
+                />
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      {/* 加購（不綁學員） */}
+      <div className="space-y-1.5">
+        {extraIndexes.map((idx) => (
+          <ExtraItemRow
+            key={idx}
+            item={items[idx] as Extract<OrderBookItemInput, { kind: 'extra' }>}
+            onChange={(next) => setItems(items.map((i, j) => (j === idx ? next : i)))}
+            onRemove={() => setItems(items.filter((_, j) => j !== idx))}
+            disabled={disabled}
+          />
+        ))}
+        {!disabled && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setItems([...items, { kind: 'extra', version: 'traditional', bookName: '' }])}
+          >
+            <IconPlus className="mr-1 h-4 w-4" />
+            {t('addExtra')}
+          </Button>
+        )}
+      </div>
+      <FormMessage>{form.formState.errors.items?.message}</FormMessage>
+    </div>
   )
 }
 
@@ -506,13 +714,13 @@ function MultiAddressRow({
         )} />
       )}
 
-      {/* 指派書本至此地址 */}
+      {/* 指派書本至此地址（可調版本、可加購；未指派＝本次不申請） */}
       <BookAssignList form={form} index={index} bookItems={bookItems} disabled={disabled} />
     </div>
   )
 }
 
-// ── 書本項目指派清單（每本書指派到唯一地址）─────────────
+// ── 書本項目指派清單（每本書指派到唯一地址；可調版本、可加購）──
 function BookAssignList({
   form,
   index,
@@ -524,46 +732,101 @@ function BookAssignList({
   bookItems: BookItem[]
   disabled: boolean
 }) {
+  const t = useTranslations('course.material')
   const allShipments = form.watch('shipments') ?? []
+  // 學員書 enrollmentId → 已指派的地址索引
   const assignedTo = new Map<number, number>()
-  allShipments.forEach((s, i) => (s?.enrollmentIds ?? []).forEach((id: number) => assignedTo.set(id, i)))
-  const myIds: number[] = form.watch(`shipments.${index}.enrollmentIds`) ?? []
+  allShipments.forEach((s, i) =>
+    (s?.items ?? []).forEach((it: OrderBookItemInput) => {
+      if (it.kind === 'enrollment') assignedTo.set(it.enrollmentId, i)
+    })
+  )
+  const myItems: OrderBookItemInput[] = form.watch(`shipments.${index}.items`) ?? []
+  const setItems = (next: OrderBookItemInput[]) =>
+    form.setValue(`shipments.${index}.items`, next, { shouldValidate: true })
 
-  const toggle = (id: number, checked: boolean) => {
-    const next = checked ? [...myIds, id] : myIds.filter((x) => x !== id)
-    form.setValue(`shipments.${index}.enrollmentIds`, next, { shouldValidate: true })
+  const toggle = (it: BookItem, checked: boolean) => {
+    if (checked) {
+      setItems([...myItems, { kind: 'enrollment', enrollmentId: it.enrollmentId, version: it.version }])
+    } else {
+      setItems(myItems.filter((i) => !(i.kind === 'enrollment' && i.enrollmentId === it.enrollmentId)))
+    }
   }
+  const setVersion = (enrollmentId: number, version: 'traditional' | 'simplified') => {
+    setItems(
+      myItems.map((i) => (i.kind === 'enrollment' && i.enrollmentId === enrollmentId ? { ...i, version } : i))
+    )
+  }
+  const extraIndexes = myItems
+    .map((i, idx) => (i.kind === 'extra' ? idx : -1))
+    .filter((idx) => idx >= 0)
 
   return (
     <div className="space-y-1">
-      <p className="text-xs font-medium">指派書本至此地址 *</p>
-      <div className="space-y-1 rounded-md border p-2 max-h-48 overflow-y-auto">
+      <p className="text-xs font-medium">{t('assignTitle')}</p>
+      <div className="space-y-1.5 rounded-md border p-2 max-h-48 overflow-y-auto">
         {bookItems.length === 0 ? (
-          <p className="text-xs text-muted-foreground">無待指派書本</p>
+          <p className="text-xs text-muted-foreground">{t('noStudentBooks')}</p>
         ) : (
           bookItems.map((it) => {
             const owner = assignedTo.get(it.enrollmentId)
             const mine = owner === index
             const elsewhere = owner != null && owner !== index
-            const versionLabel = it.version === 'traditional' ? '繁' : '簡'
+            const myItem = mine
+              ? (myItems.find((i) => i.kind === 'enrollment' && i.enrollmentId === it.enrollmentId) as
+                  | Extract<OrderBookItemInput, { kind: 'enrollment' }>
+                  | undefined)
+              : undefined
             return (
-              <label
+              <div
                 key={it.enrollmentId}
                 className={`flex items-center gap-2 text-sm ${elsewhere ? 'opacity-40' : ''}`}
               >
                 <Checkbox
                   checked={mine}
                   disabled={disabled || elsewhere}
-                  onCheckedChange={(c) => toggle(it.enrollmentId, !!c)}
+                  onCheckedChange={(c) => toggle(it, !!c)}
                 />
-                <span>{it.studentName}（{it.bookName}）· {versionLabel}</span>
-                {elsewhere && <span className="text-xs text-muted-foreground">→ 地址 {owner! + 1}</span>}
-              </label>
+                <span className="flex-1 truncate">{it.studentName}（{it.bookName}）</span>
+                {elsewhere ? (
+                  <span className="text-xs text-muted-foreground">{t('assignedToAddress', { n: owner! + 1 })}</span>
+                ) : (
+                  <VersionSelect
+                    value={myItem?.version ?? it.version}
+                    onChange={(v) => setVersion(it.enrollmentId, v)}
+                    disabled={disabled || !mine}
+                  />
+                )}
+              </div>
             )
           })
         )}
       </div>
-      <FormMessage>{form.formState.errors.shipments?.[index]?.enrollmentIds?.message}</FormMessage>
+
+      {/* 此地址的加購項目 */}
+      <div className="space-y-1.5">
+        {extraIndexes.map((idx) => (
+          <ExtraItemRow
+            key={idx}
+            item={myItems[idx] as Extract<OrderBookItemInput, { kind: 'extra' }>}
+            onChange={(next) => setItems(myItems.map((i, j) => (j === idx ? next : i)))}
+            onRemove={() => setItems(myItems.filter((_, j) => j !== idx))}
+            disabled={disabled}
+          />
+        ))}
+        {!disabled && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setItems([...myItems, { kind: 'extra', version: 'traditional', bookName: '' }])}
+          >
+            <IconPlus className="mr-1 h-4 w-4" />
+            {t('addExtra')}
+          </Button>
+        )}
+      </div>
+      <FormMessage>{form.formState.errors.shipments?.[index]?.items?.message}</FormMessage>
     </div>
   )
 }
