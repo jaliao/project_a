@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * Data Layer - 會員管理
- * 2026-04-01
+ * 2026-04-01 (Updated: 2026-07-14)
  * lib/data/members.ts
  * ----------------------------------------------
  */
@@ -104,6 +104,7 @@ export async function getMemberDetail(id: string) {
       roles: true,
       teacherNo: true,
       gender: true,
+      birthYear: true,
       displayNameMode: true,
       createdAt: true,
       // 活躍度指標
@@ -136,6 +137,14 @@ export async function getMemberDetail(id: string) {
               startedAt: true,
               courseCatalogId: true,
               courseCatalog: { select: { label: true } },
+              // 課程卡片（CourseSessionCard）所需欄位
+              courseDate: true,
+              maxCount: true,
+              expiredAt: true,
+              cancelledAt: true,
+              completedAt: true,
+              _count: { select: { enrollments: true } },
+              orders: { select: { courseDate: true }, orderBy: { createdAt: 'asc' }, take: 1 },
               createdBy: {
                 select: {
                   realName: true,
@@ -156,7 +165,16 @@ export async function getMemberDetail(id: string) {
           id: true,
           title: true,
           startedAt: true,
+          courseCatalogId: true,
           courseCatalog: { select: { label: true } },
+          // 課程卡片（CourseSessionCard）所需欄位
+          courseDate: true,
+          maxCount: true,
+          expiredAt: true,
+          cancelledAt: true,
+          completedAt: true,
+          _count: { select: { enrollments: true } },
+          orders: { select: { courseDate: true }, orderBy: { createdAt: 'asc' }, take: 1 },
         },
         orderBy: { startedAt: 'desc' },
       },

@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 後台會員詳情頁（四分頁：基本資料／學習階層／講師身分／特殊設定）
- * 2026-04-01 (Updated: 2026-07-03)
+ * 2026-04-01 (Updated: 2026-07-14)
  * app/(user)/admin/members/[id]/page.tsx
  * ----------------------------------------------
  */
@@ -29,6 +29,7 @@ import { MemberTeacherRoles } from '@/components/admin/member-teacher-roles'
 import { MemberSpecialRoles } from '@/components/admin/member-special-roles'
 import { MemberSuspendSection } from '@/components/admin/member-suspend-section'
 import { MaskedValue } from '@/components/admin/masked-value'
+import { CourseSessionCard } from '@/components/course-session/course-session-card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -50,6 +51,12 @@ function fmtDateTime(d: Date | null): string {
     year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit',
   })
+}
+
+// 年齡：僅存出生年（西元），以「當年 − 出生年」估算；未填顯示 —
+function ageLabel(birthYear: number | null): string {
+  if (!birthYear) return '—'
+  return `${new Date().getFullYear() - birthYear} 歲`
 }
 
 // 是否已更改臨時密碼：無密碼帳號顯示「不適用」
@@ -126,6 +133,7 @@ export default async function MemberDetailPage({
               <div><dt className="text-muted-foreground">英文名稱</dt><dd>{member.englishName || '—'}</dd></div>
               <div><dt className="text-muted-foreground">暱稱</dt><dd>{member.nickname || '—'}</dd></div>
               <div><dt className="text-muted-foreground">性別</dt><dd>{member.gender === 'male' ? '男' : member.gender === 'female' ? '女' : '未設定'}</dd></div>
+              <div><dt className="text-muted-foreground">年齡</dt><dd>{ageLabel(member.birthYear)}</dd></div>
               <div><dt className="text-muted-foreground">顯示名稱</dt><dd>{displayName}</dd></div>
               <div><dt className="text-muted-foreground">Email</dt><dd><MaskedValue value={member.email} label="Email" /></dd></div>
               <div><dt className="text-muted-foreground">電話</dt><dd><MaskedValue value={member.phone} label="電話" /></dd></div>
@@ -165,55 +173,59 @@ export default async function MemberDetailPage({
             </dl>
           </div>
 
-          {/* 學習紀錄 */}
+          {/* 學習紀錄（標準課程卡片牆） */}
           <div className="rounded-lg border">
             <div className="px-4 py-3 border-b bg-muted/40"><h2 className="font-medium text-sm">學習紀錄</h2></div>
             {member.inviteEnrollments.length > 0 ? (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="px-4 py-2 text-left font-medium text-muted-foreground">課程名稱</th>
-                    <th className="px-4 py-2 text-left font-medium text-muted-foreground">課程目錄</th>
-                    <th className="px-4 py-2 text-left font-medium text-muted-foreground">開始授課日期</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {member.inviteEnrollments.map((enrollment, i) => (
-                    <tr key={enrollment.invite.id} className={i < member.inviteEnrollments.length - 1 ? 'border-b' : ''}>
-                      <td className="px-4 py-2">{enrollment.invite.title}</td>
-                      <td className="px-4 py-2 text-muted-foreground">{enrollment.invite.courseCatalog.label}</td>
-                      <td className="px-4 py-2 text-muted-foreground">{enrollment.invite.startedAt ? fmtDate(enrollment.invite.startedAt) : '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
+                {member.inviteEnrollments.map(({ invite }) => (
+                  <CourseSessionCard
+                    key={invite.id}
+                    inviteId={invite.id}
+                    title={invite.title}
+                    courseCatalogId={invite.courseCatalogId}
+                    courseCatalogLabel={invite.courseCatalog.label}
+                    courseDate={invite.courseDate ?? invite.orders[0]?.courseDate ?? null}
+                    maxCount={invite.maxCount}
+                    enrolledCount={invite._count.enrollments}
+                    expiredAt={invite.expiredAt}
+                    startedAt={invite.startedAt}
+                    cancelledAt={invite.cancelledAt}
+                    completedAt={invite.completedAt}
+                    variant="compact"
+                    href={`/course/${invite.id}`}
+                  />
+                ))}
+              </div>
             ) : (
               <p className="px-4 py-6 text-center text-sm text-muted-foreground">尚無學習紀錄</p>
             )}
           </div>
 
-          {/* 授課紀錄 */}
+          {/* 授課紀錄（標準課程卡片牆） */}
           <div className="rounded-lg border">
             <div className="px-4 py-3 border-b bg-muted/40"><h2 className="font-medium text-sm">授課紀錄</h2></div>
             {member.courseInvites.length > 0 ? (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="px-4 py-2 text-left font-medium text-muted-foreground">課程名稱</th>
-                    <th className="px-4 py-2 text-left font-medium text-muted-foreground">課程目錄</th>
-                    <th className="px-4 py-2 text-left font-medium text-muted-foreground">開始授課日期</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {member.courseInvites.map((invite, i) => (
-                    <tr key={invite.id} className={i < member.courseInvites.length - 1 ? 'border-b' : ''}>
-                      <td className="px-4 py-2">{invite.title}</td>
-                      <td className="px-4 py-2 text-muted-foreground">{invite.courseCatalog.label}</td>
-                      <td className="px-4 py-2 text-muted-foreground">{invite.startedAt ? fmtDate(invite.startedAt) : '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
+                {member.courseInvites.map((invite) => (
+                  <CourseSessionCard
+                    key={invite.id}
+                    inviteId={invite.id}
+                    title={invite.title}
+                    courseCatalogId={invite.courseCatalogId}
+                    courseCatalogLabel={invite.courseCatalog.label}
+                    courseDate={invite.courseDate ?? invite.orders[0]?.courseDate ?? null}
+                    maxCount={invite.maxCount}
+                    enrolledCount={invite._count.enrollments}
+                    expiredAt={invite.expiredAt}
+                    startedAt={invite.startedAt}
+                    cancelledAt={invite.cancelledAt}
+                    completedAt={invite.completedAt}
+                    variant="compact"
+                    href={`/course/${invite.id}`}
+                  />
+                ))}
+              </div>
             ) : (
               <p className="px-4 py-6 text-center text-sm text-muted-foreground">尚無授課紀錄</p>
             )}
