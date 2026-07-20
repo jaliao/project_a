@@ -7,7 +7,7 @@ TBD - normalized for archive compatibility. Update Purpose for course-status.
 課程詳情頁講師操作區 SHALL 在課程為招生中（`startedAt = null`、`cancelledAt = null`、`completedAt = null`）時**常駐顯示**「開始上課」按鈕，且按鈕上方 SHALL 顯示**開始上課日期**欄位（date picker），預設為今天、最大可選日期為今天。
 按鈕 SHALL 僅在下列條件全部成立時為啟用狀態，否則為停用（disabled）：
 1. 該課程至少有 **1 位已核准（approved）學員**；
-2. 該課程**尚未申請的教材需求為 0**（已核准學員之 `materialChoice` 繁/簡總需求，皆已由教材訂單的繁/簡數量涵蓋）；
+2. 該課程**尚未申請的教材需求為 0**（已核准學員之 `materialChoice` 繁/簡總需求，皆已由教材訂單的繁/簡數量涵蓋）**或該課程已標記「教材申請已完成」**（`materialFinalizedAt != null`）；
 3. 該課程**所有教材訂單皆已收件**（每筆 `CourseOrder.receivedAt != null`）。
 當全班皆不需教材（總需求為 0）且無教材訂單時，條件 2、3 視為成立。
 按鈕為停用時，旁邊 SHALL 列出**所有未達成的原因**。
@@ -23,8 +23,16 @@ TBD - normalized for archive compatibility. Update Purpose for course-status.
 - **THEN** 「開始上課」按鈕為停用狀態，並顯示原因「尚無已核准學員」
 
 #### Scenario: 尚有教材未申請 — 按鈕停用並顯示原因
-- **WHEN** 教材訂單皆已收件後，又核准一位選書（繁或簡）的學員，使尚未申請需求 > 0
+- **WHEN** 教材訂單皆已收件後，又核准一位選書（繁或簡）的學員，使尚未申請需求 > 0，且課程未標記「教材申請已完成」
 - **THEN** 「開始上課」按鈕為停用狀態，並顯示原因「尚有教材未申請（繁 X、簡 Y）」
+
+#### Scenario: 教材申請已完成 — 豁免需求條件
+- **WHEN** 課程招生中、有 ≥1 已核准學員、尚未申請需求 > 0，但課程已標記「教材申請已完成」，且無未收件之教材訂單
+- **THEN** 顯示啟用狀態的「開始上課」按鈕（教材需求條件視為成立）
+
+#### Scenario: 已完成但訂單未全收件 — 仍停用
+- **WHEN** 課程已標記「教材申請已完成」，但既有教材訂單中至少一筆 `receivedAt == null`
+- **THEN** 「開始上課」按鈕為停用狀態，並顯示原因「教材訂單尚未全部收件」
 
 #### Scenario: 教材未全部收件 — 按鈕停用並顯示原因
 - **WHEN** 課程招生中、需求已全部申請，但其中至少一筆訂單 `receivedAt == null`
@@ -55,6 +63,6 @@ TBD - normalized for archive compatibility. Update Purpose for course-status.
 - **THEN** action 回傳 `success: false` 與原因，課程狀態不變（前端日期欄位 `max` 亦限制至今天）
 
 #### Scenario: server 端條件未達成時拒絕
-- **WHEN** `startCourseSession` 被呼叫但 approved 學員數 < 1、尚有教材未申請、或教材未全部收件
+- **WHEN** `startCourseSession` 被呼叫但 approved 學員數 < 1、尚有教材未申請（且未標記完成）、或教材未全部收件
 - **THEN** action 回傳 `success: false` 與具體原因，課程狀態不變
 

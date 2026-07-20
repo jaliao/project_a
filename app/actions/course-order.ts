@@ -592,6 +592,14 @@ export async function finalizeMaterialOrders(inviteId: number): Promise<ActionRe
   const { invite, actorName } = loaded
   if (invite.materialFinalizedAt) return { success: false, message: '教材申請已標記完成' }
 
+  // 前置條件：不可有進行中（尚未收件）的教材訂單
+  const activeOrders = await prisma.courseOrder.count({
+    where: { courseInviteId: inviteId, receivedAt: null },
+  })
+  if (activeOrders > 0) {
+    return { success: false, message: '尚有進行中的教材訂單，請先完成收件後再標記已完成申請' }
+  }
+
   await prisma.$transaction(async (tx) => {
     await tx.courseInvite.update({
       where: { id: inviteId },

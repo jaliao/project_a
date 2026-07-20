@@ -302,48 +302,46 @@ export function CourseDetailActions({
 
   const { total, applied, remaining, canApplyMore } = progress
   const isFinalized = materialFinalizedAt != null
+  // 進行中（尚未收件）的教材訂單存在時，不可標記「已完成申請」
+  const hasActiveOrders = orders.some((o) => o.receivedAt == null)
 
   return (
     <div className="space-y-3">
       {/* ── 區塊一：教材申請作業（講師與管理者） ────────────────── */}
       {!isStarted && canManageMaterials && (
         <Section title="教材申請作業" icon={<IconBook className="h-5 w-5 text-primary" />}>
-          {/* 說明：申請進度（總需求／已申請／尚未申請；依學員申請統計之參考值） */}
-          <div className="rounded-md bg-muted/50 px-3 py-2 text-sm space-y-1">
-            <div className="flex justify-between gap-2">
-              <span className="text-muted-foreground">總需求</span>
-              <span>{bookLabel(total.traditional, total.simplified)}</span>
+          {/* ── 單元一：學員教材需求統計 ── */}
+          <div className="space-y-1.5">
+            <h4 className="text-sm font-semibold">{t('sectionDemand')}</h4>
+            <div className="rounded-md bg-muted/50 px-3 py-2 text-sm space-y-1">
+              <div className="flex justify-between gap-2">
+                <span className="text-muted-foreground">總需求</span>
+                <span>{bookLabel(total.traditional, total.simplified)}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">{t('progressRefHint')}</p>
             </div>
-            <div className="flex justify-between gap-2">
-              <span className="text-muted-foreground">已申請</span>
-              <span>{bookLabel(applied.traditional, applied.simplified)}</span>
-            </div>
-            <div className="flex justify-between gap-2">
-              <span className="text-muted-foreground">尚未申請</span>
-              <span className={cn(canApplyMore && 'font-medium text-amber-700')}>
-                {bookLabel(remaining.traditional, remaining.simplified)}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">{t('progressRefHint')}</p>
           </div>
 
-          {/* 教材申請已完成：狀態顯示＋重新開放 */}
-          {isFinalized && (
-            <div className="flex items-center justify-between gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm">
-              <span className="flex items-center gap-1.5 text-green-800">
-                <IconChecks className="h-4 w-4" />
-                {t('finalizeDone')}
-              </span>
-              <Button variant="outline" size="sm" onClick={handleReopenMaterial} disabled={finalizePending}>
-                {finalizePending ? t('processing') : t('reopenButton')}
-              </Button>
+          {/* ── 單元二：教材申請進度 ── */}
+          <div className="space-y-1.5">
+            <h4 className="text-sm font-semibold">{t('sectionProgress')}</h4>
+            <div className="rounded-md bg-muted/50 px-3 py-2 text-sm space-y-1">
+              <div className="flex justify-between gap-2">
+                <span className="text-muted-foreground">已申請</span>
+                <span>{bookLabel(applied.traditional, applied.simplified)}</span>
+              </div>
+              <div className="flex justify-between gap-2">
+                <span className="text-muted-foreground">尚未申請</span>
+                <span className={cn(canApplyMore && 'font-medium text-amber-700')}>
+                  {bookLabel(remaining.traditional, remaining.simplified)}
+                </span>
+              </div>
             </div>
-          )}
 
-          {/* 訂單清單（每筆顯示書籍種類與數量＋狀態＋動作） */}
-          {orders.length === 0 ? (
-            <p className="text-sm text-muted-foreground">尚未申請教材，請在開始上課前完成申請。</p>
-          ) : (
+            {/* 訂單清單（每筆顯示書籍種類與數量＋狀態＋動作） */}
+            {orders.length === 0 ? (
+              <p className="text-sm text-muted-foreground">尚未申請教材，請在開始上課前完成申請。</p>
+            ) : (
             <ul className="space-y-2">
               {orders.map((order) => {
                 const status = getMaterialOrderStatus(order)
@@ -407,28 +405,53 @@ export function CourseDetailActions({
                 )
               })}
             </ul>
-          )}
+            )}
+          </div>
 
-          {/* 動作：申請教材（未標記完成即可按；學員統計僅為參考）＋完成教材申請 */}
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Button variant="outline" size="sm" onClick={openNewOrder} disabled={isFinalized}>
-                申請教材
-              </Button>
-              {!isFinalized && (
-                <Button variant="outline" size="sm" onClick={() => setFinalizeOpen(true)} disabled={finalizePending}>
-                  <IconChecks className="mr-1 h-4 w-4" />
-                  {t('finalizeButton')}
-                </Button>
-              )}
-            </div>
+          {/* ── 單元三：申請作業（注意事項＋功能按鈕說明＋功能按鈕／完成狀態） ── */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold">{t('sectionApply')}</h4>
+
             {isFinalized ? (
-              <p className="text-xs text-muted-foreground">{t('applyDisabledFinalized')}</p>
-            ) : !canApplyMore ? (
-              <p className="text-xs text-muted-foreground">
-                {total.traditional + total.simplified === 0 ? t('noDemandHint') : t('allAppliedHint')}
-              </p>
-            ) : null}
+              /* 已完成申請：僅顯示完成狀態＋重新開放（注意事項與按鈕不顯示） */
+              <div className="flex items-center justify-between gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm">
+                <span className="flex items-center gap-1.5 text-green-800">
+                  <IconChecks className="h-4 w-4" />
+                  {t('finalizeDone')}
+                </span>
+                <Button variant="outline" size="sm" onClick={handleReopenMaterial} disabled={finalizePending}>
+                  {finalizePending ? t('processing') : t('reopenButton')}
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p className="font-medium text-foreground">{t('applyNotesTitle')}</p>
+                  <ul className="list-disc pl-5 space-y-0.5">
+                    <li>{t('noteApplyButton')}</li>
+                    <li>{t('noteFinalizeButton')}</li>
+                    <li>{t('noteFinalizeBlocked')}</li>
+                    {total.traditional + total.simplified === 0 && <li>{t('noDemandHint')}</li>}
+                  </ul>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button variant="outline" size="sm" onClick={openNewOrder}>
+                    申請教材
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFinalizeOpen(true)}
+                    disabled={hasActiveOrders || finalizePending}
+                  >
+                    {t('finalizeButton')}
+                  </Button>
+                </div>
+                {!canApplyMore && total.traditional + total.simplified > 0 && (
+                  <p className="text-xs text-muted-foreground">{t('allAppliedHint')}</p>
+                )}
+              </>
+            )}
           </div>
 
           {/* 完成教材申請確認視窗 */}
