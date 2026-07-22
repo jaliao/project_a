@@ -31,8 +31,8 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
 } from '@/components/ui/form'
+import { FieldError } from '@/components/ui/field-error'
 import {
   Select,
   SelectContent,
@@ -53,11 +53,20 @@ import { applyMaterialOrder } from '@/app/actions/course-order'
 import type { BookItem } from '@/lib/data/material-items'
 import { EcpayStoreSelector } from '@/components/ecpay-store-selector/store-selector'
 
-const DELIVERY_OPTIONS = [
-  { value: 'sevenEleven', label: '7-11 取貨' },
-  { value: 'familyMart', label: '全家取貨' },
-  { value: 'delivery', label: '郵寄、宅配' },
-] as const
+const DELIVERY_VALUES = ['sevenEleven', 'familyMart', 'delivery'] as const
+
+// 取貨方式選項（label 由呼叫端以 t() 組成，見 useDeliveryOptions）
+function useDeliveryOptions(t: (key: string) => string) {
+  return DELIVERY_VALUES.map((value) => ({
+    value,
+    label:
+      value === 'sevenEleven'
+        ? t('deliverySevenEleven')
+        : value === 'familyMart'
+          ? t('deliveryFamilyMart')
+          : t('deliveryDelivery'),
+  }))
+}
 
 interface Shipment {
   id: number
@@ -128,6 +137,7 @@ export function MaterialOrderDialog({
 }: MaterialOrderDialogProps) {
   const router = useRouter()
   const t = useTranslations('course.material')
+  const deliveryOptions = useDeliveryOptions(t)
   const [isPending, startTransition] = useTransition()
 
   // 多訂單模式：既有訂單一律唯讀（不再編輯舊訂單，欲變更請「再申請一筆教材」建立新訂單）
@@ -229,16 +239,16 @@ export function MaterialOrderDialog({
         values as Record<string, unknown>
       )
       if (result.success) {
-        toast.success(result.message ?? '教材申請已送出')
+        toast.success(result.message ?? t('applySuccessFallback'))
         onOpenChange(false)
         router.refresh()
       } else {
-        toast.error(result.message ?? '送出失敗，請稍後再試')
+        toast.error(result.message ?? t('applyFailFallback'))
       }
     })
   }
 
-  const title = existingOrder ? '查看教材申請' : '申請教材'
+  const title = existingOrder ? t('dialogTitleView') : t('dialogTitleNew')
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -249,25 +259,25 @@ export function MaterialOrderDialog({
 
         {isReadonly && (
           <div className="rounded-md bg-blue-50 border border-blue-200 px-4 py-2 text-sm text-blue-700">
-            {existingOrder?.shippedAt ? '教材已寄出，申請資料不可修改。' : '已批價，申請資料不可修改。'}
+            {existingOrder?.shippedAt ? t('readonlyShipped') : t('readonlyQuoted')}
           </div>
         )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             {/* ── 統一編號（選填） ── */}
-            <FormField control={form.control} name="taxId" render={({ field }) => (
+            <FormField control={form.control} name="taxId" render={({ field, fieldState }) => (
               <FormItem>
-                <FormLabel>統一編號（若有報帳需求）</FormLabel>
+                <FormLabel>{t('taxIdLabel')}</FormLabel>
                 <FormControl><Input {...field} disabled={isReadonly} /></FormControl>
-                <FormMessage />
+                <FieldError message={fieldState.error?.message} />
               </FormItem>
             )} />
 
             {/* ── 寄送方式：單一 / 多地址 ── */}
-            <FormField control={form.control} name="shipMode" render={({ field }) => (
+            <FormField control={form.control} name="shipMode" render={({ field, fieldState }) => (
               <FormItem>
-                <FormLabel>寄送方式 *</FormLabel>
+                <FormLabel>{t('shipModeLabel')}</FormLabel>
                 <FormControl>
                   <RadioGroup
                     onValueChange={field.onChange}
@@ -276,8 +286,8 @@ export function MaterialOrderDialog({
                     disabled={isReadonly}
                   >
                     {[
-                      { value: 'single', label: '寄送單一地址' },
-                      { value: 'multiple', label: '寄送多個地址' },
+                      { value: 'single', label: t('shipModeSingle') },
+                      { value: 'multiple', label: t('shipModeMultiple') },
                     ].map((opt) => (
                       <div key={opt.value} className="flex items-center gap-2">
                         <RadioGroupItem value={opt.value} id={`sm-${opt.value}`} />
@@ -286,7 +296,7 @@ export function MaterialOrderDialog({
                     ))}
                   </RadioGroup>
                 </FormControl>
-                <FormMessage />
+                <FieldError message={fieldState.error?.message} />
               </FormItem>
             )} />
 
@@ -300,25 +310,25 @@ export function MaterialOrderDialog({
 
                 {/* 收件人（預設帶入申請講師，可修改） */}
                 <div className="flex gap-3">
-                  <FormField control={form.control} name="recipientName" render={({ field }) => (
+                  <FormField control={form.control} name="recipientName" render={({ field, fieldState }) => (
                     <FormItem className="flex-1">
-                      <FormLabel>收件人 *</FormLabel>
+                      <FormLabel>{t('recipientNameLabel')}</FormLabel>
                       <FormControl><Input {...field} value={field.value ?? ''} disabled={isReadonly} /></FormControl>
-                      <FormMessage />
+                      <FieldError message={fieldState.error?.message} />
                     </FormItem>
                   )} />
-                  <FormField control={form.control} name="recipientPhone" render={({ field }) => (
+                  <FormField control={form.control} name="recipientPhone" render={({ field, fieldState }) => (
                     <FormItem className="flex-1">
-                      <FormLabel>連絡電話 *</FormLabel>
+                      <FormLabel>{t('recipientPhoneLabel')}</FormLabel>
                       <FormControl><Input {...field} value={field.value ?? ''} disabled={isReadonly} /></FormControl>
-                      <FormMessage />
+                      <FieldError message={fieldState.error?.message} />
                     </FormItem>
                   )} />
                 </div>
 
-                <FormField control={form.control} name="deliveryMethod" render={({ field }) => (
+                <FormField control={form.control} name="deliveryMethod" render={({ field, fieldState }) => (
                   <FormItem>
-                    <FormLabel>取貨方式 *</FormLabel>
+                    <FormLabel>{t('deliveryMethodLabel')}</FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={handleDeliveryMethodChange}
@@ -326,7 +336,7 @@ export function MaterialOrderDialog({
                         className="space-y-1"
                         disabled={isReadonly}
                       >
-                        {DELIVERY_OPTIONS.map((opt) => (
+                        {deliveryOptions.map((opt) => (
                           <div key={opt.value} className="flex items-center gap-2">
                             <RadioGroupItem value={opt.value} id={`dm-${opt.value}`} />
                             <label htmlFor={`dm-${opt.value}`} className="text-sm cursor-pointer">{opt.label}</label>
@@ -334,14 +344,14 @@ export function MaterialOrderDialog({
                         ))}
                       </RadioGroup>
                     </FormControl>
-                    <FormMessage />
+                    <FieldError message={fieldState.error?.message} />
                   </FormItem>
                 )} />
 
                 {isCVS && (
-                  <FormField control={form.control} name="storeId" render={() => (
+                  <FormField control={form.control} name="storeId" render={({ fieldState }) => (
                     <FormItem>
-                      <FormLabel>取貨門市 *</FormLabel>
+                      <FormLabel>{t('storeLabel')}</FormLabel>
                       <FormControl>
                         <EcpayStoreSelector
                           logisticsSubType={cvsSubType}
@@ -364,17 +374,17 @@ export function MaterialOrderDialog({
                           disabled={isReadonly}
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FieldError message={fieldState.error?.message} />
                     </FormItem>
                   )} />
                 )}
 
                 {!isCVS && deliveryMethod && (
-                  <FormField control={form.control} name="deliveryAddress" render={({ field }) => (
+                  <FormField control={form.control} name="deliveryAddress" render={({ field, fieldState }) => (
                     <FormItem>
-                      <FormLabel>收件地址 *</FormLabel>
+                      <FormLabel>{t('deliveryAddressLabel')}</FormLabel>
                       <FormControl><Input {...field} disabled={isReadonly} /></FormControl>
-                      <FormMessage />
+                      <FieldError message={fieldState.error?.message} />
                     </FormItem>
                   )} />
                 )}
@@ -398,6 +408,7 @@ export function MaterialOrderDialog({
                     form={form}
                     index={index}
                     bookItems={bookItems}
+                    deliveryOptions={deliveryOptions}
                     onRemove={() => remove(index)}
                     disabled={isReadonly}
                   />
@@ -421,7 +432,7 @@ export function MaterialOrderDialog({
                     }
                   >
                     <IconPlus className="mr-1 h-4 w-4" />
-                    新增寄送地址
+                    {t('addAddress')}
                   </Button>
                 )}
               </div>
@@ -442,7 +453,7 @@ export function MaterialOrderDialog({
 
             {!isReadonly && (
               <Button type="submit" className="w-full" disabled={isPending || submitDisabled}>
-                {isPending ? '送出中…' : existingOrder ? '更新申請' : '送出申請'}
+                {isPending ? t('submitting') : existingOrder ? t('updateSubmit') : t('submit')}
               </Button>
             )}
           </form>
@@ -597,7 +608,7 @@ function SingleBookList({
           </Button>
         )}
       </div>
-      <FormMessage>{form.formState.errors.items?.message}</FormMessage>
+      <FieldError message={form.formState.errors.items?.message} />
     </div>
   )
 }
@@ -607,15 +618,18 @@ function MultiAddressRow({
   form,
   index,
   bookItems,
+  deliveryOptions,
   onRemove,
   disabled,
 }: {
   form: UseFormReturn<MaterialOrderFormValues>
   index: number
   bookItems: BookItem[]
+  deliveryOptions: { value: 'sevenEleven' | 'familyMart' | 'delivery'; label: string }[]
   onRemove: () => void
   disabled: boolean
 }) {
+  const t = useTranslations('course.material')
   const method = form.watch(`shipments.${index}.deliveryMethod`)
   const isCVS = method === 'sevenEleven' || method === 'familyMart'
   const cvsSubType = method === 'sevenEleven' ? 'UNIMART' : 'FAMI'
@@ -630,7 +644,7 @@ function MultiAddressRow({
   return (
     <div className="rounded-lg border p-3 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium">寄送地址 {index + 1}</span>
+        <span className="text-sm font-medium">{t('addressLabel', { n: index + 1 })}</span>
         {!disabled && (
           <Button type="button" variant="ghost" size="sm" onClick={onRemove} className="h-7 px-2 text-destructive">
             <IconTrash className="h-4 w-4" />
@@ -640,22 +654,22 @@ function MultiAddressRow({
 
       {/* 收件人 / 連絡電話 */}
       <div className="flex gap-3">
-        <FormField control={form.control} name={`shipments.${index}.recipientName`} render={({ field }) => (
+        <FormField control={form.control} name={`shipments.${index}.recipientName`} render={({ field, fieldState }) => (
           <FormItem className="flex-1">
-            <FormControl><Input {...field} value={field.value ?? ''} placeholder="收件人 *" disabled={disabled} /></FormControl>
-            <FormMessage />
+            <FormControl><Input {...field} value={field.value ?? ''} placeholder={t('recipientNameLabel')} disabled={disabled} /></FormControl>
+            <FieldError message={fieldState.error?.message} />
           </FormItem>
         )} />
-        <FormField control={form.control} name={`shipments.${index}.recipientPhone`} render={({ field }) => (
+        <FormField control={form.control} name={`shipments.${index}.recipientPhone`} render={({ field, fieldState }) => (
           <FormItem className="flex-1">
-            <FormControl><Input {...field} value={field.value ?? ''} placeholder="連絡電話 *" disabled={disabled} /></FormControl>
-            <FormMessage />
+            <FormControl><Input {...field} value={field.value ?? ''} placeholder={t('recipientPhoneLabel')} disabled={disabled} /></FormControl>
+            <FieldError message={fieldState.error?.message} />
           </FormItem>
         )} />
       </div>
 
       {/* 取貨方式 */}
-      <FormField control={form.control} name={`shipments.${index}.deliveryMethod`} render={({ field }) => (
+      <FormField control={form.control} name={`shipments.${index}.deliveryMethod`} render={({ field, fieldState }) => (
         <FormItem>
           <FormControl>
             <RadioGroup
@@ -664,7 +678,7 @@ function MultiAddressRow({
               className="flex flex-wrap gap-3"
               disabled={disabled}
             >
-              {DELIVERY_OPTIONS.map((opt) => (
+              {deliveryOptions.map((opt) => (
                 <div key={opt.value} className="flex items-center gap-1.5">
                   <RadioGroupItem value={opt.value} id={`s${index}-${opt.value}`} />
                   <label htmlFor={`s${index}-${opt.value}`} className="text-sm cursor-pointer">{opt.label}</label>
@@ -672,13 +686,13 @@ function MultiAddressRow({
               ))}
             </RadioGroup>
           </FormControl>
-          <FormMessage />
+          <FieldError message={fieldState.error?.message} />
         </FormItem>
       )} />
 
       {/* 門市 / 地址 */}
       {isCVS ? (
-        <FormField control={form.control} name={`shipments.${index}.storeId`} render={() => (
+        <FormField control={form.control} name={`shipments.${index}.storeId`} render={({ fieldState }) => (
           <FormItem>
             <FormControl>
               <EcpayStoreSelector
@@ -705,14 +719,14 @@ function MultiAddressRow({
                 disabled={disabled}
               />
             </FormControl>
-            <FormMessage />
+            <FieldError message={fieldState.error?.message} />
           </FormItem>
         )} />
       ) : (
-        <FormField control={form.control} name={`shipments.${index}.deliveryAddress`} render={({ field }) => (
+        <FormField control={form.control} name={`shipments.${index}.deliveryAddress`} render={({ field, fieldState }) => (
           <FormItem>
-            <FormControl><Input {...field} placeholder="收件地址" disabled={disabled} /></FormControl>
-            <FormMessage />
+            <FormControl><Input {...field} placeholder={t('deliveryAddressLabel')} disabled={disabled} /></FormControl>
+            <FieldError message={fieldState.error?.message} />
           </FormItem>
         )} />
       )}
@@ -829,7 +843,7 @@ function BookAssignList({
           </Button>
         )}
       </div>
-      <FormMessage>{form.formState.errors.shipments?.[index]?.items?.message}</FormMessage>
+      <FieldError message={form.formState.errors.shipments?.[index]?.items?.message} />
     </div>
   )
 }

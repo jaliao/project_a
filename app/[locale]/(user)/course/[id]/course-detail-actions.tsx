@@ -90,29 +90,31 @@ function Section({
   )
 }
 
-// 繁/簡/英本數顯示
-function bookLabel(trad: number, simp: number, eng: number): string {
+// 繁/簡/英本數顯示（版本標籤由呼叫端以 t() 翻譯後傳入）
+function bookLabel(
+  trad: number,
+  simp: number,
+  eng: number,
+  labels: { trad: string; simp: string; eng: string }
+): string {
   const parts: string[] = []
-  if (trad > 0) parts.push(`繁 ${trad}`)
-  if (simp > 0) parts.push(`簡 ${simp}`)
-  if (eng > 0) parts.push(`英 ${eng}`)
-  return parts.length > 0 ? parts.join('、') : '繁 0、簡 0、英 0'
+  if (trad > 0) parts.push(`${labels.trad} ${trad}`)
+  if (simp > 0) parts.push(`${labels.simp} ${simp}`)
+  if (eng > 0) parts.push(`${labels.eng} ${eng}`)
+  return parts.length > 0 ? parts.join('、') : `${labels.trad} 0、${labels.simp} 0、${labels.eng} 0`
 }
 
-const DELIVERY_LABELS: Record<string, string> = {
-  sevenEleven: '7-11 超商',
-  familyMart: '全家超商',
-  delivery: '郵寄/宅配',
-}
-
-// 取貨方式一行文字（超商→門市（店號）；宅配→地址）
-function deliveryLine(m: {
-  deliveryMethod: string
-  deliveryAddress: string | null
-  storeId: string | null
-  storeName: string | null
-}): string {
-  const label = DELIVERY_LABELS[m.deliveryMethod] ?? m.deliveryMethod
+// 取貨方式一行文字（超商→門市（店號）；宅配→地址；label 由呼叫端以 t() 翻譯後傳入）
+function deliveryLine(
+  m: {
+    deliveryMethod: string
+    deliveryAddress: string | null
+    storeId: string | null
+    storeName: string | null
+  },
+  deliveryLabels: Record<string, string>
+): string {
+  const label = deliveryLabels[m.deliveryMethod] ?? m.deliveryMethod
   if (m.deliveryMethod === 'delivery') {
     return m.deliveryAddress ? `${label} — ${m.deliveryAddress}` : label
   }
@@ -122,6 +124,19 @@ function deliveryLine(m: {
 
 // 教材訂單內嵌資訊（取代原「查看」對話框）
 function MaterialOrderInfo({ order }: { order: CourseSessionOrder }) {
+  const t = useTranslations('course.material')
+  const versionLabels = {
+    trad: t('versionShortTraditional'),
+    simp: t('versionShortSimplified'),
+    eng: t('versionShortEnglish'),
+  }
+  const deliveryLabels = {
+    sevenEleven: t('deliverySevenEleven'),
+    familyMart: t('deliveryFamilyMart'),
+    delivery: t('deliveryDelivery'),
+  }
+  const versionShort = (v: string) =>
+    v === 'traditional' ? versionLabels.trad : v === 'simplified' ? versionLabels.simp : versionLabels.eng
   const fmt = (d: Date | null) => (d ? new Date(d).toLocaleString('zh-TW') : null)
   if (order.shipMode === 'multiple') {
     return (
@@ -129,32 +144,32 @@ function MaterialOrderInfo({ order }: { order: CourseSessionOrder }) {
         {order.shipments.map((s, i) => (
           <div key={s.id} className="rounded border px-3 py-2 space-y-0.5">
             <p className="font-medium text-foreground">
-              地址 {i + 1}
-              <span className="ml-2 text-xs">{bookLabel(s.traditionalQty, s.simplifiedQty, s.englishQty)}</span>
+              {t('addressNumberLabel', { n: i + 1 })}
+              <span className="ml-2 text-xs">{bookLabel(s.traditionalQty, s.simplifiedQty, s.englishQty, versionLabels)}</span>
             </p>
-            <p>取貨方式：{deliveryLine(s)}</p>
-            <p>收件人：{s.recipientName || '—'}　·　{s.recipientPhone || '—'}</p>
+            <p>{t('deliveryMethodPrefix')}{deliveryLine(s, deliveryLabels)}</p>
+            <p>{t('recipientPrefix')}{s.recipientName || '—'}　·　{s.recipientPhone || '—'}</p>
             {s.items.length > 0 && (
               <ul className="space-y-0.5">
                 {s.items.map((it, j) => (
-                  <li key={j}>・{it.studentName}（{it.bookName}）· {it.version === 'traditional' ? '繁' : it.version === 'simplified' ? '簡' : '英'}</li>
+                  <li key={j}>・{it.studentName}（{it.bookName}）· {versionShort(it.version)}</li>
                 ))}
               </ul>
             )}
-            {fmt(s.shippedAt) && <p>寄送時間：{fmt(s.shippedAt)}</p>}
+            {fmt(s.shippedAt) && <p>{t('shippedAtPrefix')}{fmt(s.shippedAt)}</p>}
           </div>
         ))}
-        {fmt(order.receivedAt) && <p>收件時間：{fmt(order.receivedAt)}</p>}
+        {fmt(order.receivedAt) && <p>{t('receivedAtPrefix')}{fmt(order.receivedAt)}</p>}
       </div>
     )
   }
   return (
     <div className="space-y-0.5 text-sm text-muted-foreground">
-      <p>書本數量：{bookLabel(order.traditionalQty, order.simplifiedQty, order.englishQty)}</p>
-      <p>取貨方式：{deliveryLine(order)}</p>
-      <p>收件人：{order.recipientName || '—'}　·　{order.recipientPhone || '—'}</p>
-      {fmt(order.shippedAt) && <p>寄送時間：{fmt(order.shippedAt)}</p>}
-      {fmt(order.receivedAt) && <p>收件時間：{fmt(order.receivedAt)}</p>}
+      <p>{t('bookQtyPrefix')}{bookLabel(order.traditionalQty, order.simplifiedQty, order.englishQty, versionLabels)}</p>
+      <p>{t('deliveryMethodPrefix')}{deliveryLine(order, deliveryLabels)}</p>
+      <p>{t('recipientPrefix')}{order.recipientName || '—'}　·　{order.recipientPhone || '—'}</p>
+      {fmt(order.shippedAt) && <p>{t('shippedAtPrefix')}{fmt(order.shippedAt)}</p>}
+      {fmt(order.receivedAt) && <p>{t('receivedAtPrefix')}{fmt(order.receivedAt)}</p>}
     </div>
   )
 }
@@ -186,6 +201,12 @@ export function CourseDetailActions({
 }: Props) {
   const router = useRouter()
   const t = useTranslations('course.material')
+  const ta = useTranslations('course.actions')
+  const versionLabels = {
+    trad: t('versionShortTraditional'),
+    simp: t('versionShortSimplified'),
+    eng: t('versionShortEnglish'),
+  }
   const [cancelOpen, setCancelOpen] = useState(false)
   // 教材申請 Dialog：僅用於「申請教材」（新訂單）；既有訂單改於列內嵌顯示
   const [materialOpen, setMaterialOpen] = useState(false)
@@ -211,14 +232,14 @@ export function CourseDetailActions({
   }
 
   function handleCancelOrder(orderId: number) {
-    if (!window.confirm('確定要取消此教材申請？取消後可重新申請。')) return
+    if (!window.confirm(t('cancelOrderConfirm'))) return
     startCancelTransition(async () => {
       const result = await cancelCourseOrder(orderId)
       if (result.success) {
-        toast.success(result.message ?? '已取消申請')
+        toast.success(result.message ?? t('cancelledSuccessFallback'))
         router.refresh()
       } else {
-        toast.error(result.message ?? '取消失敗，請稍後再試')
+        toast.error(result.message ?? t('cancelFailFallback'))
       }
     })
   }
@@ -227,11 +248,11 @@ export function CourseDetailActions({
     startPaymentTransition(async () => {
       const result = await reportMaterialPayment(orderId, last5Map[orderId] ?? '')
       if (result.success) {
-        toast.success(result.message ?? '已回填匯款資訊')
+        toast.success(result.message ?? t('paymentReportedFallback'))
         setLast5Map((m) => ({ ...m, [orderId]: '' }))
         router.refresh()
       } else {
-        toast.error(result.errors?.last5?.[0] ?? result.message ?? '操作失敗，請稍後再試')
+        toast.error(result.errors?.last5?.[0] ?? result.message ?? t('genericFailFallback'))
       }
     })
   }
@@ -240,10 +261,10 @@ export function CourseDetailActions({
     startReceiptTransition(async () => {
       const result = await confirmReceipt(orderId)
       if (result.success) {
-        toast.success(result.message ?? '已確認收件')
+        toast.success(result.message ?? t('receiptConfirmedFallback'))
         router.refresh()
       } else {
-        toast.error(result.message ?? '操作失敗，請稍後再試')
+        toast.error(result.message ?? t('genericFailFallback'))
       }
     })
   }
@@ -254,10 +275,10 @@ export function CourseDetailActions({
     setReopenLoading(false)
     setReopenOpen(false)
     if (result.success) {
-      toast.success(result.message ?? '已退回招生中')
+      toast.success(result.message ?? ta('reopenSuccessFallback'))
       router.refresh()
     } else {
-      toast.error(result.message ?? '操作失敗，請稍後再試')
+      toast.error(result.message ?? t('genericFailFallback'))
     }
   }
 
@@ -269,7 +290,7 @@ export function CourseDetailActions({
         toast.success(result.message ?? t('finalizeDone'))
         router.refresh()
       } else {
-        toast.error(result.message ?? '操作失敗，請稍後再試')
+        toast.error(result.message ?? t('genericFailFallback'))
       }
     })
   }
@@ -281,7 +302,7 @@ export function CourseDetailActions({
         toast.success(result.message ?? t('reopenDone'))
         router.refresh()
       } else {
-        toast.error(result.message ?? '操作失敗，請稍後再試')
+        toast.error(result.message ?? t('genericFailFallback'))
       }
     })
   }
@@ -292,10 +313,10 @@ export function CourseDetailActions({
     setStartLoading(false)
     setStartConfirmOpen(false)
     if (result.success) {
-      toast.success('課程已開始')
+      toast.success(ta('startSuccessToast'))
       router.refresh()
     } else {
-      toast.error(result.message ?? '操作失敗，請稍後再試')
+      toast.error(result.message ?? t('genericFailFallback'))
     }
   }
 
@@ -310,14 +331,14 @@ export function CourseDetailActions({
     <div className="space-y-3">
       {/* ── 區塊一：教材申請作業（講師與管理者） ────────────────── */}
       {!isStarted && canManageMaterials && (
-        <Section title="教材申請作業" icon={<IconBook className="h-5 w-5 text-primary" />}>
+        <Section title={ta('sectionMaterial')} icon={<IconBook className="h-5 w-5 text-primary" />}>
           {/* ── 單元一：學員教材需求統計 ── */}
           <div className="space-y-1.5">
             <h4 className="text-sm font-semibold">{t('sectionDemand')}</h4>
             <div className="rounded-md bg-muted/50 px-3 py-2 text-sm space-y-1">
               <div className="flex justify-between gap-2">
-                <span className="text-muted-foreground">總需求</span>
-                <span>{bookLabel(total.traditional, total.simplified, total.english)}</span>
+                <span className="text-muted-foreground">{t('totalDemandLabel')}</span>
+                <span>{bookLabel(total.traditional, total.simplified, total.english, versionLabels)}</span>
               </div>
               <p className="text-xs text-muted-foreground">{t('progressRefHint')}</p>
             </div>
@@ -328,20 +349,20 @@ export function CourseDetailActions({
             <h4 className="text-sm font-semibold">{t('sectionProgress')}</h4>
             <div className="rounded-md bg-muted/50 px-3 py-2 text-sm space-y-1">
               <div className="flex justify-between gap-2">
-                <span className="text-muted-foreground">已申請</span>
-                <span>{bookLabel(applied.traditional, applied.simplified, applied.english)}</span>
+                <span className="text-muted-foreground">{t('appliedLabel')}</span>
+                <span>{bookLabel(applied.traditional, applied.simplified, applied.english, versionLabels)}</span>
               </div>
               <div className="flex justify-between gap-2">
-                <span className="text-muted-foreground">尚未申請</span>
+                <span className="text-muted-foreground">{t('remainingLabel')}</span>
                 <span className={cn(canApplyMore && 'font-medium text-amber-700')}>
-                  {bookLabel(remaining.traditional, remaining.simplified, remaining.english)}
+                  {bookLabel(remaining.traditional, remaining.simplified, remaining.english, versionLabels)}
                 </span>
               </div>
             </div>
 
             {/* 訂單清單（每筆顯示書籍種類與數量＋狀態＋動作） */}
             {orders.length === 0 ? (
-              <p className="text-sm text-muted-foreground">尚未申請教材，請在開始上課前完成申請。</p>
+              <p className="text-sm text-muted-foreground">{t('noOrdersHint')}</p>
             ) : (
             <ul className="space-y-2">
               {orders.map((order) => {
@@ -350,9 +371,9 @@ export function CourseDetailActions({
                   <li key={order.id} className="rounded-md border p-3 space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-sm font-medium">
-                        訂單 #{order.id}
+                        {t('orderNumberLabel', { id: order.id })}
                         <span className="ml-2 text-xs text-muted-foreground">
-                          {bookLabel(order.traditionalQty, order.simplifiedQty, order.englishQty)}
+                          {bookLabel(order.traditionalQty, order.simplifiedQty, order.englishQty, versionLabels)}
                         </span>
                       </span>
                       <span className={cn('rounded px-2 py-0.5 text-xs', status.tone)}>{status.label}</span>
@@ -364,7 +385,7 @@ export function CourseDetailActions({
                     {status.key === 'pending_payment' && (
                       <div className="text-sm bg-amber-50 border border-amber-200 rounded-md px-3 py-2 space-y-2">
                         <p className="text-amber-800">
-                          教材費用 <strong>NT${order.quotedAmount}</strong>，請匯款至：
+                          {t('feeNoticePrefix')} <strong>NT${order.quotedAmount}</strong>{t('feeNoticeSuffix')}
                         </p>
                         <p className="whitespace-pre-wrap font-medium text-amber-900">
                           {order.remittanceAccount}
@@ -373,12 +394,12 @@ export function CourseDetailActions({
                           <Input
                             value={last5Map[order.id] ?? ''}
                             onChange={(e) => setLast5Map((m) => ({ ...m, [order.id]: e.target.value }))}
-                            placeholder="匯款後五碼"
+                            placeholder={t('last5Placeholder')}
                             maxLength={5}
                             className="w-32"
                           />
                           <Button size="sm" onClick={() => handleReportPayment(order.id)} disabled={paymentPending}>
-                            {paymentPending ? '送出中...' : '回填'}
+                            {paymentPending ? t('submittingLabel') : t('fillButton')}
                           </Button>
                         </div>
                       </div>
@@ -393,12 +414,12 @@ export function CourseDetailActions({
                           onClick={() => handleCancelOrder(order.id)}
                           disabled={cancelPending}
                         >
-                          {cancelPending ? '取消中...' : '取消申請'}
+                          {cancelPending ? t('cancellingLabel') : t('cancelOrderButton')}
                         </Button>
                       )}
                       {status.key === 'shipped' && (
                         <Button size="sm" onClick={() => handleConfirmReceipt(order.id)} disabled={receiptPending}>
-                          {receiptPending ? '確認中...' : '我已收到教材'}
+                          {receiptPending ? t('confirmingLabel') : t('receivedButton')}
                         </Button>
                       )}
                     </div>
@@ -437,7 +458,7 @@ export function CourseDetailActions({
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <Button variant="outline" size="sm" onClick={openNewOrder}>
-                    申請教材
+                    {t('applyMaterialButton')}
                   </Button>
                   <Button
                     variant="outline"
@@ -486,9 +507,9 @@ export function CourseDetailActions({
 
       {/* ── 區塊二：開始上課作業（僅講師） ────────────────── */}
       {!isStarted && isInstructor && (
-        <Section title="開始上課作業" icon={<IconPlayerPlay className="h-5 w-5 text-primary" />}>
+        <Section title={ta('sectionStart')} icon={<IconPlayerPlay className="h-5 w-5 text-primary" />}>
           <div className="text-sm text-muted-foreground space-y-1">
-            <p>注意事項：開始上課後課程狀態將變為「進行中」，並可開始辦理結業。</p>
+            <p>{ta('startNote')}</p>
             <p>{t('startGateHint')}</p>
             {!canStart && startReasons.length > 0 && (
               <ul className="list-disc pl-5 text-amber-700">
@@ -499,7 +520,7 @@ export function CourseDetailActions({
             )}
           </div>
           <div className="space-y-1.5">
-            <label className="text-sm font-medium" htmlFor="course-start-date">開始上課日期</label>
+            <label className="text-sm font-medium" htmlFor="course-start-date">{ta('startDateLabel')}</label>
             <Input
               id="course-start-date"
               type="date"
@@ -513,37 +534,37 @@ export function CourseDetailActions({
           <Button
             onClick={() => {
               if (!startDate) {
-                toast.error('請選擇開始上課日期')
+                toast.error(ta('startSelectDateError'))
                 return
               }
               setStartConfirmOpen(true)
             }}
             disabled={startLoading || !canStart}
           >
-            開始上課
+            {ta('startButton')}
           </Button>
 
           {/* 開始上課確認視窗：確認開課日期與人數後才執行 */}
           <Dialog open={startConfirmOpen} onOpenChange={setStartConfirmOpen}>
             <DialogContent className="max-w-sm">
               <DialogHeader>
-                <DialogTitle>確認開始上課</DialogTitle>
+                <DialogTitle>{ta('startConfirmTitle')}</DialogTitle>
               </DialogHeader>
               <div className="space-y-2 text-sm">
                 <p>
-                  開課日期：<span className="font-medium">{startDate.replace(/-/g, '/')}</span>
+                  {ta('startConfirmDate')}<span className="font-medium">{startDate.replace(/-/g, '/')}</span>
                 </p>
                 <p>
-                  上課人數：<span className="font-medium">{approvedCount} 位</span>（已核准學員）
+                  {ta('startConfirmCount', { count: approvedCount })}
                 </p>
-                <p className="text-muted-foreground">確認後課程狀態將變為「進行中」。</p>
+                <p className="text-muted-foreground">{ta('startConfirmDesc')}</p>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setStartConfirmOpen(false)} disabled={startLoading}>
-                  取消
+                  {ta('cancel')}
                 </Button>
                 <Button onClick={handleStart} disabled={startLoading}>
-                  {startLoading ? '處理中...' : '確認開始'}
+                  {startLoading ? ta('processing') : ta('confirmStart')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -553,14 +574,14 @@ export function CourseDetailActions({
 
       {/* 進行中：結業作業（講師與管理者） */}
       {isStarted && (
-        <Section title="結業作業" icon={<IconCertificate className="h-5 w-5 text-primary" />}>
+        <Section title={ta('sectionGraduate')} icon={<IconCertificate className="h-5 w-5 text-primary" />}>
           {hasApprovedStudents ? (
             <Button asChild>
-              <Link href={`/course/${inviteId}/graduate`}>結業</Link>
+              <Link href={`/course/${inviteId}/graduate`}>{ta('graduateButton')}</Link>
             </Button>
           ) : (
-            <Button onClick={() => toast.error('尚無已核准學員，無法結業')}>
-              結業
+            <Button onClick={() => toast.error(ta('graduateNoStudentsToast'))}>
+              {ta('graduateButton')}
             </Button>
           )}
         </Section>
@@ -568,32 +589,32 @@ export function CourseDetailActions({
 
       {/* 進行中：重新招募作業（講師與管理者） */}
       {isStarted && (
-        <Section title="重新招募作業" icon={<IconRefresh className="h-5 w-5 text-primary" />}>
+        <Section title={ta('sectionReopen')} icon={<IconRefresh className="h-5 w-5 text-primary" />}>
           <p className="text-sm text-muted-foreground">
-            將課程由「進行中」退回「招生中」，可再邀請／核准學員；既有學員報名與教材紀錄不受影響。
+            {ta('reopenDesc')}
           </p>
           <Button variant="outline" onClick={() => setReopenOpen(true)}>
-            退回招生中
+            {ta('reopenButton')}
           </Button>
 
           {/* 重新招募確認視窗 */}
           <Dialog open={reopenOpen} onOpenChange={setReopenOpen}>
             <DialogContent className="max-w-sm">
               <DialogHeader>
-                <DialogTitle>確認退回招生中</DialogTitle>
+                <DialogTitle>{ta('reopenConfirmTitle')}</DialogTitle>
               </DialogHeader>
               <div className="space-y-2 text-sm">
-                <p>課程狀態將由「進行中」退回「招生中」。</p>
+                <p>{ta('reopenConfirmLine1')}</p>
                 <p className="text-muted-foreground">
-                  退回後可再邀請／核准學員；既有學員報名與教材紀錄不受影響，重新開始上課時仍須符合開課門檻。
+                  {ta('reopenConfirmLine2')}
                 </p>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setReopenOpen(false)} disabled={reopenLoading}>
-                  取消
+                  {ta('cancel')}
                 </Button>
                 <Button onClick={handleReopen} disabled={reopenLoading}>
-                  {reopenLoading ? '處理中...' : '確認退回'}
+                  {reopenLoading ? ta('processing') : ta('confirmReopen')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -602,9 +623,9 @@ export function CourseDetailActions({
       )}
 
       {/* ── 區塊三：取消上課作業（講師與管理者） ────────────────── */}
-      <Section title="取消上課作業" icon={<IconBan className="h-5 w-5 text-primary" />}>
+      <Section title={ta('sectionCancel')} icon={<IconBan className="h-5 w-5 text-primary" />}>
         <Button variant="destructive" onClick={() => setCancelOpen(true)}>
-          取消授課
+          {ta('cancelButton')}
         </Button>
       </Section>
 

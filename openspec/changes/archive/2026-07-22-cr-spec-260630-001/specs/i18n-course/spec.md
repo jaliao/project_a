@@ -1,18 +1,4 @@
-# i18n-course Specification
-
-## Purpose
-TBD - created by archiving change cr-spec-260629-008. Update Purpose after archive.
-## Requirements
-### Requirement: 課程頁在地化
-課程頁（`course/[id]` 詳情、`course/[id]/graduate` 結業、`course-sessions` 查詢）的 UI 文案 SHALL 以 `course` 命名空間取用、隨當前語言呈現，不寫死語言字串；server 文案用 `getTranslations`、client 互動用 `useTranslations`，動態數值以 ICU 參數代入。
-
-#### Scenario: 課程詳情頁在地化
-- **WHEN** 以非預設語言開啟課程詳情頁
-- **THEN** 區塊標題、欄位標籤、按鈕、狀態說明、空狀態以該語言呈現；課程名/講師名等內容原樣顯示
-
-#### Scenario: 結業表單頁在地化
-- **WHEN** 以非預設語言開啟結業表單頁
-- **THEN** 表單標題、步驟與按鈕以該語言呈現
+## MODIFIED Requirements
 
 ### Requirement: 課程元件在地化
 `components/course-session`、`components/course-faq`、`components/course-catalog` 的靜態 UI 文案 SHALL 以 i18n 取用。
@@ -39,4 +25,3 @@ TBD - created by archiving change cr-spec-260629-008. Update Purpose after archi
 #### Scenario: 課程詳情頁操作區塊全數在地化
 - **WHEN** 以非預設語言開啟課程詳情頁，檢視教材申請、開始上課、結業、重新招募、取消上課各操作區塊
 - **THEN** 各區塊標題、說明、確認視窗、按鈕文字皆以該語言呈現，無硬編碼繁體殘留（動作層 `message` 文案除外，依既有慣例維持原樣）
-

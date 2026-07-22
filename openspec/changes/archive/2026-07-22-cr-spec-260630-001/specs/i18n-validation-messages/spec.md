@@ -1,8 +1,5 @@
-# i18n-validation-messages Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change cr-spec-260629-006. Update Purpose after archive.
-## Requirements
 ### Requirement: 驗證訊息以 i18n key 表示
 前台 Zod schema 的驗證訊息 SHALL 以 `validation.*` 命名空間的 i18n key 表示，不寫死語言字串；呈現端 SHALL 以 next-intl 解析該 key（client `useTranslations`、server action 回傳 key 由 client 呈現端翻譯）。本批適用範圍為純前台 schema（`auth`、`profile`、`course-order` 中的 `materialOrderSchema`／`shipmentItemSchema`／`orderBookItemInputSchema`）；與後台共用的 schema 不在此批，以免後台顯示原始 key。
 
@@ -25,4 +22,3 @@ TBD - created by archiving change cr-spec-260629-006. Update Purpose after archi
 #### Scenario: 教材申請表單顯示在地化驗證訊息
 - **WHEN** 老師/管理者於教材申請對話框（`material-order-dialog`）送出未填妥的表單（如未選取貨方式、未填收件人）
 - **THEN** 對應欄位顯示 `<FieldError>` 呈現之 `validation.*` key 翻譯文字，而非原始 key 字串
-
