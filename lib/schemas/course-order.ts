@@ -69,11 +69,11 @@ export const orderBookItemInputSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('enrollment'),
     enrollmentId: z.number().int(),
-    version: z.enum(['traditional', 'simplified'], { error: '請選擇版本' }),
+    version: z.enum(['traditional', 'simplified', 'english'], { error: '請選擇版本' }),
   }),
   z.object({
     kind: z.literal('extra'),
-    version: z.enum(['traditional', 'simplified'], { error: '請選擇版本' }),
+    version: z.enum(['traditional', 'simplified', 'english'], { error: '請選擇版本' }),
     bookName: z.string().optional(),
   }),
 ])

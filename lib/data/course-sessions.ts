@@ -287,6 +287,7 @@ export type CourseSessionOrder = {
   receivedAt: Date | null
   traditionalQty: number
   simplifiedQty: number
+  englishQty: number
   shipMode: string
   shipments: {
     id: number
@@ -298,6 +299,7 @@ export type CourseSessionOrder = {
     storeName: string | null
     traditionalQty: number
     simplifiedQty: number
+    englishQty: number
     shippedAt: Date | null
     items: { studentName: string; bookName: string; version: string }[]
   }[]
@@ -374,6 +376,7 @@ export async function getCourseSessionById(
           receivedAt: true,
           traditionalQty: true,
           simplifiedQty: true,
+          englishQty: true,
           shipMode: true,
           shipments: {
             select: {
@@ -386,6 +389,7 @@ export async function getCourseSessionById(
               storeName: true,
               traditionalQty: true,
               simplifiedQty: true,
+              englishQty: true,
               shippedAt: true,
               items: { select: { studentName: true, bookName: true, version: true } },
             },
@@ -594,7 +598,7 @@ export async function getAllCourseSessionsAdmin(
  */
 export async function getEnrollmentMaterialSummary(
   inviteId: number
-): Promise<{ traditional: number; simplified: number }> {
+): Promise<{ traditional: number; simplified: number; english: number }> {
   const rows = await prisma.inviteEnrollment.findMany({
     where: {
       inviteId,
@@ -606,9 +610,11 @@ export async function getEnrollmentMaterialSummary(
 
   let traditional = 0
   let simplified = 0
+  let english = 0
   for (const row of rows) {
     if (row.materialChoice === 'traditional') traditional++
     else if (row.materialChoice === 'simplified') simplified++
+    else if (row.materialChoice === 'english') english++
   }
-  return { traditional, simplified }
+  return { traditional, simplified, english }
 }

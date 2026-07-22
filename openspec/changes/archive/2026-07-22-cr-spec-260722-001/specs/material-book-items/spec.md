@@ -1,8 +1,5 @@
-# material-book-items Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change cr-spec-260701-003. Update Purpose after archive.
-## Requirements
 ### Requirement: 教材逐本項目
 教材以「逐本項目」表示：某課程中「已核准且選了版本（`materialChoice ≠ none`）」的每一筆報名，即為一個書本項目 `{ 學員, 書本名字, 版本(繁/簡/英) }`。系統 SHALL 由報名產生書本項目清單，作為老師/管理者申請教材時的**預設值與參考依據**：送出申請前 SHALL 能逐本調整版本（繁/簡/英三者間任意切換）、取消勾選（本次不申請該本），並可新增加購項目。訂單的繁/簡/英本數 SHALL 由**實際送出的項目**（含覆寫後版本與加購項目）計數推導（`traditionalQty/simplifiedQty/englishQty` 為推導值）。
 
@@ -26,7 +23,6 @@ TBD - created by archiving change cr-spec-260701-003. Update Purpose after archi
 - **WHEN** 老師將預設清單中一本繁體改為英文後送出
 - **THEN** 該訂單 `traditionalQty` 減 1、`englishQty` 加 1
 
-
 ### Requirement: 地址優先指派書本項目
 多地址寄送 SHALL 採「先建地址、再指派書本」流程：先新增寄送地址（收件人＋門市/宅配，只填一次），再將書本項目（含加購項目）指派至該地址（建立項目↔地址關聯 `MaterialShipmentItem`）。指派時 SHALL 快照書本名字與版本（含覆寫後版本）。每個地址的繁/簡/英本數 SHALL 由其已指派項目推導。同一學員書本項目 SHALL NOT 被指派到多個地址；未指派的項目 SHALL 視為本次不申請（不再要求全數指派）。
 
@@ -49,22 +45,6 @@ TBD - created by archiving change cr-spec-260701-003. Update Purpose after archi
 #### Scenario: 指派英文版本書本項目
 - **WHEN** 老師將一個版本為英文的書本項目指派至某地址
 - **THEN** 該地址關聯此項目，其英文本數依項目推導增加 1
-
-
-### Requirement: 單一地址亦以逐本項目呈現
-每一筆教材訂單（含**單一地址**）SHALL 記錄其實際涵蓋的書本項目：訂單涵蓋範圍＝送出時**勾選的書本項目**（預設帶入當下尚未被任何寄送地址指派的項目 `getUnassignedBookItems`，可逐本取消勾選、調整版本）加上加購項目。單一地址訂單 SHALL 亦建立一個寄送批次（`MaterialShipment`，鏡射該地址）並為每本書建立 `MaterialShipmentItem`（快照書本名字、版本、學員名稱）。訂單的書本清單 SHALL 取自其自身寄送批次之項目，使多筆先後寄送（多地址／單一地址）之書本歸屬明確、不混淆。
-
-#### Scenario: 單一地址記錄勾選涵蓋書本
-- **WHEN** 老師以單一地址申請，預設帶入 3 本未指派書、取消勾選其中 1 本後送出
-- **THEN** 系統建立一個寄送批次並為勾選的 2 本建立項目（含學員名稱快照），該訂單書本清單即為這些項目；未勾選的 1 本仍屬未指派
-
-#### Scenario: 多筆單一寄送各自歸屬
-- **WHEN** 同課程先後建立兩筆單一地址訂單（其間各有新學員加入）
-- **THEN** 每筆訂單只包含其送出當下勾選的書本，不會互相混入
-
-#### Scenario: 項目快照含學員名稱
-- **WHEN** 書本項目被指派/建立
-- **THEN** 一併快照學員名稱（加購項目為空字串），供後台與列印顯示
 
 ### Requirement: 加購書本項目（不綁學員）
 系統 SHALL 支援「額外加購」書本項目：不對應任何學員報名（`MaterialShipmentItem.enrollmentId` SHALL 為 nullable，加購項目為 `null`），僅指定版本（繁/簡/英），書本名字可自填、預設為「額外加購」，學員名稱快照為空字串。加購項目 SHALL 與學員書本項目一樣計入所屬訂單／寄送批次的繁/簡/英本數推導，並於訂單清單、後台教材管理與出貨單列印以快照欄位呈現。

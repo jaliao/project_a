@@ -40,6 +40,7 @@ export type CourseOrderDetail = {
   receivedAt: Date | null
   traditionalQty: number
   simplifiedQty: number
+  englishQty: number
   createdAt: Date
   note: string | null // 內部備註（單一地址）
 }
@@ -61,6 +62,7 @@ export type ShipmentInfo = {
   storeName: string | null
   traditionalQty: number
   simplifiedQty: number
+  englishQty: number
   shippedAt: Date | null
   note: string | null // 內部備註（此收件地址）
   items: ShipmentItemInfo[] // 指派至此地址的書本項目
@@ -94,6 +96,7 @@ export type CourseOrderForPrint = {
   shippedAt: Date | null
   traditionalQty: number
   simplifiedQty: number
+  englishQty: number
   inviteId: number | null
   inviteTitle: string | null
   catalogLabel: string | null
@@ -114,6 +117,7 @@ const shipmentSelect = {
   storeName: true,
   traditionalQty: true,
   simplifiedQty: true,
+  englishQty: true,
   shippedAt: true,
   note: true,
   items: { select: { enrollmentId: true, bookName: true, version: true, studentName: true } },
@@ -158,6 +162,7 @@ export async function getAllCourseOrdersWithInvite(): Promise<
       receivedAt: true,
       traditionalQty: true,
       simplifiedQty: true,
+      englishQty: true,
       createdAt: true,
       note: true,
       shipMode: true,
@@ -205,6 +210,7 @@ export async function getAllCourseOrdersWithInvite(): Promise<
       receivedAt: order.receivedAt,
       traditionalQty: order.traditionalQty,
       simplifiedQty: order.simplifiedQty,
+      englishQty: order.englishQty,
       createdAt: order.createdAt,
       note: order.note,
       shipMode: order.shipMode,
@@ -250,6 +256,7 @@ export async function getCourseOrderForPrint(
       shippedAt: true,
       traditionalQty: true,
       simplifiedQty: true,
+      englishQty: true,
       note: true,
       shipMode: true,
       shipments: { select: shipmentSelect, orderBy: { id: 'asc' } },
@@ -288,6 +295,7 @@ export async function getCourseOrderForPrint(
     shippedAt: order.shippedAt,
     traditionalQty: order.traditionalQty,
     simplifiedQty: order.simplifiedQty,
+    englishQty: order.englishQty,
     shipMode: order.shipMode,
     shipments: order.shipments,
     note: order.note,

@@ -181,7 +181,7 @@ function OrderDetail({
                   <div className="text-sm">
                     <span className="font-medium">地址 {i + 1}：</span>
                     <span className="text-muted-foreground">{DELIVERY_METHOD_LABELS[s.deliveryMethod] ?? s.deliveryMethod} — {addr}</span>
-                    <span className="ml-2 text-xs text-muted-foreground">繁 {s.traditionalQty} / 簡 {s.simplifiedQty}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">繁 {s.traditionalQty} / 簡 {s.simplifiedQty} / 英 {s.englishQty}</span>
                   </div>
                   {s.shippedAt ? (
                     <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700 shrink-0">已寄送</span>
@@ -205,7 +205,7 @@ function OrderDetail({
                 {s.items.length > 0 && (
                   <ul className="text-xs text-muted-foreground space-y-0.5">
                     {s.items.map((it) => (
-                      <li key={it.enrollmentId}>・{it.studentName}（{it.bookName}）· {it.version === 'traditional' ? '繁' : '簡'}</li>
+                      <li key={it.enrollmentId}>・{it.studentName}（{it.bookName}）· {it.version === 'traditional' ? '繁' : it.version === 'simplified' ? '簡' : '英'}</li>
                     ))}
                   </ul>
                 )}
@@ -225,7 +225,7 @@ function OrderDetail({
           <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
             <div>
               <span className="text-muted-foreground">書本數量：</span>
-              繁 {order.traditionalQty} / 簡 {order.simplifiedQty}
+              繁 {order.traditionalQty} / 簡 {order.simplifiedQty} / 英 {order.englishQty}
             </div>
             <div>
               <span className="text-muted-foreground">取貨方式：</span>
@@ -263,7 +263,7 @@ function OrderDetail({
               <span className="font-medium">書本清單：</span>
               <ul className="mt-0.5 space-y-0.5">
                 {order.bookItems.map((it, i) => (
-                  <li key={i}>・{it.studentName}（{it.bookName}）· {it.version === 'traditional' ? '繁' : '簡'}</li>
+                  <li key={i}>・{it.studentName}（{it.bookName}）· {it.version === 'traditional' ? '繁' : it.version === 'simplified' ? '簡' : '英'}</li>
                 ))}
               </ul>
             </div>

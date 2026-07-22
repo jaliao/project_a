@@ -79,7 +79,7 @@ TBD - normalized for archive compatibility. Update Purpose for admin-material-ma
 
 #### Scenario: 版本與數量仍可於詳情查看
 - **WHEN** 管理者展開任一訂單詳情
-- **THEN** 仍可見教材版本與書本數量（繁 X / 簡 Y）
+- **THEN** 仍可見教材版本與書本數量（繁 X / 簡 Y / 英 Z）
 
 ### Requirement: 收件地址顯示收件人姓名與聯絡電話
 展開訂單詳情時，系統 SHALL 於每個收件地址顯示收件人姓名與聯絡電話。單一地址（`shipMode = single`）取自 `CourseOrder.recipientName` / `recipientPhone`；多地址（`shipMode = multiple`）每個寄送批次取自對應 `MaterialShipment.recipientName` / `recipientPhone`。欄位為空時 SHALL 顯示「—」。
@@ -90,7 +90,7 @@ TBD - normalized for archive compatibility. Update Purpose for admin-material-ma
 
 #### Scenario: 多地址每批顯示收件人
 - **WHEN** 管理者展開多地址訂單詳情
-- **THEN** 每個地址列除「取貨方式 — 門市（店號）　繁 X / 簡 Y」外，另顯示該批收件人姓名與聯絡電話
+- **THEN** 每個地址列除「取貨方式 — 門市（店號）　繁 X / 簡 Y / 英 Z」外，另顯示該批收件人姓名與聯絡電話
 
 #### Scenario: 收件人未填顯示破折號
 - **WHEN** 某收件地址未填收件人姓名或電話
@@ -116,7 +116,7 @@ TBD - normalized for archive compatibility. Update Purpose for admin-material-ma
 - **THEN** 既存備註仍正確顯示
 
 ### Requirement: 教材申請顯示各地址學員書本項目
-後台教材申請詳情 SHALL 於每個寄送地址呈現指派的書本項目「學員名（書本名字）＋版本（繁/簡）」清單，供管理者確認哪些書送到哪個地址。單一地址訂單 SHALL 呈現該課程全部書本項目；多地址訂單 SHALL 依各地址已指派項目呈現。出貨單列印亦 SHALL 帶出各地址的書本項目清單。
+後台教材申請詳情 SHALL 於每個寄送地址呈現指派的書本項目「學員名（書本名字）＋版本（繁/簡/英）」清單，供管理者確認哪些書送到哪個地址。單一地址訂單 SHALL 呈現該課程全部書本項目；多地址訂單 SHALL 依各地址已指派項目呈現。出貨單列印亦 SHALL 帶出各地址的書本項目清單。
 
 #### Scenario: 多地址顯示各地址書本清單
 - **WHEN** 管理者展開多地址教材訂單詳情
@@ -131,26 +131,26 @@ TBD - normalized for archive compatibility. Update Purpose for admin-material-ma
 - **THEN** 出貨單含該地址的書本項目清單
 
 ### Requirement: 單一地址訂單顯示書本清單
-後台教材申請詳情與出貨單列印，於單一地址訂單 SHALL 顯示書本清單（學員名稱＋書本名字＋版本繁/簡），以利管理者製作印上名字的書。清單由該課程書本項目推導。
+後台教材申請詳情與出貨單列印，於單一地址訂單 SHALL 顯示書本清單（學員名稱＋書本名字＋版本繁/簡/英），以利管理者製作印上名字的書。清單由該課程書本項目推導。
 
 #### Scenario: 後台單一地址顯示書本清單
 - **WHEN** 管理者展開單一地址教材訂單詳情
-- **THEN** 於書本數量下方顯示書本清單（學員名（書本名字）· 繁/簡）
+- **THEN** 於書本數量下方顯示書本清單（學員名（書本名字）· 繁/簡/英）
 
 #### Scenario: 列印單一地址帶書本清單
 - **WHEN** 管理者列印單一地址出貨單
 - **THEN** 出貨單含該訂單的書本清單
 
 ### Requirement: 各批次書本清單顯示學員名稱
-後台教材申請詳情與出貨單列印，於各寄送批次（單一與多地址一致）之書本清單 SHALL 顯示「學員名稱＋書本名字＋版本（繁/簡）」，來源為該批次的 `MaterialShipmentItem`（含 `studentName` 快照）。單一地址訂單亦讀取其自身批次項目呈現。
+後台教材申請詳情與出貨單列印，於各寄送批次（單一與多地址一致）之書本清單 SHALL 顯示「學員名稱＋書本名字＋版本（繁/簡/英）」，來源為該批次的 `MaterialShipmentItem`（含 `studentName` 快照）。單一地址訂單亦讀取其自身批次項目呈現。
 
 #### Scenario: 多地址各批顯示學員名
 - **WHEN** 管理者展開多地址訂單詳情或列印某批次出貨單
-- **THEN** 各批書本清單顯示學員名（書本名字）· 繁/簡
+- **THEN** 各批書本清單顯示學員名（書本名字）· 繁/簡/英
 
 #### Scenario: 單一地址顯示學員名
 - **WHEN** 管理者展開單一地址訂單詳情或列印其出貨單
-- **THEN** 顯示該訂單自身批次的書本清單（學員名（書本名字）· 繁/簡）
+- **THEN** 顯示該訂單自身批次的書本清單（學員名（書本名字）· 繁/簡/英）
 
 ### Requirement: 後台不提供教材訂單編輯
 後台教材申請管理 SHALL NOT 提供事後編輯訂單快照（收件人、寄送方式、數量等）的功能，以避免與申請時快照不一致。訂單詳情 SHALL NOT 顯示「編輯」按鈕。管理者仍可進行既有的批價、確認收款、確認寄送與地址內部備註等作業。

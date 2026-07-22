@@ -43,6 +43,7 @@ export default async function PrintShippingOrderPage({
           deliveryAddress: s.deliveryAddress,
           traditional: s.traditionalQty,
           simplified: s.simplifiedQty,
+          english: s.englishQty,
           note: s.note,
           items: s.items.map((it) => ({
             enrollmentId: it.enrollmentId,
@@ -63,6 +64,7 @@ export default async function PrintShippingOrderPage({
             deliveryAddress: order.deliveryAddress,
             traditional: order.traditionalQty,
             simplified: order.simplifiedQty,
+            english: order.englishQty,
             note: order.note,
             items: order.bookItems.map((b, i) => ({
               enrollmentId: i,
@@ -152,7 +154,7 @@ export default async function PrintShippingOrderPage({
                       {slip.items.map((it) => (
                         <span key={it.enrollmentId} className="block">
                           {it.studentName ? `${it.studentName}（${it.bookName}）` : it.bookName}
-                          （{it.version === 'traditional' ? '繁' : '簡'}）
+                          （{it.version === 'traditional' ? '繁' : it.version === 'simplified' ? '簡' : '英'}）
                         </span>
                       ))}
                     </span>
@@ -169,8 +171,10 @@ export default async function PrintShippingOrderPage({
                 <span>{slip.traditional} 本</span>
                 <span className="text-muted-foreground">簡體版</span>
                 <span>{slip.simplified} 本</span>
+                <span className="text-muted-foreground">英文版</span>
+                <span>{slip.english} 本</span>
                 <span className="text-muted-foreground font-medium">合計</span>
-                <span className="font-medium">{slip.traditional + slip.simplified} 本</span>
+                <span className="font-medium">{slip.traditional + slip.simplified + slip.english} 本</span>
               </div>
             </section>
 

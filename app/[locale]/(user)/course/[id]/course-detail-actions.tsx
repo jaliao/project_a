@@ -90,12 +90,13 @@ function Section({
   )
 }
 
-// 繁/簡本數顯示
-function bookLabel(trad: number, simp: number): string {
+// 繁/簡/英本數顯示
+function bookLabel(trad: number, simp: number, eng: number): string {
   const parts: string[] = []
   if (trad > 0) parts.push(`繁 ${trad}`)
   if (simp > 0) parts.push(`簡 ${simp}`)
-  return parts.length > 0 ? parts.join('、') : '繁 0、簡 0'
+  if (eng > 0) parts.push(`英 ${eng}`)
+  return parts.length > 0 ? parts.join('、') : '繁 0、簡 0、英 0'
 }
 
 const DELIVERY_LABELS: Record<string, string> = {
@@ -129,14 +130,14 @@ function MaterialOrderInfo({ order }: { order: CourseSessionOrder }) {
           <div key={s.id} className="rounded border px-3 py-2 space-y-0.5">
             <p className="font-medium text-foreground">
               地址 {i + 1}
-              <span className="ml-2 text-xs">{bookLabel(s.traditionalQty, s.simplifiedQty)}</span>
+              <span className="ml-2 text-xs">{bookLabel(s.traditionalQty, s.simplifiedQty, s.englishQty)}</span>
             </p>
             <p>取貨方式：{deliveryLine(s)}</p>
             <p>收件人：{s.recipientName || '—'}　·　{s.recipientPhone || '—'}</p>
             {s.items.length > 0 && (
               <ul className="space-y-0.5">
                 {s.items.map((it, j) => (
-                  <li key={j}>・{it.studentName}（{it.bookName}）· {it.version === 'traditional' ? '繁' : '簡'}</li>
+                  <li key={j}>・{it.studentName}（{it.bookName}）· {it.version === 'traditional' ? '繁' : it.version === 'simplified' ? '簡' : '英'}</li>
                 ))}
               </ul>
             )}
@@ -149,7 +150,7 @@ function MaterialOrderInfo({ order }: { order: CourseSessionOrder }) {
   }
   return (
     <div className="space-y-0.5 text-sm text-muted-foreground">
-      <p>書本數量：{bookLabel(order.traditionalQty, order.simplifiedQty)}</p>
+      <p>書本數量：{bookLabel(order.traditionalQty, order.simplifiedQty, order.englishQty)}</p>
       <p>取貨方式：{deliveryLine(order)}</p>
       <p>收件人：{order.recipientName || '—'}　·　{order.recipientPhone || '—'}</p>
       {fmt(order.shippedAt) && <p>寄送時間：{fmt(order.shippedAt)}</p>}
@@ -316,7 +317,7 @@ export function CourseDetailActions({
             <div className="rounded-md bg-muted/50 px-3 py-2 text-sm space-y-1">
               <div className="flex justify-between gap-2">
                 <span className="text-muted-foreground">總需求</span>
-                <span>{bookLabel(total.traditional, total.simplified)}</span>
+                <span>{bookLabel(total.traditional, total.simplified, total.english)}</span>
               </div>
               <p className="text-xs text-muted-foreground">{t('progressRefHint')}</p>
             </div>
@@ -328,12 +329,12 @@ export function CourseDetailActions({
             <div className="rounded-md bg-muted/50 px-3 py-2 text-sm space-y-1">
               <div className="flex justify-between gap-2">
                 <span className="text-muted-foreground">已申請</span>
-                <span>{bookLabel(applied.traditional, applied.simplified)}</span>
+                <span>{bookLabel(applied.traditional, applied.simplified, applied.english)}</span>
               </div>
               <div className="flex justify-between gap-2">
                 <span className="text-muted-foreground">尚未申請</span>
                 <span className={cn(canApplyMore && 'font-medium text-amber-700')}>
-                  {bookLabel(remaining.traditional, remaining.simplified)}
+                  {bookLabel(remaining.traditional, remaining.simplified, remaining.english)}
                 </span>
               </div>
             </div>
@@ -351,7 +352,7 @@ export function CourseDetailActions({
                       <span className="text-sm font-medium">
                         訂單 #{order.id}
                         <span className="ml-2 text-xs text-muted-foreground">
-                          {bookLabel(order.traditionalQty, order.simplifiedQty)}
+                          {bookLabel(order.traditionalQty, order.simplifiedQty, order.englishQty)}
                         </span>
                       </span>
                       <span className={cn('rounded px-2 py-0.5 text-xs', status.tone)}>{status.label}</span>
@@ -431,7 +432,7 @@ export function CourseDetailActions({
                     <li>{t('noteApplyButton')}</li>
                     <li>{t('noteFinalizeButton')}</li>
                     <li>{t('noteFinalizeBlocked')}</li>
-                    {total.traditional + total.simplified === 0 && <li>{t('noDemandHint')}</li>}
+                    {total.traditional + total.simplified + total.english === 0 && <li>{t('noDemandHint')}</li>}
                   </ul>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -447,7 +448,7 @@ export function CourseDetailActions({
                     {t('finalizeButton')}
                   </Button>
                 </div>
-                {!canApplyMore && total.traditional + total.simplified > 0 && (
+                {!canApplyMore && total.traditional + total.simplified + total.english > 0 && (
                   <p className="text-xs text-muted-foreground">{t('allAppliedHint')}</p>
                 )}
               </>
@@ -465,6 +466,7 @@ export function CourseDetailActions({
                   {t('finalizeConfirmRemaining', {
                     trad: remaining.traditional,
                     simp: remaining.simplified,
+                    eng: remaining.english,
                   })}
                 </p>
                 <p className="text-muted-foreground">{t('finalizeConfirmDesc')}</p>

@@ -1,18 +1,4 @@
-# material-order-application Specification
-
-## Purpose
-TBD - normalized for archive compatibility. Update Purpose for material-order-application.
-## Requirements
-### Requirement: 出貨單顯示書本名稱
-出貨單列印頁的「課程資訊」區塊 SHALL 顯示書本名稱（`CourseCatalog.label`）。
-
-#### Scenario: 有關聯課程目錄時顯示書本名稱
-- **WHEN** 管理者開啟出貨單列印頁且對應 CourseInvite 有 CourseCatalog 關聯
-- **THEN** 顯示「書本名稱」列，內容為 `CourseCatalog.label`
-
-#### Scenario: 無法取得書本名稱時顯示 fallback
-- **WHEN** CourseInvite 未關聯 CourseCatalog（catalogLabel 為 null）
-- **THEN** 顯示「書本名稱」列，內容為「（未填）」
+## MODIFIED Requirements
 
 ### Requirement: 前台內嵌顯示教材訂單資訊
 前台課程頁的教材申請作業 SHALL 於每筆訂單列內嵌顯示其進度與寄送資訊，取代原「查看教材申請」對話框（SHALL 移除該查看按鈕與唯讀對話框）。內嵌資訊 SHALL 包含：書本數量（繁 X / 簡 Y / 英 Z）、取貨方式（郵寄/宅配顯示地址；超商顯示門市名稱與店號）、收件人與聯絡電話、寄送時間、收件時間。多地址訂單 SHALL 逐地址呈現各地址之寄送資訊與其書本項目。
@@ -28,4 +14,3 @@ TBD - normalized for archive compatibility. Update Purpose for material-order-ap
 #### Scenario: 訂單列顯示英文本數
 - **WHEN** 老師於課程頁檢視含英文書本項目的教材訂單
 - **THEN** 該訂單列的書本數量一併顯示英文本數（繁 X / 簡 Y / 英 Z）
-

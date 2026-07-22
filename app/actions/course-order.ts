@@ -164,6 +164,7 @@ export async function applyMaterialOrder(
   const countQty = (rows: ItemRow[]) => ({
     trad: rows.filter((r) => r.version === 'traditional').length,
     simp: rows.filter((r) => r.version === 'simplified').length,
+    eng: rows.filter((r) => r.version === 'english').length,
   })
 
   // ── 多地址模式（逐本指派，含版本覆寫與加購）─────────────────────────
@@ -184,16 +185,18 @@ export async function applyMaterialOrder(
       return { success: false, message: '請至少申請 1 本教材' }
     }
 
-    // 各地址由項目推導繁/簡本數
+    // 各地址由項目推導繁/簡/英本數
     const perShipQty = perShipRows.map(countQty)
     const sumTrad = perShipQty.reduce((a, q) => a + q.trad, 0)
     const sumSimp = perShipQty.reduce((a, q) => a + q.simp, 0)
+    const sumEng = perShipQty.reduce((a, q) => a + q.eng, 0)
 
     const orderData = {
       ...snapshot,
       courseInviteId: inviteId,
       traditionalQty: sumTrad,
       simplifiedQty: sumSimp,
+      englishQty: sumEng,
       shipMode: 'multiple' as ShipMode,
       // 多地址下訂單自身寄件欄位以第一筆為代表（deliveryMethod 為非空必填）
       deliveryMethod: shipments[0].deliveryMethod as DeliveryMethod,
@@ -217,6 +220,7 @@ export async function applyMaterialOrder(
             storeName: s.deliveryMethod !== 'delivery' ? (s.storeName || null) : null,
             traditionalQty: perShipQty[i].trad,
             simplifiedQty: perShipQty[i].simp,
+            englishQty: perShipQty[i].eng,
           },
         })
         await tx.materialShipmentItem.createMany({
@@ -245,12 +249,13 @@ export async function applyMaterialOrder(
   if (singleRows.length < 1) {
     return { success: false, message: '請至少申請 1 本教材' }
   }
-  const { trad: singleTrad, simp: singleSimp } = countQty(singleRows)
+  const { trad: singleTrad, simp: singleSimp, eng: singleEng } = countQty(singleRows)
 
   const orderData = {
     ...snapshot,
     traditionalQty: singleTrad,
     simplifiedQty: singleSimp,
+    englishQty: singleEng,
     shipMode: 'single' as ShipMode,
     recipientName: d.recipientName?.trim() || teacher.realName || teacher.name || '',
     recipientPhone: d.recipientPhone?.trim() || teacher.phone || '',
@@ -276,6 +281,7 @@ export async function applyMaterialOrder(
         storeName: orderData.storeName,
         traditionalQty: singleTrad,
         simplifiedQty: singleSimp,
+        englishQty: singleEng,
       },
     })
     if (singleRows.length > 0) {

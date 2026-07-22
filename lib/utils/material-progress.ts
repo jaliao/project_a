@@ -9,7 +9,7 @@
  * ----------------------------------------------
  */
 
-export type MaterialCount = { traditional: number; simplified: number }
+export type MaterialCount = { traditional: number; simplified: number; english: number }
 
 export type MaterialProgress = {
   total: MaterialCount
@@ -20,23 +20,25 @@ export type MaterialProgress = {
 
 export function computeMaterialProgress(
   total: MaterialCount,
-  orders: { traditionalQty: number; simplifiedQty: number }[]
+  orders: { traditionalQty: number; simplifiedQty: number; englishQty: number }[]
 ): MaterialProgress {
   const applied = orders.reduce<MaterialCount>(
     (a, o) => ({
       traditional: a.traditional + o.traditionalQty,
       simplified: a.simplified + o.simplifiedQty,
+      english: a.english + o.englishQty,
     }),
-    { traditional: 0, simplified: 0 }
+    { traditional: 0, simplified: 0, english: 0 }
   )
   const remaining: MaterialCount = {
     traditional: Math.max(0, total.traditional - applied.traditional),
     simplified: Math.max(0, total.simplified - applied.simplified),
+    english: Math.max(0, total.english - applied.english),
   }
   return {
     total,
     applied,
     remaining,
-    canApplyMore: remaining.traditional + remaining.simplified > 0,
+    canApplyMore: remaining.traditional + remaining.simplified + remaining.english > 0,
   }
 }

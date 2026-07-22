@@ -111,10 +111,10 @@ export default async function CourseDetailPage({
   // 教材申請作業：講師本人或管理者可見可操作（比照班級管理前台化）
   const canManageMaterials = isInstructor || isAdmin
 
-  // 多地址寄送所需：應寄繁/簡本數（依 approved 學員 materialChoice 統計，參考值）
+  // 多地址寄送所需：應寄繁/簡/英本數（依 approved 學員 materialChoice 統計，參考值）
   const materialSummary = canManageMaterials
     ? await getEnrollmentMaterialSummary(courseSession.id)
-    : { traditional: 0, simplified: 0 }
+    : { traditional: 0, simplified: 0, english: 0 }
   // 逐本清單／多地址逐本指派：尚未指派的書本項目
   const unassignedBookItems = canManageMaterials ? await getUnassignedBookItems(courseSession.id) : []
 

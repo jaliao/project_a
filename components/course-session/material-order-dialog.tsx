@@ -69,6 +69,7 @@ interface Shipment {
   storeName: string | null
   traditionalQty: number
   simplifiedQty: number
+  englishQty: number
   shippedAt: Date | null
   items?: { enrollmentId: number | null; bookName: string; version: string }[]
 }
@@ -91,7 +92,7 @@ interface MaterialOrderDialogProps {
     shipments: Shipment[]
   } | null
   // 學員申請尚未申請之本數（參考值，非上限）
-  remaining: { traditional: number; simplified: number }
+  remaining: { traditional: number; simplified: number; english: number }
   // 尚未指派的書本項目（逐本清單／多地址指派用）
   bookItems: BookItem[]
   // 單一地址收件人預設值（申請講師姓名 + 個人資料電話）
@@ -102,16 +103,17 @@ interface MaterialOrderDialogProps {
 function toFormItems(items: Shipment['items']): OrderBookItemInput[] {
   return (items ?? []).map((i) =>
     i.enrollmentId != null
-      ? { kind: 'enrollment' as const, enrollmentId: i.enrollmentId, version: i.version as 'traditional' | 'simplified' }
-      : { kind: 'extra' as const, version: i.version as 'traditional' | 'simplified', bookName: i.bookName }
+      ? { kind: 'enrollment' as const, enrollmentId: i.enrollmentId, version: i.version as 'traditional' | 'simplified' | 'english' }
+      : { kind: 'extra' as const, version: i.version as 'traditional' | 'simplified' | 'english', bookName: i.bookName }
   )
 }
 
-// 書本項目繁/簡合計
-function countItems(items: OrderBookItemInput[]): { trad: number; simp: number } {
+// 書本項目繁/簡/英合計
+function countItems(items: OrderBookItemInput[]): { trad: number; simp: number; eng: number } {
   return {
     trad: items.filter((i) => i.version === 'traditional').length,
     simp: items.filter((i) => i.version === 'simplified').length,
+    eng: items.filter((i) => i.version === 'english').length,
   }
 }
 
@@ -428,9 +430,9 @@ export function MaterialOrderDialog({
             {/* 合計對照列（本次申請 vs 學員申請參考） */}
             {!isReadonly && (
               <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm space-y-0.5">
-                <p className="font-medium">{t('totalLine', { trad: totals.trad, simp: totals.simp })}</p>
+                <p className="font-medium">{t('totalLine', { trad: totals.trad, simp: totals.simp, eng: totals.eng })}</p>
                 <p className="text-xs text-muted-foreground">
-                  {t('studentRefLine', { trad: remaining.traditional, simp: remaining.simplified })}
+                  {t('studentRefLine', { trad: remaining.traditional, simp: remaining.simplified, eng: remaining.english })}
                 </p>
                 {allItems.length < 1 && (
                   <p className="text-xs text-amber-700">{t('atLeastOne')}</p>
@@ -450,25 +452,26 @@ export function MaterialOrderDialog({
   )
 }
 
-// ── 版本下拉（繁/簡）─────────────────────────────────────
+// ── 版本下拉（繁/簡/英）─────────────────────────────────────
 function VersionSelect({
   value,
   onChange,
   disabled,
 }: {
-  value: 'traditional' | 'simplified'
-  onChange: (v: 'traditional' | 'simplified') => void
+  value: 'traditional' | 'simplified' | 'english'
+  onChange: (v: 'traditional' | 'simplified' | 'english') => void
   disabled?: boolean
 }) {
   const t = useTranslations('course.material')
   return (
-    <Select value={value} onValueChange={(v) => onChange(v as 'traditional' | 'simplified')} disabled={disabled}>
+    <Select value={value} onValueChange={(v) => onChange(v as 'traditional' | 'simplified' | 'english')} disabled={disabled}>
       <SelectTrigger size="sm" className="w-20 shrink-0">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="traditional">{t('versionShortTraditional')}</SelectItem>
         <SelectItem value="simplified">{t('versionShortSimplified')}</SelectItem>
+        <SelectItem value="english">{t('versionShortEnglish')}</SelectItem>
       </SelectContent>
     </Select>
   )
@@ -533,7 +536,7 @@ function SingleBookList({
       setItems(items.filter((i) => !(i.kind === 'enrollment' && i.enrollmentId === it.enrollmentId)))
     }
   }
-  const setVersion = (enrollmentId: number, version: 'traditional' | 'simplified') => {
+  const setVersion = (enrollmentId: number, version: 'traditional' | 'simplified' | 'english') => {
     setItems(
       items.map((i) => (i.kind === 'enrollment' && i.enrollmentId === enrollmentId ? { ...i, version } : i))
     )
@@ -752,7 +755,7 @@ function BookAssignList({
       setItems(myItems.filter((i) => !(i.kind === 'enrollment' && i.enrollmentId === it.enrollmentId)))
     }
   }
-  const setVersion = (enrollmentId: number, version: 'traditional' | 'simplified') => {
+  const setVersion = (enrollmentId: number, version: 'traditional' | 'simplified' | 'english') => {
     setItems(
       myItems.map((i) => (i.kind === 'enrollment' && i.enrollmentId === enrollmentId ? { ...i, version } : i))
     )

@@ -266,7 +266,7 @@ export async function getMyLearningRecords() {
 // ── 學員申請參加課程（含書籍選擇）────────────────────
 export async function applyToCourse(
   inviteId: number,
-  materialChoice: 'none' | 'traditional' | 'simplified',
+  materialChoice: 'none' | 'traditional' | 'simplified' | 'english',
   bookName?: string
 ): Promise<ActionResponse> {
   const session = await auth()
@@ -357,7 +357,7 @@ export async function startCourseSession(inviteId: number, startDate: string): P
       completedAt: true,
       startedAt: true,
       materialFinalizedAt: true,
-      orders: { select: { receivedAt: true, traditionalQty: true, simplifiedQty: true } },
+      orders: { select: { receivedAt: true, traditionalQty: true, simplifiedQty: true, englishQty: true } },
       _count: { select: { enrollments: { where: { status: 'approved' } } } },
     },
   })

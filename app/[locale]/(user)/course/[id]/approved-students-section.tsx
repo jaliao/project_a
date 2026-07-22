@@ -22,6 +22,7 @@ const MATERIAL_COLORS: Record<string, string> = {
   none: 'bg-gray-100 text-gray-600',
   traditional: 'bg-blue-100 text-blue-700',
   simplified: 'bg-green-100 text-green-700',
+  english: 'bg-amber-100 text-amber-700',
 }
 
 function formatDate(date: Date): string {

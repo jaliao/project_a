@@ -29,7 +29,7 @@ TBD - normalized for archive compatibility. Update Purpose for course-enrollment
 
 #### Scenario: 開啟書籍選購 Dialog
 - **WHEN** 學員點擊「申請參加」
-- **THEN** 彈出 Dialog，標題「選擇書籍」，提供三個選項：無須購買、繁體教材、簡體教材
+- **THEN** 彈出 Dialog，標題「選擇書籍」，提供四個選項：無須購買、繁體教材、簡體教材、英文教材
 
 #### Scenario: 送出申請
 - **WHEN** 學員選擇一項書籍選項後點擊「確認申請」
@@ -42,6 +42,10 @@ TBD - normalized for archive compatibility. Update Purpose for course-enrollment
 #### Scenario: 申請失敗
 - **WHEN** Server Action 回傳錯誤
 - **THEN** 顯示錯誤 toast，Dialog 維持開啟
+
+#### Scenario: 選擇英文教材送出申請
+- **WHEN** 學員選擇「英文教材」選項後點擊「確認申請」
+- **THEN** 系統建立 InviteEnrollment（status=pending, materialChoice=english），顯示「申請已送出，等待講師審核」toast，Dialog 關閉
 
 ### Requirement: 學員申請資料模型
 `InviteEnrollment` SHALL 包含 `status EnrollmentStatus`（預設 `pending`）與 `materialChoice MaterialChoice`（預設 `none`）欄位。

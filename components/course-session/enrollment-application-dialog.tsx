@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import { applyToCourse } from '@/app/actions/course-invite'
 
-type MaterialChoice = 'none' | 'traditional' | 'simplified'
+type MaterialChoice = 'none' | 'traditional' | 'simplified' | 'english'
 
 type Props = {
   inviteId: number
@@ -42,6 +42,7 @@ export function EnrollmentApplicationDialog({ inviteId, open, onOpenChange, cour
     { value: 'none', label: t('course.material.none'), desc: t('course.enroll.noneDesc') },
     { value: 'traditional', label: t('course.material.traditional'), desc: t('course.enroll.tradDesc') },
     { value: 'simplified', label: t('course.material.simplified'), desc: t('course.enroll.simpDesc') },
+    { value: 'english', label: t('course.material.english'), desc: t('course.enroll.engDesc') },
   ]
   const router = useRouter()
   const [selected, setSelected] = useState<MaterialChoice | ''>('')
@@ -112,7 +113,7 @@ export function EnrollmentApplicationDialog({ inviteId, open, onOpenChange, cour
         </div>
 
         {/* 教材所屬姓名（選了需購買版本才顯示；必填）*/}
-        {(selected === 'traditional' || selected === 'simplified') && (
+        {(selected === 'traditional' || selected === 'simplified' || selected === 'english') && (
           <div className="space-y-1.5">
             <label className="text-sm font-medium">
               {t('course.enroll.bookNameLabel')}

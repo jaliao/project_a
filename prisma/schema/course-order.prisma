@@ -71,6 +71,7 @@ model CourseOrder {
   // 本筆申請的書籍本數（單一地址自動帶當下尚未申請的剩餘；多地址為各批次加總）
   traditionalQty Int @default(0) // 繁體本數
   simplifiedQty  Int @default(0) // 簡體本數
+  englishQty     Int @default(0) // 英文本數
 
   // 其他
   courseDate      String // 預計開課日期（可填「無」）
@@ -135,6 +136,7 @@ model MaterialShipment {
   // 各版本本數（由已指派書本項目推導）
   traditionalQty Int @default(0) // 繁體本數
   simplifiedQty  Int @default(0) // 簡體本數
+  englishQty     Int @default(0) // 英文本數
 
   // 逐本書本項目（指派至此地址的學員書）
   items MaterialShipmentItem[]

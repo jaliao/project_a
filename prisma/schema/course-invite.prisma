@@ -21,6 +21,7 @@ enum MaterialChoice {
   none // 無須購買
   traditional // 繁體教材
   simplified // 簡體教材
+  english // 英文教材
 }
 
 // ==========================================

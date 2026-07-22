@@ -22,7 +22,7 @@ export type CourseStartGate = {
 
 export function evaluateCourseStartGate(input: {
   approvedCount: number
-  remaining: { traditional: number; simplified: number }
+  remaining: { traditional: number; simplified: number; english: number }
   orders: CourseStartGateOrder[]
   // 教材申請已完成標記（CourseInvite.materialFinalizedAt != null）：豁免教材需求條件
   materialFinalized?: boolean
@@ -34,9 +34,9 @@ export function evaluateCourseStartGate(input: {
   }
 
   // 尚有教材需求未申請（有需求卻無訂單，或訂單涵蓋不足）；已標記完成教材申請則豁免
-  const { traditional, simplified } = input.remaining
-  if (!input.materialFinalized && traditional + simplified > 0) {
-    reasons.push(`尚有教材未申請（繁 ${traditional}、簡 ${simplified}）`)
+  const { traditional, simplified, english } = input.remaining
+  if (!input.materialFinalized && traditional + simplified + english > 0) {
+    reasons.push(`尚有教材未申請（繁 ${traditional}、簡 ${simplified}、英 ${english}）`)
   }
 
   // 所有教材訂單需皆已收件（無訂單時不檢查 → 全班不需教材可開課）

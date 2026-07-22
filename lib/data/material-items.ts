@@ -11,7 +11,7 @@
 import { prisma } from '@/lib/prisma'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
 
-export type BookVersion = 'traditional' | 'simplified'
+export type BookVersion = 'traditional' | 'simplified' | 'english'
 
 export type BookItem = {
   enrollmentId: number

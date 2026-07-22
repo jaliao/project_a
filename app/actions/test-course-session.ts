@@ -29,7 +29,7 @@ const SPIRIT_COURSE_CATALOG_ID = 1 // 啟動靈人
 const TEST_STUDENT_COUNT = 5
 
 // 教材選項（隨機指派給測試學員）
-const MATERIAL_CHOICES = ['none', 'traditional', 'simplified'] as const
+const MATERIAL_CHOICES = ['none', 'traditional', 'simplified', 'english'] as const
 
 // 格式化日期為 YYYY/MM/DD 字串（與 course-session action 一致）
 function formatDateString(date: Date): string {
