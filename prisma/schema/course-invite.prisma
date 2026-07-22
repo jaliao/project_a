@@ -77,6 +77,9 @@ model CourseInvite {
   // 學習歷程回饋補建結果關聯
   feedbackResults LearningRecordFeedback[]
 
+  // 聯繫管理者（課程提問）關聯
+  inquiries SupportInquiry[]
+
   // 管理操作紀錄關聯
   adminLogs AdminActionLog[]
 

@@ -17,6 +17,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getMyInquiries } from '@/lib/data/support-inquiry'
 import { Badge } from '@/components/ui/badge'
+import { SupportInquiryForm } from '@/components/support-inquiry/support-inquiry-form'
 
 export const metadata: Metadata = {
   title: '我的提問 — 啟動事工',
@@ -66,6 +67,11 @@ export default async function MyInquiriesPage({ params }: Props) {
         <h1 className="text-2xl font-semibold">{t('myInquiriesTitle')}</h1>
       </div>
 
+      {/* 送出新提問 */}
+      <div className="rounded-lg border p-4">
+        <SupportInquiryForm />
+      </div>
+
       {inquiries.length === 0 ? (
         <div className="rounded-lg border p-10 text-center text-sm text-muted-foreground">
           {t('noInquiries')}
@@ -91,6 +97,12 @@ export default async function MyInquiriesPage({ params }: Props) {
                 {t('createdAtPrefix')}
                 {inq.createdAt.toLocaleString('zh-TW')}
               </p>
+              {inq.courseTitle && (
+                <p className="text-xs text-muted-foreground">
+                  {t('relatedCoursePrefix')}
+                  {inq.courseTitle}
+                </p>
+              )}
               {inq.status === 'replied' && (
                 <div className="rounded-md bg-muted/50 px-3 py-2 space-y-1">
                   <p className="text-sm whitespace-pre-wrap">{inq.replyBody}</p>

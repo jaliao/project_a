@@ -22,7 +22,7 @@
     "notifications": "Notifications",
     "matchBoard": "Match board",
     "admin": "Admin",
-    "help": "Help"
+    "help": "Contact Admin"
   },
   "auth": {
     "loginWithEmail": "Log in with Email",
@@ -657,6 +657,7 @@
     "dialogTitle": "Contact Admin",
     "categoryLabel": "Category",
     "categoryPlaceholder": "Select a category",
+    "courseCategoryFixedNote": "Automatically categorized as course issue",
     "bodyLabel": "Your question",
     "bodyPlaceholder": "Describe your question",
     "cancel": "Cancel",
@@ -670,18 +671,22 @@
     "createdAtPrefix": "Submitted at: ",
     "repliedByPrefix": "Replied by: ",
     "repliedAtPrefix": "Replied at: ",
+    "relatedCoursePrefix": "Related course: ",
     "adminPageTitle": "Inquiry Management",
     "colSubmitter": "Submitter",
     "colCategory": "Category",
     "colContent": "Content",
     "colCreatedAt": "Submitted at",
     "colStatus": "Status",
+    "viewMemberLink": "View member",
     "replyLabel": "Reply",
     "sendReply": "Send reply",
     "replySuccess": "Reply sent",
     "replyFail": "Reply failed, please try again later",
     "reopenButton": "Reopen",
     "reopenSuccess": "Reopened",
-    "reopenFail": "Action failed, please try again later"
+    "reopenFail": "Action failed, please try again later",
+    "memberInquiriesTab": "Inquiries",
+    "memberInquiriesEmpty": "This member has no inquiries yet"
   }
 }

@@ -31,6 +31,10 @@ model SupportInquiry {
   category SupportInquiryCategory
   body     String                 @db.Text // 提問內容
 
+  // 關聯課程（可選；由課程頁提問自動帶入，一般提問為 null）
+  courseInviteId Int?
+  courseInvite   CourseInvite? @relation(fields: [courseInviteId], references: [id], onDelete: SetNull)
+
   status SupportInquiryStatus @default(pending)
 
   // 回覆（覆寫式：重新回覆即取代既有內容，不留歷史列）

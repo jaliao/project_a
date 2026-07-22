@@ -1,9 +1,4 @@
-# admin-inquiry-management Specification
-
-## Purpose
-TBD - created by archiving change cr-spec-260722-002. Update Purpose after archive.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: 後台提問管理列表
 後台 SHALL 提供「提問管理」頁面，以分頁籤（待處理／已回覆／全部）呈現學員提問，以卡片形式逐筆呈現：分類、提問人顯示名稱（真實姓名）、提問人性別、提問人所屬單位、內容摘要、狀態 Badge、提問時間；若提問關聯特定課程，顯示該課程名稱。
@@ -53,6 +48,8 @@ TBD - created by archiving change cr-spec-260722-002. Update Purpose after archi
 #### Scenario: 重新標記待處理
 - **WHEN** 管理者對一筆已回覆提問卡片點擊「重新標記待處理」
 - **THEN** `status` 更新為 `pending`，`replyBody`／`repliedById`／`repliedAt` 維持原值不變
+
+## ADDED Requirements
 
 ### Requirement: 提問卡片查看更多資訊連結
 後台提問卡片 SHALL 提供「查看會員」連結（另開分頁至該會員之後台會員詳情頁），若提問關聯特定課程，SHALL 另提供「查看課程」連結（另開分頁至該課程詳情頁）。

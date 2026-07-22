@@ -54,6 +54,7 @@ export async function submitInquiry(formData: Record<string, unknown>): Promise<
       userId: session.user.id,
       category: d.category,
       body: d.body.trim(),
+      courseInviteId: d.courseInviteId ?? null,
     },
   })
 

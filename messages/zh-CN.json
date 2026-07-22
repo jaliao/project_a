@@ -23,7 +23,7 @@
     "notifications": "讯息通知",
     "matchBoard": "媒合布告栏",
     "admin": "后台管理",
-    "help": "我需要帮助"
+    "help": "联络管理者"
   },
   "auth": {
     "loginWithEmail": "以 Email 登入",
@@ -655,9 +655,10 @@
     "statusPending": "待处理",
     "statusReplied": "已回复",
     "tabAll": "全部",
-    "dialogTitle": "联系管理者",
+    "dialogTitle": "联络管理者",
     "categoryLabel": "问题分类",
     "categoryPlaceholder": "请选择问题分类",
+    "courseCategoryFixedNote": "自动归类为课程问题",
     "bodyLabel": "问题内容",
     "bodyPlaceholder": "请描述您的问题",
     "cancel": "取消",
@@ -671,18 +672,22 @@
     "createdAtPrefix": "提问时间：",
     "repliedByPrefix": "回复管理者：",
     "repliedAtPrefix": "回复时间：",
+    "relatedCoursePrefix": "相关课程：",
     "adminPageTitle": "提问管理",
     "colSubmitter": "提问人",
     "colCategory": "分类",
     "colContent": "内容",
     "colCreatedAt": "提问时间",
     "colStatus": "状态",
+    "viewMemberLink": "查看会员",
     "replyLabel": "回复内容",
     "sendReply": "送出回复",
     "replySuccess": "已送出回复",
     "replyFail": "回复失败，请稍后再试",
     "reopenButton": "重新标记待处理",
     "reopenSuccess": "已重新标记为待处理",
-    "reopenFail": "操作失败，请稍后再试"
+    "reopenFail": "操作失败，请稍后再试",
+    "memberInquiriesTab": "会员提问",
+    "memberInquiriesEmpty": "该会员尚无提问纪录"
   }
 }

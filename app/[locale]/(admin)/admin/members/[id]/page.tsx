@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
- * 後台會員詳情頁（四分頁：基本資料／學習階層／講師身分／特殊設定）
- * 2026-04-01 (Updated: 2026-07-14)
+ * 後台會員詳情頁（五分頁：基本資料／學習階層／講師身分／特殊設定／會員提問）
+ * 2026-04-01 (Updated: 2026-07-22)
  * app/(user)/admin/members/[id]/page.tsx
  * ----------------------------------------------
  */
@@ -9,6 +9,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { auth } from '@/lib/auth'
 import {
   isSuperadmin,
@@ -21,6 +22,7 @@ import { getMemberDetail, getUserDisplayById } from '@/lib/data/members'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { getAdminSetting } from '@/lib/data/admin-settings'
 import { getGraduatedCatalogIds } from '@/lib/data/course-catalog'
+import { getInquiryList } from '@/lib/data/support-inquiry'
 import { MemberResetButton } from '@/components/admin/member-reset-button'
 import { MemberEmailForm } from '@/components/admin/member-email-form'
 import { MemberDeleteButton } from '@/components/admin/member-delete-button'
@@ -30,6 +32,7 @@ import { MemberSpecialRoles } from '@/components/admin/member-special-roles'
 import { MemberSuspendSection } from '@/components/admin/member-suspend-section'
 import { MaskedValue } from '@/components/admin/masked-value'
 import { CourseSessionCard } from '@/components/course-session/course-session-card'
+import { SupportInquiryCard } from '@/components/admin/support-inquiry-card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -94,6 +97,16 @@ export default async function MemberDetailPage({
     { id: 3, label: '啟動得勝' },
   ]
 
+  // 會員提問（新分頁用）
+  const ti = await getTranslations('supportInquiry')
+  const memberInquiries = await getInquiryList({ userId: member.id, status: 'all' })
+  const INQUIRY_CATEGORY_LABELS: Record<string, string> = {
+    account: ti('categoryAccount'),
+    course: ti('categoryCourse'),
+    material: ti('categoryMaterial'),
+    other: ti('categoryOther'),
+  }
+
   // 暫停操作人顯示名稱
   const suspendedByUser = member.suspendedById
     ? await getUserDisplayById(member.suspendedById)
@@ -122,6 +135,7 @@ export default async function MemberDetailPage({
           <TabsTrigger value="hierarchy">學習階層</TabsTrigger>
           <TabsTrigger value="teacher">講師身分</TabsTrigger>
           <TabsTrigger value="special">特殊設定</TabsTrigger>
+          <TabsTrigger value="inquiries">{ti('memberInquiriesTab')}</TabsTrigger>
         </TabsList>
 
         {/* ── 基本資料分頁 ── */}
@@ -335,6 +349,35 @@ export default async function MemberDetailPage({
               <h2 className="font-medium text-sm text-destructive uppercase tracking-wide">危險操作</h2>
               <MemberDeleteButton userId={member.id} memberName={displayName} />
             </div>
+          )}
+        </TabsContent>
+
+        {/* ── 會員提問分頁 ── */}
+        <TabsContent value="inquiries" className="space-y-3 pt-4">
+          {memberInquiries.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{ti('memberInquiriesEmpty')}</p>
+          ) : (
+            memberInquiries.map((inq) => (
+              <SupportInquiryCard
+                key={inq.id}
+                id={inq.id}
+                userId={inq.userId}
+                submitterName={inq.submitterName}
+                submitterSpiritId={inq.submitterSpiritId}
+                submitterRealName={inq.submitterRealName}
+                submitterGenderLabel={inq.submitterGenderLabel}
+                submitterChurchLabel={inq.submitterChurchLabel}
+                categoryLabel={INQUIRY_CATEGORY_LABELS[inq.category]}
+                body={inq.body}
+                status={inq.status}
+                replyBody={inq.replyBody}
+                repliedByName={inq.repliedByName}
+                repliedAt={inq.repliedAt}
+                createdAt={inq.createdAt}
+                courseInviteId={inq.courseInviteId}
+                courseTitle={inq.courseTitle}
+              />
+            ))
           )}
         </TabsContent>
       </Tabs>

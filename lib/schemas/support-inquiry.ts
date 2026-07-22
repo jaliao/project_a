@@ -15,6 +15,8 @@ export const createInquirySchema = z.object({
     error: 'validation.inquiryCategoryRequired',
   }),
   body: z.string().min(1, 'validation.inquiryBodyRequired'),
+  // 可選：記錄此提問來自哪個課程頁（一般提問為 undefined）
+  courseInviteId: z.number().int().optional(),
 })
 
 export type CreateInquiryFormValues = z.infer<typeof createInquirySchema>

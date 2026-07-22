@@ -1,14 +1,14 @@
 /*
  * ----------------------------------------------
  * Data Layer - 聯繫管理者（學員提問）
- * 2026-07-22
+ * 2026-07-22 (Updated: 2026-07-22)
  * lib/data/support-inquiry.ts
  * ----------------------------------------------
  */
 
 import { prisma } from '@/lib/prisma'
 import { getMemberDisplayName, type DisplayNameMode } from '@/lib/utils/member-display'
-import type { SupportInquiryCategory, SupportInquiryStatus } from '@prisma/client'
+import type { SupportInquiryCategory, SupportInquiryStatus, Gender, ChurchType } from '@prisma/client'
 
 const displaySelect = {
   realName: true,
@@ -24,6 +24,34 @@ type DisplayUser = {
   displayNameMode: DisplayNameMode
 }
 
+// 性別文字（比照 admin/members/[id]/page.tsx 既有行內邏輯）
+function genderLabel(gender: Gender): string {
+  return gender === 'male' ? '男' : gender === 'female' ? '女' : '未設定'
+}
+
+// 所屬單位文字（比照 admin/members/[id]/page.tsx 既有行內邏輯）
+function churchLabel(u: {
+  churchType: ChurchType
+  church: { name: string } | null
+  churchOther: string | null
+}): string {
+  if (u.churchType === 'church' && u.church) return u.church.name
+  if (u.churchType === 'other' && u.churchOther) return u.churchOther
+  return '—'
+}
+
+const submitterSelect = {
+  spiritId: true,
+  realName: true,
+  englishName: true,
+  nickname: true,
+  displayNameMode: true,
+  gender: true,
+  churchType: true,
+  churchOther: true,
+  church: { select: { name: true } },
+} as const
+
 // ── 學員：查看自己送出的提問 ──
 export type MyInquiryItem = {
   id: number
@@ -34,6 +62,8 @@ export type MyInquiryItem = {
   repliedByName: string | null
   repliedAt: Date | null
   createdAt: Date
+  courseInviteId: number | null
+  courseTitle: string | null
 }
 
 export async function getMyInquiries(userId: string): Promise<MyInquiryItem[]> {
@@ -48,6 +78,8 @@ export async function getMyInquiries(userId: string): Promise<MyInquiryItem[]> {
       replyBody: true,
       repliedAt: true,
       createdAt: true,
+      courseInviteId: true,
+      courseInvite: { select: { title: true } },
       repliedBy: { select: displaySelect },
     },
   })
@@ -60,6 +92,8 @@ export async function getMyInquiries(userId: string): Promise<MyInquiryItem[]> {
     repliedByName: r.repliedBy ? getMemberDisplayName(r.repliedBy as DisplayUser) : null,
     repliedAt: r.repliedAt,
     createdAt: r.createdAt,
+    courseInviteId: r.courseInviteId,
+    courseTitle: r.courseInvite?.title ?? null,
   }))
 }
 
@@ -69,6 +103,9 @@ export type InquiryListItem = {
   userId: string
   submitterName: string
   submitterSpiritId: string | null
+  submitterRealName: string | null
+  submitterGenderLabel: string
+  submitterChurchLabel: string
   category: SupportInquiryCategory
   body: string
   status: SupportInquiryStatus
@@ -76,13 +113,19 @@ export type InquiryListItem = {
   repliedByName: string | null
   repliedAt: Date | null
   createdAt: Date
+  courseInviteId: number | null
+  courseTitle: string | null
 }
 
 export async function getInquiryList(opts: {
   status?: SupportInquiryStatus | 'all'
+  userId?: string
 }): Promise<InquiryListItem[]> {
   const status = opts.status ?? 'all'
-  const where = status === 'all' ? {} : { status }
+  const where = {
+    ...(status === 'all' ? {} : { status }),
+    ...(opts.userId ? { userId: opts.userId } : {}),
+  }
 
   const rows = await prisma.supportInquiry.findMany({
     where,
@@ -96,7 +139,9 @@ export async function getInquiryList(opts: {
       replyBody: true,
       repliedAt: true,
       createdAt: true,
-      user: { select: { spiritId: true, ...displaySelect } },
+      courseInviteId: true,
+      courseInvite: { select: { title: true } },
+      user: { select: submitterSelect },
       repliedBy: { select: displaySelect },
     },
   })
@@ -106,6 +151,9 @@ export async function getInquiryList(opts: {
     userId: r.userId,
     submitterName: getMemberDisplayName(r.user as DisplayUser),
     submitterSpiritId: r.user.spiritId,
+    submitterRealName: r.user.realName,
+    submitterGenderLabel: genderLabel(r.user.gender),
+    submitterChurchLabel: churchLabel(r.user),
     category: r.category,
     body: r.body,
     status: r.status,
@@ -113,6 +161,8 @@ export async function getInquiryList(opts: {
     repliedByName: r.repliedBy ? getMemberDisplayName(r.repliedBy as DisplayUser) : null,
     repliedAt: r.repliedAt,
     createdAt: r.createdAt,
+    courseInviteId: r.courseInviteId,
+    courseTitle: r.courseInvite?.title ?? null,
   }))
 }
 

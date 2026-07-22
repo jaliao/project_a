@@ -12,7 +12,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { getInquiryList } from '@/lib/data/support-inquiry'
-import { SupportInquiryRow } from '@/components/admin/support-inquiry-actions'
+import { SupportInquiryCard } from '@/components/admin/support-inquiry-card'
 import { cn } from '@/lib/utils'
 import type { SupportInquiryStatus } from '@prisma/client'
 
@@ -72,35 +72,28 @@ export default async function AdminSupportInquiriesPage({
       {inquiries.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t('noInquiries')}</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr className="text-left text-muted-foreground">
-                <th className="px-4 py-2.5 font-medium">{t('colSubmitter')}</th>
-                <th className="px-4 py-2.5 font-medium">{t('colCategory')}</th>
-                <th className="px-4 py-2.5 font-medium">{t('colContent')}</th>
-                <th className="px-4 py-2.5 font-medium">{t('colCreatedAt')}</th>
-                <th className="px-4 py-2.5 font-medium">{t('colStatus')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {inquiries.map((inq) => (
-                <SupportInquiryRow
-                  key={inq.id}
-                  id={inq.id}
-                  submitterName={inq.submitterName}
-                  submitterSpiritId={inq.submitterSpiritId}
-                  categoryLabel={CATEGORY_LABELS[inq.category]}
-                  body={inq.body}
-                  status={inq.status}
-                  replyBody={inq.replyBody}
-                  repliedByName={inq.repliedByName}
-                  repliedAt={inq.repliedAt}
-                  createdAt={inq.createdAt}
-                />
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-3">
+          {inquiries.map((inq) => (
+            <SupportInquiryCard
+              key={inq.id}
+              id={inq.id}
+              userId={inq.userId}
+              submitterName={inq.submitterName}
+              submitterSpiritId={inq.submitterSpiritId}
+              submitterRealName={inq.submitterRealName}
+              submitterGenderLabel={inq.submitterGenderLabel}
+              submitterChurchLabel={inq.submitterChurchLabel}
+              categoryLabel={CATEGORY_LABELS[inq.category]}
+              body={inq.body}
+              status={inq.status}
+              replyBody={inq.replyBody}
+              repliedByName={inq.repliedByName}
+              repliedAt={inq.repliedAt}
+              createdAt={inq.createdAt}
+              courseInviteId={inq.courseInviteId}
+              courseTitle={inq.courseTitle}
+            />
+          ))}
         </div>
       )}
     </div>

@@ -22,7 +22,7 @@
     "notifications": "訊息通知",
     "matchBoard": "媒合布告欄",
     "admin": "後台管理",
-    "help": "我需要幫助"
+    "help": "聯絡管理者"
   },
   "auth": {
     "loginWithEmail": "以 Email 登入",
@@ -654,9 +654,10 @@
     "statusPending": "待處理",
     "statusReplied": "已回覆",
     "tabAll": "全部",
-    "dialogTitle": "聯繫管理者",
+    "dialogTitle": "聯絡管理者",
     "categoryLabel": "問題分類",
     "categoryPlaceholder": "請選擇問題分類",
+    "courseCategoryFixedNote": "自動歸類為課程問題",
     "bodyLabel": "問題內容",
     "bodyPlaceholder": "請描述您的問題",
     "cancel": "取消",
@@ -670,18 +671,22 @@
     "createdAtPrefix": "提問時間：",
     "repliedByPrefix": "回覆管理者：",
     "repliedAtPrefix": "回覆時間：",
+    "relatedCoursePrefix": "相關課程：",
     "adminPageTitle": "提問管理",
     "colSubmitter": "提問人",
     "colCategory": "分類",
     "colContent": "內容",
     "colCreatedAt": "提問時間",
     "colStatus": "狀態",
+    "viewMemberLink": "查看會員",
     "replyLabel": "回覆內容",
     "sendReply": "送出回覆",
     "replySuccess": "已送出回覆",
     "replyFail": "回覆失敗，請稍後再試",
     "reopenButton": "重新標記待處理",
     "reopenSuccess": "已重新標記為待處理",
-    "reopenFail": "操作失敗，請稍後再試"
+    "reopenFail": "操作失敗，請稍後再試",
+    "memberInquiriesTab": "會員提問",
+    "memberInquiriesEmpty": "該會員尚無提問紀錄"
   }
 }

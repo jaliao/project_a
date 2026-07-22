@@ -37,6 +37,7 @@ import { CourseDetailActions } from './course-detail-actions'
 import { MatchSettingsEditor } from './match-settings-editor'
 import { EditCourseInfoDialog } from '@/components/course-session/edit-course-info-dialog'
 import { CopyInviteLinkButton } from './copy-invite-link-button'
+import { CourseContactAdminButton } from './course-contact-admin-button'
 import { StudentApplySection } from './student-apply-section'
 import { PendingEnrollmentList } from './pending-enrollment-list'
 import { InstructorFeedbackButton } from './instructor-feedback-button'
@@ -363,7 +364,10 @@ export default async function CourseDetailPage({
               />
             )}
             {isInstructor && (
-              <CopyInviteLinkButton courseId={courseSession.id} />
+              <>
+                <CopyInviteLinkButton courseId={courseSession.id} />
+                <CourseContactAdminButton courseId={courseSession.id} />
+              </>
             )}
           </div>
         )}

@@ -1,9 +1,4 @@
-# contact-admin Specification
-
-## Purpose
-TBD - created by archiving change cr-spec-260722-002. Update Purpose after archive.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: 提問資料模型
 系統 SHALL 提供 `SupportInquiry` 資料模型記錄學員提問，包含：分類（`SupportInquiryCategory`：帳號問題／課程問題／購買教材問題／其他）、內容（自由文字）、提問學員、狀態（`SupportInquiryStatus`：待處理／已回覆，預設待處理）、回覆內容、回覆管理者、回覆時間、建立時間、可選的關聯課程（`courseInviteId`，記錄此提問是否來自特定課程頁）。
@@ -49,6 +44,8 @@ Topbar SHALL 提供「聯絡管理者」圖示按鈕，點擊後導向個人專�
 #### Scenario: 尚無提問時的空狀態
 - **WHEN** 學員尚未送出過任何提問
 - **THEN** 清單顯示空狀態提示，送出表單仍可正常使用
+
+## ADDED Requirements
 
 ### Requirement: 課程頁聯繫管理者入口
 課程詳情頁 SHALL 於 Share（複製邀請連結）按鈕右邊提供「聯繫管理者」按鈕，顯示條件與 Share 按鈕相同（該課程講師可見）；點擊開啟提問 Dialog，問題分類固定為「課程問題」（不需選擇），送出後記錄與該課程的關聯（`courseInviteId`）。
