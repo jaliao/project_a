@@ -21,7 +21,8 @@
     "profile": "Profile",
     "notifications": "Notifications",
     "matchBoard": "Match board",
-    "admin": "Admin"
+    "admin": "Admin",
+    "help": "Help"
   },
   "auth": {
     "loginWithEmail": "Log in with Email",
@@ -570,7 +571,10 @@
     "storeRequired": "Please select a pickup store",
     "deliveryAddressRequired": "Please enter a shipping address",
     "atLeastOneAddress": "Please add at least one shipping address",
-    "atLeastOneMaterial": "Please order at least 1 material"
+    "atLeastOneMaterial": "Please order at least 1 material",
+    "inquiryCategoryRequired": "Please select a category",
+    "inquiryBodyRequired": "Please enter your question",
+    "inquiryReplyRequired": "Please enter a reply"
   },
   "status": {
     "recruiting": "Recruiting",
@@ -641,5 +645,43 @@
     "recordStatus_not_graduated": "Not graduated",
     "recordStatus_in_progress": "In progress",
     "reportButton": "Report an error"
+  },
+  "supportInquiry": {
+    "categoryAccount": "Account issue",
+    "categoryCourse": "Course issue",
+    "categoryMaterial": "Material purchase issue",
+    "categoryOther": "Other",
+    "statusPending": "Pending",
+    "statusReplied": "Replied",
+    "tabAll": "All",
+    "dialogTitle": "Contact Admin",
+    "categoryLabel": "Category",
+    "categoryPlaceholder": "Select a category",
+    "bodyLabel": "Your question",
+    "bodyPlaceholder": "Describe your question",
+    "cancel": "Cancel",
+    "submitting": "Submitting…",
+    "submit": "Submit",
+    "submitSuccess": "Your question has been submitted",
+    "submitFail": "Submission failed, please try again later",
+    "backToProfile": "Back to profile",
+    "myInquiriesTitle": "My Inquiries",
+    "noInquiries": "No inquiries yet",
+    "createdAtPrefix": "Submitted at: ",
+    "repliedByPrefix": "Replied by: ",
+    "repliedAtPrefix": "Replied at: ",
+    "adminPageTitle": "Inquiry Management",
+    "colSubmitter": "Submitter",
+    "colCategory": "Category",
+    "colContent": "Content",
+    "colCreatedAt": "Submitted at",
+    "colStatus": "Status",
+    "replyLabel": "Reply",
+    "sendReply": "Send reply",
+    "replySuccess": "Reply sent",
+    "replyFail": "Reply failed, please try again later",
+    "reopenButton": "Reopen",
+    "reopenSuccess": "Reopened",
+    "reopenFail": "Action failed, please try again later"
   }
 }

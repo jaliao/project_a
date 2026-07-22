@@ -11,7 +11,7 @@ import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { IconUser, IconBook, IconChalkboard, IconShieldCheck, IconHistory } from '@tabler/icons-react'
+import { IconUser, IconBook, IconChalkboard, IconShieldCheck, IconHistory, IconMessageCircle } from '@tabler/icons-react'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import {
@@ -233,6 +233,19 @@ export default async function UserProfilePage({ params }: Props) {
             courses={allCourses.map((c) => ({ id: c.id, label: c.label }))}
             myFeedbacks={myFeedbacks}
           />
+        </div>
+      )}
+
+      {/* 我的提問（本人可見）：聯繫管理者提問紀錄入口 */}
+      {isOwnPageEarly && (
+        <div className="rounded-lg border p-5">
+          <Link
+            href={`/user/${id}/inquiries`}
+            className="flex items-center gap-2 text-base font-semibold hover:text-primary transition-colors"
+          >
+            <IconMessageCircle className="h-5 w-5 text-primary" />
+            我的提問
+          </Link>
         </div>
       )}
 

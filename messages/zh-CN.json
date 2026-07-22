@@ -22,7 +22,8 @@
     "profile": "个人资料",
     "notifications": "讯息通知",
     "matchBoard": "媒合布告栏",
-    "admin": "后台管理"
+    "admin": "后台管理",
+    "help": "我需要帮助"
   },
   "auth": {
     "loginWithEmail": "以 Email 登入",
@@ -571,7 +572,10 @@
     "storeRequired": "请选取取货门市",
     "deliveryAddressRequired": "请填写收件地址",
     "atLeastOneAddress": "请至少新增一个寄送地址",
-    "atLeastOneMaterial": "请至少申请 1 本教材"
+    "atLeastOneMaterial": "请至少申请 1 本教材",
+    "inquiryCategoryRequired": "请选择问题分类",
+    "inquiryBodyRequired": "请填写问题内容",
+    "inquiryReplyRequired": "请填写回复内容"
   },
   "status": {
     "recruiting": "招生中",
@@ -642,5 +646,43 @@
     "recordStatus_not_graduated": "未结业",
     "recordStatus_in_progress": "进行中",
     "reportButton": "这有误？回报"
+  },
+  "supportInquiry": {
+    "categoryAccount": "帐号问题",
+    "categoryCourse": "课程问题",
+    "categoryMaterial": "购买教材问题",
+    "categoryOther": "其他",
+    "statusPending": "待处理",
+    "statusReplied": "已回复",
+    "tabAll": "全部",
+    "dialogTitle": "联系管理者",
+    "categoryLabel": "问题分类",
+    "categoryPlaceholder": "请选择问题分类",
+    "bodyLabel": "问题内容",
+    "bodyPlaceholder": "请描述您的问题",
+    "cancel": "取消",
+    "submitting": "送出中…",
+    "submit": "送出",
+    "submitSuccess": "提问已送出",
+    "submitFail": "送出失败，请稍后再试",
+    "backToProfile": "返回学员页面",
+    "myInquiriesTitle": "我的提问",
+    "noInquiries": "尚无提问纪录",
+    "createdAtPrefix": "提问时间：",
+    "repliedByPrefix": "回复管理者：",
+    "repliedAtPrefix": "回复时间：",
+    "adminPageTitle": "提问管理",
+    "colSubmitter": "提问人",
+    "colCategory": "分类",
+    "colContent": "内容",
+    "colCreatedAt": "提问时间",
+    "colStatus": "状态",
+    "replyLabel": "回复内容",
+    "sendReply": "送出回复",
+    "replySuccess": "已送出回复",
+    "replyFail": "回复失败，请稍后再试",
+    "reopenButton": "重新标记待处理",
+    "reopenSuccess": "已重新标记为待处理",
+    "reopenFail": "操作失败，请稍后再试"
   }
 }

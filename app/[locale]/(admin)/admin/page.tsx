@@ -13,6 +13,7 @@ import { isSuperadmin } from '@/lib/auth-roles'
 import { getPendingRecommendationCount } from '@/lib/data/recommendation'
 import { getMaterialTodoCount } from '@/lib/data/course-order'
 import { getPendingFeedbackCount } from '@/lib/data/learning-feedback'
+import { getPendingInquiryCount } from '@/lib/data/support-inquiry'
 import {
   IconLayoutDashboard,
   IconSchool,
@@ -23,6 +24,7 @@ import {
   IconUserExclamation,
   IconSettings,
   IconHistory,
+  IconMessageCircle,
 } from '@tabler/icons-react'
 
 export const dynamic = 'force-dynamic'
@@ -75,6 +77,13 @@ const ADMIN_FEATURES = [
     superadminOnly: false,
   },
   {
+    title: '提問管理',
+    description: '查看並回覆學員提問',
+    icon: IconMessageCircle,
+    href: '/admin/support-inquiries',
+    superadminOnly: false,
+  },
+  {
     title: '會員管理',
     description: '查看會員資料與重設密碼',
     icon: IconUsers,
@@ -100,10 +109,11 @@ const ADMIN_FEATURES = [
 export default async function AdminPage() {
   const session = await auth()
   const superadmin = isSuperadmin(session?.user?.roles)
-  const [pendingRecommend, materialTodo, pendingFeedback] = await Promise.all([
+  const [pendingRecommend, materialTodo, pendingFeedback, pendingInquiry] = await Promise.all([
     getPendingRecommendationCount(),
     getMaterialTodoCount(),
     getPendingFeedbackCount(),
+    getPendingInquiryCount(),
   ])
   // 功能卡動態副標題（待辦 > 0 顯示提示，否則預設）
   const features = ADMIN_FEATURES.filter((f) => !f.superadminOnly || superadmin).map((f) => {
@@ -115,6 +125,9 @@ export default async function AdminPage() {
     }
     if (f.href === '/admin/learning-feedback' && pendingFeedback > 0) {
       return { ...f, description: `有 ${pendingFeedback} 筆待處理回饋` }
+    }
+    if (f.href === '/admin/support-inquiries' && pendingInquiry > 0) {
+      return { ...f, description: `有 ${pendingInquiry} 筆待處理提問` }
     }
     return f
   })

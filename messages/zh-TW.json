@@ -21,7 +21,8 @@
     "profile": "個人資料",
     "notifications": "訊息通知",
     "matchBoard": "媒合布告欄",
-    "admin": "後台管理"
+    "admin": "後台管理",
+    "help": "我需要幫助"
   },
   "auth": {
     "loginWithEmail": "以 Email 登入",
@@ -570,7 +571,10 @@
     "storeRequired": "請選取取貨門市",
     "deliveryAddressRequired": "請填寫收件地址",
     "atLeastOneAddress": "請至少新增一個寄送地址",
-    "atLeastOneMaterial": "請至少申請 1 本教材"
+    "atLeastOneMaterial": "請至少申請 1 本教材",
+    "inquiryCategoryRequired": "請選擇問題分類",
+    "inquiryBodyRequired": "請填寫問題內容",
+    "inquiryReplyRequired": "請填寫回覆內容"
   },
   "status": {
     "recruiting": "招生中",
@@ -641,5 +645,43 @@
     "recordStatus_not_graduated": "未結業",
     "recordStatus_in_progress": "進行中",
     "reportButton": "這有誤？回報"
+  },
+  "supportInquiry": {
+    "categoryAccount": "帳號問題",
+    "categoryCourse": "課程問題",
+    "categoryMaterial": "購買教材問題",
+    "categoryOther": "其他",
+    "statusPending": "待處理",
+    "statusReplied": "已回覆",
+    "tabAll": "全部",
+    "dialogTitle": "聯繫管理者",
+    "categoryLabel": "問題分類",
+    "categoryPlaceholder": "請選擇問題分類",
+    "bodyLabel": "問題內容",
+    "bodyPlaceholder": "請描述您的問題",
+    "cancel": "取消",
+    "submitting": "送出中…",
+    "submit": "送出",
+    "submitSuccess": "提問已送出",
+    "submitFail": "送出失敗，請稍後再試",
+    "backToProfile": "返回學員頁面",
+    "myInquiriesTitle": "我的提問",
+    "noInquiries": "尚無提問紀錄",
+    "createdAtPrefix": "提問時間：",
+    "repliedByPrefix": "回覆管理者：",
+    "repliedAtPrefix": "回覆時間：",
+    "adminPageTitle": "提問管理",
+    "colSubmitter": "提問人",
+    "colCategory": "分類",
+    "colContent": "內容",
+    "colCreatedAt": "提問時間",
+    "colStatus": "狀態",
+    "replyLabel": "回覆內容",
+    "sendReply": "送出回覆",
+    "replySuccess": "已送出回覆",
+    "replyFail": "回覆失敗，請稍後再試",
+    "reopenButton": "重新標記待處理",
+    "reopenSuccess": "已重新標記為待處理",
+    "reopenFail": "操作失敗，請稍後再試"
   }
 }

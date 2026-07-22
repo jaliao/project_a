@@ -1,0 +1,46 @@
+/**
+ * ----------------------------------------------
+ * Prisma Schema - 聯繫管理者（學員提問）
+ * 2026-07-22
+ * prisma/schema/support-inquiry.prisma
+ * ----------------------------------------------
+ */
+
+// 提問分類
+enum SupportInquiryCategory {
+  account // 帳號問題
+  course // 課程問題
+  material // 購買教材問題
+  other // 其他
+}
+
+// 提問處理狀態
+enum SupportInquiryStatus {
+  pending // 待處理
+  replied // 已回覆
+}
+
+// 學員聯繫管理者的提問（單一回覆語意：回覆為覆寫，非多輪對話）
+model SupportInquiry {
+  id Int @id @default(autoincrement())
+
+  // 提問學員
+  userId String @db.Uuid
+  user   User   @relation("SupportInquirySubmitter", fields: [userId], references: [id], onDelete: Cascade)
+
+  category SupportInquiryCategory
+  body     String                 @db.Text // 提問內容
+
+  status SupportInquiryStatus @default(pending)
+
+  // 回覆（覆寫式：重新回覆即取代既有內容，不留歷史列）
+  replyBody   String?
+  repliedById String?   @db.Uuid
+  repliedBy   User?     @relation("SupportInquiryReplier", fields: [repliedById], references: [id])
+  repliedAt   DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([status, createdAt])
+  @@map("support_inquiries")
+}

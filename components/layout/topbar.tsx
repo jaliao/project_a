@@ -10,10 +10,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { IconUser, IconBell, IconHome, IconLayoutDashboard, IconClipboardList } from '@tabler/icons-react'
+import { IconUser, IconBell, IconHome, IconLayoutDashboard, IconClipboardList, IconHelpCircle } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { useTranslations } from 'next-intl'
 import { NotificationDrawer } from '@/components/notification/notification-drawer'
+import { ContactAdminDialog } from '@/components/support-inquiry/contact-admin-dialog'
 import { canAccessAdmin } from '@/lib/auth-roles'
 
 interface TopbarProps {
@@ -27,6 +28,7 @@ export function Topbar({ unreadCount = 0, roles, spiritId }: TopbarProps) {
   const tc = useTranslations('common')
   const router = useRouter()
   const [isNotifOpen, setIsNotifOpen] = useState(false)
+  const [isContactAdminOpen, setIsContactAdminOpen] = useState(false)
 
   const isAdmin = canAccessAdmin(roles)
   const homeUrl = spiritId ? `/user/${spiritId.toLowerCase()}` : '/'
@@ -102,6 +104,18 @@ export function Topbar({ unreadCount = 0, roles, spiritId }: TopbarProps) {
           onOpenChange={setIsNotifOpen}
           initialUnreadCount={unreadCount}
         />
+
+        {/* 我需要幫助（聯繫管理者，所有登入會員） */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsContactAdminOpen(true)}
+          title={t('help')}
+        >
+          <IconHelpCircle className="h-5 w-5" />
+        </Button>
+
+        <ContactAdminDialog open={isContactAdminOpen} onOpenChange={setIsContactAdminOpen} />
       </div>
     </header>
   )
