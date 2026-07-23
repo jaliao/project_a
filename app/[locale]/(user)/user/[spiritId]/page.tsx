@@ -11,7 +11,14 @@ import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { IconUser, IconBook, IconChalkboard, IconShieldCheck, IconHistory } from '@tabler/icons-react'
+import {
+  IconUser,
+  IconBook,
+  IconChalkboard,
+  IconShieldCheck,
+  IconMessageCircle,
+  IconChevronRight,
+} from '@tabler/icons-react'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import {
@@ -32,13 +39,12 @@ import { CourseCardGrid } from '@/components/course-session/course-card-grid'
 import { CourseProgressCards } from '@/components/learning/course-progress-cards'
 import { getMyEnrollments, getMyCourseSessions, getMyCompletionCertificates } from '@/lib/data/course-sessions'
 import { getActiveCourses, getAllCourses } from '@/lib/data/course-catalog'
-import { getMyLearningRecords } from '@/app/actions/course-invite'
-import { getMyLearningFeedbacks } from '@/lib/data/learning-feedback'
-import { LearningRecordsPanel, type LearningRecord } from '@/components/learning/feedback-entry'
+import { getMyInquiries } from '@/lib/data/support-inquiry'
+import { ContactAdminCards } from '@/components/support-inquiry/contact-admin-cards'
 import { getAdminSetting, CLASS_MAX_CAPACITY_KEY, CLASS_MAX_CAPACITY_DEFAULT } from '@/lib/data/admin-settings'
 
 export const metadata: Metadata = {
-  title: '學員資料 — 啟動事工',
+  title: '首頁 — 啟動事工',
 }
 
 type Props = {
@@ -79,12 +85,9 @@ export default async function UserProfilePage({ params }: Props) {
   const myCourseSessions = isOwnPageEarly ? await getMyCourseSessions(user.id, 4) : []
   // 查詢結業證明（所有人可見）
   const certificates = await getMyCompletionCertificates(user.id)
-  // 本人：學習紀錄狀態 + 回饋（僅本人可見）
-  const ownLearning = isOwnPageEarly
-    ? await getMyLearningRecords()
-    : { enrollments: [] as Awaited<ReturnType<typeof getMyLearningRecords>>['enrollments'], invites: [] }
-  const myFeedbacks = isOwnPageEarly ? await getMyLearningFeedbacks(user.id) : []
-  // 課程目錄（基本資料區塊進度三卡固定顯示；本人回饋表單亦沿用）
+  // 本人：最近提問（聯繫管理者，僅本人可見）
+  const myRecentInquiries = isOwnPageEarly ? (await getMyInquiries(user.id)).slice(0, 2) : []
+  // 課程目錄（基本資料區塊進度三卡固定顯示）
   const allCourses = await getAllCourses()
   // 可開設課程 id 集合：由本人持有的書籍講師身分推導（admin/superadmin 於精靈內另以 isAdmin 放行）
   const teachableCatalogIds = isOwnPageEarly
@@ -132,7 +135,7 @@ export default async function UserProfilePage({ params }: Props) {
         <ProfileBanner isComplete={isProfileComplete} displayName={displayName} spiritId={id} />
       )}
 
-      <h1 className="text-2xl font-semibold">學員資料</h1>
+      <h1 className="text-2xl font-semibold">首頁</h1>
 
       {/* 基本資料單元 */}
       <div className="rounded-lg border p-5 space-y-4">
@@ -211,28 +214,18 @@ export default async function UserProfilePage({ params }: Props) {
         )}
       </div>
 
-      {/* 學習紀錄（本人可見）：課程結業狀態 + 未結業一鍵回報 */}
+      {/* 聯繫管理者（本人可見）：最近提問卡片 + 填寫新提問 */}
       {isOwnPageEarly && (
         <div className="rounded-lg border p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <IconHistory className="h-5 w-5 text-primary" />
-            <h2 className="text-base font-semibold">學習紀錄</h2>
-          </div>
-          <LearningRecordsPanel
-            records={ownLearning.enrollments.map<LearningRecord>((e) => ({
-              enrollmentId: e.id,
-              courseCatalogId: e.invite.courseCatalog.id,
-              title: e.invite.title,
-              teacherName: getMemberDisplayName(e.invite.createdBy),
-              status: e.graduatedAt
-                ? 'graduated'
-                : e.invite.completedAt
-                  ? 'not_graduated'
-                  : 'in_progress',
-            }))}
-            courses={allCourses.map((c) => ({ id: c.id, label: c.label }))}
-            myFeedbacks={myFeedbacks}
-          />
+          <Link
+            href={`/user/${id}/inquiries`}
+            className="flex items-center gap-2 w-fit hover:opacity-70 transition-opacity"
+          >
+            <IconMessageCircle className="h-5 w-5 text-primary" />
+            <h2 className="text-base font-semibold">聯繫管理者</h2>
+            <IconChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
+          <ContactAdminCards inquiries={myRecentInquiries} />
         </div>
       )}
 

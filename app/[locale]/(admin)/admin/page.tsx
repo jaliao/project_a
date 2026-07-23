@@ -12,7 +12,6 @@ import { auth } from '@/lib/auth'
 import { isSuperadmin } from '@/lib/auth-roles'
 import { getPendingRecommendationCount } from '@/lib/data/recommendation'
 import { getMaterialTodoCount } from '@/lib/data/course-order'
-import { getPendingFeedbackCount } from '@/lib/data/learning-feedback'
 import { getPendingInquiryCount } from '@/lib/data/support-inquiry'
 import {
   IconLayoutDashboard,
@@ -23,7 +22,6 @@ import {
   IconUsers,
   IconUserExclamation,
   IconSettings,
-  IconHistory,
   IconMessageCircle,
 } from '@tabler/icons-react'
 
@@ -70,13 +68,6 @@ const ADMIN_FEATURES = [
     superadminOnly: false,
   },
   {
-    title: '學習歷程回饋',
-    description: '審核學員回饋並補資料',
-    icon: IconHistory,
-    href: '/admin/learning-feedback',
-    superadminOnly: false,
-  },
-  {
     title: '提問管理',
     description: '查看並回覆學員提問',
     icon: IconMessageCircle,
@@ -109,10 +100,9 @@ const ADMIN_FEATURES = [
 export default async function AdminPage() {
   const session = await auth()
   const superadmin = isSuperadmin(session?.user?.roles)
-  const [pendingRecommend, materialTodo, pendingFeedback, pendingInquiry] = await Promise.all([
+  const [pendingRecommend, materialTodo, pendingInquiry] = await Promise.all([
     getPendingRecommendationCount(),
     getMaterialTodoCount(),
-    getPendingFeedbackCount(),
     getPendingInquiryCount(),
   ])
   // 功能卡動態副標題（待辦 > 0 顯示提示，否則預設）
@@ -122,9 +112,6 @@ export default async function AdminPage() {
     }
     if (f.href === '/admin/materials' && materialTodo > 0) {
       return { ...f, description: `${materialTodo} 筆待批價/確認款項/出貨` }
-    }
-    if (f.href === '/admin/learning-feedback' && pendingFeedback > 0) {
-      return { ...f, description: `有 ${pendingFeedback} 筆待處理回饋` }
     }
     if (f.href === '/admin/support-inquiries' && pendingInquiry > 0) {
       return { ...f, description: `有 ${pendingInquiry} 筆待處理提問` }

@@ -216,52 +216,6 @@ export async function cancelCourseSession(
   return { success: true, message: '課程已取消' }
 }
 
-// ── 查詢當前使用者的學習與授課紀錄 ────────────
-export async function getMyLearningRecords() {
-  const session = await auth()
-  if (!session?.user?.id) return { enrollments: [], invites: [] }
-
-  const [enrollments, invites] = await Promise.all([
-    // 已完成學習（學員）
-    prisma.inviteEnrollment.findMany({
-      where: { userId: session.user.id },
-      orderBy: { joinedAt: 'desc' },
-      include: {
-        invite: {
-          select: {
-            id: true,
-            title: true,
-            completedAt: true,
-            courseCatalog: { select: { id: true, label: true } },
-            createdBy: {
-              select: {
-                realName: true,
-                name: true,
-                englishName: true,
-                nickname: true,
-                displayNameMode: true,
-              },
-            },
-          },
-        },
-      },
-    }),
-    // 已完成授課（教師）
-    prisma.courseInvite.findMany({
-      where: { createdById: session.user.id },
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        title: true,
-        courseCatalog: { select: { id: true, label: true } },
-        createdAt: true,
-        _count: { select: { enrollments: true } },
-      },
-    }),
-  ])
-
-  return { enrollments, invites }
-}
 
 // ── 學員申請參加課程（含書籍選擇）────────────────────
 export async function applyToCourse(
