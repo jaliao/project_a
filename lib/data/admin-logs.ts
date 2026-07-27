@@ -15,7 +15,7 @@ export type AdminLogItem = {
   action: string
   actorName: string
   targetName: string
-  inviteTitle: string
+  inviteTitle: string | null
   detail: string | null
   createdAt: Date
 }

@@ -78,6 +78,7 @@ export default async function AdminSupportInquiriesPage({
               key={inq.id}
               id={inq.id}
               userId={inq.userId}
+              isSubmitterDeleted={inq.isSubmitterDeleted}
               submitterName={inq.submitterName}
               submitterSpiritId={inq.submitterSpiritId}
               submitterRealName={inq.submitterRealName}

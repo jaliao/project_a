@@ -283,6 +283,7 @@ export async function unsuspendMember(userId: string): Promise<ActionResponse> {
 
 /**
  * 刪除指定會員（hard delete，需管理者權限）
+ * 刪除與稽核紀錄（AdminActionLog，action: member_delete）同交易完成，任一方失敗即整體回滾
  */
 export async function deleteMember(userId: string): Promise<ActionResponse> {
   const session = await auth()
@@ -292,14 +293,34 @@ export async function deleteMember(userId: string): Promise<ActionResponse> {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true },
+    select: { id: true, realName: true, name: true, email: true },
   })
   if (!user) return { success: false, message: '找不到此會員' }
 
-  // 依序刪除關聯資料
-  await prisma.inviteEnrollment.deleteMany({ where: { userId } })
-  await prisma.courseInvite.deleteMany({ where: { createdById: userId } })
-  await prisma.user.delete({ where: { id: userId } })
+  const actor = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { realName: true, name: true },
+  })
+  const actorName = actor?.realName || actor?.name || session.user.email || '管理者'
+  const targetName = `${user.realName || user.name || '（未填）'}（${user.email}）`
+
+  await prisma.$transaction(async (tx) => {
+    // 依序刪除關聯資料
+    await tx.inviteEnrollment.deleteMany({ where: { userId } })
+    await tx.courseInvite.deleteMany({ where: { createdById: userId } })
+    await tx.user.delete({ where: { id: userId } })
+
+    // 管理操作紀錄（同交易；失敗全部回滾）
+    await tx.adminActionLog.create({
+      data: {
+        action: 'member_delete',
+        actorId: session.user.id,
+        actorName,
+        targetName,
+        detail: '刪除會員',
+      },
+    })
+  })
 
   return { success: true, message: '會員已刪除' }
 }

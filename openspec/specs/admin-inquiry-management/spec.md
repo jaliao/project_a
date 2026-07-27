@@ -6,7 +6,7 @@ TBD - created by archiving change cr-spec-260722-002. Update Purpose after archi
 ## Requirements
 
 ### Requirement: 後台提問管理列表
-後台 SHALL 提供「提問管理」頁面，以分頁籤（待處理／已回覆／全部）呈現學員提問，以卡片形式逐筆呈現：分類、提問人顯示名稱（真實姓名）、提問人性別、提問人所屬單位、內容摘要、狀態 Badge、提問時間；若提問關聯特定課程，顯示該課程名稱。
+後台 SHALL 提供「提問管理」頁面，以分頁籤（待處理／已回覆／全部）呈現學員提問，以卡片形式逐筆呈現：分類、提問人顯示名稱（真實姓名）、提問人性別、提問人所屬單位、內容摘要、狀態 Badge、提問時間；若提問關聯特定課程，顯示該課程名稱。提問人帳號已被刪除時，卡片 SHALL 改以該筆提問建立時寫入的文字快照顯示提問人資訊，並額外顯示「此帳號已被刪除」提示。
 
 #### Scenario: 檢視待處理分頁
 - **WHEN** 管理者開啟提問管理頁面並選擇「待處理」分頁
@@ -21,8 +21,12 @@ TBD - created by archiving change cr-spec-260722-002. Update Purpose after archi
 - **THEN** 顯示對應空狀態提示
 
 #### Scenario: 卡片顯示提問人背景資訊
-- **WHEN** 管理者檢視任一提問卡片
+- **WHEN** 管理者檢視任一提問卡片，且提問人帳號仍存在
 - **THEN** 卡片顯示提問人的顯示名稱、真實姓名、性別、所屬單位
+
+#### Scenario: 提問人帳號已刪除時以快照顯示並加註提示
+- **WHEN** 管理者檢視某提問卡片，且該筆提問的提問人帳號已被刪除（`userId` 為 `null`）
+- **THEN** 卡片改以建立當下寫入的文字快照顯示提問人顯示名稱、真實姓名、性別、所屬單位，並顯示「此帳號已被刪除」提示
 
 #### Scenario: 卡片顯示課程關聯
 - **WHEN** 某筆提問的 `courseInviteId` 有值
@@ -55,7 +59,7 @@ TBD - created by archiving change cr-spec-260722-002. Update Purpose after archi
 - **THEN** `status` 更新為 `pending`，`replyBody`／`repliedById`／`repliedAt` 維持原值不變
 
 ### Requirement: 提問卡片查看更多資訊連結
-後台提問卡片 SHALL 提供「查看會員」連結（另開分頁至該會員之後台會員詳情頁），若提問關聯特定課程，SHALL 另提供「查看課程」連結（另開分頁至該課程詳情頁）。
+後台提問卡片 SHALL 提供「查看會員」連結（另開分頁至該會員之後台會員詳情頁），若提問關聯特定課程，SHALL 另提供「查看課程」連結（另開分頁至該課程詳情頁）。提問人帳號已被刪除時（`userId` 為 `null`），卡片 SHALL NOT 顯示「查看會員」連結。
 
 #### Scenario: 點擊查看會員連結
 - **WHEN** 管理者點擊提問卡片的「查看會員」連結
@@ -68,6 +72,10 @@ TBD - created by archiving change cr-spec-260722-002. Update Purpose after archi
 #### Scenario: 無課程關聯時不顯示查看課程連結
 - **WHEN** 提問的 `courseInviteId` 為 `null`
 - **THEN** 卡片不顯示「查看課程」連結
+
+#### Scenario: 提問人帳號已刪除時不顯示查看會員連結
+- **WHEN** 管理者檢視某提問卡片，且該筆提問的提問人帳號已被刪除（`userId` 為 `null`）
+- **THEN** 卡片不顯示「查看會員」連結
 
 ### Requirement: 會員詳情頁提問分頁
 後台會員詳情頁 SHALL 新增「會員提問」分頁，顯示該會員送出過的全部提問，與提問管理列表使用相同的提問卡片元件呈現。

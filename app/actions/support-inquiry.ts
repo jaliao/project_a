@@ -14,6 +14,8 @@ import { auth } from '@/lib/auth'
 import { canAccessAdmin } from '@/lib/auth-roles'
 import { createInquirySchema, replyInquirySchema } from '@/lib/schemas/support-inquiry'
 import { createNotification } from '@/app/actions/notification'
+import { getMemberDisplayName } from '@/lib/utils/member-display'
+import { genderLabel, churchLabel } from '@/lib/data/support-inquiry'
 
 type ActionResponse = {
   success: boolean
@@ -49,12 +51,33 @@ export async function submitInquiry(formData: Record<string, unknown>): Promise<
   }
   const d = parsed.data
 
+  const submitter = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      spiritId: true,
+      realName: true,
+      englishName: true,
+      nickname: true,
+      displayNameMode: true,
+      gender: true,
+      churchType: true,
+      churchOther: true,
+      church: { select: { name: true } },
+    },
+  })
+  if (!submitter) return { success: false, message: '找不到會員資料' }
+
   await prisma.supportInquiry.create({
     data: {
       userId: session.user.id,
       category: d.category,
       body: d.body.trim(),
       courseInviteId: d.courseInviteId ?? null,
+      submitterName: getMemberDisplayName(submitter),
+      submitterSpiritId: submitter.spiritId,
+      submitterRealName: submitter.realName,
+      submitterGenderLabel: genderLabel(submitter.gender),
+      submitterChurchLabel: churchLabel(submitter),
     },
   })
 
@@ -92,11 +115,13 @@ export async function replyInquiry(
     },
   })
 
-  await createNotification(
-    inquiry.userId,
-    '您的提問已獲得回覆',
-    '管理者已回覆您的提問，請至「我的提問」查看詳情。'
-  )
+  if (inquiry.userId) {
+    await createNotification(
+      inquiry.userId,
+      '您的提問已獲得回覆',
+      '管理者已回覆您的提問，請至「我的提問」查看詳情。'
+    )
+  }
 
   revalidateAdmin()
   revalidateUserInquiries()

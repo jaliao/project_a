@@ -24,9 +24,16 @@ enum SupportInquiryStatus {
 model SupportInquiry {
   id Int @id @default(autoincrement())
 
-  // 提問學員
-  userId String @db.Uuid
-  user   User   @relation("SupportInquirySubmitter", fields: [userId], references: [id], onDelete: Cascade)
+  // 提問學員（帳號被刪除時設為 null，提問本體與回覆保留，改以下方快照欄位顯示）
+  userId String? @db.Uuid
+  user   User?   @relation("SupportInquirySubmitter", fields: [userId], references: [id], onDelete: SetNull)
+
+  // 提問人快照（建立當下寫入，帳號被刪除後仍可完整顯示；既有資料無此欄位故皆為可選）
+  submitterName        String? // 顯示名稱
+  submitterSpiritId    String? // 啟動編號
+  submitterRealName    String? // 真實姓名
+  submitterGenderLabel String? // 性別文字（男／女／未設定）
+  submitterChurchLabel String? // 所屬單位文字
 
   category SupportInquiryCategory
   body     String                 @db.Text // 提問內容

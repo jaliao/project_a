@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.149（2026-07-20）
+> 自動產生，版本 0.1.155（2026-07-27）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -288,17 +288,17 @@ churchOther String?（churchType = other 時的自填文字）
 ### AdminActionLog
 ```
 id           Int（主鍵，autoincrement）
-action       String（動作代碼，值域見 config/admin-log-action.ts：enrollment_add | enrollment_remove）
+action       String（動作代碼，值域見 config/admin-log-action.ts：enrollment_add | enrollment_remove | member_delete）
 actorId      String?（操作管理者 UUID，onDelete: SetNull）
 targetUserId String?（對象學員 UUID，onDelete: SetNull）
 inviteId     Int?（班級，onDelete: SetNull）
 actorName    String（快照：操作者姓名）
 targetName   String（快照：對象姓名＋email）
-inviteTitle  String（快照：#班級編號＋課程名稱）
-detail       String?（摘要，如「補登結業 2025/09/01」）
+inviteTitle  String?（快照：#班級編號＋課程名稱；無課程情境操作如 member_delete 為 null）
+detail       String?（摘要，如「補登結業 2025/09/01」「刪除會員」）
 createdAt    DateTime
 ```
-管理操作紀錄（本階段僅班級學員新增/移除）。FK 全 optional＋SetNull＋文字快照：對象會員/班級日後被刪除時紀錄仍完整可讀；寫入與對應操作同一交易（失敗回滾不留紀錄）。
+管理操作紀錄（涵蓋班級學員新增/移除、會員刪除）。FK 全 optional＋SetNull＋文字快照：對象會員/班級日後被刪除時紀錄仍完整可讀；寫入與對應操作同一交易（失敗回滾不留紀錄）。
 
 ### AdminSetting
 ```
@@ -396,6 +396,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260727-001` — 會員刪除稽核紀錄＋提問留存（修正兩次「聯繫管理者提問消失」誤報事故的根本盲點）：`deleteMember`（`app/actions/admin.ts`）改用 `$transaction` 包住既有刪除步驟，並同交易寫入 `AdminActionLog`（新增 `member_delete` 動作代碼，見 `config/admin-log-action.ts`）；`AdminActionLog.inviteTitle` 改 `String?` 以支援無課程情境操作。`SupportInquiry.userId` 改 `String?`＋`onDelete: SetNull`（原 `Cascade`），新增提問人快照欄位（`submitterName`/`submitterSpiritId`/`submitterRealName`/`submitterGenderLabel`/`submitterChurchLabel`，`submitInquiry` 建立當下寫入），確保提問人帳號日後被刪除時提問與回覆內容仍完整保留；`getInquiryList` 回傳 `isSubmitterDeleted`，後台提問卡片於帳號已刪除時以快照顯示並加註「此帳號已被刪除」、隱藏「查看會員」連結；`replyInquiry` 通知呼叫加上 `userId` 存在判斷。migration `support_inquiry_retain_on_delete`（皆為可選欄位，additive、正式資料相容）。spec：`admin-member-management`／`admin-operation-log`／`contact-admin`／`admin-inquiry-management` MODIFIED
 - `cr-spec-260720-005` — Makefile 正式環境命名統一為 prd（比照 kua-event）：`PRISMA_GCP_DB`→`PRISMA_PRD_DB`、`tunnel-gcp`→`tunnel-prd`、`tunnel-deploy-gcp`→`tunnel-deploy-prd`、`prisma-gcp-status/deploy/seed`→`prisma-prd-status/deploy/seed`，新增 `prisma-prd-studio`；`.env`／`.env.example` 的 `DATABASE_URL_GCP`→`DATABASE_URL_PRD`（`GCP_POSTGRES_*` 三個組成變數維持原名，描述雲端供應商本身）。devops-toolkit 下實際腳本檔名不變（超出本 repo 範圍）；`vps3` 系列不受影響。純建置工具調整，無 migration、無應用程式碼變更。無 spec capability。
 - `cr-spec-260717-001` — 課程頁新增學員改為僅限既有會員（安全性強化）：`addStudentToInvite` 移除 `createLoginableMember` 建帳號分支，查無對應會員時直接拒絕（`errors.identifier`），不建立任何帳號；`lib/data/invite-students.ts` 新增 `findMemberByIdentifier`（含 `@` 視為 Email、否則視為 `spiritId`，皆精確比對）取代 `findMemberByEmail`；`lookupMemberByEmail` 更名 `lookupMemberByIdentifier`；`AddStudentDialog` 移除姓名欄與臨時密碼一次性顯示畫面，查找欄位改「Email 或啟動編號」單一輸入，查無會員時送出按鈕停用。無 migration。spec：`admin-enrollment-management` MODIFIED
 - `cr-spec-260720-002` — 後台會員詳情顯示招生中課程：`getMemberDetail`（`lib/data/members.ts`）學習紀錄 `where` 由 `invite.startedAt not null` 改為 `status: 'approved'`（含招生中，排除 pending）；授課紀錄移除 `startedAt` 過濾（含招生中與已取消）；兩者排序改 `startedAt: { sort: 'desc', nulls: 'first' }`（招生中在前）。無 migration、UI 零修改（卡片欄位既有）。spec：`admin-member-management` MODIFIED

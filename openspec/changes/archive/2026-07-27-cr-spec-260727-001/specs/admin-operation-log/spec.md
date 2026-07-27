@@ -1,9 +1,4 @@
-# admin-operation-log Specification
-
-## Purpose
-管理操作紀錄：記錄班級學員新增／移除、會員刪除等後台操作，快照保存確保可追溯；班級學員異動查詢由課程頁「課程操作 LOG」區塊承擔（見 course-session-detail）。
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: 管理操作紀錄寫入
 

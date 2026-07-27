@@ -617,6 +617,8 @@
     "submit": "送出",
     "submitSuccess": "提问已送出",
     "submitFail": "送出失败，请稍后再试",
+    "deploymentMismatch": "页面已更新，请重新整理后再试一次",
+    "refreshPage": "重新整理",
     "backToProfile": "返回学员页面",
     "myInquiriesTitle": "联系管理者",
     "noInquiries": "尚无提问纪录",
@@ -639,6 +641,7 @@
     "reopenSuccess": "已重新标记为待处理",
     "reopenFail": "操作失败，请稍后再试",
     "memberInquiriesTab": "会员提问",
-    "memberInquiriesEmpty": "该会员尚无提问纪录"
+    "memberInquiriesEmpty": "该会员尚无提问纪录",
+    "submitterDeleted": "此帐号已被删除"
   }
 }

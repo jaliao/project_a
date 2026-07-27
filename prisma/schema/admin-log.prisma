@@ -6,13 +6,13 @@
  * ----------------------------------------------
  */
 
-// 管理操作紀錄（本階段範圍：班級學員新增/移除）
+// 管理操作紀錄（涵蓋班級學員新增/移除、會員刪除）
 // FK 皆 optional + SetNull：對象會員/班級日後被刪除時紀錄仍保留，
 // 內容以文字快照欄（actorName/targetName/inviteTitle）呈現，不依賴 join
 model AdminActionLog {
   id Int @id @default(autoincrement())
 
-  action String // 動作代碼（值域見 config/admin-log-action.ts：enrollment_add / enrollment_remove）
+  action String // 動作代碼（值域見 config/admin-log-action.ts：enrollment_add / enrollment_remove / member_delete）
 
   actorId String? @db.Uuid
   actor   User?   @relation("AdminLogActor", fields: [actorId], references: [id], onDelete: SetNull)
@@ -26,7 +26,7 @@ model AdminActionLog {
   // 文字快照
   actorName   String // 操作管理者姓名
   targetName  String // 對象學員姓名（含 email）
-  inviteTitle String // 班級編號＋課程名稱
+  inviteTitle String? // 班級編號＋課程名稱（無課程情境之操作，如會員刪除，為 null）
   detail      String? // 摘要（如「補登結業 2025/09/01」「移除已結業報名」）
 
   createdAt DateTime @default(now())

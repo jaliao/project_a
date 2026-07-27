@@ -25,12 +25,12 @@ type DisplayUser = {
 }
 
 // 性別文字（比照 admin/members/[id]/page.tsx 既有行內邏輯）
-function genderLabel(gender: Gender): string {
+export function genderLabel(gender: Gender): string {
   return gender === 'male' ? '男' : gender === 'female' ? '女' : '未設定'
 }
 
 // 所屬單位文字（比照 admin/members/[id]/page.tsx 既有行內邏輯）
-function churchLabel(u: {
+export function churchLabel(u: {
   churchType: ChurchType
   church: { name: string } | null
   churchOther: string | null
@@ -100,7 +100,8 @@ export async function getMyInquiries(userId: string): Promise<MyInquiryItem[]> {
 // ── 後台：提問管理列表 ──
 export type InquiryListItem = {
   id: number
-  userId: string
+  userId: string | null
+  isSubmitterDeleted: boolean
   submitterName: string
   submitterSpiritId: string | null
   submitterRealName: string | null
@@ -133,6 +134,11 @@ export async function getInquiryList(opts: {
     select: {
       id: true,
       userId: true,
+      submitterName: true,
+      submitterSpiritId: true,
+      submitterRealName: true,
+      submitterGenderLabel: true,
+      submitterChurchLabel: true,
       category: true,
       body: true,
       status: true,
@@ -149,11 +155,12 @@ export async function getInquiryList(opts: {
   return rows.map((r) => ({
     id: r.id,
     userId: r.userId,
-    submitterName: getMemberDisplayName(r.user as DisplayUser),
-    submitterSpiritId: r.user.spiritId,
-    submitterRealName: r.user.realName,
-    submitterGenderLabel: genderLabel(r.user.gender),
-    submitterChurchLabel: churchLabel(r.user),
+    isSubmitterDeleted: r.user === null,
+    submitterName: r.user ? getMemberDisplayName(r.user as DisplayUser) : (r.submitterName ?? '（未填）'),
+    submitterSpiritId: r.user ? r.user.spiritId : r.submitterSpiritId,
+    submitterRealName: r.user ? r.user.realName : r.submitterRealName,
+    submitterGenderLabel: r.user ? genderLabel(r.user.gender) : (r.submitterGenderLabel ?? '未設定'),
+    submitterChurchLabel: r.user ? churchLabel(r.user) : (r.submitterChurchLabel ?? '—'),
     category: r.category,
     body: r.body,
     status: r.status,

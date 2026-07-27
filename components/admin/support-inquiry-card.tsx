@@ -30,6 +30,7 @@ function fmtDateTime(d: Date | null): string {
 export function SupportInquiryCard({
   id,
   userId,
+  isSubmitterDeleted,
   submitterName,
   submitterSpiritId,
   submitterRealName,
@@ -46,7 +47,8 @@ export function SupportInquiryCard({
   courseTitle,
 }: {
   id: number
-  userId: string
+  userId: string | null
+  isSubmitterDeleted: boolean
   submitterName: string
   submitterSpiritId: string | null
   submitterRealName: string | null
@@ -117,6 +119,11 @@ export function SupportInquiryCard({
               <span className="text-xs text-muted-foreground">
                 {submitterGenderLabel} · {submitterChurchLabel}
               </span>
+              {isSubmitterDeleted && (
+                <Badge variant="outline" className="text-muted-foreground">
+                  {t('submitterDeleted')}
+                </Badge>
+              )}
             </div>
             <p className="text-xs text-muted-foreground truncate">
               {categoryLabel} · {body}
@@ -136,15 +143,17 @@ export function SupportInquiryCard({
       {expanded && (
         <div className="bg-muted/20 border-t px-4 py-4 space-y-3" onClick={(e) => e.stopPropagation()}>
           <div className="flex flex-wrap items-center gap-3 text-xs">
-            <Link
-              href={`/admin/members/${userId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
-            >
-              {t('viewMemberLink')}
-              <IconExternalLink className="h-3.5 w-3.5" />
-            </Link>
+            {!isSubmitterDeleted && userId && (
+              <Link
+                href={`/admin/members/${userId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
+              >
+                {t('viewMemberLink')}
+                <IconExternalLink className="h-3.5 w-3.5" />
+              </Link>
+            )}
             {courseInviteId && courseTitle && (
               <Link
                 href={`/course/${courseInviteId}`}

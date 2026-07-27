@@ -616,6 +616,8 @@
     "submit": "送出",
     "submitSuccess": "提問已送出",
     "submitFail": "送出失敗，請稍後再試",
+    "deploymentMismatch": "頁面已更新，請重新整理後再試一次",
+    "refreshPage": "重新整理",
     "backToProfile": "返回學員頁面",
     "myInquiriesTitle": "聯繫管理者",
     "noInquiries": "尚無提問紀錄",
@@ -638,6 +640,7 @@
     "reopenSuccess": "已重新標記為待處理",
     "reopenFail": "操作失敗，請稍後再試",
     "memberInquiriesTab": "會員提問",
-    "memberInquiriesEmpty": "該會員尚無提問紀錄"
+    "memberInquiriesEmpty": "該會員尚無提問紀錄",
+    "submitterDeleted": "此帳號已被刪除"
   }
 }

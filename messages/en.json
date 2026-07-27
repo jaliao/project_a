@@ -616,6 +616,8 @@
     "submit": "Submit",
     "submitSuccess": "Your question has been submitted",
     "submitFail": "Submission failed, please try again later",
+    "deploymentMismatch": "This page has been updated. Please refresh and try again.",
+    "refreshPage": "Refresh",
     "backToProfile": "Back to profile",
     "myInquiriesTitle": "Contact Admin",
     "noInquiries": "No inquiries yet",
@@ -638,6 +640,7 @@
     "reopenSuccess": "Reopened",
     "reopenFail": "Action failed, please try again later",
     "memberInquiriesTab": "Inquiries",
-    "memberInquiriesEmpty": "This member has no inquiries yet"
+    "memberInquiriesEmpty": "This member has no inquiries yet",
+    "submitterDeleted": "Account deleted"
   }
 }

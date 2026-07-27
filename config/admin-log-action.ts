@@ -11,6 +11,7 @@ export const ADMIN_LOG_ACTIONS = {
   enrollment_remove: { label: '移除學員' },
   material_finalize: { label: '完成教材申請' },
   material_reopen: { label: '重新開放教材申請' },
+  member_delete: { label: '刪除會員' },
 } as const
 
 export type AdminLogAction = keyof typeof ADMIN_LOG_ACTIONS
