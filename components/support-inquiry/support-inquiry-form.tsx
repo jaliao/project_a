@@ -10,7 +10,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
@@ -25,6 +25,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/ui/field-error'
 import { submitInquiry } from '@/app/actions/support-inquiry'
+import { isDeploymentMismatchError } from '@/lib/utils/server-action-error'
 
 type Category = 'account' | 'course' | 'material' | 'other'
 
@@ -38,6 +39,11 @@ type Props = {
   onCancel?: () => void
 }
 
+// 課程頁 Dialog 依課程區分草稿；個人頁卡片與我的提問頁為同一類一般提問，共用草稿
+function getDraftStorageKey(courseInviteId?: number) {
+  return courseInviteId ? `supportInquiryDraft:course:${courseInviteId}` : 'supportInquiryDraft:general'
+}
+
 export function SupportInquiryForm({ fixedCategory, courseInviteId, onSuccess, onCancel }: Props) {
   const t = useTranslations('supportInquiry')
   const router = useRouter()
@@ -45,6 +51,34 @@ export function SupportInquiryForm({ fixedCategory, courseInviteId, onSuccess, o
   const [body, setBody] = useState('')
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string[]>>({})
+
+  const draftKey = getDraftStorageKey(courseInviteId)
+
+  // 掛載時還原草稿（例如因部署版本不符提示而重新整理頁面後）
+  useEffect(() => {
+    const raw = sessionStorage.getItem(draftKey)
+    if (!raw) return
+    try {
+      const draft = JSON.parse(raw) as { category?: Category | ''; body?: string }
+      if (draft.body) setBody(draft.body)
+      if (!fixedCategory && draft.category) setCategory(draft.category)
+    } catch {
+      sessionStorage.removeItem(draftKey)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKey])
+
+  function saveDraft(nextCategory: Category | '', nextBody: string) {
+    if (!nextBody && !nextCategory) {
+      sessionStorage.removeItem(draftKey)
+      return
+    }
+    sessionStorage.setItem(draftKey, JSON.stringify({ category: nextCategory, body: nextBody }))
+  }
+
+  function clearDraft() {
+    sessionStorage.removeItem(draftKey)
+  }
 
   const CATEGORY_OPTIONS: { value: Category; label: string }[] = [
     { value: 'account', label: t('categoryAccount') },
@@ -67,18 +101,31 @@ export function SupportInquiryForm({ fixedCategory, courseInviteId, onSuccess, o
   async function handleSubmit() {
     setLoading(true)
     setErrors({})
-    const result = await submitInquiry({ category, body, courseInviteId })
-    setLoading(false)
-    if (result.success) {
-      toast.success(t('submitSuccess'))
-      setBody('')
-      if (!fixedCategory) setCategory('')
-      router.refresh()
-      onSuccess?.()
-    } else if (result.errors) {
-      setErrors(result.errors)
-    } else {
-      toast.error(result.message ?? t('submitFail'))
+    try {
+      const result = await submitInquiry({ category, body, courseInviteId })
+      if (result.success) {
+        toast.success(t('submitSuccess'))
+        clearDraft()
+        setBody('')
+        if (!fixedCategory) setCategory('')
+        router.refresh()
+        onSuccess?.()
+      } else if (result.errors) {
+        setErrors(result.errors)
+      } else {
+        toast.error(result.message ?? t('submitFail'))
+      }
+    } catch (error) {
+      if (isDeploymentMismatchError(error)) {
+        toast.error(t('deploymentMismatch'), {
+          duration: Infinity,
+          action: { label: t('refreshPage'), onClick: () => window.location.reload() },
+        })
+      } else {
+        toast.error(t('submitFail'))
+      }
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -93,7 +140,14 @@ export function SupportInquiryForm({ fixedCategory, courseInviteId, onSuccess, o
           </p>
         ) : (
           <>
-            <Select value={category} onValueChange={(v) => setCategory(v as Category)} disabled={loading}>
+            <Select
+              value={category}
+              onValueChange={(v) => {
+                setCategory(v as Category)
+                saveDraft(v as Category, body)
+              }}
+              disabled={loading}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder={t('categoryPlaceholder')} />
               </SelectTrigger>
@@ -114,7 +168,10 @@ export function SupportInquiryForm({ fixedCategory, courseInviteId, onSuccess, o
         <label className="text-sm font-medium">{t('bodyLabel')}</label>
         <Textarea
           value={body}
-          onChange={(e) => setBody(e.target.value)}
+          onChange={(e) => {
+            setBody(e.target.value)
+            saveDraft(category, e.target.value)
+          }}
           placeholder={t('bodyPlaceholder')}
           rows={5}
           disabled={loading}

@@ -1,0 +1,32 @@
+# prod-db-backup Specification
+
+## Purpose
+TBD - created by archiving change cr-spec-260724-002. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: 定期自動備份
+系統 SHALL 於正式環境主機每 6 小時自動執行一次資料庫邏輯備份（`pg_dump`），輸出壓縮檔（`.sql.gz`）並以執行時間戳記命名，儲存於主機本機磁碟。
+
+#### Scenario: 排程觸發備份
+- **WHEN** 距離上次備份滿 6 小時
+- **THEN** 系統自動執行一次 `pg_dump` 備份，產生對應時間戳記的 `.sql.gz` 檔案
+
+#### Scenario: 備份指令失敗
+- **WHEN** `pg_dump` 執行過程中發生錯誤（如資料庫暫時無法連線）
+- **THEN** 備份腳本以非零狀態結束且不產生不完整的備份檔案，失敗紀錄可透過 `journalctl` 查詢
+
+### Requirement: 備份保留政策
+系統 SHALL 依保留政策自動清理備份檔案，避免磁碟空間無限成長：距今 2 天內的備份保留每次（6 小時粒度）；2 天至 14 天內的備份僅保留每日最早一份；超過 14 天的備份 SHALL 被刪除。
+
+#### Scenario: 保留窗口內的備份不被清除
+- **WHEN** 某備份檔案的建立時間在最近 2 天內
+- **THEN** 清理程序不會刪除該檔案
+
+#### Scenario: 超過保留期限的備份被清除
+- **WHEN** 某備份檔案的建立時間已超過 14 天
+- **THEN** 清理程序 SHALL 刪除該檔案
+
+#### Scenario: 中期窗口僅保留每日一份
+- **WHEN** 某備份檔案的建立時間介於 2 天至 14 天前，且同一日曆日已有較早的備份被保留
+- **THEN** 清理程序 SHALL 刪除同一日曆日內較晚產生的備份，僅保留最早一份
