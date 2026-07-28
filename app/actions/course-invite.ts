@@ -515,6 +515,42 @@ export async function graduateCourse(
   return { success: true, message: '課程已結業' }
 }
 
+// ── 結業回退（已結業退回進行中）──────────────────────────
+// 該課建立者或管理者可操作；清除課程結業標記與評分心得、清除該課全部學員的結業標記
+// 不寄信、不建立通知、不寫操作紀錄（比照 reopenRecruitment 的既有慣例）
+export async function revertGraduation(inviteId: number): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  const invite = await prisma.courseInvite.findUnique({
+    where: { id: inviteId },
+    select: { id: true, createdById: true, completedAt: true, cancelledAt: true },
+  })
+  if (!invite) return { success: false, message: '找不到課程' }
+  if (invite.createdById !== session.user.id && !canAccessAdmin(session.user.roles)) {
+    return { success: false, message: '無權限' }
+  }
+  if (!invite.completedAt || invite.cancelledAt) {
+    return { success: false, message: '僅已結業的課程可退回進行中' }
+  }
+
+  await prisma.$transaction([
+    prisma.courseInvite.update({
+      where: { id: inviteId },
+      data: { completedAt: null, gradRating: null, gradTestimony: null },
+    }),
+    prisma.inviteEnrollment.updateMany({
+      where: { inviteId },
+      data: { graduatedAt: null, nonGraduateReason: null },
+    }),
+  ])
+
+  const { revalidatePath } = await import('next/cache')
+  revalidatePath(`/course/${inviteId}`)
+
+  return { success: true, message: '已退回進行中' }
+}
+
 // ── 講師資格回饋（由課程建立者對已結業學員填寫，可重複編輯）──
 export async function upsertInstructorFeedback(
   input: { enrollmentId: number; recommended: boolean; note?: string }

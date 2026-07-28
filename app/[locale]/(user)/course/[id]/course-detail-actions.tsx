@@ -30,7 +30,7 @@ import { cn } from '@/lib/utils'
 import { CancelCourseDialog } from '@/components/course-session/cancel-course-dialog'
 import { MaterialOrderDialog } from '@/components/course-session/material-order-dialog'
 import type { BookItem } from '@/lib/data/material-items'
-import { startCourseSession } from '@/app/actions/course-invite'
+import { startCourseSession, revertGraduation } from '@/app/actions/course-invite'
 import { reopenRecruitment } from '@/app/actions/course-session'
 import {
   confirmReceipt,
@@ -220,6 +220,9 @@ export function CourseDetailActions({
   // 重新招募：確認視窗與處理中狀態
   const [reopenOpen, setReopenOpen] = useState(false)
   const [reopenLoading, setReopenLoading] = useState(false)
+  // 結業回退：確認視窗與處理中狀態
+  const [revertOpen, setRevertOpen] = useState(false)
+  const [revertLoading, setRevertLoading] = useState(false)
   const [receiptPending, startReceiptTransition] = useTransition()
   const [paymentPending, startPaymentTransition] = useTransition()
   const [cancelPending, startCancelTransition] = useTransition()
@@ -282,6 +285,19 @@ export function CourseDetailActions({
     }
   }
 
+  async function handleRevert() {
+    setRevertLoading(true)
+    const result = await revertGraduation(inviteId)
+    setRevertLoading(false)
+    setRevertOpen(false)
+    if (result.success) {
+      toast.success(result.message ?? ta('revertSuccessFallback'))
+      router.refresh()
+    } else {
+      toast.error(result.message ?? t('genericFailFallback'))
+    }
+  }
+
   function handleFinalize() {
     startFinalizeTransition(async () => {
       const result = await finalizeMaterialOrders(inviteId)
@@ -320,7 +336,8 @@ export function CourseDetailActions({
     }
   }
 
-  if (!canAct) return null
+  // 已取消：不顯示任何作業區塊；已結業：仍需顯示「結業回退作業」，其餘區塊各自以 isCompleted 排除
+  if (isCancelled) return null
 
   const { total, applied, remaining, canApplyMore } = progress
   const isFinalized = materialFinalizedAt != null
@@ -573,7 +590,7 @@ export function CourseDetailActions({
       )}
 
       {/* 進行中：結業作業（講師與管理者） */}
-      {isStarted && (
+      {isStarted && !isCompleted && (
         <Section title={ta('sectionGraduate')} icon={<IconCertificate className="h-5 w-5 text-primary" />}>
           {hasApprovedStudents ? (
             <Button asChild>
@@ -588,7 +605,7 @@ export function CourseDetailActions({
       )}
 
       {/* 進行中：重新招募作業（講師與管理者） */}
-      {isStarted && (
+      {isStarted && !isCompleted && (
         <Section title={ta('sectionReopen')} icon={<IconRefresh className="h-5 w-5 text-primary" />}>
           <p className="text-sm text-muted-foreground">
             {ta('reopenDesc')}
@@ -622,12 +639,49 @@ export function CourseDetailActions({
         </Section>
       )}
 
-      {/* ── 區塊三：取消上課作業（講師與管理者） ────────────────── */}
-      <Section title={ta('sectionCancel')} icon={<IconBan className="h-5 w-5 text-primary" />}>
-        <Button variant="destructive" onClick={() => setCancelOpen(true)}>
-          {ta('cancelButton')}
-        </Button>
-      </Section>
+      {/* 已結業：結業回退作業（講師與管理者） */}
+      {isCompleted && (
+        <Section title={ta('sectionRevert')} icon={<IconRefresh className="h-5 w-5 text-primary" />}>
+          <p className="text-sm text-muted-foreground">
+            {ta('revertDesc')}
+          </p>
+          <Button variant="outline" onClick={() => setRevertOpen(true)}>
+            {ta('revertButton')}
+          </Button>
+
+          {/* 結業回退確認視窗 */}
+          <Dialog open={revertOpen} onOpenChange={setRevertOpen}>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle>{ta('revertConfirmTitle')}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-2 text-sm">
+                <p>{ta('revertConfirmLine1')}</p>
+                <p className="text-muted-foreground">
+                  {ta('revertConfirmLine2')}
+                </p>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setRevertOpen(false)} disabled={revertLoading}>
+                  {ta('cancel')}
+                </Button>
+                <Button onClick={handleRevert} disabled={revertLoading}>
+                  {revertLoading ? ta('processing') : ta('confirmReopen')}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </Section>
+      )}
+
+      {/* ── 區塊三：取消上課作業（講師與管理者，已結業課程不顯示，原經上方 return null 排除） ────────────────── */}
+      {!isCompleted && (
+        <Section title={ta('sectionCancel')} icon={<IconBan className="h-5 w-5 text-primary" />}>
+          <Button variant="destructive" onClick={() => setCancelOpen(true)}>
+            {ta('cancelButton')}
+          </Button>
+        </Section>
+      )}
 
       {/* 取消授課 Dialog */}
       <CancelCourseDialog

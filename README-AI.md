@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.159（2026-07-28）
+> 自動產生，版本 0.1.160（2026-07-29）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -396,6 +396,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260728-006` — 結業回退作業（已結業退回進行中）：新增 `revertGraduation`（`app/actions/course-invite.ts`，比照 `graduateCourse`/`reopenRecruitment` 的權限模式，該課建立者或管理者可操作）於單一交易內清除 `CourseInvite.completedAt`／`gradRating`／`gradTestimony` 與該課全部 `InviteEnrollment.graduatedAt`／`nonGraduateReason`；不寄信、不建立通知、不寫 LOG。`course-detail-actions.tsx` 新增「結業回退作業」區塊（`isCompleted` 時顯示，確認視窗明示已寄結業信無法收回、重新結業將重複寄信）。**同時修正既有 bug**：元件原有 `if (!canAct) return null`（`canAct = !isCancelled && !isCompleted`）會在已結業時整個元件連同新區塊一併隱藏，改為僅 `isCancelled` 時提早 return，並為「結業作業」「重新招募作業」「取消上課作業」三區塊個別補上 `!isCompleted` 排除條件以維持原有行為不變。「進行中退回招生中」（既有 `reopenRecruitment`）本次未變動、迴歸測試通過。無 migration。spec：`cancel-course-session` MODIFIED
 - `cr-spec-260728-005` — 證書製作頁分頁加頁碼跳頁：新增 shadcn `Pagination` 元件（`components/ui/pagination.tsx`，`PaginationLink` 由純 `<a>` 改為 `next/link` `Link` 以維持既有 client 導航模式）；`app/[locale]/(admin)/admin/certificates/page.tsx` 新增 `getPaginationRange(current, total)` 頁碼視窗 helper（總頁數 ≤7 全列出，超過則頭尾＋當前頁前後各 1 頁＋省略號），分頁區塊由上一頁/下一頁改為頁碼按鈕，保留上一頁/下一頁箭頭。純 UI，資料層 `getCertificateProductionList` 未變動，無 migration。範圍僅限證書製作頁。spec：`admin-certificate-production` MODIFIED
 - `cr-spec-260728-002` — 教材申請收件地址加郵遞區號提示：`material-order-dialog.tsx` 單一地址（382-390 行）與多地址（`MultiAddressRow`，726-731 行）收件地址欄位下方，新增 `FormDescription` 提示文字（i18n key `course.material.deliveryAddressHint`，`messages/zh-TW.json`/`en.json`/`zh-CN.json`）；純文案，不加驗證。無 migration。spec：`course-order`／`material-multi-address-shipping` MODIFIED
 - `cr-spec-260728-004` — 新增學員人數上限檢查：`resolveMaxCapacity(isAdmin)` 自 `app/actions/course-session.ts` 移至 `lib/data/admin-settings.ts` 並匯出（開課／編輯課程與新增學員共用）；`addStudentToInvite`（`app/actions/invite-students.ts`）新增已核准人數（`prisma.inviteEnrollment.count`）與 `class_max_capacity` 上限比對，非管理者（含該課講師）達上限時拒絕並回傳 `message`；`AddStudentDialog`（`components/admin/invite-student-cells.tsx`）新增 `approvedCount`/`capacity`/`isAdmin` props，非管理者達上限時提前停用送出並提示；`ApprovedStudentsSection`／課程頁 `page.tsx` 一併傳入。管理者不受限制（沿用既有硬頂 999）。無 migration。spec：`admin-enrollment-management` MODIFIED
