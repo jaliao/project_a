@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.155（2026-07-27）
+> 自動產生，版本 0.1.156（2026-07-28）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -396,6 +396,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260728-001` — 招生中課程狀態標籤底色改黃：`CourseStatusBadge`（`components/course-session/course-status-badge.tsx`）`STATUS_COLORS.recruiting` 由 `bg-gray-100 text-gray-600` 改為 `bg-yellow-100 text-yellow-700`，與進行中（藍）／已結業（綠）／已取消（紅）並列時提升辨識度。純樣式調整，無 migration。spec：`course-status` MODIFIED（新增需求）
 - `cr-spec-260727-001` — 會員刪除稽核紀錄＋提問留存（修正兩次「聯繫管理者提問消失」誤報事故的根本盲點）：`deleteMember`（`app/actions/admin.ts`）改用 `$transaction` 包住既有刪除步驟，並同交易寫入 `AdminActionLog`（新增 `member_delete` 動作代碼，見 `config/admin-log-action.ts`）；`AdminActionLog.inviteTitle` 改 `String?` 以支援無課程情境操作。`SupportInquiry.userId` 改 `String?`＋`onDelete: SetNull`（原 `Cascade`），新增提問人快照欄位（`submitterName`/`submitterSpiritId`/`submitterRealName`/`submitterGenderLabel`/`submitterChurchLabel`，`submitInquiry` 建立當下寫入），確保提問人帳號日後被刪除時提問與回覆內容仍完整保留；`getInquiryList` 回傳 `isSubmitterDeleted`，後台提問卡片於帳號已刪除時以快照顯示並加註「此帳號已被刪除」、隱藏「查看會員」連結；`replyInquiry` 通知呼叫加上 `userId` 存在判斷。migration `support_inquiry_retain_on_delete`（皆為可選欄位，additive、正式資料相容）。spec：`admin-member-management`／`admin-operation-log`／`contact-admin`／`admin-inquiry-management` MODIFIED
 - `cr-spec-260720-005` — Makefile 正式環境命名統一為 prd（比照 kua-event）：`PRISMA_GCP_DB`→`PRISMA_PRD_DB`、`tunnel-gcp`→`tunnel-prd`、`tunnel-deploy-gcp`→`tunnel-deploy-prd`、`prisma-gcp-status/deploy/seed`→`prisma-prd-status/deploy/seed`，新增 `prisma-prd-studio`；`.env`／`.env.example` 的 `DATABASE_URL_GCP`→`DATABASE_URL_PRD`（`GCP_POSTGRES_*` 三個組成變數維持原名，描述雲端供應商本身）。devops-toolkit 下實際腳本檔名不變（超出本 repo 範圍）；`vps3` 系列不受影響。純建置工具調整，無 migration、無應用程式碼變更。無 spec capability。
 - `cr-spec-260717-001` — 課程頁新增學員改為僅限既有會員（安全性強化）：`addStudentToInvite` 移除 `createLoginableMember` 建帳號分支，查無對應會員時直接拒絕（`errors.identifier`），不建立任何帳號；`lib/data/invite-students.ts` 新增 `findMemberByIdentifier`（含 `@` 視為 Email、否則視為 `spiritId`，皆精確比對）取代 `findMemberByEmail`；`lookupMemberByEmail` 更名 `lookupMemberByIdentifier`；`AddStudentDialog` 移除姓名欄與臨時密碼一次性顯示畫面，查找欄位改「Email 或啟動編號」單一輸入，查無會員時送出按鈕停用。無 migration。spec：`admin-enrollment-management` MODIFIED
