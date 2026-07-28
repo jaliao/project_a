@@ -383,6 +383,8 @@ export default async function CourseDetailPage({
         inviteId={courseSession.id}
         inviteCompleted={isCompleted}
         canManage={(isInstructor || isAdmin) === true}
+        isAdmin={isAdmin === true}
+        capacity={classMaxCapacity}
         students={courseSession.approvedEnrollments.map((enrollment) => ({
           enrollmentId: enrollment.id,
           displayName: getMemberDisplayName(enrollment.user),

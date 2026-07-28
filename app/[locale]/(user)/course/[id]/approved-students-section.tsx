@@ -47,11 +47,15 @@ export function ApprovedStudentsSection({
   inviteId,
   inviteCompleted,
   canManage,
+  isAdmin,
+  capacity,
   students,
 }: {
   inviteId: number
   inviteCompleted: boolean
   canManage: boolean
+  isAdmin: boolean
+  capacity: number
   students: ApprovedStudentItem[]
 }) {
   const t = useTranslations()
@@ -73,6 +77,9 @@ export function ApprovedStudentsSection({
               inviteId={inviteId}
               inviteCompleted={inviteCompleted}
               autoOpen={false}
+              approvedCount={students.length}
+              capacity={capacity}
+              isAdmin={isAdmin}
               triggerVariant="outline"
               triggerSize="sm"
             />

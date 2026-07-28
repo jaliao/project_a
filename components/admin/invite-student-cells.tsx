@@ -56,15 +56,22 @@ export function AddStudentDialog({
   inviteId,
   inviteCompleted,
   autoOpen,
+  approvedCount,
+  capacity,
+  isAdmin,
   triggerVariant = 'default',
   triggerSize = 'default',
 }: {
   inviteId: number
   inviteCompleted: boolean
   autoOpen: boolean
+  approvedCount: number
+  capacity: number
+  isAdmin: boolean
   triggerVariant?: 'default' | 'outline'
   triggerSize?: 'default' | 'sm'
 }) {
+  const atCapacity = !isAdmin && approvedCount >= capacity
   const router = useRouter()
   const [open, setOpen] = useState(autoOpen)
   const [isPending, startTransition] = useTransition()
@@ -143,6 +150,11 @@ export function AddStudentDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
+          {atCapacity && (
+            <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              已達班級人數上限（{capacity} 人），如需超過請洽管理者
+            </p>
+          )}
           <div className="space-y-1.5">
             <Label htmlFor="student-identifier">Email 或啟動編號</Label>
             <Input
@@ -196,7 +208,7 @@ export function AddStudentDialog({
             <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isPending}>
               取消
             </Button>
-            <Button onClick={handleSubmit} disabled={isPending || lookup.kind !== 'existing'}>
+            <Button onClick={handleSubmit} disabled={isPending || atCapacity || lookup.kind !== 'existing'}>
               {isPending ? '處理中…' : '新增'}
             </Button>
           </div>

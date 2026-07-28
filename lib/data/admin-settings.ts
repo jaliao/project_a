@@ -39,6 +39,12 @@ export async function getAdminSetting(key: string, defaultValue: string): Promis
   return setting?.value ?? defaultValue
 }
 
+// 依系統設定 class_max_capacity 與操作者身分推導有效人數上限（管理者放寬至硬頂）
+export async function resolveMaxCapacity(isAdmin: boolean): Promise<{ capacity: number; effective: number }> {
+  const capacity = parseInt(await getAdminSetting(CLASS_MAX_CAPACITY_KEY, CLASS_MAX_CAPACITY_DEFAULT), 10) || 7
+  return { capacity, effective: isAdmin ? CLASS_MAX_CAPACITY_HARD_CAP : capacity }
+}
+
 export async function upsertAdminSetting(key: string, value: string): Promise<void> {
   await prisma.adminSetting.upsert({
     where: { key },

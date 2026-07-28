@@ -1,9 +1,4 @@
-# admin-enrollment-management Specification
-
-## Purpose
-班級學員管理：管理者或該課講師於課程頁對班級新增／移除報名，修復名冊問題（遺漏學員、重複帳號搬課、同名拆帳、換班）。
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: 新增學員（僅限既有會員）
 
@@ -51,41 +46,3 @@
 #### Scenario: UI 已核准人數達上限時提前停用（非管理者）
 - **WHEN** 該課講師（非管理者）開啟新增學員對話框，班級已核准人數已達「班級人數上限」設定值
 - **THEN** 對話框顯示已達上限提示，送出按鈕為停用狀態，即使輸入查得到既有會員亦不可送出
-
-
-### Requirement: 補登結業
-
-新增學員勾選「已結業」時，系統 SHALL 將該報名 `graduatedAt` 與 `joinedAt` 皆設為指定結業日（避免入班晚於結業）；若該班級 `completedAt` 為空，SHALL 於同一交易補為同日，且 UI SHALL 於勾選時提示「班級未結業將一併標記結業」。未勾選時 `joinedAt` 為當下時間、SHALL NOT 變更班級狀態。
-
-#### Scenario: 對未結業班級補登結業
-- **WHEN** 管理者新增學員並勾選已結業（結業日 D），且該班 `completedAt` 為空
-- **THEN** 報名 `graduatedAt=D`、`joinedAt=D`，班級 `completedAt=D`
-
-#### Scenario: 對已結業班級補登結業
-- **WHEN** 管理者對 `completedAt` 已有值的班級新增已結業學員（結業日 D）
-- **THEN** 報名 `graduatedAt=D`、`joinedAt=D`，班級 `completedAt` 維持不變
-
-#### Scenario: 未勾選已結業
-- **WHEN** 管理者新增學員未勾選已結業
-- **THEN** 報名無 `graduatedAt`、`joinedAt` 為當下時間，班級狀態不變
-
-
-### Requirement: 移除學員
-
-**管理者或該課講師** SHALL 能自班級移除學員（實體刪除該筆 `InviteEnrollment`）。該報名有教材寄送項目（`MaterialShipmentItem`）關聯時，系統 SHALL 拒絕並提示先處理教材。移除已結業報名時，UI SHALL 先以醒目確認對話框警示影響（證書待製作、師生階層、擋修資格），操作者確認後方執行。刪除與操作紀錄寫入 SHALL 於單一交易內完成。系統 SHALL NOT 主動刪除既有 `CertificateProduction` 紀錄。
-
-#### Scenario: 移除一般報名
-- **WHEN** 管理者或該課講師移除某未結業、無教材寄送關聯的報名
-- **THEN** 該筆報名被刪除，學員自該班清單消失
-
-#### Scenario: 有教材寄送關聯擋下
-- **WHEN** 移除的報名已有教材寄送項目
-- **THEN** 系統拒絕並提示先至教材管理處理，不刪除任何資料
-
-#### Scenario: 移除已結業報名需確認
-- **WHEN** 操作者點選移除已結業的報名
-- **THEN** 先顯示影響警示之確認對話框，確認後才刪除
-
-#### Scenario: 無權限者無法移除
-- **WHEN** 非管理者且非該課建立者呼叫移除學員 Server Action
-- **THEN** 回傳 `{ success: false, message: '無權限' }`

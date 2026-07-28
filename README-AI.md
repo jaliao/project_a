@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.156（2026-07-28）
+> 自動產生，版本 0.1.157（2026-07-28）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -396,6 +396,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260728-004` — 新增學員人數上限檢查：`resolveMaxCapacity(isAdmin)` 自 `app/actions/course-session.ts` 移至 `lib/data/admin-settings.ts` 並匯出（開課／編輯課程與新增學員共用）；`addStudentToInvite`（`app/actions/invite-students.ts`）新增已核准人數（`prisma.inviteEnrollment.count`）與 `class_max_capacity` 上限比對，非管理者（含該課講師）達上限時拒絕並回傳 `message`；`AddStudentDialog`（`components/admin/invite-student-cells.tsx`）新增 `approvedCount`/`capacity`/`isAdmin` props，非管理者達上限時提前停用送出並提示；`ApprovedStudentsSection`／課程頁 `page.tsx` 一併傳入。管理者不受限制（沿用既有硬頂 999）。無 migration。spec：`admin-enrollment-management` MODIFIED
 - `cr-spec-260728-001` — 招生中課程狀態標籤底色改黃：`CourseStatusBadge`（`components/course-session/course-status-badge.tsx`）`STATUS_COLORS.recruiting` 由 `bg-gray-100 text-gray-600` 改為 `bg-yellow-100 text-yellow-700`，與進行中（藍）／已結業（綠）／已取消（紅）並列時提升辨識度。純樣式調整，無 migration。spec：`course-status` MODIFIED（新增需求）
 - `cr-spec-260727-001` — 會員刪除稽核紀錄＋提問留存（修正兩次「聯繫管理者提問消失」誤報事故的根本盲點）：`deleteMember`（`app/actions/admin.ts`）改用 `$transaction` 包住既有刪除步驟，並同交易寫入 `AdminActionLog`（新增 `member_delete` 動作代碼，見 `config/admin-log-action.ts`）；`AdminActionLog.inviteTitle` 改 `String?` 以支援無課程情境操作。`SupportInquiry.userId` 改 `String?`＋`onDelete: SetNull`（原 `Cascade`），新增提問人快照欄位（`submitterName`/`submitterSpiritId`/`submitterRealName`/`submitterGenderLabel`/`submitterChurchLabel`，`submitInquiry` 建立當下寫入），確保提問人帳號日後被刪除時提問與回覆內容仍完整保留；`getInquiryList` 回傳 `isSubmitterDeleted`，後台提問卡片於帳號已刪除時以快照顯示並加註「此帳號已被刪除」、隱藏「查看會員」連結；`replyInquiry` 通知呼叫加上 `userId` 存在判斷。migration `support_inquiry_retain_on_delete`（皆為可選欄位，additive、正式資料相容）。spec：`admin-member-management`／`admin-operation-log`／`contact-admin`／`admin-inquiry-management` MODIFIED
 - `cr-spec-260720-005` — Makefile 正式環境命名統一為 prd（比照 kua-event）：`PRISMA_GCP_DB`→`PRISMA_PRD_DB`、`tunnel-gcp`→`tunnel-prd`、`tunnel-deploy-gcp`→`tunnel-deploy-prd`、`prisma-gcp-status/deploy/seed`→`prisma-prd-status/deploy/seed`，新增 `prisma-prd-studio`；`.env`／`.env.example` 的 `DATABASE_URL_GCP`→`DATABASE_URL_PRD`（`GCP_POSTGRES_*` 三個組成變數維持原名，描述雲端供應商本身）。devops-toolkit 下實際腳本檔名不變（超出本 repo 範圍）；`vps3` 系列不受影響。純建置工具調整，無 migration、無應用程式碼變更。無 spec capability。

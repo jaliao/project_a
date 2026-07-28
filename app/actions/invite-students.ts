@@ -19,6 +19,7 @@ import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { canAccessAdmin } from '@/lib/auth-roles'
 import { findMemberByIdentifier, type MemberByIdentifier } from '@/lib/data/invite-students'
+import { resolveMaxCapacity } from '@/lib/data/admin-settings'
 
 type ActionResponse<T = undefined> = {
   success: boolean
@@ -120,6 +121,16 @@ export async function addStudentToInvite(input: {
     return { success: false, message: '無權限' }
   }
   if (invite.cancelledAt) return { success: false, message: '已取消的班級無法新增學員' }
+
+  // 人數上限：非管理者受 class_max_capacity 限制，管理者不受限
+  const isAdmin = canAccessAdmin(session.user.roles)
+  const { effective } = await resolveMaxCapacity(isAdmin)
+  const approvedCount = await prisma.inviteEnrollment.count({
+    where: { inviteId, status: 'approved' },
+  })
+  if (!isAdmin && approvedCount >= effective) {
+    return { success: false, message: `已達班級人數上限（${effective} 人），如需超過請洽管理者` }
+  }
 
   // 僅限既有會員：查無時直接拒絕，不建立任何新帳號
   const existingUser = await findMemberByIdentifier(identifier)
