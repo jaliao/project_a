@@ -57,7 +57,7 @@ TBD - created by archiving change cr-spec-260628-003. Update Purpose after archi
 - **THEN** 僅顯示已完成的證書
 
 ### Requirement: 人名搜尋與分頁
-清單 SHALL 支援以人名搜尋，比對範圍 SHALL 涵蓋**真實姓名（中文 `realName`、英文 `englishName`，英文不分大小寫）**、顯示名稱與啟動編號，並 SHALL 以每頁最多 30 筆分頁；搜尋與狀態篩選 SHALL 一併作用於分頁結果。
+清單 SHALL 支援以人名搜尋，比對範圍 SHALL 涵蓋**真實姓名（中文 `realName`、英文 `englishName`，英文不分大小寫）**、顯示名稱與啟動編號，並 SHALL 以每頁最多 30 筆分頁；搜尋與狀態篩選 SHALL 一併作用於分頁結果。分頁導覽 SHALL 提供**頁碼按鈕**供管理者直接跳至任一頁（不限於上一頁／下一頁逐頁點擊），頁數較多時 SHALL 以省略號收合中段頁碼，並保留上一頁／下一頁箭頭。
 
 #### Scenario: 以真實姓名搜尋
 - **WHEN** 管理者輸入某學員中文真實姓名或英文名稱的關鍵字（即使與其暱稱不同）
@@ -70,6 +70,22 @@ TBD - created by archiving change cr-spec-260628-003. Update Purpose after archi
 #### Scenario: 每頁 30 筆
 - **WHEN** 符合條件的證書超過 30 筆
 - **THEN** 每頁最多顯示 30 筆並提供翻頁
+
+#### Scenario: 點擊頁碼直接跳頁
+- **WHEN** 符合條件的證書超過 30 筆（共多頁），管理者點擊某個非目前頁的頁碼按鈕（例如目前在第 1 頁，點擊頁碼「5」）
+- **THEN** 頁面導航至該頁碼對應的結果，不需逐頁點擊上一頁／下一頁；目前狀態篩選與搜尋關鍵字維持不變
+
+#### Scenario: 總頁數不多時列出全部頁碼
+- **WHEN** 總頁數為 7 頁以內
+- **THEN** 頁碼按鈕列出全部頁碼，不顯示省略號
+
+#### Scenario: 總頁數多時以省略號收合
+- **WHEN** 總頁數超過 7 頁，且目前頁與頭尾頁距離超過視窗範圍
+- **THEN** 頁碼按鈕僅顯示第 1 頁、最後一頁、目前頁前後各 1 頁，其餘以單一省略號標示，不逐頁列出
+
+#### Scenario: 目前頁碼有明顯標示
+- **WHEN** 管理者檢視分頁按鈕列
+- **THEN** 目前所在頁碼的按鈕樣式與其他頁碼不同，可清楚辨識目前在第幾頁
 
 ### Requirement: 證書備註
 系統 SHALL 允許管理者對每張證書填寫/編輯備註（內部用途），以 `(userId, courseCatalogId)` upsert 至 `CertificateProduction.note`；空白 SHALL 存為 null。備註 SHALL 於清單該列顯示與編輯。

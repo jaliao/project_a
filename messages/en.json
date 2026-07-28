@@ -206,6 +206,7 @@
       "deliveryMethodLabel": "Pickup method *",
       "storeLabel": "Pickup store *",
       "deliveryAddressLabel": "Shipping address *",
+      "deliveryAddressHint": "Please provide a complete address including the postal code",
       "addAddress": "Add shipping address",
       "submitting": "Submitting…",
       "updateSubmit": "Update order",

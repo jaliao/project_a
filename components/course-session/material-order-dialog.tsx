@@ -28,6 +28,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -384,6 +385,7 @@ export function MaterialOrderDialog({
                     <FormItem>
                       <FormLabel>{t('deliveryAddressLabel')}</FormLabel>
                       <FormControl><Input {...field} disabled={isReadonly} /></FormControl>
+                      <FormDescription>{t('deliveryAddressHint')}</FormDescription>
                       <FieldError message={fieldState.error?.message} />
                     </FormItem>
                   )} />
@@ -726,6 +728,7 @@ function MultiAddressRow({
         <FormField control={form.control} name={`shipments.${index}.deliveryAddress`} render={({ field, fieldState }) => (
           <FormItem>
             <FormControl><Input {...field} placeholder={t('deliveryAddressLabel')} disabled={disabled} /></FormControl>
+            <FormDescription>{t('deliveryAddressHint')}</FormDescription>
             <FieldError message={fieldState.error?.message} />
           </FormItem>
         )} />

@@ -206,6 +206,7 @@
       "deliveryMethodLabel": "取貨方式 *",
       "storeLabel": "取貨門市 *",
       "deliveryAddressLabel": "收件地址 *",
+      "deliveryAddressHint": "請填寫完整地址並包含郵遞區號",
       "addAddress": "新增寄送地址",
       "submitting": "送出中…",
       "updateSubmit": "更新申請",

@@ -12,13 +12,20 @@
 export const dynamic = 'force-dynamic'
 
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { IconChevronLeft, IconChevronRight, IconGenderAgender, IconGenderFemale, IconGenderMale } from '@tabler/icons-react'
+import { IconGenderAgender, IconGenderFemale, IconGenderMale } from '@tabler/icons-react'
 import { getCertificateProductionList, type CertificateStatus } from '@/lib/data/certificate'
 import { CertificateFilter } from '@/components/admin/certificate-filter'
 import { CertificateProduceButton, CertificateNoteCell } from '@/components/admin/certificate-cells'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+} from '@/components/ui/pagination'
 
 export const metadata: Metadata = {
   title: '證書製作 — 啟動事工',
@@ -26,6 +33,23 @@ export const metadata: Metadata = {
 
 function fmtDate(d: Date): string {
   return new Date(d).toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' })
+}
+
+// 頁碼視窗：總頁數 <=7 全列出；否則顯示頭尾＋目前頁前後各 1 頁，其餘以單一 'ellipsis' 收合
+function getPaginationRange(current: number, total: number): (number | 'ellipsis')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const pages = [...new Set([1, total, current - 1, current, current + 1])].filter(
+    (p) => p >= 1 && p <= total
+  )
+  pages.sort((a, b) => a - b)
+  const result: (number | 'ellipsis')[] = []
+  let prev = 0
+  for (const p of pages) {
+    if (prev && p - prev > 1) result.push('ellipsis')
+    result.push(p)
+    prev = p
+  }
+  return result
 }
 
 // 性別以 icon 呈現於姓名旁（未指定用中性 icon、淡色）
@@ -135,38 +159,41 @@ export default async function AdminCertificatesPage({
           </div>
 
           {result.totalPages > 1 && (
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
               <span className="text-sm text-muted-foreground">
                 第 {result.page} / {result.totalPages} 頁・共 {result.total} 筆
               </span>
-              <div className="flex gap-2">
-                {result.page > 1 ? (
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={qs(result.page - 1)}>
-                      <IconChevronLeft className="h-4 w-4" />
-                      上一頁
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button variant="outline" size="sm" disabled>
-                    <IconChevronLeft className="h-4 w-4" />
-                    上一頁
-                  </Button>
-                )}
-                {result.page < result.totalPages ? (
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={qs(result.page + 1)}>
-                      下一頁
-                      <IconChevronRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button variant="outline" size="sm" disabled>
-                    下一頁
-                    <IconChevronRight className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
+              <Pagination className="mx-0 w-auto">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href={qs(Math.max(1, result.page - 1))}
+                      aria-disabled={result.page <= 1}
+                      className={result.page <= 1 ? 'pointer-events-none opacity-50' : undefined}
+                    />
+                  </PaginationItem>
+                  {getPaginationRange(result.page, result.totalPages).map((p, i) =>
+                    p === 'ellipsis' ? (
+                      <PaginationItem key={`ellipsis-${i}`}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    ) : (
+                      <PaginationItem key={p}>
+                        <PaginationLink href={qs(p)} isActive={p === result.page}>
+                          {p}
+                        </PaginationLink>
+                      </PaginationItem>
+                    )
+                  )}
+                  <PaginationItem>
+                    <PaginationNext
+                      href={qs(Math.min(result.totalPages, result.page + 1))}
+                      aria-disabled={result.page >= result.totalPages}
+                      className={result.page >= result.totalPages ? 'pointer-events-none opacity-50' : undefined}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
             </div>
           )}
         </>
