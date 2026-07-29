@@ -415,6 +415,7 @@ export async function cancelCourseOrder(orderId: number): Promise<ActionResponse
   await prisma.courseOrder.delete({ where: { id: orderId } })
 
   revalidatePath(`/course/${order.courseInvite.id}`)
+  revalidatePath('/admin/materials')
   return { success: true, message: '已取消申請，可重新申請教材' }
 }
 

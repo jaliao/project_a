@@ -74,6 +74,7 @@ export type OrderBookItem = { studentName: string; bookName: string; version: st
 export type CourseOrderWithInvite = CourseOrderDetail & {
   inviteId: number | null
   inviteTitle: string | null
+  inviteCancelledAt: Date | null
   instructorName: string | null
   instructorEmail: string | null
   shipMode: string
@@ -171,6 +172,7 @@ export async function getAllCourseOrdersWithInvite(): Promise<
         select: {
           id: true,
           title: true,
+          cancelledAt: true,
           createdBy: { select: { realName: true, name: true, email: true } },
         },
       },
@@ -217,6 +219,7 @@ export async function getAllCourseOrdersWithInvite(): Promise<
       shipments: order.shipments,
       inviteId: invite?.id ?? null,
       inviteTitle: invite?.title ?? null,
+      inviteCancelledAt: invite?.cancelledAt ?? null,
       instructorName:
         invite?.createdBy.realName ?? invite?.createdBy.name ?? null,
       instructorEmail: invite?.createdBy.email ?? null,

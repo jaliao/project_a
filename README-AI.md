@@ -1,6 +1,6 @@
 # README-AI.md
 
-> 自動產生，版本 0.1.160（2026-07-29）
+> 自動產生，版本 0.1.161（2026-07-29）
 > 供 AI 輔助開發使用，反映當前系統狀態。
 
 ---
@@ -396,6 +396,7 @@ createdAt       DateTime
 ## 7. 當前挑戰與任務
 
 ### 已完成
+- `cr-spec-260728-003` — 課程取消後仍可取消卡住的教材申請：`course-detail-actions.tsx` 移除元件層級 `if (isCancelled) return null`，逐區塊補 `!isCancelled` 排除（開始上課／結業／重新招募／取消上課）；「教材申請作業」區塊已取消時顯示精簡版（僅訂單清單＋取消申請按鈕），略過需求統計／申請進度統計／申請作業三單元。**實作時發現並修正一個既有設計遺漏**：取消申請按鈕原條件 `canAct`（`= !isCancelled && !isCompleted`）會讓已取消課程恆不顯示取消按鈕，已改為 `!isCompleted`。後台教材管理頁（`/admin/materials`）新增：課程已取消時顯示紅色標記、尚未回填匯款訂單新增「取消申請」按鈕（沿用同一 `cancelCourseOrder`，`revalidatePath` 補上 `/admin/materials`）；`getAllCourseOrdersWithInvite` 新增回傳 `inviteCancelledAt`。無 migration。spec：`material-order-cancel` MODIFIED
 - `cr-spec-260728-006` — 結業回退作業（已結業退回進行中）：新增 `revertGraduation`（`app/actions/course-invite.ts`，比照 `graduateCourse`/`reopenRecruitment` 的權限模式，該課建立者或管理者可操作）於單一交易內清除 `CourseInvite.completedAt`／`gradRating`／`gradTestimony` 與該課全部 `InviteEnrollment.graduatedAt`／`nonGraduateReason`；不寄信、不建立通知、不寫 LOG。`course-detail-actions.tsx` 新增「結業回退作業」區塊（`isCompleted` 時顯示，確認視窗明示已寄結業信無法收回、重新結業將重複寄信）。**同時修正既有 bug**：元件原有 `if (!canAct) return null`（`canAct = !isCancelled && !isCompleted`）會在已結業時整個元件連同新區塊一併隱藏，改為僅 `isCancelled` 時提早 return，並為「結業作業」「重新招募作業」「取消上課作業」三區塊個別補上 `!isCompleted` 排除條件以維持原有行為不變。「進行中退回招生中」（既有 `reopenRecruitment`）本次未變動、迴歸測試通過。無 migration。spec：`cancel-course-session` MODIFIED
 - `cr-spec-260728-005` — 證書製作頁分頁加頁碼跳頁：新增 shadcn `Pagination` 元件（`components/ui/pagination.tsx`，`PaginationLink` 由純 `<a>` 改為 `next/link` `Link` 以維持既有 client 導航模式）；`app/[locale]/(admin)/admin/certificates/page.tsx` 新增 `getPaginationRange(current, total)` 頁碼視窗 helper（總頁數 ≤7 全列出，超過則頭尾＋當前頁前後各 1 頁＋省略號），分頁區塊由上一頁/下一頁改為頁碼按鈕，保留上一頁/下一頁箭頭。純 UI，資料層 `getCertificateProductionList` 未變動，無 migration。範圍僅限證書製作頁。spec：`admin-certificate-production` MODIFIED
 - `cr-spec-260728-002` — 教材申請收件地址加郵遞區號提示：`material-order-dialog.tsx` 單一地址（382-390 行）與多地址（`MultiAddressRow`，726-731 行）收件地址欄位下方，新增 `FormDescription` 提示文字（i18n key `course.material.deliveryAddressHint`，`messages/zh-TW.json`/`en.json`/`zh-CN.json`）；純文案，不加驗證。無 migration。spec：`course-order`／`material-multi-address-shipping` MODIFIED

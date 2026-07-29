@@ -1,8 +1,5 @@
-# material-order-cancel Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change cr-spec-260630-005. Update Purpose after archive.
-## Requirements
 ### Requirement: 匯款前可取消教材訂單
 老師或管理者 SHALL 能於教材訂單「尚未回填匯款」（`paymentReportedAt` 為 null，即狀態為待批價或待付款）時取消該訂單，**不論其所屬課程目前是否已取消**。取消 SHALL 驗證操作者為該課程（訂單所屬 `courseInvite`）之建立者或管理者，並 SHALL 刪除該 `CourseOrder`（連帶刪除其寄送批次 `MaterialShipment` 與書本項目 `MaterialShipmentItem`），使該批書本回到「未指派」以供重新申請（課程未取消時）。已回填匯款（`paymentReportedAt` 非 null）之訂單 SHALL NOT 可由老師或管理者取消，無論課程是否已取消。取消為破壞性操作，前端 SHALL 於執行前要求確認。
 
@@ -49,4 +46,3 @@ TBD - created by archiving change cr-spec-260630-005. Update Purpose after archi
 #### Scenario: 後台未取消課程之訂單不受影響
 - **WHEN** 訂單所屬課程尚未取消
 - **THEN** 後台教材管理頁不顯示「已取消」標記，動作欄維持既有行為（不提供「取消申請」按鈕）
-

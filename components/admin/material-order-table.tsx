@@ -14,7 +14,7 @@ import { toast } from 'sonner'
 import { IconChevronDown, IconChevronRight, IconPrinter } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { confirmShipment, confirmShipmentBatch, confirmMaterialPayment, updateMaterialAddressNote } from '@/app/actions/course-order'
+import { confirmShipment, confirmShipmentBatch, confirmMaterialPayment, updateMaterialAddressNote, cancelCourseOrder } from '@/app/actions/course-order'
 import type { CourseOrderWithInvite } from '@/lib/data/course-order'
 import { getMaterialOrderStatus, getMaterialOrderStatusKey } from '@/lib/utils/material-order-status'
 import { MaterialQuoteDialog } from './material-quote-dialog'
@@ -303,6 +303,21 @@ export function MaterialOrderTable({ orders, defaultRemittanceAccount }: Materia
     })
   }
 
+  function handleCancelOrder(orderId: number) {
+    if (!window.confirm('確定取消此教材申請？此操作無法復原。')) return
+    setLoadingId(orderId)
+    startTransition(async () => {
+      const result = await cancelCourseOrder(orderId)
+      setLoadingId(null)
+      if (result.success) {
+        toast.success(result.message ?? '已取消申請')
+        router.refresh()
+      } else {
+        toast.error(result.message ?? '操作失敗，請稍後再試')
+      }
+    })
+  }
+
   function handleConfirmShipment(orderId: number) {
     setLoadingId(orderId)
     startTransition(async () => {
@@ -375,7 +390,14 @@ export function MaterialOrderTable({ orders, defaultRemittanceAccount }: Materia
                   )}
                 </td>
                 <td className="px-4 py-3 font-medium">#{order.id}</td>
-                <td className="px-4 py-3">{order.inviteTitle ?? '—'}</td>
+                <td className="px-4 py-3">
+                  {order.inviteTitle ?? '—'}
+                  {order.inviteCancelledAt && (
+                    <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                      已取消
+                    </span>
+                  )}
+                </td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {order.inviteId ? `#${order.inviteId}` : '—'}
                 </td>
@@ -414,15 +436,34 @@ export function MaterialOrderTable({ orders, defaultRemittanceAccount }: Materia
                   {(() => {
                     const key = getMaterialOrderStatusKey(order)
                     const busy = pending && loadingId === order.id
+                    const cancelBtn = order.inviteCancelledAt && !order.paymentReportedAt && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-red-600 hover:text-red-700"
+                        disabled={busy}
+                        onClick={() => handleCancelOrder(order.id)}
+                      >
+                        {busy ? '處理中...' : '取消申請'}
+                      </Button>
+                    )
                     if (key === 'pending_quote') {
                       return (
-                        <Button size="sm" variant="outline" onClick={() => setQuoteOrderId(order.id)}>
-                          批價
-                        </Button>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Button size="sm" variant="outline" onClick={() => setQuoteOrderId(order.id)}>
+                            批價
+                          </Button>
+                          {cancelBtn}
+                        </div>
                       )
                     }
                     if (key === 'pending_payment') {
-                      return <span className="text-xs text-muted-foreground">等待老師付款</span>
+                      return (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs text-muted-foreground">等待老師付款</span>
+                          {cancelBtn}
+                        </div>
+                      )
                     }
                     if (key === 'pending_confirm') {
                       return (

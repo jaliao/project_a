@@ -228,8 +228,6 @@ export function CourseDetailActions({
   const [cancelPending, startCancelTransition] = useTransition()
   const [last5Map, setLast5Map] = useState<Record<number, string>>({})
 
-  const canAct = !isCancelled && !isCompleted
-
   function openNewOrder() {
     setMaterialOpen(true)
   }
@@ -336,9 +334,8 @@ export function CourseDetailActions({
     }
   }
 
-  // 已取消：不顯示任何作業區塊；已結業：仍需顯示「結業回退作業」，其餘區塊各自以 isCompleted 排除
-  if (isCancelled) return null
-
+  // 已取消／已結業皆不整體早退：教材申請作業於已取消時仍需顯示精簡版，
+  // 其餘區塊（開始上課／結業／重新招募／取消上課）各自以 !isCancelled、!isCompleted 排除
   const { total, applied, remaining, canApplyMore } = progress
   const isFinalized = materialFinalizedAt != null
   // 進行中（尚未收件）的教材訂單存在時，不可標記「已完成申請」
@@ -346,10 +343,11 @@ export function CourseDetailActions({
 
   return (
     <div className="space-y-3">
-      {/* ── 區塊一：教材申請作業（講師與管理者） ────────────────── */}
-      {!isStarted && canManageMaterials && (
+      {/* ── 區塊一：教材申請作業（講師與管理者；已取消課程顯示精簡版，僅訂單清單＋取消申請） ────────────────── */}
+      {(isCancelled || !isStarted) && canManageMaterials && (
         <Section title={ta('sectionMaterial')} icon={<IconBook className="h-5 w-5 text-primary" />}>
-          {/* ── 單元一：學員教材需求統計 ── */}
+          {/* ── 單元一：學員教材需求統計（已取消課程不顯示） ── */}
+          {!isCancelled && (
           <div className="space-y-1.5">
             <h4 className="text-sm font-semibold">{t('sectionDemand')}</h4>
             <div className="rounded-md bg-muted/50 px-3 py-2 text-sm space-y-1">
@@ -360,10 +358,12 @@ export function CourseDetailActions({
               <p className="text-xs text-muted-foreground">{t('progressRefHint')}</p>
             </div>
           </div>
+          )}
 
-          {/* ── 單元二：教材申請進度 ── */}
+          {/* ── 單元二：教材申請進度（已取消課程僅顯示訂單清單，不顯示已申請/尚未申請統計） ── */}
           <div className="space-y-1.5">
             <h4 className="text-sm font-semibold">{t('sectionProgress')}</h4>
+            {!isCancelled && (
             <div className="rounded-md bg-muted/50 px-3 py-2 text-sm space-y-1">
               <div className="flex justify-between gap-2">
                 <span className="text-muted-foreground">{t('appliedLabel')}</span>
@@ -376,6 +376,7 @@ export function CourseDetailActions({
                 </span>
               </div>
             </div>
+            )}
 
             {/* 訂單清單（每筆顯示書籍種類與數量＋狀態＋動作） */}
             {orders.length === 0 ? (
@@ -399,7 +400,7 @@ export function CourseDetailActions({
                     {/* 內嵌顯示訂單寄送資訊 */}
                     <MaterialOrderInfo order={order} />
 
-                    {status.key === 'pending_payment' && (
+                    {!isCancelled && status.key === 'pending_payment' && (
                       <div className="text-sm bg-amber-50 border border-amber-200 rounded-md px-3 py-2 space-y-2">
                         <p className="text-amber-800">
                           {t('feeNoticePrefix')} <strong>NT${order.quotedAmount}</strong>{t('feeNoticeSuffix')}
@@ -423,7 +424,7 @@ export function CourseDetailActions({
                     )}
 
                     <div className="flex items-center gap-2 flex-wrap">
-                      {(status.key === 'pending_quote' || status.key === 'pending_payment') && canAct && (
+                      {(status.key === 'pending_quote' || status.key === 'pending_payment') && !isCompleted && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -434,7 +435,7 @@ export function CourseDetailActions({
                           {cancelPending ? t('cancellingLabel') : t('cancelOrderButton')}
                         </Button>
                       )}
-                      {status.key === 'shipped' && (
+                      {!isCancelled && status.key === 'shipped' && (
                         <Button size="sm" onClick={() => handleConfirmReceipt(order.id)} disabled={receiptPending}>
                           {receiptPending ? t('confirmingLabel') : t('receivedButton')}
                         </Button>
@@ -447,7 +448,8 @@ export function CourseDetailActions({
             )}
           </div>
 
-          {/* ── 單元三：申請作業（注意事項＋功能按鈕說明＋功能按鈕／完成狀態） ── */}
+          {/* ── 單元三：申請作業（注意事項＋功能按鈕說明＋功能按鈕／完成狀態；已取消課程不顯示） ── */}
+          {!isCancelled && (
           <div className="space-y-2">
             <h4 className="text-sm font-semibold">{t('sectionApply')}</h4>
 
@@ -492,6 +494,7 @@ export function CourseDetailActions({
               </>
             )}
           </div>
+          )}
 
           {/* 完成教材申請確認視窗 */}
           <Dialog open={finalizeOpen} onOpenChange={setFinalizeOpen}>
@@ -523,7 +526,7 @@ export function CourseDetailActions({
       )}
 
       {/* ── 區塊二：開始上課作業（僅講師） ────────────────── */}
-      {!isStarted && isInstructor && (
+      {!isStarted && !isCancelled && isInstructor && (
         <Section title={ta('sectionStart')} icon={<IconPlayerPlay className="h-5 w-5 text-primary" />}>
           <div className="text-sm text-muted-foreground space-y-1">
             <p>{ta('startNote')}</p>
@@ -590,7 +593,7 @@ export function CourseDetailActions({
       )}
 
       {/* 進行中：結業作業（講師與管理者） */}
-      {isStarted && !isCompleted && (
+      {isStarted && !isCompleted && !isCancelled && (
         <Section title={ta('sectionGraduate')} icon={<IconCertificate className="h-5 w-5 text-primary" />}>
           {hasApprovedStudents ? (
             <Button asChild>
@@ -605,7 +608,7 @@ export function CourseDetailActions({
       )}
 
       {/* 進行中：重新招募作業（講師與管理者） */}
-      {isStarted && !isCompleted && (
+      {isStarted && !isCompleted && !isCancelled && (
         <Section title={ta('sectionReopen')} icon={<IconRefresh className="h-5 w-5 text-primary" />}>
           <p className="text-sm text-muted-foreground">
             {ta('reopenDesc')}
@@ -674,8 +677,8 @@ export function CourseDetailActions({
         </Section>
       )}
 
-      {/* ── 區塊三：取消上課作業（講師與管理者，已結業課程不顯示，原經上方 return null 排除） ────────────────── */}
-      {!isCompleted && (
+      {/* ── 區塊三：取消上課作業（講師與管理者，已結業／已取消課程不顯示） ────────────────── */}
+      {!isCompleted && !isCancelled && (
         <Section title={ta('sectionCancel')} icon={<IconBan className="h-5 w-5 text-primary" />}>
           <Button variant="destructive" onClick={() => setCancelOpen(true)}>
             {ta('cancelButton')}
