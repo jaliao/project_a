@@ -22,7 +22,8 @@
     "notifications": "Notifications",
     "matchBoard": "Match board",
     "admin": "Admin",
-    "help": "Contact Admin"
+    "help": "Contact Admin",
+    "messages": "Messages"
   },
   "auth": {
     "loginWithEmail": "Log in with Email",
@@ -582,7 +583,11 @@
     "atLeastOneMaterial": "Please order at least 1 material",
     "inquiryCategoryRequired": "Please select a category",
     "inquiryBodyRequired": "Please enter your question",
-    "inquiryReplyRequired": "Please enter a reply"
+    "inquiryReplyRequired": "Please enter a reply",
+    "conversationMessageRequired": "Please enter a message",
+    "conversationMessageMax2000": "Message must be 2000 characters or fewer",
+    "avatarTypeInvalid": "Only JPG, PNG, or WebP images are supported",
+    "avatarTooLarge": "Image must be 2MB or smaller"
   },
   "status": {
     "recruiting": "Recruiting",
@@ -650,5 +655,22 @@
     "memberInquiriesTab": "Inquiries",
     "memberInquiriesEmpty": "This member has no inquiries yet",
     "submitterDeleted": "Account deleted"
+  },
+  "conversation": {
+    "pageTitle": "Messages",
+    "close": "Close",
+    "emptyState": "No conversations yet",
+    "selectChannelHint": "Select a conversation",
+    "pickerHint": "You already have a conversation with this person — continue it or start a new one",
+    "startNewConversation": "Start new conversation",
+    "titlePlaceholder": "Enter a conversation title",
+    "invitePlaceholder": "Enter Spirit ID to invite",
+    "inviteSuccess": "Invited to conversation",
+    "inviteFail": "Failed to invite, please check the Spirit ID",
+    "placeholder": "Type a message…",
+    "send": "Send",
+    "sending": "Sending…",
+    "sendSuccess": "Message sent",
+    "sendFail": "Failed to send, please try again later"
   }
 }

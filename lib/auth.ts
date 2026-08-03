@@ -17,6 +17,7 @@ import Google from 'next-auth/providers/google'
 import Credentials from 'next-auth/providers/credentials'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import bcrypt from 'bcryptjs'
+import { resolveAvatarUrl } from '@/lib/utils/avatar'
 import { prisma } from './prisma'
 import { generateSpiritId } from './spirit-id'
 
@@ -168,12 +169,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.spiritId = dbUser.spiritId
           token.isTempPassword = dbUser.isTempPassword
           token.isProfileComplete = !!(dbUser.realName && dbUser.phone)
+          token.avatarUrl = resolveAvatarUrl(dbUser)
         }
       } else if (token.id) {
         // 後續請求：從 DB 同步動態欄位，確保 role/spiritId 變更立即生效，無需重新登入
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { roles: true, spiritId: true, isTempPassword: true, realName: true, phone: true, email: true },
+          select: {
+            roles: true,
+            spiritId: true,
+            isTempPassword: true,
+            realName: true,
+            phone: true,
+            email: true,
+            avatarKey: true,
+            image: true,
+          },
         })
         if (dbUser) {
           token.roles = dbUser.roles
@@ -182,6 +193,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.isProfileComplete = !!(dbUser.realName && dbUser.phone)
           // 帳號 email 變更後同步（顯示一致性；授權皆以 id/roles）
           token.email = dbUser.email
+          token.avatarUrl = resolveAvatarUrl(dbUser)
         }
       }
       return token
@@ -195,6 +207,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.spiritId = token.spiritId as string | null
         session.user.isTempPassword = token.isTempPassword as boolean
         session.user.isProfileComplete = token.isProfileComplete as boolean ?? false
+        session.user.avatarUrl = (token.avatarUrl as string | null) ?? null
       }
       return session
     },

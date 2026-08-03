@@ -1,0 +1,63 @@
+/**
+ * ----------------------------------------------
+ * Prisma Schema - 訊息（任何會員互傳，支援多人群組）
+ * 2026-08-03 (Updated: 2026-08-03)
+ * prisma/schema/conversation.prisma
+ * ConversationParticipant 多對多中介表；同一對象間可有多筆
+ * 獨立對話、可邀請他人加入成為群組、可釘選、對話可自訂標題
+ * （cr-spec-260803-006，疊加於 cr-spec-260803-004 之上）
+ * ----------------------------------------------
+ */
+
+model Conversation {
+  id Int @id @default(autoincrement())
+
+  createdById String @db.Uuid // 發起人（任何會員，非僅管理者）
+  createdBy   User   @relation("ConversationCreatedBy", fields: [createdById], references: [id])
+
+  createdAt     DateTime @default(now())
+  lastMessageAt DateTime @default(now())
+
+  title String? // 自訂標題；null = 未設定，顯示時自動組合參與者名稱
+
+  participants ConversationParticipant[]
+  messages     ConversationMessage[]
+
+  @@index([lastMessageAt(sort: Desc)])
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id Int @id @default(autoincrement())
+
+  conversationId Int
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime  @default(now())
+  lastReadAt DateTime? // 該使用者最後一次查看此對話的時間；null = 從未查看
+  pinnedAt   DateTime? // 該使用者釘選此對話的時間；null = 未釘選
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_participants")
+}
+
+model ConversationMessage {
+  id Int @id @default(autoincrement())
+
+  conversationId Int
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  authorId String @db.Uuid
+  author   User   @relation(fields: [authorId], references: [id])
+
+  body String @db.Text // 訊息內容
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@map("conversation_messages")
+}

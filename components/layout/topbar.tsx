@@ -10,23 +10,27 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { IconUser, IconBell, IconHome, IconLayoutDashboard, IconClipboardList, IconMessageCircle } from '@tabler/icons-react'
+import { IconUser, IconBell, IconHome, IconLayoutDashboard, IconClipboardList, IconMessageCircle, IconMessage } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { useTranslations } from 'next-intl'
 import { NotificationDrawer } from '@/components/notification/notification-drawer'
 import { canAccessAdmin } from '@/lib/auth-roles'
+import { UserAvatar } from '@/components/shared/user-avatar'
+import { useMessageDrawer } from '@/components/conversation/message-drawer-provider'
 
 interface TopbarProps {
   unreadCount?: number
   roles?: string[]
   spiritId?: string
+  avatarUrl?: string | null
 }
 
-export function Topbar({ unreadCount = 0, roles, spiritId }: TopbarProps) {
+export function Topbar({ unreadCount = 0, roles, spiritId, avatarUrl }: TopbarProps) {
   const t = useTranslations('nav')
   const tc = useTranslations('common')
   const router = useRouter()
   const [isNotifOpen, setIsNotifOpen] = useState(false)
+  const { openMessageDrawer, unreadCount: unreadMessageCount } = useMessageDrawer()
 
   const isAdmin = canAccessAdmin(roles)
   const homeUrl = spiritId ? `/user/${spiritId.toLowerCase()}` : '/'
@@ -79,7 +83,11 @@ export function Topbar({ unreadCount = 0, roles, spiritId }: TopbarProps) {
           onClick={() => router.push(profileUrl)}
           title={t('profile')}
         >
-          <IconUser className="h-5 w-5" />
+          {avatarUrl ? (
+            <UserAvatar avatarUrl={avatarUrl} displayName="" size="sm" />
+          ) : (
+            <IconUser className="h-5 w-5" />
+          )}
         </Button>
 
         {/* 聯絡管理者（所有登入會員） */}
@@ -90,6 +98,22 @@ export function Topbar({ unreadCount = 0, roles, spiritId }: TopbarProps) {
           title={t('help')}
         >
           <IconMessageCircle className="h-5 w-5" />
+        </Button>
+
+        {/* 訊息（所有登入會員） */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => openMessageDrawer()}
+          title={t('messages')}
+          className="relative"
+        >
+          <IconMessage className="h-5 w-5" />
+          {unreadMessageCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white leading-none">
+              {unreadMessageCount > 99 ? '99+' : unreadMessageCount}
+            </span>
+          )}
         </Button>
 
         {/* 訊息通知 */}

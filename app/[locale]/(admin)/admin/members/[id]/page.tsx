@@ -23,6 +23,7 @@ import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { getAdminSetting } from '@/lib/data/admin-settings'
 import { getGraduatedCatalogIds } from '@/lib/data/course-catalog'
 import { getInquiryList } from '@/lib/data/support-inquiry'
+import { SendMessageButton } from '@/components/conversation/send-message-button'
 import { MemberResetButton } from '@/components/admin/member-reset-button'
 import { MemberEmailForm } from '@/components/admin/member-email-form'
 import { MemberDeleteButton } from '@/components/admin/member-delete-button'
@@ -100,6 +101,7 @@ export default async function MemberDetailPage({
   // 會員提問（新分頁用）
   const ti = await getTranslations('supportInquiry')
   const memberInquiries = await getInquiryList({ userId: member.id, status: 'all' })
+
   const INQUIRY_CATEGORY_LABELS: Record<string, string> = {
     account: ti('categoryAccount'),
     course: ti('categoryCourse'),
@@ -127,6 +129,7 @@ export default async function MemberDetailPage({
         {member.suspendedAt && (
           <Badge variant="destructive" className="text-xs">已暫停</Badge>
         )}
+        <SendMessageButton targetUserId={member.id} label="傳訊息" />
       </div>
 
       <Tabs defaultValue="info">

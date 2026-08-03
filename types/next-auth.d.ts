@@ -16,6 +16,7 @@ declare module 'next-auth' {
       spiritId: string | null
       isTempPassword: boolean
       isProfileComplete: boolean
+      avatarUrl: string | null
     } & DefaultSession['user']
   }
 }

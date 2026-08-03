@@ -18,6 +18,7 @@ import { updateProfile, updateCommEmail, resendCommVerification, unlinkGoogleAcc
 import { updateProfileSchema, commEmailSchema } from '@/lib/schemas/profile'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { FieldError } from '@/components/ui/field-error'
+import { AvatarUploadSection } from '@/components/profile/avatar-upload-section'
 
 type Church = { id: number; name: string; isActive: boolean }
 
@@ -37,6 +38,8 @@ type ProfileFormProps = {
     churchId: number | null
     churchOther: string
     currentChurch: { id: number; name: string; isActive: boolean } | null
+    avatarUrl: string | null
+    avatarKey: string | null
   }
   activeChurches: Church[]
   linkedProviders: string[]
@@ -170,6 +173,15 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
 
   return (
     <div className="space-y-8">
+      {/* ── 頭像 ── */}
+      <section className="rounded-lg border p-6">
+        <AvatarUploadSection
+          avatarUrl={user.avatarUrl}
+          avatarKey={user.avatarKey}
+          displayName={getMemberDisplayName(user)}
+        />
+      </section>
+
       {/* ── 個人資料 ── */}
       <section className="rounded-lg border p-6 space-y-4">
         <h2 className="text-lg font-semibold">基本資料</h2>

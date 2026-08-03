@@ -30,6 +30,9 @@ import {
   type TeacherRole,
 } from '@/lib/auth-roles'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
+import { resolveAvatarUrl } from '@/lib/utils/avatar'
+import { UserAvatar } from '@/components/shared/user-avatar'
+import { SendMessageButton } from '@/components/conversation/send-message-button'
 import { Badge } from '@/components/ui/badge'
 import { ProfileBanner } from '@/components/dashboard/profile-banner'
 import { GenderPromptDialog } from '@/components/dashboard/gender-prompt-dialog'
@@ -72,6 +75,8 @@ export default async function UserProfilePage({ params }: Props) {
       spiritId: true,
       roles: true,
       gender: true,
+      avatarKey: true,
+      image: true,
     },
   })
 
@@ -155,7 +160,9 @@ export default async function UserProfilePage({ params }: Props) {
           {/* 姓名 */}
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground w-20 shrink-0">姓名</span>
+            <UserAvatar avatarUrl={resolveAvatarUrl(user)} displayName={displayName} size="sm" />
             <span className="text-sm font-medium">{displayName}</span>
+            {!isOwnPage && <SendMessageButton targetUserId={user.id} label="傳訊息" />}
           </div>
 
           {/* Spirit ID */}

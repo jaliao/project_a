@@ -16,6 +16,7 @@ import { ChangePasswordCard } from './change-password-card'
 import { ChangeAccountCard } from './change-account-card'
 import { SignOutSection } from '@/components/profile/sign-out-section'
 import { getActiveChurches } from '@/lib/data/churches'
+import { resolveAvatarUrl } from '@/lib/utils/avatar'
 
 type Props = {
   searchParams: Promise<{ incomplete?: string }>
@@ -98,6 +99,8 @@ export default async function ProfilePage({ searchParams }: Props) {
           churchId: user.churchId ?? null,
           churchOther: user.churchOther ?? '',
           currentChurch: user.church ?? null,
+          avatarUrl: resolveAvatarUrl(user),
+          avatarKey: user.avatarKey,
         }}
         activeChurches={activeChurches}
         linkedProviders={linkedProviders}

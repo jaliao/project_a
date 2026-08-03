@@ -54,6 +54,7 @@ model User {
   emailVerified DateTime?
   name          String?
   image         String?
+  avatarKey     String? // R2 object key（自訂上傳頭像），例如 avatars/{userId}/{uuid}.webp；null = 未上傳
   roles         UserRole[] @default([user]) // 多重身分集合，至少含 user 基線
 
   // 啟動靈人身分識別
@@ -120,6 +121,11 @@ model User {
 
   // 課程 FAQ 留言關聯
   courseMessages CourseMessage[]
+
+  // 站內訊息（管理者主動聯繫會員）關聯
+  conversationsCreated       Conversation[]            @relation("ConversationCreatedBy")
+  conversationParticipations ConversationParticipant[]
+  conversationMessages       ConversationMessage[]
 
   // 實體證書製作關聯
   certificates         CertificateProduction[] @relation("CertOwner")

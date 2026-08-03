@@ -22,7 +22,8 @@
     "notifications": "訊息通知",
     "matchBoard": "媒合布告欄",
     "admin": "後台管理",
-    "help": "聯絡管理者"
+    "help": "聯絡管理者",
+    "messages": "訊息"
   },
   "auth": {
     "loginWithEmail": "以 Email 登入",
@@ -582,7 +583,11 @@
     "atLeastOneMaterial": "請至少申請 1 本教材",
     "inquiryCategoryRequired": "請選擇問題分類",
     "inquiryBodyRequired": "請填寫問題內容",
-    "inquiryReplyRequired": "請填寫回覆內容"
+    "inquiryReplyRequired": "請填寫回覆內容",
+    "conversationMessageRequired": "請輸入訊息內容",
+    "conversationMessageMax2000": "訊息最長 2000 字",
+    "avatarTypeInvalid": "僅支援 JPG／PNG／WebP 圖片格式",
+    "avatarTooLarge": "圖片大小不可超過 2MB"
   },
   "status": {
     "recruiting": "招生中",
@@ -650,5 +655,22 @@
     "memberInquiriesTab": "會員提問",
     "memberInquiriesEmpty": "該會員尚無提問紀錄",
     "submitterDeleted": "此帳號已被刪除"
+  },
+  "conversation": {
+    "pageTitle": "訊息",
+    "close": "關閉",
+    "emptyState": "目前尚無任何對話",
+    "selectChannelHint": "請選擇一個對話",
+    "pickerHint": "已有與對方的對話，請選擇繼續既有對話，或開新對話",
+    "startNewConversation": "開新對話",
+    "titlePlaceholder": "輸入對話標題",
+    "invitePlaceholder": "輸入對方啟動編號邀請加入",
+    "inviteSuccess": "已邀請加入對話",
+    "inviteFail": "邀請失敗，請確認啟動編號是否正確",
+    "placeholder": "輸入訊息內容…",
+    "send": "送出",
+    "sending": "送出中…",
+    "sendSuccess": "訊息已送出",
+    "sendFail": "送出失敗，請稍後再試"
   }
 }

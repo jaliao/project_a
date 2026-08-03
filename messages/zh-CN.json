@@ -23,7 +23,8 @@
     "notifications": "讯息通知",
     "matchBoard": "媒合布告栏",
     "admin": "后台管理",
-    "help": "联络管理者"
+    "help": "联络管理者",
+    "messages": "讯息"
   },
   "auth": {
     "loginWithEmail": "以 Email 登入",
@@ -583,7 +584,11 @@
     "atLeastOneMaterial": "请至少申请 1 本教材",
     "inquiryCategoryRequired": "请选择问题分类",
     "inquiryBodyRequired": "请填写问题内容",
-    "inquiryReplyRequired": "请填写回复内容"
+    "inquiryReplyRequired": "请填写回复内容",
+    "conversationMessageRequired": "请输入讯息内容",
+    "conversationMessageMax2000": "讯息最长 2000 字",
+    "avatarTypeInvalid": "仅支援 JPG／PNG／WebP 图片格式",
+    "avatarTooLarge": "图片大小不可超过 2MB"
   },
   "status": {
     "recruiting": "招生中",
@@ -651,5 +656,22 @@
     "memberInquiriesTab": "会员提问",
     "memberInquiriesEmpty": "该会员尚无提问纪录",
     "submitterDeleted": "此帐号已被删除"
+  },
+  "conversation": {
+    "pageTitle": "讯息",
+    "close": "关闭",
+    "emptyState": "目前尚无任何对话",
+    "selectChannelHint": "请选择一个对话",
+    "pickerHint": "已有与对方的对话，请选择继续既有对话，或开新对话",
+    "startNewConversation": "开新对话",
+    "titlePlaceholder": "输入对话标题",
+    "invitePlaceholder": "输入对方启动编号邀请加入",
+    "inviteSuccess": "已邀请加入对话",
+    "inviteFail": "邀请失败，请确认启动编号是否正确",
+    "placeholder": "输入讯息内容…",
+    "send": "送出",
+    "sending": "送出中…",
+    "sendSuccess": "讯息已送出",
+    "sendFail": "送出失败，请稍后再试"
   }
 }
