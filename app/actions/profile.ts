@@ -10,6 +10,7 @@
 
 import { randomBytes } from 'crypto'
 import bcrypt from 'bcryptjs'
+import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
@@ -38,7 +39,7 @@ export async function updateProfile(
     phone: formData.get('phone'),
     address: formData.get('address'),
     englishName: formData.get('englishName'),
-    gender: formData.get('gender') || 'unspecified',
+    gender: formData.get('gender'),
     birthYear: formData.get('birthYear'),
     displayNameMode: formData.get('displayNameMode') || 'nickname',
     churchType: formData.get('churchType') || 'none',
@@ -76,6 +77,27 @@ export async function updateProfile(
 
   revalidatePath('/(user)/profile')
   return { success: true, message: '個人資料已更新' }
+}
+
+// ── 首頁性別補填對話框專用：僅更新單一欄位 gender（cr-spec-260803-002） ──
+export async function updateGender(gender: 'male' | 'female'): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  const parsed = z.enum(['male', 'female']).safeParse(gender)
+  if (!parsed.success) {
+    return { success: false, message: '請選擇性別' }
+  }
+
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { gender: parsed.data },
+  })
+
+  if (session.user.spiritId) {
+    revalidatePath(`/user/${session.user.spiritId.toLowerCase()}`)
+  }
+  return { success: true, message: '性別已更新' }
 }
 
 // ── 更新通訊 Email（觸發重驗） ────────────────

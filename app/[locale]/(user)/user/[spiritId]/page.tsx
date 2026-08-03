@@ -32,6 +32,7 @@ import {
 import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { Badge } from '@/components/ui/badge'
 import { ProfileBanner } from '@/components/dashboard/profile-banner'
+import { GenderPromptDialog } from '@/components/dashboard/gender-prompt-dialog'
 import { CourseSessionDialog } from '@/components/course-session/course-session-dialog'
 import { TestCourseSessionButton } from '@/components/course-session/test-course-session-button'
 import { CourseSessionCard } from '@/components/course-session/course-session-card'
@@ -70,6 +71,7 @@ export default async function UserProfilePage({ params }: Props) {
       phone: true,
       spiritId: true,
       roles: true,
+      gender: true,
     },
   })
 
@@ -133,6 +135,11 @@ export default async function UserProfilePage({ params }: Props) {
       {/* 資料完整度提醒（僅本人可見，且強制轉導停用時才顯示） */}
       {isOwnPage && showProfileBanner && (
         <ProfileBanner isComplete={isProfileComplete} displayName={displayName} spiritId={id} />
+      )}
+
+      {/* 已完成首次填寫（realName/phone 皆有值）但性別未填時彈出補填對話框（cr-spec-260803-002） */}
+      {isOwnPage && !!user.realName && !!user.phone && user.gender === 'unspecified' && (
+        <GenderPromptDialog />
       )}
 
       <h1 className="text-2xl font-semibold">首頁</h1>

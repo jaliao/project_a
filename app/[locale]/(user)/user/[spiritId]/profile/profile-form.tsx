@@ -73,7 +73,8 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
       nickname: user.nickname,
       phone: user.phone,
       address: user.address,
-      gender: user.gender,
+      // gender schema 已改為必填 male/female，既有 unspecified 帳號留空由 <select> 預設第一個選項呈現
+      gender: user.gender === 'unspecified' ? undefined : user.gender,
       birthYear: user.birthYear,
       displayNameMode: user.displayNameMode,
       churchType: user.churchType,
@@ -213,7 +214,6 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
                 className="w-full rounded-md border px-3 py-2 text-sm bg-background"
                 disabled={isPending}
               >
-                <option value="unspecified">未設定</option>
                 <option value="male">男</option>
                 <option value="female">女</option>
               </select>

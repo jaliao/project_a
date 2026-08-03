@@ -40,7 +40,8 @@ export const updateProfileSchema = z
     address: z.string().optional(),
     // 英文名稱、性別、顯示名稱模式
     englishName: z.string().optional(),
-    gender: z.enum(['male', 'female', 'unspecified']),
+    // 性別必填：須為男/女，不接受未指定（cr-spec-260803-002）
+    gender: z.enum(['male', 'female'], { message: 'validation.genderRequired' }),
     birthYear: birthYearOptional,
     displayNameMode: z.enum(['nickname', 'nickname_zh', 'nickname_en']),
     // 所屬教會
