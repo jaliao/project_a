@@ -98,3 +98,14 @@ TBD - created by archiving change cr-spec-260628-003. Update Purpose after archi
 - **WHEN** 管理者將備註清為空白並儲存
 - **THEN** `note` 存為 null
 
+### Requirement: 證書卡片學員列使用會員文字元件
+證書製作卡片原本純文字顯示的「啟動編號」列 SHALL 改為「學員」列，並以「會員文字元件」（見 `admin-member-tag`）呈現該學員的啟動編號與顯示名稱；點擊可展開完整會員標籤，提供檢視與傳訊息入口。
+
+#### Scenario: 學員列顯示會員文字元件
+- **WHEN** 管理者檢視證書製作清單中某張卡片
+- **THEN** 卡片的「學員」列以底線文字顯示該學員的啟動編號＋顯示名稱
+
+#### Scenario: 點擊學員列展開完整資訊
+- **WHEN** 管理者點擊卡片「學員」列的文字
+- **THEN** 彈出該學員的完整會員標籤，可點擊「檢視」開新分頁至會員詳情頁、點擊「訊息」開啟訊息 Drawer 聯繫
+
