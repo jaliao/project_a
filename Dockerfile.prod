@@ -39,6 +39,11 @@ COPY . .
 ARG DATABASE_URL="postgresql://build:build@localhost:5432/build_db"
 ENV DATABASE_URL=$DATABASE_URL
 
+# NEXT_PUBLIC_* 會在 `next build` 當下就內嵌進前端 JS bundle，屬 build-time 值，
+# 不能只靠 runner 階段的 env_file（那是 runtime，對已編譯好的前端程式碼無效）
+ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY
+ENV NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY
+
 # 產生 Prisma Client（會讀取 prisma.config.ts 內的 schema: 'prisma/schema'）
 RUN npx prisma generate
 
@@ -67,6 +72,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends tzdata \
 # Next standalone output
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# public/（含 PWA sw.js 等靜態檔）standalone 模式不會自動打包，需另外複製
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 # 保守補齊 Prisma engine（避免 standalone 漏帶 .prisma）
 # COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma

@@ -277,7 +277,24 @@
       "cancel": "Cancel",
       "processing": "Processing...",
       "confirmStart": "Confirm Start",
-      "confirmReopen": "Confirm"
+      "confirmReopen": "Confirm",
+      "sectionArchive": "Archive / Delete Course",
+      "archiveButton": "Archive Course",
+      "unarchiveButton": "Unarchive",
+      "archiveConfirmTitle": "Confirm Archive Course",
+      "archiveConfirmDesc": "Archiving hides this course from the default view of the course management list. Enrollment and material data are fully preserved, and it can be unarchived at any time.",
+      "unarchiveConfirmTitle": "Confirm Unarchive",
+      "unarchiveConfirmDesc": "Unarchiving will make this course reappear in the default view of the course management list.",
+      "archiveReasonLabel": "Archive Reason (optional)",
+      "archiveReasonPlaceholder": "Enter archive reason",
+      "archiveSuccessFallback": "Course archived",
+      "unarchiveSuccessFallback": "Unarchived",
+      "deleteButton": "Delete Course",
+      "deleteConfirmTitle": "Confirm Delete Course",
+      "deleteConfirmEnrollLine": "Current enrollments: {count} (including {graduated} graduated)",
+      "deleteConfirmNoEnroll": "No enrollments currently",
+      "deleteConfirmWarning": "This action cannot be undone. Deleting will permanently remove this course and its enrollment records, and may affect students' learning history and certificate eligibility.",
+      "deleteSuccessFallback": "Course deleted"
     },
     "detail": {
       "metaTitle": "Course details — 啟動事工",
@@ -342,7 +359,8 @@
       "publicRecruiting": "Public match · Recruiting",
       "enrolledPlanned": "Enrolled {enrolled} / Planned {max}",
       "expectedStart": "Expected start: {date}",
-      "deadline": "Deadline: {date}"
+      "deadline": "Deadline: {date}",
+      "archived": "Archived"
     },
     "loginPrompt": {
       "title": "Cannot view this course",
@@ -672,5 +690,51 @@
     "sending": "Sending…",
     "sendSuccess": "Message sent",
     "sendFail": "Failed to send, please try again later"
+  },
+  "pwa": {
+    "homeLink": "Install to home screen",
+    "installBanner": {
+      "title": "Install to your home screen",
+      "description": "Add to your home screen for a faster experience and push notifications.",
+      "install": "Install",
+      "viewInstructions": "View install instructions",
+      "dismiss": "Maybe later"
+    },
+    "installPage": {
+      "title": "Install to your home screen",
+      "description": "Follow the steps for your device and browser.",
+      "ios": {
+        "title": "iOS (Safari)",
+        "steps": [
+          "Open this site in Safari",
+          "Tap the Share icon at the bottom of the screen",
+          "Choose \"Add to Home Screen\" from the menu",
+          "Tap \"Add\" in the top-right corner to finish"
+        ]
+      },
+      "android": {
+        "title": "Android (Chrome)",
+        "steps": [
+          "Open this site in Chrome",
+          "Tap the menu icon (⋮) in the top-right corner",
+          "Choose \"Install app\" or \"Add to Home screen\"",
+          "Tap \"Install\" to finish"
+        ]
+      },
+      "desktop": {
+        "title": "Desktop (Chrome / Edge)",
+        "steps": [
+          "Open this site in Chrome or Edge",
+          "Click the install icon in the address bar",
+          "Click \"Install\" to finish"
+        ]
+      }
+    },
+    "pushToggle": {
+      "label": "Enable push notifications",
+      "iosRequiresInstall": "Please add this app to your home screen first to enable push notifications",
+      "permissionDenied": "Browser notifications are blocked. Please enable them in your browser settings and try again",
+      "subscribeFailed": "Failed to set up push notifications, please try again later"
+    }
   }
 }

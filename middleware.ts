@@ -60,8 +60,9 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // 排除 api、_next、靜態檔；其餘交由 middleware（含 i18n）
+  // 排除 api、_next、靜態檔、PWA 特殊檔案（manifest/icon/sw.js 皆為 app/ 根層級特殊檔案，
+  // 不在 [locale] 之下，不可被 next-intl 加上 locale 前綴改寫，否則會 404）；其餘交由 middleware（含 i18n）
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw\\.js|icon-192|icon-512|icon$|apple-icon|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

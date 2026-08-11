@@ -278,7 +278,24 @@
       "cancel": "取消",
       "processing": "处理中...",
       "confirmStart": "确认开始",
-      "confirmReopen": "确认退回"
+      "confirmReopen": "确认退回",
+      "sectionArchive": "封存／删除课程",
+      "archiveButton": "封存课程",
+      "unarchiveButton": "解除封存",
+      "archiveConfirmTitle": "确认封存课程",
+      "archiveConfirmDesc": "封存后课程将从开课管理清单的预设检视中隐藏，报名、教材等资料完全保留，可随时解除封存。",
+      "unarchiveConfirmTitle": "确认解除封存",
+      "unarchiveConfirmDesc": "解除封存后课程将重新出现在开课管理清单的预设检视中。",
+      "archiveReasonLabel": "封存原因（选填）",
+      "archiveReasonPlaceholder": "请输入封存原因",
+      "archiveSuccessFallback": "课程已封存",
+      "unarchiveSuccessFallback": "已解除封存",
+      "deleteButton": "删除课程",
+      "deleteConfirmTitle": "确认删除课程",
+      "deleteConfirmEnrollLine": "目前报名人数：{count} 位（其中已结业 {graduated} 位）",
+      "deleteConfirmNoEnroll": "目前无报名资料",
+      "deleteConfirmWarning": "此操作无法复原，删除后该课程与其报名纪录将永久移除，可能影响学员的学习历程与证书资格判断。",
+      "deleteSuccessFallback": "课程已删除"
     },
     "detail": {
       "metaTitle": "课程详情 — 启动事工",
@@ -343,7 +360,8 @@
       "publicRecruiting": "公开媒合・招募中",
       "enrolledPlanned": "已报名 {enrolled} / 预计 {max} 人",
       "expectedStart": "预计开课：{date}",
-      "deadline": "截止报名：{date}"
+      "deadline": "截止报名：{date}",
+      "archived": "已封存"
     },
     "loginPrompt": {
       "title": "无法检视此课程",
@@ -673,5 +691,51 @@
     "sending": "送出中…",
     "sendSuccess": "讯息已送出",
     "sendFail": "送出失败，请稍后再试"
+  },
+  "pwa": {
+    "homeLink": "安装到手机桌面",
+    "installBanner": {
+      "title": "安装到手机桌面",
+      "description": "加入主画面，开启更快速的启动体验与推播通知。",
+      "install": "安装",
+      "viewInstructions": "查看安装说明",
+      "dismiss": "稍后再说"
+    },
+    "installPage": {
+      "title": "安装到手机桌面",
+      "description": "依照您使用的装置与浏览器，选择对应的安装步骤。",
+      "ios": {
+        "title": "iOS（Safari）",
+        "steps": [
+          "以 Safari 浏览器开启本网站",
+          "点击画面下方的「分享」图示",
+          "于选单中选择「加入主画面」",
+          "点击右上角「加入」完成安装"
+        ]
+      },
+      "android": {
+        "title": "Android（Chrome）",
+        "steps": [
+          "以 Chrome 浏览器开启本网站",
+          "点击右上角选单（⋮）",
+          "选择「安装应用程式」或「加到主画面」",
+          "点击「安装」完成"
+        ]
+      },
+      "desktop": {
+        "title": "桌面（Chrome／Edge）",
+        "steps": [
+          "以 Chrome 或 Edge 浏览器开启本网站",
+          "点击网址列右侧的安装图示",
+          "点击「安装」完成"
+        ]
+      }
+    },
+    "pushToggle": {
+      "label": "启用推播通知",
+      "iosRequiresInstall": "请先将系统加入主画面，才能开启推播通知",
+      "permissionDenied": "浏览器通知权限已被封锁，请至浏览器设定开启后再试",
+      "subscribeFailed": "推播设定失败，请稍后再试"
+    }
   }
 }

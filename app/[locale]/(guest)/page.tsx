@@ -10,6 +10,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -18,12 +19,19 @@ export const metadata: Metadata = {
   description: '啟動事工 — 課程管理、會員管理與學習追蹤平台',
 }
 
-export default async function HomePage() {
+export default async function HomePage({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}) {
   // 已登入使用者直接跳轉
   const session = await auth()
   if (session?.user) {
     redirect(session.user.spiritId ? `/user/${session.user.spiritId.toLowerCase()}` : '/profile')
   }
+
+  const { locale } = await params
+  const tPwa = await getTranslations({ locale, namespace: 'pwa' })
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -119,6 +127,8 @@ export default async function HomePage() {
         <Link href="/terms" className="hover:text-foreground underline underline-offset-4">服務條款</Link>
         <span className="mx-2">·</span>
         <Link href="/privacy" className="hover:text-foreground underline underline-offset-4">隱私政策</Link>
+        <span className="mx-2">·</span>
+        <Link href="/pwa-install" className="hover:text-foreground underline underline-offset-4">{tPwa('homeLink')}</Link>
       </footer>
 
     </div>

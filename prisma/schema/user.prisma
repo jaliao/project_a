@@ -119,6 +119,9 @@ model User {
   // 通知關聯
   notifications Notification[]
 
+  // 推播訂閱關聯
+  pushSubscriptions PushSubscription[]
+
   // 課程 FAQ 留言關聯
   courseMessages CourseMessage[]
 
@@ -229,6 +232,24 @@ model Notification {
   @@index([userId, isRead])
   @@index([userId, createdAt(sort: Desc)])
   @@map("notifications")
+}
+
+// ==========================================
+// 瀏覽器推播訂閱（PWA Web Push）
+// ==========================================
+model PushSubscription {
+  id        Int      @id @default(autoincrement())
+  userId    String   @db.Uuid
+  endpoint  String   @unique @db.Text
+  p256dh    String   @db.Text
+  auth      String   @db.Text
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
 }
 
 // ==========================================

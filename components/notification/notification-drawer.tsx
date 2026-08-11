@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { fetchNotifications, markNotificationRead, markAllNotificationsRead } from '@/app/actions/notification'
+import { PushToggle } from '@/components/pwa/push-toggle'
 import { cn } from '@/lib/utils'
 
 interface NotificationDrawerProps {
@@ -95,6 +96,8 @@ export function NotificationDrawer({ open, onOpenChange, initialUnreadCount }: N
             全部標為已讀
           </Button>
         </SheetHeader>
+
+        <PushToggle />
 
         <ScrollArea className="flex-1">
           {!loaded && isPending ? (

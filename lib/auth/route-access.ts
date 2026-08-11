@@ -31,6 +31,7 @@ export const PUBLIC_PAGES: RouteRule[] = [
   { match: 'exact', path: '/account-suspended', reason: '帳號已暫停獨立頁（免登入可見）' },
   { match: 'exact', path: '/terms', reason: '服務條款' },
   { match: 'exact', path: '/privacy', reason: '隱私政策' },
+  { match: 'exact', path: '/pwa-install', reason: 'PWA 安裝說明（免登入）' },
 ]
 
 // 免登入 API

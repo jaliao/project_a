@@ -35,6 +35,7 @@ import { UserAvatar } from '@/components/shared/user-avatar'
 import { SendMessageButton } from '@/components/conversation/send-message-button'
 import { Badge } from '@/components/ui/badge'
 import { ProfileBanner } from '@/components/dashboard/profile-banner'
+import { InstallBanner } from '@/components/pwa/install-banner'
 import { GenderPromptDialog } from '@/components/dashboard/gender-prompt-dialog'
 import { CourseSessionDialog } from '@/components/course-session/course-session-dialog'
 import { TestCourseSessionButton } from '@/components/course-session/test-course-session-button'
@@ -137,6 +138,9 @@ export default async function UserProfilePage({ params }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* PWA 安裝提醒（僅本人可見，非 standalone 啟動時顯示） */}
+      {isOwnPage && <InstallBanner />}
+
       {/* 資料完整度提醒（僅本人可見，且強制轉導停用時才顯示） */}
       {isOwnPage && showProfileBanner && (
         <ProfileBanner isComplete={isProfileComplete} displayName={displayName} spiritId={id} />

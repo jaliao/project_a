@@ -9,12 +9,13 @@
  * ----------------------------------------------
  */
 
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { notFound } from 'next/navigation'
 import { NextIntlClientProvider, hasLocale } from 'next-intl'
 import { getTranslations } from 'next-intl/server'
 import { Toaster } from 'sonner'
 import { routing } from '@/i18n/routing'
+import { PwaRegister } from '@/components/pwa/pwa-register'
 import '../globals.css'
 
 export function generateStaticParams() {
@@ -32,7 +33,13 @@ export async function generateMetadata({
   return {
     title: t('appName'),
     description: t('appName'),
+    manifest: '/manifest.webmanifest',
   }
+}
+
+// PWA theme-color（對應 app/manifest.ts 的 THEME_COLOR，需手動同步）
+export function generateViewport(): Viewport {
+  return { themeColor: '#2563eb' }
 }
 
 export default async function LocaleLayout({
@@ -49,6 +56,7 @@ export default async function LocaleLayout({
     <html lang={locale}>
       <body>
         <NextIntlClientProvider>
+          <PwaRegister />
           {children}
           <Toaster richColors position="top-right" />
         </NextIntlClientProvider>
