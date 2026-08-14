@@ -25,11 +25,10 @@ import {
   canAccessAdmin,
   canTeachAny,
   CATALOG_BY_TEACHER_ROLE,
-  TEACHER_ROLES,
-  ROLE_LABELS,
   type TeacherRole,
 } from '@/lib/auth-roles'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
+import { getIdentityTags } from '@/lib/utils/identity-tags'
 import { resolveAvatarUrl } from '@/lib/utils/avatar'
 import { UserAvatar } from '@/components/shared/user-avatar'
 import { SendMessageButton } from '@/components/conversation/send-message-button'
@@ -114,13 +113,7 @@ export default async function UserProfilePage({ params }: Props) {
   const displayName = getMemberDisplayName(user)
 
   // 計算身分標籤（系統管理員優先，講師標籤依書籍講師身分推導）
-  const identityTags: string[] = []
-  if (canAccessAdmin(user.roles)) {
-    identityTags.push('系統管理員')
-  }
-  for (const role of TEACHER_ROLES) {
-    if (user.roles.includes(role)) identityTags.push(ROLE_LABELS[role])
-  }
+  const identityTags = getIdentityTags(user.roles)
 
   // 判斷是否為本人頁面
   const isOwnPage = session?.user?.spiritId?.toLowerCase() === id

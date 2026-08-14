@@ -14,10 +14,16 @@ import { toast } from 'sonner'
 import { IconChevronDown, IconChevronRight, IconPrinter } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { confirmShipment, confirmShipmentBatch, confirmMaterialPayment, updateMaterialAddressNote, cancelCourseOrder } from '@/app/actions/course-order'
 import type { CourseOrderWithInvite } from '@/lib/data/course-order'
-import { getMaterialOrderStatus, getMaterialOrderStatusKey } from '@/lib/utils/material-order-status'
+import { getMaterialOrderStatus, getMaterialOrderStatusKey, type MaterialOrderStatusKey } from '@/lib/utils/material-order-status'
 import { MaterialQuoteDialog } from './material-quote-dialog'
+import { MemberTag } from './member-tag'
+
+// ── 分頁籤：待處理／已完成狀態分組 ─────────────
+const isCompletedStatus = (key: MaterialOrderStatusKey) => key === 'shipped' || key === 'received'
+type MaterialTab = 'all' | 'pending' | 'completed'
 
 // ── 購買性質標籤 ──────────────────────────
 const PURCHASE_TYPE_LABELS: Record<string, string> = {
@@ -93,6 +99,12 @@ function OrderDetail({
 }) {
   return (
     <div className="p-4 bg-muted/30 border-t space-y-3">
+      {order.instructor && (
+        <div className="space-y-1.5">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">講師</p>
+          <MemberTag {...order.instructor} />
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">購買人資料（自動快照）</p>
       </div>
@@ -288,6 +300,13 @@ export function MaterialOrderTable({ orders, defaultRemittanceAccount }: Materia
   const [pending, startTransition] = useTransition()
   const [loadingId, setLoadingId] = useState<number | null>(null)
   const [busyShipmentId, setBusyShipmentId] = useState<number | null>(null)
+  const [tab, setTab] = useState<MaterialTab>('all')
+
+  const filteredOrders = orders.filter((order) => {
+    if (tab === 'all') return true
+    const completed = isCompletedStatus(getMaterialOrderStatusKey(order))
+    return tab === 'completed' ? completed : !completed
+  })
 
   function handleConfirmPayment(orderId: number) {
     setLoadingId(orderId)
@@ -355,7 +374,15 @@ export function MaterialOrderTable({ orders, defaultRemittanceAccount }: Materia
   }
 
   return (
-    <div className="rounded-lg border overflow-hidden">
+    <div className="space-y-3">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as MaterialTab)}>
+        <TabsList>
+          <TabsTrigger value="all">全部</TabsTrigger>
+          <TabsTrigger value="pending">待處理</TabsTrigger>
+          <TabsTrigger value="completed">已完成</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      <div className="rounded-lg border overflow-hidden">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
@@ -372,7 +399,14 @@ export function MaterialOrderTable({ orders, defaultRemittanceAccount }: Materia
           </tr>
         </thead>
         <tbody>
-          {orders.map((order) => (
+          {filteredOrders.length === 0 && (
+            <tr>
+              <td colSpan={10} className="px-4 py-12 text-center text-sm text-muted-foreground">
+                此分類目前無教材申請
+              </td>
+            </tr>
+          )}
+          {filteredOrders.map((order) => (
             <>
               <tr
                 key={order.id}
@@ -402,12 +436,7 @@ export function MaterialOrderTable({ orders, defaultRemittanceAccount }: Materia
                   {order.inviteId ? `#${order.inviteId}` : '—'}
                 </td>
                 <td className="px-4 py-3">
-                  <div>{order.instructorName ?? '—'}</div>
-                  {order.instructorEmail && (
-                    <div className="text-xs text-muted-foreground">
-                      {order.instructorEmail}
-                    </div>
-                  )}
+                  {order.instructorName ?? '—'}
                 </td>
                 <td className="px-4 py-3">{order.buyerNameZh}</td>
                 <td className="px-4 py-3 text-muted-foreground">
@@ -522,6 +551,7 @@ export function MaterialOrderTable({ orders, defaultRemittanceAccount }: Materia
           ))}
         </tbody>
       </table>
+      </div>
 
       {quoteOrderId !== null && (
         <MaterialQuoteDialog

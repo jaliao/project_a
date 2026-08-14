@@ -39,3 +39,10 @@ export function getMemberDisplayName(user: MemberDisplayInput): string {
   if (!suffix || suffix === base) return base
   return `${base}（${suffix}）`
 }
+
+// 後台情境固定附註真實姓名（與 displayNameMode 無關），缺漏或顯示名稱已包含真實姓名時省略括號
+// （displayNameMode 為 nickname_zh/nickname_en 時，displayName 本身可能已內嵌 realName，用 includes 而非 === 才能正確判斷）
+export function withRealName(displayName: string, realName: string | null): string {
+  if (!realName || displayName.includes(realName)) return displayName
+  return `${displayName}（${realName}）`
+}

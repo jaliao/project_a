@@ -8,7 +8,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { getMemberDisplayName, type DisplayNameMode } from '@/lib/utils/member-display'
-import type { SupportInquiryCategory, SupportInquiryStatus, Gender, ChurchType } from '@prisma/client'
+import type { SupportInquiryCategory, SupportInquiryStatus, Gender, ChurchType, Prisma } from '@prisma/client'
 
 const displaySelect = {
   realName: true,
@@ -118,41 +118,40 @@ export type InquiryListItem = {
   courseTitle: string | null
 }
 
-export async function getInquiryList(opts: {
-  status?: SupportInquiryStatus | 'all'
-  userId?: string
-}): Promise<InquiryListItem[]> {
+export const INQUIRY_PAGE_SIZE = 20
+
+const inquiryRowSelect = {
+  id: true,
+  userId: true,
+  submitterName: true,
+  submitterSpiritId: true,
+  submitterRealName: true,
+  submitterGenderLabel: true,
+  submitterChurchLabel: true,
+  category: true,
+  body: true,
+  status: true,
+  replyBody: true,
+  repliedAt: true,
+  createdAt: true,
+  courseInviteId: true,
+  courseInvite: { select: { title: true } },
+  user: { select: submitterSelect },
+  repliedBy: { select: displaySelect },
+} as const
+
+type InquiryRow = Prisma.SupportInquiryGetPayload<{ select: typeof inquiryRowSelect }>
+
+function buildInquiryWhere(opts: { status?: SupportInquiryStatus | 'all'; userId?: string }) {
   const status = opts.status ?? 'all'
-  const where = {
+  return {
     ...(status === 'all' ? {} : { status }),
     ...(opts.userId ? { userId: opts.userId } : {}),
   }
+}
 
-  const rows = await prisma.supportInquiry.findMany({
-    where,
-    orderBy: { createdAt: 'desc' },
-    select: {
-      id: true,
-      userId: true,
-      submitterName: true,
-      submitterSpiritId: true,
-      submitterRealName: true,
-      submitterGenderLabel: true,
-      submitterChurchLabel: true,
-      category: true,
-      body: true,
-      status: true,
-      replyBody: true,
-      repliedAt: true,
-      createdAt: true,
-      courseInviteId: true,
-      courseInvite: { select: { title: true } },
-      user: { select: submitterSelect },
-      repliedBy: { select: displaySelect },
-    },
-  })
-
-  return rows.map((r) => ({
+function mapInquiryRow(r: InquiryRow): InquiryListItem {
+  return {
     id: r.id,
     userId: r.userId,
     isSubmitterDeleted: r.user === null,
@@ -170,7 +169,40 @@ export async function getInquiryList(opts: {
     createdAt: r.createdAt,
     courseInviteId: r.courseInviteId,
     courseTitle: r.courseInvite?.title ?? null,
-  }))
+  }
+}
+
+export async function getInquiryList(opts: {
+  status?: SupportInquiryStatus | 'all'
+  userId?: string
+}): Promise<InquiryListItem[]> {
+  const rows = await prisma.supportInquiry.findMany({
+    where: buildInquiryWhere(opts),
+    orderBy: { createdAt: 'desc' },
+    select: inquiryRowSelect,
+  })
+
+  return rows.map(mapInquiryRow)
+}
+
+export async function getPaginatedInquiryList(opts: {
+  status?: SupportInquiryStatus | 'all'
+  page?: number
+}): Promise<{ items: InquiryListItem[]; total: number; page: number; pageCount: number }> {
+  const where = buildInquiryWhere(opts)
+  const total = await prisma.supportInquiry.count({ where })
+  const pageCount = Math.max(1, Math.ceil(total / INQUIRY_PAGE_SIZE))
+  const safePage = Math.min(Math.max(1, opts.page ?? 1), pageCount)
+
+  const rows = await prisma.supportInquiry.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    skip: (safePage - 1) * INQUIRY_PAGE_SIZE,
+    take: INQUIRY_PAGE_SIZE,
+    select: inquiryRowSelect,
+  })
+
+  return { items: rows.map(mapInquiryRow), total, page: safePage, pageCount }
 }
 
 // ── 後台：待處理提問數（儀錶板提示）──

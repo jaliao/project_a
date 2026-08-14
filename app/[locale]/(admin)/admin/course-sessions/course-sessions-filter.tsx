@@ -20,6 +20,7 @@ const STATUS_OPTIONS = [
   { value: 'started', label: '進行中' },
   { value: 'completed', label: '已結業' },
   { value: 'cancelled', label: '已取消' },
+  { value: 'archived', label: '已封存' },
 ]
 
 interface CourseSessionsFilterProps {

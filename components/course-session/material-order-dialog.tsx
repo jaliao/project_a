@@ -396,12 +396,11 @@ export function MaterialOrderDialog({
             {/* ════════ 多地址 ════════ */}
             {isMultiple && (
               <div className="space-y-4">
-                {/* 指派提示（未指派＝本次不申請） */}
+                {/* 指派提示 */}
                 <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm space-y-0.5">
                   <p className="font-medium">
                     {t('multiSummary', { count: bookItems.length })}
                   </p>
-                  <p className="text-muted-foreground">{t('unassignedHint')}</p>
                 </div>
 
                 {fields.map((fieldItem, index) => (
@@ -496,28 +495,33 @@ function ExtraItemRow({
   onChange,
   onRemove,
   disabled,
+  errorMessage,
 }: {
   item: Extract<OrderBookItemInput, { kind: 'extra' }>
   onChange: (next: Extract<OrderBookItemInput, { kind: 'extra' }>) => void
   onRemove: () => void
   disabled?: boolean
+  errorMessage?: string
 }) {
   const t = useTranslations('course.material')
   return (
-    <div className="flex items-center gap-2">
-      <VersionSelect value={item.version} onChange={(v) => onChange({ ...item, version: v })} disabled={disabled} />
-      <Input
-        value={item.bookName ?? ''}
-        onChange={(e) => onChange({ ...item, bookName: e.target.value })}
-        placeholder={t('extraNamePlaceholder')}
-        className="h-8 flex-1 text-sm"
-        disabled={disabled}
-      />
-      {!disabled && (
-        <Button type="button" variant="ghost" size="sm" onClick={onRemove} className="h-7 px-2 text-destructive">
-          <IconTrash className="h-4 w-4" />
-        </Button>
-      )}
+    <div className="space-y-1">
+      <div className="flex items-center gap-2">
+        <VersionSelect value={item.version} onChange={(v) => onChange({ ...item, version: v })} disabled={disabled} />
+        <Input
+          value={item.bookName ?? ''}
+          onChange={(e) => onChange({ ...item, bookName: e.target.value })}
+          placeholder={t('extraNamePlaceholder')}
+          className="h-8 flex-1 text-sm"
+          disabled={disabled}
+        />
+        {!disabled && (
+          <Button type="button" variant="ghost" size="sm" onClick={onRemove} className="h-7 px-2 text-destructive">
+            <IconTrash className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+      <FieldError message={errorMessage} />
     </div>
   )
 }
@@ -596,6 +600,7 @@ function SingleBookList({
             onChange={(next) => setItems(items.map((i, j) => (j === idx ? next : i)))}
             onRemove={() => setItems(items.filter((_, j) => j !== idx))}
             disabled={disabled}
+            errorMessage={(form.formState.errors.items as { [key: number]: { bookName?: { message?: string } } } | undefined)?.[idx]?.bookName?.message}
           />
         ))}
         {!disabled && (
@@ -832,6 +837,13 @@ function BookAssignList({
             onChange={(next) => setItems(myItems.map((i, j) => (j === idx ? next : i)))}
             onRemove={() => setItems(myItems.filter((_, j) => j !== idx))}
             disabled={disabled}
+            errorMessage={
+              (
+                form.formState.errors.shipments as
+                  | { [key: number]: { items?: { [key: number]: { bookName?: { message?: string } } } } }
+                  | undefined
+              )?.[index]?.items?.[idx]?.bookName?.message
+            }
           />
         ))}
         {!disabled && (

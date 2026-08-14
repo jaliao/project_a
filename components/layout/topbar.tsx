@@ -16,21 +16,20 @@ import { useTranslations } from 'next-intl'
 import { NotificationDrawer } from '@/components/notification/notification-drawer'
 import { canAccessAdmin } from '@/lib/auth-roles'
 import { UserAvatar } from '@/components/shared/user-avatar'
-import { useMessageDrawer } from '@/components/conversation/message-drawer-provider'
 
 interface TopbarProps {
   unreadCount?: number
+  unreadMessageCount?: number
   roles?: string[]
   spiritId?: string
   avatarUrl?: string | null
 }
 
-export function Topbar({ unreadCount = 0, roles, spiritId, avatarUrl }: TopbarProps) {
+export function Topbar({ unreadCount = 0, unreadMessageCount = 0, roles, spiritId, avatarUrl }: TopbarProps) {
   const t = useTranslations('nav')
   const tc = useTranslations('common')
   const router = useRouter()
   const [isNotifOpen, setIsNotifOpen] = useState(false)
-  const { openMessageDrawer, unreadCount: unreadMessageCount } = useMessageDrawer()
 
   const isAdmin = canAccessAdmin(roles)
   const homeUrl = spiritId ? `/user/${spiritId.toLowerCase()}` : '/'
@@ -104,7 +103,7 @@ export function Topbar({ unreadCount = 0, roles, spiritId, avatarUrl }: TopbarPr
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => openMessageDrawer()}
+          onClick={() => router.push('/messages')}
           title={t('messages')}
           className="relative"
         >

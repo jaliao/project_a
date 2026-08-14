@@ -278,3 +278,75 @@ export async function reopenRecruitment(inviteId: number): Promise<ActionRespons
   revalidatePath(`/course/${inviteId}`)
   return { success: true, message: '已退回招生中' }
 }
+
+// ── 封存課程（僅 admin/superadmin；不限課程狀態；資料完全保留，僅從預設清單隱藏）──
+export async function archiveCourseSession(
+  inviteId: number,
+  reason?: string
+): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+  if (!canAccessAdmin(session.user.roles)) return { success: false, message: '無權限' }
+
+  const invite = await prisma.courseInvite.findUnique({
+    where: { id: inviteId },
+    select: { id: true },
+  })
+  if (!invite) return { success: false, message: '找不到課程' }
+
+  await prisma.courseInvite.update({
+    where: { id: inviteId },
+    data: { archivedAt: new Date(), archiveReason: reason?.trim() || null },
+  })
+
+  revalidatePath(`/course/${inviteId}`)
+  revalidatePath('/admin/course-sessions')
+  return { success: true, message: '課程已封存' }
+}
+
+// ── 解除封存課程（僅 admin/superadmin）──
+export async function unarchiveCourseSession(inviteId: number): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+  if (!canAccessAdmin(session.user.roles)) return { success: false, message: '無權限' }
+
+  const invite = await prisma.courseInvite.findUnique({
+    where: { id: inviteId },
+    select: { id: true },
+  })
+  if (!invite) return { success: false, message: '找不到課程' }
+
+  await prisma.courseInvite.update({
+    where: { id: inviteId },
+    data: { archivedAt: null, archiveReason: null },
+  })
+
+  revalidatePath(`/course/${inviteId}`)
+  revalidatePath('/admin/course-sessions')
+  return { success: true, message: '已解除封存' }
+}
+
+// ── 刪除課程（僅 admin/superadmin；不可回復）──
+// 交易內先刪除該課全部 InviteEnrollment（inviteId FK 為 ON DELETE RESTRICT），
+// 再刪除 CourseInvite 本身；MaterialShipmentItem／CourseOrder.courseInviteId／
+// AdminActionLog／SupportInquiry／LearningRecordFeedback.resultInviteId 依既有 FK 設定自動 SetNull，
+// CourseMessage 依 onDelete: Cascade 自動隨課程刪除
+export async function deleteCourseSession(inviteId: number): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+  if (!canAccessAdmin(session.user.roles)) return { success: false, message: '無權限' }
+
+  const invite = await prisma.courseInvite.findUnique({
+    where: { id: inviteId },
+    select: { id: true },
+  })
+  if (!invite) return { success: false, message: '找不到課程' }
+
+  await prisma.$transaction([
+    prisma.inviteEnrollment.deleteMany({ where: { inviteId } }),
+    prisma.courseInvite.delete({ where: { id: inviteId } }),
+  ])
+
+  revalidatePath('/admin/course-sessions')
+  return { success: true, message: '課程已刪除' }
+}

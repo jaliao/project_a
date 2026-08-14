@@ -19,7 +19,7 @@ export const orderBookItemInputSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('extra'),
     version: z.enum(['traditional', 'simplified', 'english'], { error: 'validation.versionRequired' }),
-    bookName: z.string().optional(),
+    bookName: z.string().trim().min(1, 'validation.bookNameRequired'),
   }),
 ])
 

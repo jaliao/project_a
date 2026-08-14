@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
-import { IconBook, IconPlayerPlay, IconCertificate, IconBan, IconRefresh, IconChecks } from '@tabler/icons-react'
+import { IconBook, IconPlayerPlay, IconCertificate, IconBan, IconRefresh, IconChecks, IconArchive, IconTrash } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -29,6 +29,8 @@ import {
 import { cn } from '@/lib/utils'
 import { CancelCourseDialog } from '@/components/course-session/cancel-course-dialog'
 import { MaterialOrderDialog } from '@/components/course-session/material-order-dialog'
+import { ArchiveCourseDialog } from '@/components/course-session/archive-course-dialog'
+import { DeleteCourseDialog } from '@/components/course-session/delete-course-dialog'
 import type { BookItem } from '@/lib/data/material-items'
 import { startCourseSession, revertGraduation } from '@/app/actions/course-invite'
 import { reopenRecruitment } from '@/app/actions/course-session'
@@ -47,6 +49,9 @@ type Props = {
   inviteId: number
   // 是否為該課講師（開始上課僅講師可見；其餘作業講師與管理者皆可）
   isInstructor: boolean
+  // 封存／刪除課程：僅 admin/superadmin 可見可操作（該課建立者不足以操作）
+  isAdmin: boolean
+  isArchived: boolean
   // 教材申請作業：講師本人或管理者可見可操作
   canManageMaterials: boolean
   isCancelled: boolean
@@ -55,6 +60,9 @@ type Props = {
   hasApprovedStudents: boolean
   // 已核准學員人數（開始上課確認視窗顯示用）
   approvedCount: number
+  // 全部報名人數（含待審）與其中已結業人數（刪除課程確認視窗顯示用）
+  totalEnrollCount: number
+  graduatedCount: number
   orders: CourseSessionOrder[]
   // 教材申請進度（總需求／已申請／尚未申請；依學員申請統計之參考值）
   progress: MaterialProgress
@@ -185,12 +193,16 @@ function todayInput(): string {
 export function CourseDetailActions({
   inviteId,
   isInstructor,
+  isAdmin,
+  isArchived,
   canManageMaterials,
   isCancelled,
   isCompleted,
   isStarted,
   hasApprovedStudents,
   approvedCount,
+  totalEnrollCount,
+  graduatedCount,
   orders,
   progress,
   materialFinalizedAt,
@@ -223,6 +235,9 @@ export function CourseDetailActions({
   // 結業回退：確認視窗與處理中狀態
   const [revertOpen, setRevertOpen] = useState(false)
   const [revertLoading, setRevertLoading] = useState(false)
+  // 封存／解除封存、刪除課程：確認視窗（僅 admin/superadmin）
+  const [archiveOpen, setArchiveOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const [receiptPending, startReceiptTransition] = useTransition()
   const [paymentPending, startPaymentTransition] = useTransition()
   const [cancelPending, startCancelTransition] = useTransition()
@@ -472,7 +487,6 @@ export function CourseDetailActions({
                     <li>{t('noteApplyButton')}</li>
                     <li>{t('noteFinalizeButton')}</li>
                     <li>{t('noteFinalizeBlocked')}</li>
-                    {total.traditional + total.simplified + total.english === 0 && <li>{t('noDemandHint')}</li>}
                   </ul>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -686,11 +700,47 @@ export function CourseDetailActions({
         </Section>
       )}
 
+      {/* ── 區塊四：封存／刪除課程（僅 admin/superadmin；不限課程狀態） ────────────────── */}
+      {isAdmin && (
+        <Section title={ta('sectionArchive')} icon={<IconArchive className="h-5 w-5 text-primary" />}>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="outline" onClick={() => setArchiveOpen(true)}>
+              {isArchived ? ta('unarchiveButton') : ta('archiveButton')}
+            </Button>
+            <Button
+              variant="outline"
+              className="text-red-600 hover:text-red-700"
+              onClick={() => setDeleteOpen(true)}
+            >
+              <IconTrash className="h-4 w-4" />
+              {ta('deleteButton')}
+            </Button>
+          </div>
+        </Section>
+      )}
+
       {/* 取消授課 Dialog */}
       <CancelCourseDialog
         inviteId={inviteId}
         open={cancelOpen}
         onOpenChange={setCancelOpen}
+      />
+
+      {/* 封存／解除封存 Dialog */}
+      <ArchiveCourseDialog
+        inviteId={inviteId}
+        isArchived={isArchived}
+        open={archiveOpen}
+        onOpenChange={setArchiveOpen}
+      />
+
+      {/* 刪除課程 Dialog */}
+      <DeleteCourseDialog
+        inviteId={inviteId}
+        enrollCount={totalEnrollCount}
+        graduatedCount={graduatedCount}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
       />
 
       {/* 教材申請 Dialog（僅用於新申請；既有訂單於列內嵌顯示） */}

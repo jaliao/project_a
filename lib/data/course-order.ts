@@ -8,6 +8,9 @@
 
 import { prisma } from '@/lib/prisma'
 import { getMaterialOrderStatusKey } from '@/lib/utils/material-order-status'
+import { getMemberDisplayName } from '@/lib/utils/member-display'
+import { resolveAvatarUrl } from '@/lib/utils/avatar'
+import type { MemberTagInfo } from '@/components/admin/member-tag'
 
 export type CourseOrderDetail = {
   id: number
@@ -77,6 +80,7 @@ export type CourseOrderWithInvite = CourseOrderDetail & {
   inviteCancelledAt: Date | null
   instructorName: string | null
   instructorEmail: string | null
+  instructor: MemberTagInfo | null
   shipMode: string
   shipments: ShipmentInfo[]
   bookItems: OrderBookItem[] // 單一地址書本清單（多地址為空，改用 shipments[].items）
@@ -173,7 +177,24 @@ export async function getAllCourseOrdersWithInvite(): Promise<
           id: true,
           title: true,
           cancelledAt: true,
-          createdBy: { select: { realName: true, name: true, email: true } },
+          createdBy: {
+            select: {
+              id: true,
+              spiritId: true,
+              roles: true,
+              realName: true,
+              name: true,
+              email: true,
+              nickname: true,
+              englishName: true,
+              displayNameMode: true,
+              avatarKey: true,
+              image: true,
+              gender: true,
+              church: { select: { name: true } },
+              churchOther: true,
+            },
+          },
         },
       },
     },
@@ -223,6 +244,18 @@ export async function getAllCourseOrdersWithInvite(): Promise<
       instructorName:
         invite?.createdBy.realName ?? invite?.createdBy.name ?? null,
       instructorEmail: invite?.createdBy.email ?? null,
+      instructor: invite?.createdBy
+        ? {
+            id: invite.createdBy.id,
+            spiritId: invite.createdBy.spiritId,
+            roles: invite.createdBy.roles,
+            displayName: getMemberDisplayName(invite.createdBy),
+            realName: invite.createdBy.realName ?? null,
+            gender: invite.createdBy.gender,
+            churchLabel: invite.createdBy.church?.name ?? invite.createdBy.churchOther ?? null,
+            avatarUrl: resolveAvatarUrl(invite.createdBy),
+          }
+        : null,
       // 單一地址：書本清單＝該訂單自身寄送批次之項目（精準對應本訂單）
       bookItems:
         order.shipMode === 'single'

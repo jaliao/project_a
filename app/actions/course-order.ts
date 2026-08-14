@@ -112,7 +112,7 @@ export async function applyMaterialOrder(
         seen.add(input.enrollmentId)
         rows.push({ enrollmentId: it.enrollmentId, bookName: it.bookName, version: input.version, studentName: it.studentName })
       } else {
-        rows.push({ enrollmentId: null, bookName: input.bookName?.trim() || '額外加購', version: input.version, studentName: '' })
+        rows.push({ enrollmentId: null, bookName: input.bookName, version: input.version, studentName: '' })
       }
     }
     return rows

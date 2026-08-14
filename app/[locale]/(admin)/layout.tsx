@@ -17,8 +17,7 @@ import { canAccessAdmin } from '@/lib/auth-roles'
 import { Topbar } from '@/components/layout/topbar'
 import { Footer } from '@/components/layout/footer'
 import { getUnreadNotificationCount } from '@/lib/data/notification'
-import { getMyConversations } from '@/lib/data/conversation'
-import { MessageDrawerProvider } from '@/components/conversation/message-drawer-provider'
+import { getUnreadConversationCount } from '@/lib/data/conversation'
 
 export default async function AdminLayout({
   children,
@@ -53,22 +52,21 @@ export default async function AdminLayout({
   if (!canAccessAdmin(session.user?.roles)) redirect('/')
 
   const unreadCount = await getUnreadNotificationCount(userId)
-  const initialConversations = await getMyConversations(userId)
+  const unreadMessageCount = await getUnreadConversationCount(userId)
 
   return (
-    <MessageDrawerProvider initialConversations={initialConversations} currentUserId={userId}>
-      <div className="min-h-screen flex flex-col">
-        <Topbar
-          unreadCount={unreadCount}
-          roles={session?.user?.roles}
-          spiritId={session?.user?.spiritId ?? undefined}
-          avatarUrl={session?.user?.avatarUrl}
-        />
-        <main className="flex-1 p-6">
-          {children}
-        </main>
-        <Footer />
-      </div>
-    </MessageDrawerProvider>
+    <div className="min-h-screen flex flex-col">
+      <Topbar
+        unreadCount={unreadCount}
+        unreadMessageCount={unreadMessageCount}
+        roles={session?.user?.roles}
+        spiritId={session?.user?.spiritId ?? undefined}
+        avatarUrl={session?.user?.avatarUrl}
+      />
+      <main className="flex-1 p-6">
+        {children}
+      </main>
+      <Footer />
+    </div>
   )
 }

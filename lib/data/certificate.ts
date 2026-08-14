@@ -13,6 +13,9 @@
 
 import { prisma } from '@/lib/prisma'
 import { getMemberDisplayName, type DisplayNameMode } from '@/lib/utils/member-display'
+import { resolveAvatarUrl } from '@/lib/utils/avatar'
+import type { MemberTagInfo } from '@/components/admin/member-tag'
+import type { Gender } from '@/components/shared/gender-icon'
 
 const PAGE_SIZE = 30
 
@@ -26,8 +29,6 @@ const displaySelect = {
 
 export type CertificateStatus = 'pending' | 'done'
 
-export type CertificateGender = 'male' | 'female' | 'unspecified'
-
 export type CertificateListItem = {
   userId: string
   courseCatalogId: number
@@ -35,13 +36,15 @@ export type CertificateListItem = {
   displayName: string
   realName: string | null
   englishName: string | null
-  gender: CertificateGender
+  gender: Gender
   churchLabel: string | null
   spiritId: string | null
   graduatedAt: Date
   producedAt: Date | null
   producedByName: string | null
   note: string | null
+  member: MemberTagInfo
+  teacher: MemberTagInfo
 }
 
 export type CertificateListResult = {
@@ -81,28 +84,58 @@ export async function getCertificateProductionList(opts: {
           churchType: true,
           churchOther: true,
           church: { select: { name: true } },
+          roles: true,
+          avatarKey: true,
+          image: true,
           ...displaySelect,
         },
       },
-      invite: { select: { courseCatalogId: true, courseCatalog: { select: { label: true } } } },
+      invite: {
+        select: {
+          courseCatalogId: true,
+          courseCatalog: { select: { label: true } },
+          createdBy: {
+            select: {
+              id: true,
+              spiritId: true,
+              roles: true,
+              realName: true,
+              name: true,
+              email: true,
+              nickname: true,
+              englishName: true,
+              displayNameMode: true,
+              avatarKey: true,
+              image: true,
+              gender: true,
+              church: { select: { name: true } },
+              churchOther: true,
+            },
+          },
+        },
+      },
     },
   })
+
+  type EligibleUser = DisplayUser & { roles: string[]; avatarKey: string | null; image: string | null }
 
   type Eligible = {
     userId: string
     courseCatalogId: number
     courseCatalogLabel: string
-    user: DisplayUser
-    gender: CertificateGender
+    user: EligibleUser
+    gender: Gender
     churchLabel: string | null
     spiritId: string | null
     graduatedAt: Date
+    teacher: MemberTagInfo
   }
   const eligible = new Map<string, Eligible>()
   for (const e of enrollments) {
     const key = `${e.user.id}:${e.invite.courseCatalogId}`
     const prev = eligible.get(key)
     if (!prev || e.graduatedAt! > prev.graduatedAt) {
+      const teacherUser = e.invite.createdBy
       eligible.set(key, {
         userId: e.user.id,
         courseCatalogId: e.invite.courseCatalogId,
@@ -113,6 +146,16 @@ export async function getCertificateProductionList(opts: {
         churchLabel: e.user.church?.name ?? e.user.churchOther ?? null,
         spiritId: e.user.spiritId,
         graduatedAt: e.graduatedAt!,
+        teacher: {
+          id: teacherUser.id,
+          spiritId: teacherUser.spiritId,
+          roles: teacherUser.roles,
+          displayName: getMemberDisplayName(teacherUser),
+          realName: teacherUser.realName ?? null,
+          gender: teacherUser.gender,
+          churchLabel: teacherUser.church?.name ?? teacherUser.churchOther ?? null,
+          avatarUrl: resolveAvatarUrl(teacherUser),
+        },
       })
     }
   }
@@ -146,6 +189,17 @@ export async function getCertificateProductionList(opts: {
       producedAt: p?.producedAt ?? null,
       producedByName: p?.producedBy ? getMemberDisplayName(p.producedBy) : null,
       note: p?.note ?? null,
+      member: {
+        id: c.userId,
+        spiritId: c.spiritId,
+        roles: c.user.roles,
+        displayName: getMemberDisplayName(c.user),
+        realName: c.user.realName ?? null,
+        gender: c.gender,
+        churchLabel: c.churchLabel,
+        avatarUrl: resolveAvatarUrl(c.user),
+      },
+      teacher: c.teacher,
     }
   })
 

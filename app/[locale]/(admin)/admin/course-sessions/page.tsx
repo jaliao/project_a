@@ -38,8 +38,8 @@ export default async function AdminCourseSessionsPage({
   // 守衛（登入 + admin 身分）由 (admin)/layout.tsx 統一處理
   const { q, catalogId, status, startDate, endDate } = await searchParams
 
-  const validStatus = ['recruiting', 'started', 'completed', 'cancelled'].includes(status ?? '')
-    ? (status as 'recruiting' | 'started' | 'completed' | 'cancelled')
+  const validStatus = ['recruiting', 'started', 'completed', 'cancelled', 'archived'].includes(status ?? '')
+    ? (status as 'recruiting' | 'started' | 'completed' | 'cancelled' | 'archived')
     : undefined
 
   const [{ total, items }, catalogs] = await Promise.all([
@@ -94,6 +94,7 @@ export default async function AdminCourseSessionsPage({
                   startedAt={item.startedAt}
                   cancelledAt={item.cancelledAt}
                   completedAt={item.completedAt}
+                  archivedAt={item.archivedAt}
                   variant="full"
                   href={`/course/${item.id}`}
                   newTab

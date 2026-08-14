@@ -14,8 +14,7 @@ import { Topbar } from '@/components/layout/topbar'
 import { Footer } from '@/components/layout/footer'
 import { getUnreadNotificationCount } from '@/lib/data/notification'
 import { isGuestRoute } from '@/lib/auth/route-access'
-import { getMyConversations } from '@/lib/data/conversation'
-import { MessageDrawerProvider } from '@/components/conversation/message-drawer-provider'
+import { getUnreadConversationCount } from '@/lib/data/conversation'
 
 export default async function UserLayout({
   children,
@@ -60,22 +59,21 @@ export default async function UserLayout({
   }
 
   const unreadCount = userId ? await getUnreadNotificationCount(userId) : 0
-  const initialConversations = await getMyConversations(userId)
+  const unreadMessageCount = await getUnreadConversationCount(userId)
 
   return (
-    <MessageDrawerProvider initialConversations={initialConversations} currentUserId={userId}>
-      <div className="min-h-screen flex flex-col">
-        <Topbar
-          unreadCount={unreadCount}
-          roles={session?.user?.roles}
-          spiritId={session?.user?.spiritId ?? undefined}
-          avatarUrl={session?.user?.avatarUrl}
-        />
-        <main className="flex-1 p-6">
-          {children}
-        </main>
-        <Footer />
-      </div>
-    </MessageDrawerProvider>
+    <div className="min-h-screen flex flex-col">
+      <Topbar
+        unreadCount={unreadCount}
+        unreadMessageCount={unreadMessageCount}
+        roles={session?.user?.roles}
+        spiritId={session?.user?.spiritId ?? undefined}
+        avatarUrl={session?.user?.avatarUrl}
+      />
+      <main className="flex-1 p-6">
+        {children}
+      </main>
+      <Footer />
+    </div>
   )
 }

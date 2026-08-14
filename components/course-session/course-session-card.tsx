@@ -32,6 +32,7 @@ type CourseSessionCardProps = {
   startedAt?: Date | null
   cancelledAt?: Date | null
   completedAt?: Date | null
+  archivedAt?: Date | null
   matchNote?: string | null
   showMatchBadge?: boolean
 }
@@ -58,6 +59,7 @@ export function CourseSessionCard({
   startedAt,
   cancelledAt,
   completedAt,
+  archivedAt,
   matchNote,
   showMatchBadge = false,
 }: CourseSessionCardProps) {
@@ -82,6 +84,9 @@ export function CourseSessionCard({
           )}
           <CourseCatalogBadge catalogId={courseCatalogId} label={courseCatalogLabel} size="sm" />
           {status && <CourseStatusBadge status={status} size="sm" />}
+          {archivedAt && (
+            <Badge className="bg-slate-200 text-slate-700 hover:bg-slate-200 text-xs">{t('archived')}</Badge>
+          )}
         </div>
         <p className={cn('font-semibold text-sm', variant === 'full' && 'text-base')}>
           {title}

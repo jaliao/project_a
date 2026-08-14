@@ -412,17 +412,21 @@ export default async function CourseDetailPage({
         />
       )}
 
-      {/* 課程操作區（教材申請＝講師與管理者；開始上課僅講師；結業/重新招募/取消＝講師與管理者） */}
+      {/* 課程操作區（教材申請＝講師與管理者；開始上課僅講師；結業/重新招募/取消＝講師與管理者；封存/刪除＝僅管理者） */}
       {(isInstructor || isAdmin) && (
         <CourseDetailActions
           inviteId={courseSession.id}
           isInstructor={isInstructor}
+          isAdmin={isAdmin}
+          isArchived={!!courseSession.archivedAt}
           canManageMaterials={canManageMaterials}
           isCancelled={isCancelled}
           isCompleted={isCompleted}
           isStarted={!!courseSession.startedAt}
           hasApprovedStudents={courseSession.approvedEnrollments.length > 0}
           approvedCount={courseSession.approvedEnrollments.length}
+          totalEnrollCount={courseSession.approvedEnrollments.length + courseSession.pendingEnrollments.length}
+          graduatedCount={courseSession.approvedEnrollments.filter((e) => e.graduatedAt).length}
           orders={courseSession.orders}
           progress={materialProgress}
           materialFinalizedAt={courseSession.materialFinalizedAt}

@@ -57,7 +57,7 @@ export const ASSIGNABLE_ROLES: UserRole[] = [
   'superadmin',
 ]
 
-type Roles = readonly string[] | null | undefined
+export type Roles = readonly string[] | null | undefined
 
 /**
  * 判定身分集合是否含指定身分

@@ -33,6 +33,7 @@ export type CourseSessionItem = {
   startedAt: Date | null
   cancelledAt: Date | null
   completedAt: Date | null
+  archivedAt: Date | null
 }
 
 /**
@@ -58,6 +59,7 @@ export async function getMyCourseSessions(
       startedAt: true,
       cancelledAt: true,
       completedAt: true,
+      archivedAt: true,
       _count: { select: { enrollments: true } },
       courseDate: true,
       orders: { select: { courseDate: true }, orderBy: { createdAt: 'asc' }, take: 1 },
@@ -77,6 +79,7 @@ export async function getMyCourseSessions(
     startedAt: invite.startedAt,
     cancelledAt: invite.cancelledAt,
     completedAt: invite.completedAt,
+    archivedAt: invite.archivedAt,
   }))
 }
 
@@ -108,6 +111,7 @@ export async function getPublicMatchingSessions(): Promise<MatchBoardItem[]> {
       startedAt: true,
       cancelledAt: true,
       completedAt: true,
+      archivedAt: true,
       matchNote: true,
       _count: { select: { enrollments: true } },
       courseDate: true,
@@ -129,6 +133,7 @@ export async function getPublicMatchingSessions(): Promise<MatchBoardItem[]> {
     startedAt: invite.startedAt,
     cancelledAt: invite.cancelledAt,
     completedAt: invite.completedAt,
+    archivedAt: invite.archivedAt,
     matchNote: invite.matchNote,
     instructorName: invite.createdBy.realName || invite.createdBy.name || '講師',
   }))
@@ -243,6 +248,9 @@ export type CourseSessionDetail = {
   materialFinalizedAt: Date | null
   isPublicMatch: boolean
   matchNote: string | null
+  // 封存（有值即代表已封存；資料完全保留，僅從預設清單隱藏）
+  archivedAt: Date | null
+  archiveReason: string | null
   createdBy: {
     id: string
     name: string | null
@@ -331,6 +339,8 @@ export async function getCourseSessionById(
       notes: true,
       isPublicMatch: true,
       matchNote: true,
+      archivedAt: true,
+      archiveReason: true,
       createdBy: { select: { ...displayNameUserSelect, phone: true } },
       enrollments: {
         select: {
@@ -422,6 +432,8 @@ export async function getCourseSessionById(
     materialFinalizedAt: invite.materialFinalizedAt,
     isPublicMatch: invite.isPublicMatch,
     matchNote: invite.matchNote,
+    archivedAt: invite.archivedAt,
+    archiveReason: invite.archiveReason,
     createdBy: invite.createdBy,
     approvedEnrollments,
     pendingEnrollments,
@@ -481,7 +493,7 @@ export async function getMyCompletionCertificates(
 export type AdminCourseSessionParams = {
   q?: string
   catalogId?: number
-  status?: 'recruiting' | 'started' | 'completed' | 'cancelled'
+  status?: 'recruiting' | 'started' | 'completed' | 'cancelled' | 'archived'
   startDate?: string
   endDate?: string
 }
@@ -524,14 +536,17 @@ export async function getAllCourseSessionsAdmin(
       }
     : {}
 
-  // 進度篩選條件
+  // 進度篩選條件；已封存課程從所有非「已封存」篩選中排除（含未指定篩選）
   const statusWhere = (() => {
-    if (!status) return {}
-    if (status === 'cancelled') return { cancelledAt: { not: null } }
-    if (status === 'completed') return { cancelledAt: null, completedAt: { not: null } }
-    if (status === 'started') return { cancelledAt: null, completedAt: null, startedAt: { not: null } }
+    if (status === 'archived') return { archivedAt: { not: null } }
+    if (!status) return { archivedAt: null }
+    if (status === 'cancelled') return { archivedAt: null, cancelledAt: { not: null } }
+    if (status === 'completed') return { archivedAt: null, cancelledAt: null, completedAt: { not: null } }
+    if (status === 'started') {
+      return { archivedAt: null, cancelledAt: null, completedAt: null, startedAt: { not: null } }
+    }
     // recruiting
-    return { cancelledAt: null, completedAt: null, startedAt: null }
+    return { archivedAt: null, cancelledAt: null, completedAt: null, startedAt: null }
   })()
 
   // 課程目錄篩選
@@ -560,6 +575,7 @@ export async function getAllCourseSessionsAdmin(
     startedAt: true,
     cancelledAt: true,
     completedAt: true,
+    archivedAt: true,
     _count: { select: { enrollments: true } },
     courseDate: true,
     orders: { select: { courseDate: true }, orderBy: { createdAt: 'asc' as const }, take: 1 },
@@ -588,6 +604,7 @@ export async function getAllCourseSessionsAdmin(
     startedAt: invite.startedAt,
     cancelledAt: invite.cancelledAt,
     completedAt: invite.completedAt,
+    archivedAt: invite.archivedAt,
   }))
 
   return { total, items }

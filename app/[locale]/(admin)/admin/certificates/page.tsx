@@ -12,10 +12,11 @@
 export const dynamic = 'force-dynamic'
 
 import type { Metadata } from 'next'
-import { IconGenderAgender, IconGenderFemale, IconGenderMale } from '@tabler/icons-react'
 import { getCertificateProductionList, type CertificateStatus } from '@/lib/data/certificate'
 import { CertificateFilter } from '@/components/admin/certificate-filter'
 import { CertificateProduceButton, CertificateNoteCell } from '@/components/admin/certificate-cells'
+import { MemberTextTag } from '@/components/admin/member-text-tag'
+import { GenderIcon } from '@/components/shared/gender-icon'
 import { Badge } from '@/components/ui/badge'
 import {
   Pagination,
@@ -50,17 +51,6 @@ function getPaginationRange(current: number, total: number): (number | 'ellipsis
     prev = p
   }
   return result
-}
-
-// 性別以 icon 呈現於姓名旁（未指定用中性 icon、淡色）
-function GenderIcon({ gender }: { gender: string }) {
-  if (gender === 'male') {
-    return <IconGenderMale className="size-4 shrink-0 text-blue-500" aria-label="男" />
-  }
-  if (gender === 'female') {
-    return <IconGenderFemale className="size-4 shrink-0 text-rose-500" aria-label="女" />
-  }
-  return <IconGenderAgender className="size-4 shrink-0 text-muted-foreground/50" aria-label="未指定" />
 }
 
 export default async function AdminCertificatesPage({
@@ -121,15 +111,15 @@ export default async function AdminCertificatesPage({
                     )}
                   </div>
 
-                  {/* 欄位依序：啟動編號、顯示名稱、單位、階層－結業時間（行距一致；中英文姓名已在主標題） */}
+                  {/* 欄位依序：學員、顯示名稱、單位、階層－結業時間（行距一致；中英文姓名已在主標題） */}
                   <div className="space-y-1.5 text-sm">
                     <p>
-                      <span className="text-muted-foreground">啟動編號：</span>
-                      {it.spiritId ? <span className="font-mono">{it.spiritId}</span> : '—'}
+                      <span className="text-muted-foreground">學員：</span>
+                      <MemberTextTag {...it.member} />
                     </p>
-                    <p className="break-words">
-                      <span className="text-muted-foreground">顯示名稱：</span>
-                      {it.displayName}
+                    <p>
+                      <span className="text-muted-foreground">老師：</span>
+                      <MemberTextTag {...it.teacher} />
                     </p>
                     <p className="break-words">
                       <span className="text-muted-foreground">單位：</span>
