@@ -45,3 +45,6 @@ next-env.d.ts
 # prisma
 prisma/generated
 # /lib/generated/prisma
+
+# db backups（make db-backup／還原正式站資料時產生，含真實使用者資料，不可進版控）
+/backups/

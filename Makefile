@@ -320,13 +320,13 @@ prisma-inspect: ## 🔬 檢查目前資料庫結構
 db-shell: ## 🐘 進入資料庫命令列
 	@echo "🐘 進入 PostgreSQL 命令列..."
 	@echo "💡 提示：輸入 \q 離開"
-	@$(DEV_COMPOSE) exec db psql -U postgres -d project_a_db
+	@$(DEV_COMPOSE) exec db psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)
 
 db-backup: ## 💾 備份資料庫
 	@echo "💾 備份資料庫..."
 	@mkdir -p ./backups
 	@BACKUP_FILE=./backups/backup_$(shell date +%Y%m%d_%H%M%S).sql; \
-	$(DEV_COMPOSE) exec -T db pg_dump -U postgres project_a_db > $$BACKUP_FILE; \
+	$(DEV_COMPOSE) exec -T db pg_dump -U $(POSTGRES_USER) $(POSTGRES_DB) > $$BACKUP_FILE; \
 	echo "✅ 備份完成：$$BACKUP_FILE"
 
 db-restore: ## 📥 還原資料庫
@@ -335,7 +335,7 @@ db-restore: ## 📥 還原資料庫
 	@ls -1 ./backups/*.sql 2>/dev/null || echo "   （無備份檔案）"
 	@read -p "請輸入備份檔案路徑: " file; \
 	if [ -f "$$file" ]; then \
-		cat $$file | $(DEV_COMPOSE) exec -T db psql -U postgres project_a_db; \
+		cat $$file | $(DEV_COMPOSE) exec -T db psql -U $(POSTGRES_USER) $(POSTGRES_DB); \
 		echo "✅ 還原完成"; \
 	else \
 		echo "❌ 檔案不存在"; \
