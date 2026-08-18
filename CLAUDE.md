@@ -256,9 +256,11 @@ export type ProjectStatus = keyof typeof PROJECT_STATUSES
 - `config/version.json` 是版本號的唯一來源，登入後頁面 Footer 顯示對應版本與系統更新日期
 
 ### 8. README-AI.md Update
-- 每次 `/opsx:apply` 套用變更後，須依照 `.ai-rules.md` 的規範重新產生 `README-AI.md`
-- 更新內容須反映最新的版本號、資料模型、路由結構、業務邏輯與當前任務狀態
-- 參照 `.ai-rules.md` 定義的七大章節結構：專案核心目標、技術棧、系統架構、核心資料模型、關鍵業務邏輯、開發規範、當前挑戰與任務
+- `README-AI.md`（根目錄）為索引檔，七大章節內容拆分至 `ai-context/01-goals.md` ~ `07-current-tasks.md`（每章一檔，避免單一檔案過大；2026-08-14 拆分。⚠️ 是根目錄下的 `ai-context/`，不是 `docs/ai-context/`——`docs/`〔複數〕已被 `.git/info/exclude` 排除於版控之外，僅 `doc/`〔單數，中文手冊〕與 `ai-context/` 會進版控）
+- 每次 `/opsx:apply` 套用變更後，須依照 `.ai-rules.md` 的規範更新**有異動的章節檔**（不需重寫整份索引）：反映最新的版本號、資料模型、路由結構、業務邏輯與當前任務狀態
+- 新增歷史 CR 記錄一律附加於 `ai-context/07-current-tasks.md`「已完成」清單最前面
+- 七大章節結構（`.ai-rules.md` 定義）：專案核心目標、技術棧、系統架構、核心資料模型、關鍵業務邏輯、開發規範、當前挑戰與任務——依序對應 `01-goals.md` ~ `07-current-tasks.md`
+- 索引本身（`README-AI.md`）僅在章節新增/移除、或版本號變動時才需要修改
 
 ### 9. 操作手冊同步（功能異動）
 - 只要有任何功能異動（新增/修改/移除功能），都必須同步檢查並修正 `doc/` 下三份操作手冊，依異動影響的角色判斷需更新的章節（流程、按鈕、權限、路由）：
