@@ -1,13 +1,14 @@
 /*
  * ----------------------------------------------
  * Server Actions - 課程學員管理（課程頁）
- * 2026-07-14 (Updated: 2026-07-17)
+ * 2026-07-14 (Updated: 2026-08-18)
  * app/actions/invite-students.ts
  *
  * 新增學員（僅限既有會員，以 Email 或啟動編號查找、可補登結業）、移除學員，
  * 皆於單一交易內完成並寫入管理操作紀錄（AdminActionLog）。
  * 操作權限：管理者或該課建立者（canManageInvite）。
- * 不寄信、不發 Inbox 通知。
+ * 移除學員須填寫必填原因，成功後 fire-and-forget 通知管理者群組（見 createNotification）。
+ * 新增學員仍不寄信、不發 Inbox 通知。
  * ----------------------------------------------
  */
 
@@ -20,6 +21,7 @@ import { auth } from '@/lib/auth'
 import { canAccessAdmin } from '@/lib/auth-roles'
 import { findMemberByIdentifier, type MemberByIdentifier } from '@/lib/data/invite-students'
 import { resolveMaxCapacity } from '@/lib/data/admin-settings'
+import { createNotification } from '@/app/actions/notification'
 
 type ActionResponse<T = undefined> = {
   success: boolean
@@ -203,38 +205,39 @@ export async function addStudentToInvite(input: {
 }
 
 /**
- * 自班級移除學員：實體刪除報名。
- * 有教材寄送項目關聯者拒絕；刪除與操作紀錄同交易。
+ * 自班級移除學員：實體刪除報名，須填寫必填原因；刪除與操作紀錄同交易。
+ * 有無教材寄送項目關聯皆可移除；成功後 fire-and-forget 通知管理者群組。
  */
-export async function removeStudentFromInvite(enrollmentId: number): Promise<ActionResponse> {
+export async function removeStudentFromInvite(enrollmentId: number, reason: string): Promise<ActionResponse> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
 
-  const enrollment = await prisma.inviteEnrollment.findUnique({
-    where: { id: enrollmentId },
-    select: {
-      id: true,
-      graduatedAt: true,
-      invite: { select: { id: true, title: true, createdById: true } },
-      user: { select: { id: true, realName: true, email: true } },
-      _count: { select: { shipmentItems: true } },
-    },
-  })
-  if (!enrollment) return { success: false, message: '找不到此報名' }
-  if (!canManageInvite(session.user.roles, session.user.id, enrollment.invite)) {
-    return { success: false, message: '無權限' }
+  if (!reason.trim()) {
+    return { success: false, errors: { reason: ['請填寫移除原因'] } }
   }
-  if (enrollment._count.shipmentItems > 0) {
-    return { success: false, message: '該報名已有教材寄送紀錄，請先至教材管理處理' }
-  }
-
-  const actor = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { realName: true, name: true },
-  })
-  const actorName = actor?.realName || actor?.name || session.user.email || '管理者'
 
   try {
+    const enrollment = await prisma.inviteEnrollment.findUnique({
+      where: { id: enrollmentId },
+      select: {
+        id: true,
+        graduatedAt: true,
+        invite: { select: { id: true, title: true, createdById: true } },
+        user: { select: { id: true, realName: true, email: true } },
+        _count: { select: { shipmentItems: true } },
+      },
+    })
+    if (!enrollment) return { success: false, message: '找不到此報名' }
+    if (!canManageInvite(session.user.roles, session.user.id, enrollment.invite)) {
+      return { success: false, message: '無權限' }
+    }
+
+    const actor = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { realName: true, name: true },
+    })
+    const actorName = actor?.realName || actor?.name || session.user.email || '管理者'
+
     await prisma.$transaction(async (tx) => {
       await tx.inviteEnrollment.delete({ where: { id: enrollmentId } })
       await tx.adminActionLog.create({
@@ -246,18 +249,35 @@ export async function removeStudentFromInvite(enrollmentId: number): Promise<Act
           actorName,
           targetName: targetSnapshot(enrollment.user.realName, enrollment.user.email),
           inviteTitle: inviteSnapshot(enrollment.invite.id, enrollment.invite.title),
-          detail: enrollment.graduatedAt
-            ? `移除已結業報名（結業 ${fmtDate(enrollment.graduatedAt)}）`
-            : '移除報名',
+          detail: `${
+            enrollment.graduatedAt ? `移除已結業報名（結業 ${fmtDate(enrollment.graduatedAt)}）` : '移除報名'
+          }；原因：${reason.trim()}`,
         },
       })
     })
 
     revalidatePath('/admin/course-sessions')
     revalidatePath(`/course/${enrollment.invite.id}`)
+
+    // 通知管理者群組（fire-and-forget，失敗不影響主操作結果）
+    try {
+      const admins = await prisma.user.findMany({
+        where: { roles: { hasSome: ['admin', 'superadmin'] } },
+        select: { id: true },
+      })
+      const shipmentNote = enrollment._count.shipmentItems > 0 ? '\n該學員已有教材寄送紀錄，請留意後續處理。' : ''
+      const body = `${inviteSnapshot(enrollment.invite.id, enrollment.invite.title)} 的學員 ${targetSnapshot(
+        enrollment.user.realName,
+        enrollment.user.email
+      )} 已由 ${actorName} 移除。\n原因：${reason.trim()}${shipmentNote}`
+      await Promise.all(admins.map((admin) => createNotification(admin.id, '學員移除通知', body)))
+    } catch (e) {
+      console.error('[removeStudentFromInvite] 通知管理者群組失敗：', e)
+    }
+
     return { success: true, message: '已移除學員' }
   } catch (err) {
-    console.error('[removeStudentFromInvite] 移除失敗：', err)
+    console.error('[removeStudentFromInvite] 移除失敗：', enrollmentId, err)
     return { success: false, message: '移除失敗，請稍後再試' }
   }
 }

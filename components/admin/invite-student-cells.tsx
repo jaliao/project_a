@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Dialog,
   DialogContent,
@@ -234,13 +235,19 @@ export function RemoveStudentButton({
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [reason, setReason] = useState('')
+  const [reasonError, setReasonError] = useState<string | null>(null)
 
   const handleRemove = () => {
     startTransition(async () => {
-      const res = await removeStudentFromInvite(enrollmentId)
+      const res = await removeStudentFromInvite(enrollmentId, reason)
       if (res.success) {
         toast.success(res.message ?? '已移除學員')
+        setReason('')
+        setReasonError(null)
         router.refresh()
+      } else if (res.errors?.reason) {
+        setReasonError(res.errors.reason[0])
       } else {
         toast.error(res.message ?? '移除失敗')
       }
@@ -248,7 +255,14 @@ export function RemoveStudentButton({
   }
 
   return (
-    <AlertDialog>
+    <AlertDialog
+      onOpenChange={(open) => {
+        if (!open) {
+          setReason('')
+          setReasonError(null)
+        }
+      }}
+    >
       <AlertDialogTrigger asChild>
         <Button variant="outline" size="sm" className="text-destructive" disabled={isPending}>
           移除
@@ -276,16 +290,34 @@ export function RemoveStudentButton({
                 </div>
               )}
               {hasShipmentItems && (
-                <p className="text-amber-700">⚠️ 此報名有教材寄送紀錄，系統將拒絕移除，請先至教材管理處理。</p>
+                <p className="text-amber-700">⚠️ 此報名已有教材寄送紀錄，移除後管理者將收到通知，請留意後續教材處理。</p>
               )}
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
+        <div className="space-y-1.5 px-1">
+          <Label htmlFor={`remove-reason-${enrollmentId}`}>移除原因（必填）</Label>
+          <Textarea
+            id={`remove-reason-${enrollmentId}`}
+            placeholder="請說明移除原因"
+            value={reason}
+            onChange={(e) => {
+              setReason(e.target.value)
+              if (reasonError) setReasonError(null)
+            }}
+            rows={3}
+          />
+          {reasonError && <p className="text-sm text-destructive">{reasonError}</p>}
+        </div>
         <AlertDialogFooter>
           <AlertDialogCancel>取消</AlertDialogCancel>
           <AlertDialogAction
             className="bg-destructive text-white hover:bg-destructive/90"
-            onClick={handleRemove}
+            disabled={!reason.trim() || isPending}
+            onClick={(e) => {
+              e.preventDefault()
+              handleRemove()
+            }}
           >
             確認移除
           </AlertDialogAction>
