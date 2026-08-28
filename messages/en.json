@@ -769,6 +769,14 @@
     "deleteConfirmTitle": "Delete this study entry?",
     "deleteConfirmBody": "This cannot be undone.",
     "deleteConfirmAction": "Delete",
-    "genericError": "Something went wrong. Please try again."
+    "genericError": "Something went wrong. Please try again.",
+    "chooseCatalog": "Choose a course to start your segmented Bible study. Notes are not tied to any class — write anytime, or not at all.",
+    "catalogLocked": "You need to enrol and have an instructor start the class before you can use this course's segmented study.",
+    "catalogComingSoon": "Segmented study content for this course is not available yet.",
+    "backToCatalogs": "Back to course list",
+    "lessonDone": "Filled in",
+    "lessonTodo": "To fill in",
+    "lessonNoScripture": "No entry needed",
+    "progressCount": "{done} / {total} lessons done"
   }
 }

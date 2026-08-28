@@ -1,6 +1,6 @@
 /*
  * ----------------------------------------------
- * 我的學習頁面（分段查經筆記）
+ * 我的學習 — 書籍（課程目錄）選擇頁
  * 2026-08-28
  * app/(user)/user/[spiritId]/learning/page.tsx
  * [spiritId] 為 Spirit ID 小寫（例：pa260001）
@@ -13,16 +13,17 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { IconArrowLeft, IconNotebook } from '@tabler/icons-react'
 import { getTranslations } from 'next-intl/server'
-import type { LearningStudyEntry } from '@prisma/client'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getCatalogOutline, getOutlineCatalogIds, getScripture } from '@/config/learning-outline'
+import { getCatalogOutline } from '@/config/learning-outline'
 import {
   getUnlockedLearningCatalogIds,
-  getStudyEntriesForUser,
-  outlineSlotKey,
+  getLessonKeysWithEntries,
 } from '@/lib/data/learning-study'
-import { LearningOutlineSection } from '@/components/learning/learning-outline-section'
+import {
+  LearningCatalogGrid,
+  type LearningCatalogCard,
+} from '@/components/learning/learning-catalog-grid'
 
 export const metadata: Metadata = {
   title: '我的學習 — 啟動事工',
@@ -50,39 +51,36 @@ export default async function LearningPage({ params }: Props) {
 
   const t = await getTranslations('learning')
 
-  // 已解鎖且設定檔有大綱的課程目錄
-  const outlineIds = getOutlineCatalogIds()
-  const unlockedIds = await getUnlockedLearningCatalogIds(user.id)
-  const catalogIds = outlineIds.filter((id) => unlockedIds.includes(id))
+  const [catalogs, unlockedIds] = await Promise.all([
+    prisma.courseCatalog.findMany({
+      select: { id: true, label: true },
+      orderBy: { sortOrder: 'asc' },
+    }),
+    getUnlockedLearningCatalogIds(user.id),
+  ])
 
-  const catalogs =
-    catalogIds.length > 0
-      ? await prisma.courseCatalog.findMany({
-          where: { id: { in: catalogIds } },
-          select: { id: true, label: true },
-          orderBy: { sortOrder: 'asc' },
-        })
-      : []
+  const cards: LearningCatalogCard[] = await Promise.all(
+    catalogs.map(async (c): Promise<LearningCatalogCard> => {
+      const outline = getCatalogOutline(c.id)
+      const unlocked = unlockedIds.includes(c.id)
+      const canEnter = !!outline && unlocked
 
-  // 每個目錄的筆記，分為「大綱內」與「孤兒」（大綱已調整、找不到對應課次／經文）
-  const sections = await Promise.all(
-    catalogs.map(async (catalog) => {
-      const outline = getCatalogOutline(catalog.id)!
-      const grouped = await getStudyEntriesForUser(user.id, catalog.id)
-
-      const entriesBySlot: Record<string, LearningStudyEntry[]> = {}
-      const orphanEntries: LearningStudyEntry[] = []
-
-      for (const [slot, list] of grouped) {
-        const [lessonKey, scriptureKey] = slot.split('::')
-        if (getScripture(catalog.id, lessonKey, scriptureKey)) {
-          entriesBySlot[outlineSlotKey(lessonKey, scriptureKey)] = list
-        } else {
-          orphanEntries.push(...list)
+      if (!canEnter) {
+        return {
+          id: c.id,
+          label: c.label,
+          canEnter: false,
+          lockReason: outline ? 'locked' : 'comingSoon',
         }
       }
 
-      return { catalog, outline, entriesBySlot, orphanEntries }
+      const withEntries = await getLessonKeysWithEntries(user.id, c.id)
+      const totalCount = outline.lessons.length
+      const doneCount = outline.lessons.filter(
+        (l) => l.scriptures.length === 0 || withEntries.has(l.key)
+      ).length
+
+      return { id: c.id, label: c.label, canEnter: true, doneCount, totalCount }
     })
   )
 
@@ -100,25 +98,9 @@ export default async function LearningPage({ params }: Props) {
         <IconNotebook className="h-5 w-5 text-primary" />
         <h1 className="text-2xl font-semibold">{t('pageTitle')}</h1>
       </div>
-      <p className="text-sm text-muted-foreground">{t('intro')}</p>
+      <p className="text-sm text-muted-foreground">{t('chooseCatalog')}</p>
 
-      {sections.length === 0 ? (
-        <div className="rounded-lg border p-8 text-center text-sm text-muted-foreground">
-          {t('lockedEmpty')}
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {sections.map(({ catalog, outline, entriesBySlot, orphanEntries }) => (
-            <LearningOutlineSection
-              key={catalog.id}
-              catalogLabel={catalog.label}
-              outline={outline}
-              entriesBySlot={entriesBySlot}
-              orphanEntries={orphanEntries}
-            />
-          ))}
-        </div>
-      )}
+      <LearningCatalogGrid spiritId={spiritId} catalogs={cards} />
     </div>
   )
 }

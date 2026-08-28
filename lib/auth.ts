@@ -173,28 +173,41 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
       } else if (token.id) {
         // 後續請求：從 DB 同步動態欄位，確保 role/spiritId 變更立即生效，無需重新登入
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: {
-            roles: true,
-            spiritId: true,
-            isTempPassword: true,
-            realName: true,
-            phone: true,
-            email: true,
-            avatarKey: true,
-            image: true,
-          },
-        })
-        if (dbUser) {
-          token.roles = dbUser.roles
-          token.spiritId = dbUser.spiritId
-          token.isTempPassword = dbUser.isTempPassword
-          token.isProfileComplete = !!(dbUser.realName && dbUser.phone)
-          // 帳號 email 變更後同步（顯示一致性；授權皆以 id/roles）
-          token.email = dbUser.email
-          token.avatarUrl = resolveAvatarUrl(dbUser)
+        let dbUser
+        try {
+          dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: {
+              roles: true,
+              spiritId: true,
+              isTempPassword: true,
+              realName: true,
+              phone: true,
+              email: true,
+              avatarKey: true,
+              image: true,
+            },
+          })
+        } catch (e) {
+          // DB 連線瞬斷等：不誤把使用者登出，沿用既有 token，待下次請求再同步
+          console.error('[auth] jwt callback 查詢使用者失敗（保留現有 token）:', e)
+          return token
         }
+
+        if (!dbUser) {
+          // token.id 指向不存在的使用者（開發環境重建 DB／帳號已刪／跨環境舊 cookie）
+          // → 使 JWT session 失效，下一個受保護請求即被 layout 導回 /login，不留殭屍 session
+          console.warn('[auth] token.id 對應的使用者不存在，session 失效:', token.id)
+          return null
+        }
+
+        token.roles = dbUser.roles
+        token.spiritId = dbUser.spiritId
+        token.isTempPassword = dbUser.isTempPassword
+        token.isProfileComplete = !!(dbUser.realName && dbUser.phone)
+        // 帳號 email 變更後同步（顯示一致性；授權皆以 id/roles）
+        token.email = dbUser.email
+        token.avatarUrl = resolveAvatarUrl(dbUser)
       }
       return token
     },

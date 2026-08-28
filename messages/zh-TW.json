@@ -769,6 +769,14 @@
     "deleteConfirmTitle": "刪除這則分段查經？",
     "deleteConfirmBody": "刪除後無法復原。",
     "deleteConfirmAction": "確認刪除",
-    "genericError": "操作失敗，請稍後再試"
+    "genericError": "操作失敗，請稍後再試",
+    "chooseCatalog": "選擇課程，開始你的分段查經。學習筆記與特定開課不綁定，隨時可寫、也可以不寫。",
+    "catalogLocked": "需先報名並由講師開始上課，才能使用此課程的分段查經。",
+    "catalogComingSoon": "此課程的分段查經內容尚未開放。",
+    "backToCatalogs": "返回課程列表",
+    "lessonDone": "已填寫",
+    "lessonTodo": "待填寫",
+    "lessonNoScripture": "無需填寫",
+    "progressCount": "已完成 {done} / 共 {total} 課"
   }
 }

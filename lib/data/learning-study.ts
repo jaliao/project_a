@@ -56,3 +56,19 @@ export async function getStudyEntriesForUser(
   }
   return grouped
 }
+
+/**
+ * 取得該使用者在某課程目錄下「已有至少一筆筆記」的課次 key 集合，
+ * 供課次卡片的完成／未完成配色使用。
+ */
+export async function getLessonKeysWithEntries(
+  userId: string,
+  courseCatalogId: number
+): Promise<Set<string>> {
+  const rows = await prisma.learningStudyEntry.findMany({
+    where: { userId, courseCatalogId },
+    select: { lessonKey: true },
+    distinct: ['lessonKey'],
+  })
+  return new Set(rows.map((r) => r.lessonKey))
+}

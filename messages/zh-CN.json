@@ -770,6 +770,14 @@
     "deleteConfirmTitle": "删除这则分段查经？",
     "deleteConfirmBody": "删除后无法复原。",
     "deleteConfirmAction": "确认删除",
-    "genericError": "操作失败，请稍后再试"
+    "genericError": "操作失败，请稍后再试",
+    "chooseCatalog": "选择课程，开始你的分段查经。学习笔记与特定开课不绑定，随时可写、也可以不写。",
+    "catalogLocked": "需先报名并由讲师开始上课，才能使用此课程的分段查经。",
+    "catalogComingSoon": "此课程的分段查经内容尚未开放。",
+    "backToCatalogs": "返回课程列表",
+    "lessonDone": "已填写",
+    "lessonTodo": "待填写",
+    "lessonNoScripture": "无需填写",
+    "progressCount": "已完成 {done} / 共 {total} 课"
   }
 }
