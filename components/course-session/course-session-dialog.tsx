@@ -29,6 +29,9 @@ interface CourseSessionDialogProps {
   teachableCatalogIds?: number[]
   isAdmin?: boolean
   classMaxCapacity?: number
+  // 管理者代講師建立授課：目標老師的 User id 與顯示名稱
+  onBehalfOfUserId?: string
+  onBehalfOfName?: string
 }
 
 export function CourseSessionDialog({
@@ -37,6 +40,8 @@ export function CourseSessionDialog({
   teachableCatalogIds = [],
   isAdmin = false,
   classMaxCapacity = 7,
+  onBehalfOfUserId,
+  onBehalfOfName,
 }: CourseSessionDialogProps) {
   const t = useTranslations('course.sessionDialog')
   const [open, setOpen] = useState(false)
@@ -60,6 +65,8 @@ export function CourseSessionDialog({
           teachableCatalogIds={teachableCatalogIds}
           isAdmin={isAdmin}
           classMaxCapacity={classMaxCapacity}
+          onBehalfOfUserId={onBehalfOfUserId}
+          onBehalfOfName={onBehalfOfName}
           onClose={() => setOpen(false)}
         />
       </DialogContent>

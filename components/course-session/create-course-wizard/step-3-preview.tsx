@@ -17,6 +17,8 @@ import type { Step2FormValues } from './step-2-basic-info'
 
 interface Step3PreviewProps {
   formValues: Step2FormValues
+  // 管理者代講師建立時帶入目標老師 id；一般建立為 undefined
+  targetTeacherId?: string
   onSuccess: (inviteId: number) => void
   onBack: () => void
 }
@@ -28,7 +30,7 @@ function formatDate(date: Date): string {
   return `${y}/${m}/${d}`
 }
 
-export function Step3Preview({ formValues, onSuccess, onBack }: Step3PreviewProps) {
+export function Step3Preview({ formValues, targetTeacherId, onSuccess, onBack }: Step3PreviewProps) {
   const t = useTranslations('course.wizard')
   const [isPending, startTransition] = useTransition()
 
@@ -42,7 +44,8 @@ export function Step3Preview({ formValues, onSuccess, onBack }: Step3PreviewProp
 
   const handleConfirm = () => {
     startTransition(async () => {
-      const result = await createCourseSession(formValues as Record<string, unknown>)
+      const payload = targetTeacherId ? { ...formValues, targetTeacherId } : formValues
+      const result = await createCourseSession(payload as Record<string, unknown>)
       if (result.success && result.data) {
         toast.success(t('created'))
         onSuccess(result.data.inviteId)

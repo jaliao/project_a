@@ -88,22 +88,34 @@ export default async function UserProfilePage({ params }: Props) {
 
   // 判斷是否為本人頁面（提前計算，供授課查詢使用）
   const isOwnPageEarly = session?.user?.spiritId?.toLowerCase() === id
-  // 查詢本人授課（最多 4 筆，用於判斷是否顯示「更多」卡片）
-  const myCourseSessions = isOwnPageEarly ? await getMyCourseSessions(user.id, 4) : []
+  // 頁主（該老師）持有的書籍講師身分對應課程 id
+  const pageOwnerTeacherCatalogIds = (user.roles ?? [])
+    .map((r) => CATALOG_BY_TEACHER_ROLE[r as TeacherRole])
+    .filter((n): n is number => typeof n === 'number')
+  // 管理者於他人頁面代該老師建立授課的入口：頁主須具任一書籍講師身分
+  const isAdminEarly = canAccessAdmin(session?.user?.roles)
+  const showTeacherSectionForAdmin =
+    !isOwnPageEarly && isAdminEarly && pageOwnerTeacherCatalogIds.length > 0
+  // 授課相關資料：本人頁或管理者代建立頁皆需查詢
+  const needTeacherData = isOwnPageEarly || showTeacherSectionForAdmin
+  // 查詢授課（最多 4 筆，用於判斷是否顯示「更多」卡片）
+  const myCourseSessions = needTeacherData ? await getMyCourseSessions(user.id, 4) : []
   // 查詢結業證明（所有人可見）
   const certificates = await getMyCompletionCertificates(user.id)
   // 本人：最近提問（聯繫管理者，僅本人可見）
   const myRecentInquiries = isOwnPageEarly ? (await getMyInquiries(user.id)).slice(0, 2) : []
   // 課程目錄（基本資料區塊進度三卡固定顯示）
   const allCourses = await getAllCourses()
-  // 可開設課程 id 集合：由本人持有的書籍講師身分推導（admin/superadmin 於精靈內另以 isAdmin 放行）
+  // 可開設課程 id 集合：本人頁取自登入者身分；管理者代建立取自頁主（該老師）身分
   const teachableCatalogIds = isOwnPageEarly
     ? (session?.user?.roles ?? [])
         .map((r) => CATALOG_BY_TEACHER_ROLE[r as TeacherRole])
         .filter((n): n is number => typeof n === 'number')
-    : []
+    : showTeacherSectionForAdmin
+      ? pageOwnerTeacherCatalogIds
+      : []
   // 查詢可開設課程（開課精靈使用）
-  const activeCourses = isOwnPageEarly ? await getActiveCourses() : []
+  const activeCourses = needTeacherData ? await getActiveCourses() : []
   // 班級人數上限（開課精靈顯示與驗證用）
   const classMaxCapacity = Math.min(
     99,
@@ -240,12 +252,19 @@ export default async function UserProfilePage({ params }: Props) {
         </div>
       )}
 
-      {/* 授課單元（本人且具備講師身分才顯示） */}
-      {isOwnPage && canTeach && (
+      {/* 授課單元（本人且具備講師身分；或管理者於講師頁代該老師建立） */}
+      {((isOwnPage && canTeach) || showTeacherSectionForAdmin) && (
         <div className="rounded-lg border p-5 space-y-4">
           <div className="flex items-center gap-2">
             <IconChalkboard className="h-5 w-5 text-primary" />
-            <h2 className="text-base font-semibold">授課</h2>
+            <h2 className="text-base font-semibold">
+              授課
+              {showTeacherSectionForAdmin && (
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  （代 {displayName} 建立）
+                </span>
+              )}
+            </h2>
           </div>
 
           {/* 最近授課預覽 */}
@@ -290,10 +309,12 @@ export default async function UserProfilePage({ params }: Props) {
                 teachableCatalogIds={teachableCatalogIds}
                 isAdmin={isAdmin}
                 classMaxCapacity={classMaxCapacity}
+                onBehalfOfUserId={showTeacherSectionForAdmin ? user.id : undefined}
+                onBehalfOfName={showTeacherSectionForAdmin ? displayName : undefined}
               />
             </Suspense>
-            {/* 測試環境專用：一鍵建立測試授課 */}
-            {process.env.NODE_ENV === 'development' && <TestCourseSessionButton />}
+            {/* 測試環境專用：一鍵建立測試授課（僅本人頁） */}
+            {isOwnPage && process.env.NODE_ENV === 'development' && <TestCourseSessionButton />}
           </div>
         </div>
       )}

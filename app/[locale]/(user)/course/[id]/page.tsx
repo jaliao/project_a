@@ -228,8 +228,8 @@ export default async function CourseDetailPage({
                     <li key={e.id} className="text-sm text-green-900 flex items-center gap-1.5 flex-wrap">
                       <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
                       {getMemberDisplayName(e.user)}
-                      {/* 講師資格回饋：僅課程建立者（原老師）可填寫 */}
-                      {isInstructor && (
+                      {/* 講師資格回饋：該課建立者（原老師）或管理者可填寫 */}
+                      {(isInstructor || isAdmin) && (
                         <InstructorFeedbackButton
                           enrollmentId={e.id}
                           studentName={getMemberDisplayName(e.user)}
@@ -335,7 +335,7 @@ export default async function CourseDetailPage({
         </div>
 
         {/* 操作按鈕：編輯課程資訊＋複製邀請連結（自頁首移入） */}
-        {((canEditInfo && !isCancelled) || isInstructor) && (
+        {((canEditInfo && !isCancelled) || isInstructor || isAdmin) && (
           <div className="flex items-center gap-2 pt-1">
             {canEditInfo && !isCancelled && (
               <EditCourseInfoDialog
@@ -355,18 +355,16 @@ export default async function CourseDetailPage({
                 }}
               />
             )}
-            {isInstructor && (
-              <>
-                <CopyInviteLinkButton courseId={courseSession.id} />
-                <CourseContactAdminButton courseId={courseSession.id} />
-              </>
-            )}
+            {/* 複製邀請連結：該課講師或管理者 */}
+            {(isInstructor || isAdmin) && <CopyInviteLinkButton courseId={courseSession.id} />}
+            {/* 聯繫管理者：講師向管理者求助的管道，維持講師專屬 */}
+            {isInstructor && <CourseContactAdminButton courseId={courseSession.id} />}
           </div>
         )}
       </div>
 
-      {/* 講師：待審申請 */}
-      {isInstructor && courseSession.pendingEnrollments.length > 0 && (
+      {/* 待審申請（該課講師或管理者可見可審核） */}
+      {(isInstructor || isAdmin) && courseSession.pendingEnrollments.length > 0 && (
         <PendingEnrollmentList enrollments={courseSession.pendingEnrollments} />
       )}
 
@@ -404,12 +402,12 @@ export default async function CourseDetailPage({
         />
       )}
 
-      {/* 課程操作區（教材申請＝講師與管理者；開始上課僅講師；結業/重新招募/取消＝講師與管理者；封存/刪除＝僅管理者） */}
+      {/* 課程操作區（教材申請／開始上課／結業／重新招募／取消＝講師與管理者；封存/刪除＝僅管理者） */}
       {(isInstructor || isAdmin) && (
         <CourseDetailActions
           inviteId={courseSession.id}
-          isInstructor={isInstructor}
           isAdmin={isAdmin}
+          canManageStart={isInstructor || isAdmin}
           isArchived={!!courseSession.archivedAt}
           canManageMaterials={canManageMaterials}
           isCancelled={isCancelled}
@@ -432,8 +430,8 @@ export default async function CourseDetailPage({
         />
       )}
 
-      {/* 講師：公開媒合設定（未取消／未結業時可調整） */}
-      {isInstructor && !isCancelled && !isCompleted && (
+      {/* 公開媒合設定（該課講師或管理者；未取消／未結業時可調整） */}
+      {(isInstructor || isAdmin) && !isCancelled && !isCompleted && (
         <MatchSettingsEditor
           inviteId={courseSession.id}
           isPublicMatch={courseSession.isPublicMatch}

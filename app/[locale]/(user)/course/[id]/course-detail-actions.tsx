@@ -47,10 +47,10 @@ import type { CourseSessionOrder } from '@/lib/data/course-sessions'
 
 type Props = {
   inviteId: number
-  // 是否為該課講師（開始上課僅講師可見；其餘作業講師與管理者皆可）
-  isInstructor: boolean
   // 封存／刪除課程：僅 admin/superadmin 可見可操作（該課建立者不足以操作）
   isAdmin: boolean
+  // 開始上課作業：該課講師或管理者皆可（門檻仍於 server 強制）
+  canManageStart: boolean
   isArchived: boolean
   // 教材申請作業：講師本人或管理者可見可操作
   canManageMaterials: boolean
@@ -192,8 +192,8 @@ function todayInput(): string {
 
 export function CourseDetailActions({
   inviteId,
-  isInstructor,
   isAdmin,
+  canManageStart,
   isArchived,
   canManageMaterials,
   isCancelled,
@@ -539,8 +539,8 @@ export function CourseDetailActions({
         </Section>
       )}
 
-      {/* ── 區塊二：開始上課作業（僅講師） ────────────────── */}
-      {!isStarted && !isCancelled && isInstructor && (
+      {/* ── 區塊二：開始上課作業（該課講師或管理者） ────────────────── */}
+      {!isStarted && !isCancelled && canManageStart && (
         <Section title={ta('sectionStart')} icon={<IconPlayerPlay className="h-5 w-5 text-primary" />}>
           <div className="text-sm text-muted-foreground space-y-1">
             <p>{ta('startNote')}</p>

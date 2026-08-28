@@ -25,6 +25,8 @@ export const courseSessionSchema = z
     // 公開媒合（布告欄招募）
     isPublicMatch: z.boolean(),
     matchNote: z.string().trim().max(500, '招募備註最長 500 字').optional(),
+    // 管理者代講師建立授課時帶入目標老師的 User id（UUID）；僅型別把關，授權於 server action 判定
+    targetTeacherId: z.string().uuid().optional(),
   })
   .superRefine((data, ctx) => {
     // 邀請截止日期不可早於今天

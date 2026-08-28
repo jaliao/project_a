@@ -25,6 +25,9 @@ interface CreateCourseWizardProps {
   teachableCatalogIds: number[]
   isAdmin: boolean
   classMaxCapacity?: number
+  // 管理者代講師建立授課：目標老師的 User id 與顯示名稱（帶入時以該老師為建立者）
+  onBehalfOfUserId?: string
+  onBehalfOfName?: string
   onClose: () => void
 }
 
@@ -34,8 +37,15 @@ export function CreateCourseWizard({
   teachableCatalogIds,
   isAdmin,
   classMaxCapacity = 7,
+  onBehalfOfUserId,
+  onBehalfOfName,
   onClose,
 }: CreateCourseWizardProps) {
+  // 代建立時「授課老師」顯示與預設課名以該老師為準
+  const displayInstructorName = onBehalfOfName ?? instructorName
+  const isOnBehalf = !!onBehalfOfUserId
+  // 代建立時課程選單限於該老師持有的書別（不套用管理者全放行）；一般管理者仍可選任一課程
+  const canPickAnyBook = isAdmin && !isOnBehalf
   const t = useTranslations('course.wizard')
   const STEP_TITLES: Record<WizardStep, string> = {
     1: t('step1'),
@@ -84,7 +94,7 @@ export function CreateCourseWizard({
           onSelect={setSelectedCatalogId}
           onNext={() => setStep(2)}
           teachableCatalogIds={teachableCatalogIds}
-          isAdmin={isAdmin}
+          isAdmin={canPickAnyBook}
         />
       )}
 
@@ -93,7 +103,7 @@ export function CreateCourseWizard({
         <Step2BasicInfo
           courseCatalogId={selectedCatalogId}
           courseCatalogLabel={activeCourses.find((c) => c.id === selectedCatalogId)?.label ?? ''}
-          instructorName={instructorName}
+          instructorName={displayInstructorName}
           classMaxCapacity={classMaxCapacity}
           defaultValues={formValues ?? undefined}
           onNext={(values) => {
@@ -108,6 +118,7 @@ export function CreateCourseWizard({
       {step === 3 && formValues && (
         <Step3Preview
           formValues={formValues}
+          targetTeacherId={onBehalfOfUserId}
           onSuccess={(inviteId) => {
             setCreatedInviteId(inviteId)
             setStep('invite')

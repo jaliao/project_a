@@ -11,7 +11,7 @@
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
-import { canAccessAdmin, canTeachAny, canTeachBook } from '@/lib/auth-roles'
+import { canAccessAdmin, canTeachAny, canTeachBook, hasRole, TEACHER_ROLE_BY_CATALOG } from '@/lib/auth-roles'
 import {
   courseSessionSchema,
   editCourseInfoSchema,
@@ -70,9 +70,31 @@ export async function createCourseSession(
   if (!course) return { success: false, message: '找不到課程' }
   if (!course.isActive) return { success: false, message: '此課程目前未開放' }
 
-  // 開課資格：須具該書對應的講師身分（admin／superadmin 不受限）
-  if (!canTeachBook(session.user.roles, d.courseCatalogId)) {
-    return { success: false, message: `須具備${course.label}講師身分才能授課` }
+  // 代講師建立授課：帶入 targetTeacherId 且非本人時，改以該老師為建立者
+  const isOnBehalf = !!d.targetTeacherId && d.targetTeacherId !== session.user.id
+  let createdById = session.user.id
+
+  if (isOnBehalf) {
+    // 僅管理者可代建立
+    if (!canAccessAdmin(session.user.roles)) {
+      return { success: false, message: '無權限' }
+    }
+    // 目標老師須存在，且「實際持有」該書對應的書籍講師身分（不套用管理者 override）
+    const targetTeacher = await prisma.user.findUnique({
+      where: { id: d.targetTeacherId! },
+      select: { id: true, roles: true },
+    })
+    if (!targetTeacher) return { success: false, message: '找不到該老師' }
+    const requiredRole = TEACHER_ROLE_BY_CATALOG[d.courseCatalogId]
+    if (!requiredRole || !hasRole(targetTeacher.roles, requiredRole)) {
+      return { success: false, message: `須具備${course.label}講師身分才能授課` }
+    }
+    createdById = targetTeacher.id
+  } else {
+    // 開課資格：須具該書對應的講師身分（admin／superadmin 不受限）
+    if (!canTeachBook(session.user.roles, d.courseCatalogId)) {
+      return { success: false, message: `須具備${course.label}講師身分才能授課` }
+    }
   }
 
   const invite = await prisma.courseInvite.create({
@@ -85,14 +107,15 @@ export async function createCourseSession(
       notes: d.notes || null,
       isPublicMatch: d.isPublicMatch ?? false,
       matchNote: d.matchNote || null,
-      createdById: session.user.id,
+      createdById,
     },
   })
 
   // 寫入 Inbox 通知（fire-and-forget，失敗不影響主操作）
+  // 代建立時通知寄給該老師（建立者），而非操作的管理者
   try {
     await createNotification(
-      session.user.id,
+      createdById,
       '授課已建立',
       `${d.title} 已建立，預計開課日期：${formatDateString(d.courseDate)}`
     )

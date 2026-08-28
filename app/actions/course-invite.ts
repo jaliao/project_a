@@ -204,8 +204,9 @@ export async function cancelCourseSession(
   revalidatePath(`/course/${id}`)
 
   try {
+    // 通知寄給該課講師（建立者）——管理者代取消時老師仍收到
     await createNotification(
-      session.user.id,
+      invite.createdById,
       '課程已取消',
       `${invite.title} 課程已取消。取消原因：${cancelReason.trim()}`
     )
@@ -316,7 +317,8 @@ export async function startCourseSession(inviteId: number, startDate: string): P
     },
   })
   if (!invite) return { success: false, message: '找不到課程' }
-  if (invite.createdById !== session.user.id) {
+  // 該課講師或管理者可開始上課（管理者可代講師操作；開課門檻仍於下方強制）
+  if (invite.createdById !== session.user.id && !canAccessAdmin(session.user.roles)) {
     return { success: false, message: '無權限執行此操作' }
   }
   if (invite.cancelledAt) return { success: false, message: '課程已取消' }
@@ -357,7 +359,8 @@ export async function approveEnrollment(enrollmentId: number): Promise<ActionRes
     include: { invite: { select: { id: true, title: true, createdById: true } } },
   })
   if (!enrollment) return { success: false, message: '找不到申請記錄' }
-  if (enrollment.invite.createdById !== session.user.id) {
+  // 該課講師或管理者可同意（管理者可代講師操作）
+  if (enrollment.invite.createdById !== session.user.id && !canAccessAdmin(session.user.roles)) {
     return { success: false, message: '無權限執行此操作' }
   }
 
@@ -551,7 +554,7 @@ export async function revertGraduation(inviteId: number): Promise<ActionResponse
   return { success: true, message: '已退回進行中' }
 }
 
-// ── 講師資格回饋（由課程建立者對已結業學員填寫，可重複編輯）──
+// ── 講師資格回饋（由課程建立者或管理者對已結業學員填寫，可重複編輯）──
 export async function upsertInstructorFeedback(
   input: { enrollmentId: number; recommended: boolean; note?: string }
 ): Promise<ActionResponse> {
@@ -574,8 +577,8 @@ export async function upsertInstructorFeedback(
   })
   if (!enrollment) return { success: false, message: '找不到報名記錄' }
 
-  // 僅該課程建立者（原老師）可填寫
-  if (enrollment.invite.createdById !== session.user.id) {
+  // 該課程建立者（原老師）或管理者可填寫
+  if (enrollment.invite.createdById !== session.user.id && !canAccessAdmin(session.user.roles)) {
     return { success: false, message: '無權限' }
   }
   // 僅可對已結業學員填寫
