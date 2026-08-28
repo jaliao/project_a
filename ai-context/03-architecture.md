@@ -31,9 +31,9 @@ app/
 │   └── admin/           # 管理後台：功能網格（儀錶板/課程/授課/教材/會員/教會/系統設定）
 │       ├── dashboard/       # 後台儀錶板（統計卡片 7 個）
 │       ├── course-sessions/ # 開課管理（全站；搜尋 + 篩選；純卡片列表——學員增刪/狀態/LOG 皆於前台課程頁操作）
-│       ├── members/         # 會員管理清單（搜尋/篩選/翻頁/重設密碼/查看詳情）
-│       ├── members/[id]/    # 會員詳情（Tabs：基本資料/學習階層/講師身分/特殊設定）
-│       ├── members/inactive/ # 未啟用會員清單（lastLoginAt 為 null）
+│       ├── members/         # 會員管理清單（搜尋/篩選/翻頁/重設密碼/查看詳情/會員首頁〔新分頁開該會員 /user/<spiritId>〕）
+│       ├── members/[id]/    # 會員詳情（Tabs：基本資料/學習階層/講師身分/特殊設定；頁首含「會員首頁」按鈕）
+│       ├── members/inactive/ # 未啟用會員清單（lastLoginAt 為 null；有 spiritId 者亦提供「會員首頁」）
 │       ├── materials/       # 教材申請管理（查看、確認已寄送、出貨單列印）
 │       ├── churches/        # redirect → /admin/settings?tab=churches（舊路由相容）
 │       └── settings/        # 系統設定 Tabs（hierarchy_depth/教會/課程目錄）
@@ -67,6 +67,7 @@ components/
 ├── admin/
 │   ├── material-order-table.tsx    # 教材申請管理表格（狀態 Badge、確認已寄送、展開詳情）
 │   ├── member-reset-button.tsx     # 重設密碼按鈕（AlertDialog 確認）
+│   ├── member-home-link.tsx        # 「會員首頁」按鈕（next/link + target=_blank 開 /user/<spiritId 小寫>；無 spiritId 則 disabled；三處後台會員清單/詳情共用）
 │   ├── members-filter.tsx          # 會員管理篩選列（搜尋 debounce 300ms + 性別/身分/教會下拉；更新 URL，改篩選重置 page）
 │   ├── members-pagination.tsx      # 會員管理翻頁控制（上一頁/下一頁，?page=）
 │   ├── member-delete-button.tsx    # 刪除會員按鈕（AlertDialog 二次確認；ENABLE_MEMBER_DELETE 控制）

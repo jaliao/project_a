@@ -16,6 +16,7 @@ import { listInactiveMembers } from '@/lib/data/account-recovery'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { MaskedValue } from '@/components/admin/masked-value'
+import { MemberHomeLink } from '@/components/admin/member-home-link'
 
 export const dynamic = 'force-dynamic'
 
@@ -86,9 +87,12 @@ export default async function InactiveMembersPage() {
                     )}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/admin/members/${m.id}`}>查看詳情</Link>
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/admin/members/${m.id}`}>查看詳情</Link>
+                      </Button>
+                      <MemberHomeLink spiritId={m.spiritId} />
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -15,6 +15,7 @@ import { searchMembers, hasAnyMemberFilter, type MemberFilters } from '@/lib/dat
 import { getActiveChurches } from '@/lib/data/churches'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { MemberResetButton } from '@/components/admin/member-reset-button'
+import { MemberHomeLink } from '@/components/admin/member-home-link'
 import { MembersFilter } from '@/components/admin/members-filter'
 import { MembersPagination } from '@/components/admin/members-pagination'
 import { CreateMemberDialog } from '@/components/admin/create-member-dialog'
@@ -131,6 +132,7 @@ export default async function AdminMembersPage({
                           <Button variant="ghost" size="sm" asChild>
                             <Link href={`/admin/members/${member.id}`}>查看詳情</Link>
                           </Button>
+                          <MemberHomeLink spiritId={member.spiritId} />
                           <MemberResetButton userId={member.id} memberName={displayName} />
                         </div>
                       </td>

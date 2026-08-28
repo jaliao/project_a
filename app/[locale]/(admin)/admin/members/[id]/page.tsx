@@ -25,6 +25,7 @@ import { getGraduatedCatalogIds } from '@/lib/data/course-catalog'
 import { getInquiryList } from '@/lib/data/support-inquiry'
 import { SendMessageButton } from '@/components/conversation/send-message-button'
 import { MemberResetButton } from '@/components/admin/member-reset-button'
+import { MemberHomeLink } from '@/components/admin/member-home-link'
 import { MemberEmailForm } from '@/components/admin/member-email-form'
 import { MemberDeleteButton } from '@/components/admin/member-delete-button'
 import { MemberHierarchyTree } from '@/components/admin/member-hierarchy-tree'
@@ -130,6 +131,7 @@ export default async function MemberDetailPage({
           <Badge variant="destructive" className="text-xs">已暫停</Badge>
         )}
         <SendMessageButton targetUserId={member.id} label="傳訊息" />
+        <MemberHomeLink spiritId={member.spiritId} />
       </div>
 
       <Tabs defaultValue="info">
