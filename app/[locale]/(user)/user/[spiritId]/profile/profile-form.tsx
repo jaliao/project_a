@@ -187,7 +187,7 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
         <h2 className="text-lg font-semibold">基本資料</h2>
         <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">真實姓名 *</label>
+            <label className="block text-sm font-medium mb-1">中文姓名（若無中文姓名請填上您護照上的拼音姓名） *</label>
             <input
               {...profileForm.register('realName')}
               className="w-full rounded-md border px-3 py-2"
