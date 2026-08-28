@@ -21,6 +21,7 @@ export type RouteRule = { match: 'exact' | 'prefix'; path: string; reason: strin
 // 免登入頁面
 export const PUBLIC_PAGES: RouteRule[] = [
   { match: 'exact', path: '/', reason: '行銷首頁' },
+  { match: 'exact', path: '/courses', reason: '課程介紹（SEO 公開頁）' },
   { match: 'exact', path: '/login', reason: '登入頁' },
   { match: 'exact', path: '/register', reason: '註冊頁' },
   { match: 'exact', path: '/forgot-password', reason: '忘記密碼' },

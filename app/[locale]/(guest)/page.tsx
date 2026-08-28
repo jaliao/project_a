@@ -6,18 +6,15 @@
  * ----------------------------------------------
  */
 
-import type { Metadata } from 'next'
 import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { JsonLd, orgJsonLd, websiteJsonLd, graphJsonLd } from '@/components/seo/json-ld'
 
-export const metadata: Metadata = {
-  title: '啟動事工',
-  description: '啟動事工 — 課程管理、會員管理與學習追蹤平台',
-}
+// metadata 由 app/[locale]/layout.tsx 的 generateMetadata 提供（title.default／description／canonical '/' 皆已含關鍵字）
 
 export default async function HomePage({
   params,
@@ -32,9 +29,12 @@ export default async function HomePage({
 
   const { locale } = await params
   const tPwa = await getTranslations({ locale, namespace: 'pwa' })
+  const tHome = await getTranslations({ locale, namespace: 'home' })
+  const tCourses = await getTranslations({ locale, namespace: 'courses' })
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <JsonLd data={graphJsonLd([orgJsonLd(), websiteJsonLd()])} />
 
       {/* ── 頂部 Header ── */}
       <header className="flex items-center justify-between px-6 py-4 border-b">
@@ -71,7 +71,7 @@ export default async function HomePage({
               啟動事工
             </h1>
             <p className="text-xl text-muted-foreground">
-              課程管理・會員追蹤・學習紀錄
+              {tHome('heroSubtitle')}
             </p>
           </div>
 
@@ -81,7 +81,7 @@ export default async function HomePage({
               <div className="text-2xl">📋</div>
               <h3 className="font-semibold">課程管理</h3>
               <p className="text-sm text-muted-foreground">
-                管理啟動靈人、啟動豐盛等課程的開課紀錄與學員報名。
+                {tHome('featureCourseDesc')}
               </p>
             </div>
             <div className="rounded-lg border p-5 space-y-2">
@@ -108,6 +108,12 @@ export default async function HomePage({
             >
               開始啟動
             </Link>
+            <Link
+              href="/courses"
+              className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+            >
+              {tCourses('homeLink')}
+            </Link>
             {/* 灌檔且未登入過的會員：找回帳號 */}
             <Link
               href="/recover-account"
@@ -127,6 +133,8 @@ export default async function HomePage({
         <Link href="/terms" className="hover:text-foreground underline underline-offset-4">服務條款</Link>
         <span className="mx-2">·</span>
         <Link href="/privacy" className="hover:text-foreground underline underline-offset-4">隱私政策</Link>
+        <span className="mx-2">·</span>
+        <Link href="/courses" className="hover:text-foreground underline underline-offset-4">{tCourses('homeLink')}</Link>
         <span className="mx-2">·</span>
         <Link href="/pwa-install" className="hover:text-foreground underline underline-offset-4">{tPwa('homeLink')}</Link>
       </footer>

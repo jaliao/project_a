@@ -712,5 +712,31 @@
       "permissionDenied": "Browser notifications are blocked. Please enable them in your browser settings and try again",
       "subscribeFailed": "Failed to set up push notifications, please try again later"
     }
+  },
+  "seo": {
+    "defaultTitle": "KUA Ministry | Activate Spirit, Abundance & Victory Courses",
+    "description": "KUA Ministry offers the three-stage discipleship courses Activate Spirit (啟動靈人), Activate Abundance (啟動豐盛) and Activate Victory (啟動得勝) for church and small-group leaders. Online enrolment, material requests and learning progress in one place."
+  },
+  "home": {
+    "heroSubtitle": "Activate Spirit · Activate Abundance · Activate Victory — discipleship course platform",
+    "featureCourseDesc": "Manage sessions and enrolment for 啟動靈人, 啟動豐盛, 啟動得勝 and more."
+  },
+  "courses": {
+    "metaTitle": "Courses",
+    "metaDescription": "Learn about KUA Ministry's three-stage courses 啟動靈人 / 啟動豐盛 / 啟動得勝: content, who they are for, and how to enrol.",
+    "introHeading": "啟動靈人 · 啟動豐盛 · 啟動得勝 — Course Overview",
+    "introBody": "KUA Ministry is a progressive discipleship training programme made up of three stages — 啟動靈人 (Activate Spirit), 啟動豐盛 (Activate Abundance) and 啟動得勝 (Activate Victory) — for Christians, small-group leaders and church co-workers who long to grow. 啟動靈人 helps you know and experience the presence of the Holy Spirit; 啟動豐盛 builds you up in gifts and service; 啟動得勝 equips you to stand firm in spiritual battle and lead others.",
+    "listHeading": "Courses currently offered",
+    "noCourses": "No courses are open for enrolment right now. Please check back for updates.",
+    "fallback": {
+      "啟動靈人": "The 啟動靈人 course leads students to know the Holy Spirit and practise a Spirit-led life; suitable for new or renewing believers.",
+      "啟動豐盛": "The 啟動豐盛 course builds students who have completed 啟動靈人 in gifts, character and service toward an abundant life.",
+      "啟動得勝": "The 啟動得勝 course equips students to stand firm in spiritual battle, experience breakthrough and lead others to victory."
+    },
+    "fallbackGeneric": "A detailed introduction for this course is coming soon. Please sign in or contact us for enrolment details.",
+    "ctaEnroll": "Sign in / Enrol",
+    "ctaRecover": "Never set up an account? Recover my account",
+    "homeLink": "Courses",
+    "backToHome": "Back to home"
   }
 }

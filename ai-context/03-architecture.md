@@ -10,7 +10,8 @@ app/
 # 免登入頁面/API 的單一事實來源為 lib/auth/route-access.ts（middleware 與 layout 共用）
 ├── [locale]/        # i18n 根：層下含 (guest)/(user)/(admin) 三群組
 ├── (guest)/         # 免登入群組（薄 passthrough layout，不擋已登入者）
-│   ├── page.tsx         # 行銷首頁（/）
+│   ├── page.tsx         # 行銷首頁（/）——含 Organization/WebSite JSON-LD
+│   ├── courses/         # 課程介紹頁（/courses，SEO 公開頁；資料驅動自 CourseCatalog + Course JSON-LD）
 │   ├── login, register, forgot-password, reset-password, recover-account（找回帳號）
 │   ├── terms, privacy, account-suspended
 │   ├── onboarding/      # 首次登入 Wizard（三步驟；頁面自行 auth 守衛）
@@ -40,8 +41,10 @@ app/
 ├── api/ecpay/
 │   ├── store-map/       # GET：產生 ECPay MapCVS auto-submit form（Mock 模式支援）
 │   └── store-callback/  # POST：接收 ECPay 門市選擇結果，postMessage 回前端後關閉視窗
-├── middleware.ts    # 未登入攔截 + 臨時密碼強制導向 + x-pathname header 注入
-└── layout.tsx       # Root layout（Toaster）
+├── robots.ts        # /robots.txt（SEO：allow /、disallow 後台/功能區塊、宣告 sitemap，網域取自 lib/utils/site-url.ts）
+├── sitemap.ts       # /sitemap.xml（SEO：/, /courses, /terms, /privacy, /pwa-install + hreflang alternates）
+├── middleware.ts    # 未登入攔截 + 臨時密碼強制導向 + x-pathname header 注入（matcher 排除 robots.txt/sitemap.xml）
+└── layout.tsx       # Root layout（Toaster）；[locale]/layout.tsx generateMetadata 提供 metadataBase/OpenGraph/canonical/hreflang
 
 components/
 ├── ui/              # shadcn/ui 基礎元件
