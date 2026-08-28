@@ -582,7 +582,10 @@
     "conversationMessageMax2000": "訊息最長 2000 字",
     "avatarTypeInvalid": "僅支援 JPG／PNG／WebP 圖片格式",
     "avatarTooLarge": "圖片大小不可超過 2MB",
-    "bookNameRequired": "請填寫教材姓名"
+    "bookNameRequired": "請填寫教材姓名",
+    "studyMainTitleRequired": "請填寫總標題",
+    "studyMainTitleTooLong": "總標題最長 200 字",
+    "studyFieldTooLong": "內容最長 5000 字"
   },
   "status": {
     "recruiting": "招生中",
@@ -738,5 +741,34 @@
     "ctaRecover": "還沒設定過帳號？找回我的帳號",
     "homeLink": "課程介紹",
     "backToHome": "返回首頁"
+  },
+  "learning": {
+    "pageTitle": "我的學習",
+    "metaTitle": "我的學習 — 啟動事工",
+    "backToProfile": "返回學員頁面",
+    "intro": "針對已開始上課的課程，隨時記錄你的分段查經；可以多次撰寫，也可以不寫。學習筆記與特定開課不綁定。",
+    "lockedEmpty": "目前沒有可撰寫的課程。需先報名並由講師開始上課，才能使用「我的學習」。",
+    "lessonHeading": "課次",
+    "noScripture": "本課次尚無可填寫的分段查經。",
+    "noEntries": "尚未撰寫，點「新增分段查經」開始記錄。",
+    "orphanSectionTitle": "其他（大綱已調整）",
+    "orphanSectionHint": "以下筆記對應的課次／經文已在大綱中調整，內容仍完整保留。",
+    "addEntry": "新增分段查經",
+    "fieldMainTitle": "總標題",
+    "fieldSubTitle": "次標題",
+    "fieldWordReceived": "所領受的話語",
+    "fieldApplication": "運用",
+    "mainTitlePlaceholder": "為這則分段查經下一個標題",
+    "save": "儲存",
+    "cancel": "取消",
+    "edit": "編輯",
+    "delete": "刪除",
+    "edited": "已編輯",
+    "filledAtLabel": "填寫時間",
+    "updatedAtLabel": "更新時間",
+    "deleteConfirmTitle": "刪除這則分段查經？",
+    "deleteConfirmBody": "刪除後無法復原。",
+    "deleteConfirmAction": "確認刪除",
+    "genericError": "操作失敗，請稍後再試"
   }
 }

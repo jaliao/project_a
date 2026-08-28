@@ -583,7 +583,10 @@
     "conversationMessageMax2000": "讯息最长 2000 字",
     "avatarTypeInvalid": "仅支援 JPG／PNG／WebP 图片格式",
     "avatarTooLarge": "图片大小不可超过 2MB",
-    "bookNameRequired": "请填写教材姓名"
+    "bookNameRequired": "请填写教材姓名",
+    "studyMainTitleRequired": "请填写总标题",
+    "studyMainTitleTooLong": "总标题最长 200 字",
+    "studyFieldTooLong": "内容最长 5000 字"
   },
   "status": {
     "recruiting": "招生中",
@@ -739,5 +742,34 @@
     "ctaRecover": "还没设定过帐号？找回我的帐号",
     "homeLink": "课程介绍",
     "backToHome": "返回首页"
+  },
+  "learning": {
+    "pageTitle": "我的学习",
+    "metaTitle": "我的学习 — 启动事工",
+    "backToProfile": "返回学员页面",
+    "intro": "针对已开始上课的课程，随时记录你的分段查经；可以多次撰写，也可以不写。学习笔记与特定开课不绑定。",
+    "lockedEmpty": "目前没有可撰写的课程。需先报名并由讲师开始上课，才能使用「我的学习」。",
+    "lessonHeading": "课次",
+    "noScripture": "本课次尚无可填写的分段查经。",
+    "noEntries": "尚未撰写，点「新增分段查经」开始记录。",
+    "orphanSectionTitle": "其他（大纲已调整）",
+    "orphanSectionHint": "以下笔记对应的课次／经文已在大纲中调整，内容仍完整保留。",
+    "addEntry": "新增分段查经",
+    "fieldMainTitle": "总标题",
+    "fieldSubTitle": "次标题",
+    "fieldWordReceived": "所领受的话语",
+    "fieldApplication": "运用",
+    "mainTitlePlaceholder": "为这则分段查经下一个标题",
+    "save": "储存",
+    "cancel": "取消",
+    "edit": "编辑",
+    "delete": "删除",
+    "edited": "已编辑",
+    "filledAtLabel": "填写时间",
+    "updatedAtLabel": "更新时间",
+    "deleteConfirmTitle": "删除这则分段查经？",
+    "deleteConfirmBody": "删除后无法复原。",
+    "deleteConfirmAction": "确认删除",
+    "genericError": "操作失败，请稍后再试"
   }
 }

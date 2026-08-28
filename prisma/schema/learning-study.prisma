@@ -1,0 +1,39 @@
+/**
+ * ----------------------------------------------
+ * Prisma Schema - 我的學習（分段查經筆記）
+ * 2026-08-28
+ * prisma/schema/learning-study.prisma
+ * 大綱（課程目錄 → 課次 → 經文項目）為程式碼設定檔
+ * config/learning-outline.ts 定義，此表僅存學員填寫的筆記。
+ * lessonKey / scriptureKey 對應設定檔的穩定識別（發布後不可變更）。
+ * ----------------------------------------------
+ */
+
+// 分段查經筆記：一筆＝一則，同一 (user, catalog, lesson, scripture) 允許多筆
+model LearningStudyEntry {
+  id Int @id @default(autoincrement())
+
+  // 撰寫者（隨帳號刪除移除）
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 所屬課程目錄（啟動靈人／啟動豐盛／啟動得勝）
+  courseCatalogId Int
+  courseCatalog   CourseCatalog @relation(fields: [courseCatalogId], references: [id])
+
+  // 大綱位置（對應 config/learning-outline.ts）
+  lessonKey    String // LessonOutline.key
+  scriptureKey String // ScriptureOutline.key
+
+  // 內容欄位
+  mainTitle    String // 總標題（一般文字、單行）
+  subTitle     String? // 次標題（多行純文字）
+  wordReceived String? // 所領受的話語（多行純文字）
+  application  String? // 運用（多行純文字）
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, courseCatalogId, lessonKey, scriptureKey])
+  @@map("learning_study_entries")
+}

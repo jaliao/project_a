@@ -141,6 +141,9 @@ model User {
   learningFeedbacks LearningRecordFeedback[] @relation("FeedbackSubmitter")
   resolvedFeedbacks LearningRecordFeedback[] @relation("FeedbackResolver")
 
+  // 我的學習（分段查經筆記）關聯
+  learningStudyEntries LearningStudyEntry[]
+
   // 聯繫管理者（提問）關聯
   supportInquiries        SupportInquiry[] @relation("SupportInquirySubmitter")
   repliedSupportInquiries SupportInquiry[] @relation("SupportInquiryReplier")
