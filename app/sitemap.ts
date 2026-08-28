@@ -12,6 +12,10 @@
 import type { MetadataRoute } from 'next'
 import { getSiteUrl } from '@/lib/utils/site-url'
 
+// 動態產生：需於 request 時讀取執行環境的站台網址（NEXT_PUBLIC_SITE_URL / NEXTAUTH_URL），
+// 不可於 build 時靜態烘焙（否則所有 <loc> 會固定成 build 環境的 localhost）。
+export const dynamic = 'force-dynamic'
+
 type PageDef = {
   path: string
   priority: number
