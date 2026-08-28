@@ -62,8 +62,9 @@ export function middleware(req: NextRequest) {
 export const config = {
   // 排除 api、_next、靜態檔、PWA 特殊檔案、SEO 特殊檔案（manifest/icon/sw.js/robots.txt/sitemap.xml
   // 皆為 app/ 根層級特殊檔案，不在 [locale] 之下，不可被 next-intl 加上 locale 前綴改寫，否則會 404）；
-  // 其餘交由 middleware（含 i18n）
+  // 以及 Google Search Console 網站所有權驗證檔（public/google*.html，須以原路徑、原內容供 Google 抓取，
+  // 不可被 i18n 前綴改寫或被未登入導向 /login）；其餘交由 middleware（含 i18n）
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|robots\\.txt|sitemap\\.xml|sw\\.js|icon-192|icon-512|icon$|apple-icon|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|robots\\.txt|sitemap\\.xml|sw\\.js|icon-192|icon-512|icon$|apple-icon|google[0-9a-f]+\\.html|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
