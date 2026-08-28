@@ -1,8 +1,7 @@
-# my-learning Specification
+# my-learning Delta（cr-spec-260828-009）
 
-## Purpose
-TBD - created by archiving change cr-spec-260828-003. Update Purpose after archive.
-## Requirements
+## MODIFIED Requirements
+
 ### Requirement: 我的學習頁面路由與存取
 
 系統 SHALL 提供 `/user/{spiritId}/learning`（書籍選擇）與 `/user/{spiritId}/learning/{catalogId}`（單一課程目錄）兩層路由，顯示該學員的「我的學習」分段查經筆記。兩層皆 SHALL 僅本人可存取：已登入使用者存取他人的對應路由 SHALL 被重定向至本人的對應路由；未登入使用者存取 SHALL 被重定向至 `/login`。`/user/{spiritId}/learning` SHALL 提供返回 `/user/{spiritId}` 的連結；`/user/{spiritId}/learning/{catalogId}` SHALL 提供返回 `/user/{spiritId}/learning` 的連結。`{catalogId}` 若非合法數字、對應 `CourseCatalog` 不存在、或設定檔中無該目錄之大綱，系統 SHALL 重定向至 `/user/{spiritId}/learning`。此頁面內容 SHALL NOT 對他人或管理者後台可見。
@@ -31,20 +30,6 @@ TBD - created by archiving change cr-spec-260828-003. Update Purpose after archi
 
 - **WHEN** 已登入使用者存取自己的 `/user/{spiritId}/learning/{catalogId}`，但 `{catalogId}` 非數字、無對應 `CourseCatalog`、或設定檔無該目錄大綱
 - **THEN** 系統重定向至 `/user/{spiritId}/learning`
-
-### Requirement: 首頁「我的學習」入口
-
-`/user/{spiritId}` 首頁 SHALL 在使用者查閱自己頁面時顯示「我的學習」單元，其標題列 SHALL 連結至 `/user/{spiritId}/learning`。他人視角 SHALL NOT 顯示此單元。
-
-#### Scenario: 本人首頁顯示入口
-
-- **WHEN** 已登入使用者存取自己的 `/user/{spiritId}`
-- **THEN** 頁面顯示「我的學習」單元，點擊導向 `/user/{spiritId}/learning`
-
-#### Scenario: 他人首頁不顯示入口
-
-- **WHEN** 已登入使用者存取他人的 `/user/{spiritId}`
-- **THEN** 頁面不顯示「我的學習」單元
 
 ### Requirement: 課程目錄解鎖條件
 
@@ -142,6 +127,8 @@ TBD - created by archiving change cr-spec-260828-003. Update Purpose after archi
 - **WHEN** 未登入狀態呼叫任一筆記 Server Action
 - **THEN** 系統拒絕操作，不異動資料
 
+## ADDED Requirements
+
 ### Requirement: 書籍選擇頁與課次卡片牆
 
 `/user/{spiritId}/learning` SHALL 以卡片方式列出所有課程目錄（依 `CourseCatalog.sortOrder`）作為「書籍」入口，卡片牆 SHALL 使用與個人首頁「授課單元」相同的響應式網格容器（`CourseCardGrid`）。`/user/{spiritId}/learning/{catalogId}` SHALL 以同一響應式網格容器列出該目錄大綱中的所有課次作為卡片。課次卡片 SHALL 顯示課次標題與「完成狀態」視覺標記，並可點擊以在**同頁展開／收合（accordion）**該課次的經文項目與分段查經筆記；同一時間 SHALL 至多展開一個課次。書籍子頁 SHALL 於頂部顯示「已完成課次數 / 總課次數」。
@@ -185,4 +172,3 @@ TBD - created by archiving change cr-spec-260828-003. Update Purpose after archi
 
 - **WHEN** 頁面渲染「第一課：接受禮物」或「第十二課：靈人全開啟」
 - **THEN** 該課次卡片以完成態呈現並標示「無需填寫」，且計入「已完成課次數」
-
