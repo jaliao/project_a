@@ -8,6 +8,8 @@
 
 // ==========================================
 // 課程 FAQ 留言（提問與回覆同表，parentId 自關聯）
+// ⚠️ 課程 FAQ 功能已於 CR-SPEC-260828-004 下架，前後端程式皆已移除；
+//    此 model 與 course_messages 資料表僅為保留歷史資料，無應用層程式使用。
 // ==========================================
 model CourseMessage {
   id Int @id @default(autoincrement())

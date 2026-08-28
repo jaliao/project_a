@@ -513,28 +513,6 @@
       "copied": "Course link copied!",
       "copiedShort": "Copied!",
       "share": "Share"
-    },
-    "faq": {
-      "title": "Course FAQ",
-      "askPlaceholder": "Have a question about the course? Ask here…",
-      "submitAsk": "Submit question",
-      "submitting": "Submitting…",
-      "asked": "Question submitted",
-      "askFail": "Submission failed",
-      "validateContent": "Please enter content",
-      "emptyTeacher": "No student questions yet.",
-      "emptyStudent": "You haven't asked anything yet. After submitting above, only you and the instructor can see it.",
-      "teacherTag": "Instructor",
-      "replyPlaceholder": "Reply to the student's question…",
-      "submitReply": "Submit reply",
-      "replied": "Replied",
-      "replyFail": "Reply failed",
-      "deleted": "Deleted",
-      "deleteFail": "Delete failed",
-      "deleteTitle": "Delete message",
-      "confirmDeleteTitle": "Confirm message deletion",
-      "deleteWarning": "This cannot be undone. Deleting a question also deletes all its replies.",
-      "confirmDelete": "Confirm delete"
     }
   },
   "matchBoard": {

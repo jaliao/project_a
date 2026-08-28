@@ -514,28 +514,6 @@
       "copied": "已复制课程连结！",
       "copiedShort": "已复制！",
       "share": "分享"
-    },
-    "faq": {
-      "title": "课程 FAQ",
-      "askPlaceholder": "对课程有疑问吗？在这里提问…",
-      "submitAsk": "送出提问",
-      "submitting": "送出中…",
-      "asked": "已送出提问",
-      "askFail": "送出失败",
-      "validateContent": "请填写内容",
-      "emptyTeacher": "目前还没有学员提问。",
-      "emptyStudent": "您目前还没有提问，在上方输入框送出后，仅您与授课老师看得到。",
-      "teacherTag": "老师",
-      "replyPlaceholder": "回复学员提问…",
-      "submitReply": "送出回复",
-      "replied": "已回复",
-      "replyFail": "回复失败",
-      "deleted": "已删除",
-      "deleteFail": "删除失败",
-      "deleteTitle": "删除留言",
-      "confirmDeleteTitle": "确认删除留言",
-      "deleteWarning": "此操作不可复原。若删除的是提问，其下所有回复也会一并删除。",
-      "confirmDelete": "确认删除"
     }
   },
   "matchBoard": {

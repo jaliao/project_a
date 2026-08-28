@@ -513,28 +513,6 @@
       "copied": "已複製課程連結！",
       "copiedShort": "已複製！",
       "share": "分享"
-    },
-    "faq": {
-      "title": "課程 FAQ",
-      "askPlaceholder": "對課程有疑問嗎？在這裡提問…",
-      "submitAsk": "送出提問",
-      "submitting": "送出中…",
-      "asked": "已送出提問",
-      "askFail": "送出失敗",
-      "validateContent": "請填寫內容",
-      "emptyTeacher": "目前還沒有學員提問。",
-      "emptyStudent": "您目前還沒有提問，在上方輸入框送出後，僅您與授課老師看得到。",
-      "teacherTag": "老師",
-      "replyPlaceholder": "回覆學員提問…",
-      "submitReply": "送出回覆",
-      "replied": "已回覆",
-      "replyFail": "回覆失敗",
-      "deleted": "已刪除",
-      "deleteFail": "刪除失敗",
-      "deleteTitle": "刪除留言",
-      "confirmDeleteTitle": "確認刪除留言",
-      "deleteWarning": "此操作不可復原。若刪除的是提問，其下所有回覆也會一併刪除。",
-      "confirmDelete": "確認刪除"
     }
   },
   "matchBoard": {

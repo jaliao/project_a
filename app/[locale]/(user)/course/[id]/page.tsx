@@ -31,8 +31,6 @@ import { getCourseSessionById, getEnrollmentMaterialSummary } from '@/lib/data/c
 import { evaluateCourseStartGate } from '@/lib/utils/course-start-gate'
 import { computeMaterialProgress } from '@/lib/utils/material-progress'
 import { checkPrerequisites } from '@/lib/data/course-catalog'
-import { getCourseMessages } from '@/lib/data/course-message'
-import { CourseFaq } from '@/components/course-faq/course-faq'
 import { CourseDetailActions } from './course-detail-actions'
 import { MatchSettingsEditor } from './match-settings-editor'
 import { EditCourseInfoDialog } from '@/components/course-session/edit-course-info-dialog'
@@ -102,12 +100,6 @@ export default async function CourseDetailPage({
   // 結業資訊區塊可見性：僅該課程授課老師（建立者）或管理者可查閱
   // （他班講師／持講師身分的學員／一般會員一律不顯示，勿用 canTeachAny）
   const canViewGraduation = isInstructor || isAdmin
-
-  // 課程 FAQ 留言（1 對 1 可見性：老師見全部、其他會員僅見自己的提問串）
-  const faqMessages = await getCourseMessages(courseSession.id, {
-    userId: currentUserId,
-    isInstructor,
-  })
 
   // 教材申請作業：講師本人或管理者可見可操作（比照班級管理前台化）
   const canManageMaterials = isInstructor || isAdmin
@@ -451,14 +443,6 @@ export default async function CourseDetailPage({
 
       {/* 課程操作 LOG（僅管理者與該課講師可見） */}
       {(isInstructor || isAdmin) && <CourseOperationLog inviteId={courseSession.id} />}
-
-      {/* 課程 FAQ 留言問答 */}
-      <CourseFaq
-        inviteId={courseSession.id}
-        currentUserId={currentUserId}
-        isInstructor={isInstructor}
-        messages={faqMessages}
-      />
     </div>
   )
 }
