@@ -3,7 +3,7 @@
 - [x] 1.1 `prisma/schema/learning-study.prisma`：新增 `LearningStudyEntry` model（`id`／`userId`＋FK Cascade／`courseCatalogId`＋FK／`lessonKey`／`scriptureKey`／`mainTitle`／`subTitle?`／`wordReceived?`／`application?`／`createdAt`／`updatedAt`，`@@index([userId, courseCatalogId, lessonKey, scriptureKey])`，`@@map("learning_study_entries")`）
 - [x] 1.2 `prisma/schema/user.prisma`：`User` 加 `learningStudyEntries LearningStudyEntry[]` 反向關聯
 - [x] 1.3 `prisma/schema/course-catalog.prisma`：`CourseCatalog` 加 `learningStudyEntries LearningStudyEntry[]` 反向關聯
-- [~] 1.4 **migration 檔已產生、尚未套用到執行中的 DB**：`prisma/migrations/20260828060944_add_learning_study_entries/migration.sql` 已由 `prisma migrate dev` 產出（乾淨的單一 `CREATE TABLE learning_study_entries` ＋ index ＋ 2 FK，與 `make schema-update` 產物一致），`prisma generate` 已更新 client 型別。**未套用**：`make schema-update` 依賴的 `web` 容器未起，且 host `127.0.0.1:5432` 上可連到的 Postgres 已與 migration 歷史嚴重漂移（缺 `admin_action_logs`／`support_inquiries`／`push_subscriptions`／`users.roles` 等數十項、`20260605024409_add_ship_mode_material_shipment` 標記失敗），`prisma migrate dev` 會要求 reset（清空資料），**已中止未動 DB**。**待辦**：使用者於自己的終端 `make dev` 起容器 → `make schema-update`（會偵測並套用此既有 migration，不會重複產生）或正式站 `make prisma-prd-deploy`；接著實測第 6.3–6.7 項。此 migration 為 additive 新表、正式資料相容。
+- [x] 1.4 migration `prisma/migrations/20260828060944_add_learning_study_entries/`（乾淨的單一 `CREATE TABLE learning_study_entries` ＋ index ＋ 2 FK）已產生，`prisma generate` 更新 client 型別。**已套用至 test 環境**（2026-08-28）：透過 SSH tunnel 對 VPS3 `project-a-stg` DB 跑 `prisma migrate deploy`，一併補齊該環境落後的 13 個 migration，`learning_study_entries` 表已建立、`Database schema is up to date!`、既有資料量不變（1363 users / 350 course_invites / 1450 enrollments）。本機 dev DB 因與 migration 歷史漂移未套用（不影響）；正式站（GCP）待部署時 `make prisma-prd-deploy`。此 migration 為 additive 新表、正式資料相容。
 - [x] 1.5 `config/learning-outline.ts`：型別（`ScriptureOutline`／`LessonOutline`／`CatalogOutline`）＋ `LEARNING_OUTLINE` 常數（啟動靈人 id 1：第一課無經文、第二課「開箱上帝所賜的生命之裡」三經文）＋ helper（`getCatalogOutline`／`getOutlineCatalogIds`／`getLesson`／`getScripture`／`isValidOutlinePath`）。已註記 key 發布後不可變更
 - [x] 1.6 `lib/schemas/learning-study.ts`：`studyEntryContentSchema`（`mainTitle` 必填 1–200＝`validation.studyMainTitleRequired`／`validation.studyMainTitleTooLong`；三個副文本選填 max 5000＝`validation.studyFieldTooLong`）＋ `createStudyEntrySchema`（再加 `courseCatalogId`/`lessonKey`/`scriptureKey`）
 - [x] 1.7 `lib/data/learning-study.ts`：`getUnlockedLearningCatalogIds(userId)`（直接 `inviteEnrollment.findMany` where `approved` + `invite.cancelledAt=null` + `invite.startedAt not null`，取 distinct `courseCatalogId`）、`getStudyEntriesForUser(userId, catalogId)`（回傳 `Map<'lessonKey::scriptureKey', LearningStudyEntry[]>`，`createdAt asc`）、`outlineSlotKey()`
@@ -39,11 +39,15 @@
 
 - [x] 6.1 `npm run lint`：0 errors（16 個既有 warning，皆非本次新檔）
 - [x] 6.2 `npm run build`：`✓ Compiled successfully`、107/107 頁產生、新路由 `ƒ /[locale]/user/[spiritId]/learning` 已註冊；`npx tsc --noEmit` 0 errors
-- [ ] 6.3 **待辦（需 1.4）**：有「已開始啟動靈人報名」的測試帳號 → `/user/{spiritId}/learning` 顯示啟動靈人大綱；第一課無填寫入口、第二課三經文各可新增
-- [ ] 6.4 **待辦（需 1.4）**：新增／編輯（顯示「已編輯」）／刪除（二次確認）；同一經文多筆並存；總標題留空被擋
-- [ ] 6.5 **待辦（需 1.4）**：未解鎖帳號 → 未解鎖空狀態；直接呼叫 `createStudyEntry` 帶未解鎖 `courseCatalogId` 被伺服器端拒絕
-- [ ] 6.6 **待辦（需 1.4）**：存取他人 `/user/{otherSpiritId}/learning` → 導回本人；未登入 → 導 `/login`
-- [ ] 6.7 **待辦（需 1.4）**：非擁有者對他人筆記 id 呼叫 `updateStudyEntry`／`deleteStudyEntry` → 回傳無權限、資料未異動
+- [ ] 6.3 **待人工實測（test 環境已就緒）**：有「已開始啟動靈人報名」的測試帳號 → `/user/{spiritId}/learning` 顯示啟動靈人大綱；第一課無填寫入口、第二課三經文各可新增
+- [ ] 6.4 **待人工實測**：新增／編輯（顯示「已編輯」）／刪除（二次確認）；同一經文多筆並存；總標題留空被擋
+- [ ] 6.5 **待人工實測**：未解鎖帳號 → 未解鎖空狀態；直接呼叫 `createStudyEntry` 帶未解鎖 `courseCatalogId` 被伺服器端拒絕
+- [~] 6.6 未登入存取 `/user/{spiritId}/learning` → `307` 轉址 `/login?callbackUrl=…`：**已於 `project-a-stg` 實測通過**（2026-08-28）。「他人頁 → 導回本人」情境待登入帳號人工實測
+- [ ] 6.7 **待人工實測**：非擁有者對他人筆記 id 呼叫 `updateStudyEntry`／`deleteStudyEntry` → 回傳無權限、資料未異動
+
+### stg 部署紀錄（2026-08-28）
+
+分支 `feat/cr-spec-260828-003-my-learning`（含本 CR 與 CR-SPEC-260828-008）已 `make push` 建置 `jaliao/project_a-web:latest` 推 Docker Hub、`make tunnel-deploy-vps3` 部署至 `https://project-a-stg.blockcode.com.tw`（VPS3）；DB migration 如 1.4 所述已套用。煙霧測試：首頁／`/login` `200`、新路由 `/user/{spiritId}/learning` 未登入 `307 → /login` 正常，容器 `Ready`。功能面互動測試（6.3–6.5、6.7）待使用者以測試帳號於 stg 進行。
 
 ## 7. 文件與版本號同步
 
