@@ -23,6 +23,7 @@ import {
   IconUserExclamation,
   IconSettings,
   IconMessageCircle,
+  IconHistory,
 } from '@tabler/icons-react'
 
 export const dynamic = 'force-dynamic'
@@ -93,6 +94,13 @@ const ADMIN_FEATURES = [
     description: '調整系統全域參數',
     icon: IconSettings,
     href: '/admin/settings',
+    superadminOnly: false,
+  },
+  {
+    title: '系統活動紀錄',
+    description: '檢視後台管理操作紀錄',
+    icon: IconHistory,
+    href: '/admin/activity-logs',
     superadminOnly: false,
   },
 ]
