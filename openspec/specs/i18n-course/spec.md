@@ -15,7 +15,9 @@ TBD - created by archiving change cr-spec-260629-008. Update Purpose after archi
 - **THEN** 表單標題、步驟與按鈕以該語言呈現
 
 ### Requirement: 課程元件在地化
-`components/course-session`、`components/course-faq`、`components/course-catalog` 的靜態 UI 文案 SHALL 以 i18n 取用。
+`components/course-session`、`components/course-catalog` 的靜態 UI 文案 SHALL 以 i18n 取用。
+
+（原一併列入的 `components/course-faq` 已隨課程 FAQ 功能下架而移除，不再適用——見 CR-SPEC-260828-004。）
 
 #### Scenario: 課程卡與詳情元件在地化
 - **WHEN** 以非預設語言檢視含課程卡或課程詳情子元件的頁面
