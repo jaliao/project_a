@@ -315,3 +315,33 @@ export function isValidOutlinePath(
 ): boolean {
   return !!getScripture(courseCatalogId, lessonKey, scriptureKey)
 }
+
+/**
+ * 課次的分段查經填寫狀態（四態）：
+ * - `noScripture`：課次無經文項目（視為已完成、標「無需填寫」）
+ * - `todo`：有經文項目、一格都沒填
+ * - `partial`：有經文項目、填了一部分（1 格以上、未填滿）
+ * - `done`：有經文項目、每一格都至少有一筆筆記
+ */
+export type LessonFillState = 'noScripture' | 'todo' | 'partial' | 'done'
+
+/**
+ * 依「已填經文位置集合」（key = `${lessonKey}::${scriptureKey}`）計算課次的四態。
+ * 純函式，client / server 皆可用。
+ */
+export function lessonFillState(lesson: LessonOutline, filledSlots: Set<string>): LessonFillState {
+  const total = lesson.scriptures.length
+  if (total === 0) return 'noScripture'
+  const filled = lesson.scriptures.filter((s) =>
+    filledSlots.has(`${lesson.key}::${s.key}`)
+  ).length
+  if (filled === 0) return 'todo'
+  if (filled < total) return 'partial'
+  return 'done'
+}
+
+/** 課次是否計入「已完成課次數」（`done` 或 `noScripture`）。 */
+export function isLessonCompleted(lesson: LessonOutline, filledSlots: Set<string>): boolean {
+  const st = lessonFillState(lesson, filledSlots)
+  return st === 'done' || st === 'noScripture'
+}

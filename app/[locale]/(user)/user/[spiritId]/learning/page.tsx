@@ -15,10 +15,10 @@ import { IconArrowLeft, IconNotebook } from '@tabler/icons-react'
 import { getTranslations } from 'next-intl/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getCatalogOutline } from '@/config/learning-outline'
+import { getCatalogOutline, isLessonCompleted } from '@/config/learning-outline'
 import {
   getUnlockedLearningCatalogIds,
-  getLessonKeysWithEntries,
+  getFilledOutlineSlots,
 } from '@/lib/data/learning-study'
 import {
   LearningCatalogGrid,
@@ -74,11 +74,9 @@ export default async function LearningPage({ params }: Props) {
         }
       }
 
-      const withEntries = await getLessonKeysWithEntries(user.id, c.id)
+      const filledSlots = await getFilledOutlineSlots(user.id, c.id)
       const totalCount = outline.lessons.length
-      const doneCount = outline.lessons.filter(
-        (l) => l.scriptures.length === 0 || withEntries.has(l.key)
-      ).length
+      const doneCount = outline.lessons.filter((l) => isLessonCompleted(l, filledSlots)).length
 
       return { id: c.id, label: c.label, canEnter: true, doneCount, totalCount }
     })

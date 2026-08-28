@@ -58,17 +58,18 @@ export async function getStudyEntriesForUser(
 }
 
 /**
- * 取得該使用者在某課程目錄下「已有至少一筆筆記」的課次 key 集合，
- * 供課次卡片的完成／未完成配色使用。
+ * 取得該使用者在某課程目錄下「已有至少一筆筆記」的經文位置集合，
+ * key = `${lessonKey}::${scriptureKey}`（= outlineSlotKey）。
+ * 供課次卡片的四態（無需填寫／待填寫／填寫中／已完成）配色與進度計算使用。
  */
-export async function getLessonKeysWithEntries(
+export async function getFilledOutlineSlots(
   userId: string,
   courseCatalogId: number
 ): Promise<Set<string>> {
   const rows = await prisma.learningStudyEntry.findMany({
     where: { userId, courseCatalogId },
-    select: { lessonKey: true },
-    distinct: ['lessonKey'],
+    select: { lessonKey: true, scriptureKey: true },
+    distinct: ['lessonKey', 'scriptureKey'],
   })
-  return new Set(rows.map((r) => r.lessonKey))
+  return new Set(rows.map((r) => outlineSlotKey(r.lessonKey, r.scriptureKey)))
 }

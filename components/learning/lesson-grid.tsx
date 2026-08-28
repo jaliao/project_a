@@ -3,6 +3,8 @@
  * LessonGrid - 單一課程目錄的課次卡片牆（accordion 展開筆記）
  * 2026-08-28
  * components/learning/lesson-grid.tsx
+ *
+ * 課次卡片依分段查經填寫進度分四態：無需填寫／待填寫／填寫中／已完成。
  * ----------------------------------------------
  */
 
@@ -12,30 +14,23 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { IconChevronDown } from '@tabler/icons-react'
 import type { LearningStudyEntry } from '@prisma/client'
-import type { CatalogOutline, LessonOutline } from '@/config/learning-outline'
+import { lessonFillState, type CatalogOutline } from '@/config/learning-outline'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { CourseCardGrid } from '@/components/course-session/course-card-grid'
 import { LessonEntriesPanel } from './lesson-entries-panel'
 
-type LessonState = 'done' | 'todo' | 'noScripture'
-
-function lessonState(lesson: LessonOutline, lessonKeysWithEntries: Set<string>): LessonState {
-  if (lesson.scriptures.length === 0) return 'noScripture'
-  return lessonKeysWithEntries.has(lesson.key) ? 'done' : 'todo'
-}
-
 type Props = {
   outline: CatalogOutline
   /** key = `${lessonKey}::${scriptureKey}` */
   entriesBySlot: Record<string, LearningStudyEntry[]>
-  /** 已有至少一筆筆記的 lessonKey */
-  lessonKeysWithEntries: string[]
+  /** 已有至少一筆筆記的經文位置（`${lessonKey}::${scriptureKey}`） */
+  filledSlots: string[]
 }
 
-export function LessonGrid({ outline, entriesBySlot, lessonKeysWithEntries }: Props) {
+export function LessonGrid({ outline, entriesBySlot, filledSlots }: Props) {
   const t = useTranslations('learning')
-  const withEntries = new Set(lessonKeysWithEntries)
+  const filled = new Set(filledSlots)
   const [openKey, setOpenKey] = useState<string | null>(null)
 
   const lessons = [...outline.lessons].sort((a, b) => a.order - b.order)
@@ -45,7 +40,7 @@ export function LessonGrid({ outline, entriesBySlot, lessonKeysWithEntries }: Pr
     <div className="space-y-4">
       <CourseCardGrid>
         {lessons.map((lesson) => {
-          const state = lessonState(lesson, withEntries)
+          const state = lessonFillState(lesson, filled)
           const isOpen = openKey === lesson.key
           return (
             <button
@@ -55,8 +50,8 @@ export function LessonGrid({ outline, entriesBySlot, lessonKeysWithEntries }: Pr
               aria-expanded={isOpen}
               className={cn(
                 'flex h-full flex-col gap-2 rounded-lg border bg-card p-4 text-left transition-colors hover:bg-muted/50',
-                state === 'done' && 'border-green-500/60',
-                state === 'noScripture' && 'border-green-500/60',
+                (state === 'done' || state === 'noScripture') && 'border-green-500/60',
+                state === 'partial' && 'border-amber-400',
                 state === 'todo' && 'border-dashed border-amber-400',
                 isOpen && 'ring-2 ring-primary'
               )}
@@ -76,8 +71,13 @@ export function LessonGrid({ outline, entriesBySlot, lessonKeysWithEntries }: Pr
               {state === 'noScripture' && (
                 <Badge variant="secondary">{t('lessonNoScripture')}</Badge>
               )}
+              {state === 'partial' && (
+                <Badge className="bg-amber-500 text-white">{t('lessonPartial')}</Badge>
+              )}
               {state === 'todo' && (
-                <Badge className="bg-amber-500 text-white">{t('lessonTodo')}</Badge>
+                <Badge variant="outline" className="border-amber-400 text-amber-600">
+                  {t('lessonTodo')}
+                </Badge>
               )}
             </button>
           )
@@ -85,7 +85,7 @@ export function LessonGrid({ outline, entriesBySlot, lessonKeysWithEntries }: Pr
       </CourseCardGrid>
 
       {openLesson && (
-        <section className="space-y-4 rounded-lg border p-5">
+        <section className="space-y-4">
           <h3 className="text-base font-semibold">{openLesson.title}</h3>
           <LessonEntriesPanel
             courseCatalogId={outline.courseCatalogId}

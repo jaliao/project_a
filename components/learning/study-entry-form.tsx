@@ -3,6 +3,10 @@
  * StudyEntryForm - 分段查經筆記表單（新增／編輯共用）
  * 2026-08-28
  * components/learning/study-entry-form.tsx
+ *
+ * create 模式為常駐表單（該經文項目尚無筆記時直接顯示），只有「儲存」；
+ * 送出成功後靠頁面 revalidate 重繪為檢視卡，不需 onDone/onCancel。
+ * edit 模式由檢視卡切入，保留「儲存＋取消」並回呼收合。
  * ----------------------------------------------
  */
 
@@ -24,22 +28,19 @@ import { createStudyEntry, updateStudyEntry } from '@/app/actions/learning-study
 
 type FormValues = z.infer<typeof studyEntryContentSchema>
 
-type CommonProps = {
-  onDone: () => void
-  onCancel: () => void
-}
-
-type CreateProps = CommonProps & {
+type CreateProps = {
   mode: 'create'
   courseCatalogId: number
   lessonKey: string
   scriptureKey: string
 }
 
-type EditProps = CommonProps & {
+type EditProps = {
   mode: 'edit'
   entryId: number
   initial: FormValues
+  onDone: () => void
+  onCancel: () => void
 }
 
 export function StudyEntryForm(props: CreateProps | EditProps) {
@@ -72,7 +73,7 @@ export function StudyEntryForm(props: CreateProps | EditProps) {
 
       if (res.success) {
         toast.success(res.message ?? '')
-        props.onDone()
+        if (props.mode === 'edit') props.onDone()
       } else if (res.errors) {
         toast.error(t('genericError'))
       } else {
@@ -115,15 +116,17 @@ export function StudyEntryForm(props: CreateProps | EditProps) {
         <Button type="submit" size="sm" disabled={isPending}>
           {t('save')}
         </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={props.onCancel}
-          disabled={isPending}
-        >
-          {t('cancel')}
-        </Button>
+        {props.mode === 'edit' && (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={props.onCancel}
+            disabled={isPending}
+          >
+            {t('cancel')}
+          </Button>
+        )}
       </div>
     </form>
   )

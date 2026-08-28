@@ -16,11 +16,11 @@ import { getTranslations } from 'next-intl/server'
 import type { LearningStudyEntry } from '@prisma/client'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getCatalogOutline, getScripture } from '@/config/learning-outline'
+import { getCatalogOutline, getScripture, isLessonCompleted } from '@/config/learning-outline'
 import {
   getUnlockedLearningCatalogIds,
   getStudyEntriesForUser,
-  getLessonKeysWithEntries,
+  getFilledOutlineSlots,
   outlineSlotKey,
 } from '@/lib/data/learning-study'
 import { LessonGrid } from '@/components/learning/lesson-grid'
@@ -86,9 +86,9 @@ export default async function LearningCatalogPage({ params }: Props) {
   }
 
   // 已解鎖：查筆記並分流「大綱內」與「孤兒」
-  const [grouped, withEntries] = await Promise.all([
+  const [grouped, filledSlots] = await Promise.all([
     getStudyEntriesForUser(user.id, catalogId),
-    getLessonKeysWithEntries(user.id, catalogId),
+    getFilledOutlineSlots(user.id, catalogId),
   ])
 
   const entriesBySlot: Record<string, LearningStudyEntry[]> = {}
@@ -103,9 +103,7 @@ export default async function LearningCatalogPage({ params }: Props) {
   }
 
   const totalCount = outline.lessons.length
-  const doneCount = outline.lessons.filter(
-    (l) => l.scriptures.length === 0 || withEntries.has(l.key)
-  ).length
+  const doneCount = outline.lessons.filter((l) => isLessonCompleted(l, filledSlots)).length
 
   return (
     <div className="space-y-6">
@@ -121,7 +119,7 @@ export default async function LearningCatalogPage({ params }: Props) {
       <LessonGrid
         outline={outline}
         entriesBySlot={entriesBySlot}
-        lessonKeysWithEntries={[...withEntries]}
+        filledSlots={[...filledSlots]}
       />
 
       {orphanEntries.length > 0 && (
@@ -129,7 +127,9 @@ export default async function LearningCatalogPage({ params }: Props) {
           <h2 className="text-base font-medium">{t('orphanSectionTitle')}</h2>
           <p className="text-xs text-muted-foreground">{t('orphanSectionHint')}</p>
           {orphanEntries.map((entry) => (
-            <StudyEntryCard key={entry.id} entry={entry} />
+            <div key={entry.id} className="rounded-lg border bg-card p-4">
+              <StudyEntryCard entry={entry} />
+            </div>
           ))}
         </section>
       )}
