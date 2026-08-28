@@ -42,6 +42,7 @@ import { TestCourseSessionButton } from '@/components/course-session/test-course
 import { CourseSessionCard } from '@/components/course-session/course-session-card'
 import { CourseCardGrid } from '@/components/course-session/course-card-grid'
 import { CourseProgressCards } from '@/components/learning/course-progress-cards'
+import { getLearningProgressByCatalog } from '@/lib/data/learning-study'
 import { getMyEnrollments, getMyCourseSessions, getMyCompletionCertificates } from '@/lib/data/course-sessions'
 import { getActiveCourses, getAllCourses } from '@/lib/data/course-catalog'
 import { getMyInquiries } from '@/lib/data/support-inquiry'
@@ -107,6 +108,18 @@ export default async function UserProfilePage({ params }: Props) {
   const myRecentInquiries = isOwnPageEarly ? (await getMyInquiries(user.id)).slice(0, 2) : []
   // 課程目錄（基本資料區塊進度三卡固定顯示）
   const allCourses = await getAllCourses()
+  // 學習進度三卡：三態（未完成／進行中／已完成）＋作業完成度
+  const certByCatalogId = new Map(certificates.map((c) => [c.courseCatalogId, c]))
+  // 進行中 = 已解鎖（approved＋未取消＋已開課）但尚未結業
+  const inProgressCatalogIds = Array.from(
+    new Set(
+      enrollments
+        .filter((e) => e.status === 'approved' && e.startedAt != null)
+        .map((e) => e.courseCatalogId)
+    )
+  ).filter((cid) => !certByCatalogId.has(cid))
+  // 各「有大綱」目錄的分段查經作業完成度（口徑同「我的學習」；公開，本人他人皆算）
+  const progressByCatalog = await getLearningProgressByCatalog(user.id)
   // 可開設課程 id 集合：本人頁取自登入者身分；管理者代建立取自頁主（該老師）身分
   const teachableCatalogIds = isOwnPageEarly
     ? (session?.user?.roles ?? [])
@@ -200,7 +213,14 @@ export default async function UserProfilePage({ params }: Props) {
           {/* 學習進度三卡（公開；已結業顯示學業完成時間） */}
           <div className="pt-1">
             <span className="text-sm text-muted-foreground block mb-2">學習進度</span>
-            <CourseProgressCards allCourses={allCourses} certificates={certificates} />
+            <CourseProgressCards
+              allCourses={allCourses}
+              certificates={certificates}
+              inProgressCatalogIds={inProgressCatalogIds}
+              progressByCatalog={progressByCatalog}
+              spiritId={id}
+              isOwnPage={isOwnPage}
+            />
           </div>
         </div>
       </div>

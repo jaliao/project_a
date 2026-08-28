@@ -8,6 +8,7 @@
 
 import { prisma } from '@/lib/prisma'
 import type { LearningStudyEntry } from '@prisma/client'
+import { getCatalogOutline, getOutlineCatalogIds, isLessonCompleted } from '@/config/learning-outline'
 
 /**
  * 取得該使用者「已解鎖」的課程目錄 id。
@@ -72,4 +73,24 @@ export async function getFilledOutlineSlots(
     distinct: ['lessonKey', 'scriptureKey'],
   })
   return new Set(rows.map((r) => outlineSlotKey(r.lessonKey, r.scriptureKey)))
+}
+
+/**
+ * 各「有大綱」課程目錄的分段查經作業完成度（供個人首頁學習進度三卡）。
+ * done 口徑與「我的學習」書籍卡片頁／子頁頂部一致（isLessonCompleted：done 或 noScripture）。
+ */
+export async function getLearningProgressByCatalog(
+  userId: string
+): Promise<Record<number, { done: number; total: number }>> {
+  const result: Record<number, { done: number; total: number }> = {}
+  for (const catalogId of getOutlineCatalogIds()) {
+    const outline = getCatalogOutline(catalogId)
+    if (!outline) continue
+    const filledSlots = await getFilledOutlineSlots(userId, catalogId)
+    result[catalogId] = {
+      total: outline.lessons.length,
+      done: outline.lessons.filter((l) => isLessonCompleted(l, filledSlots)).length,
+    }
+  }
+  return result
 }
