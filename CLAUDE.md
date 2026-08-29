@@ -73,13 +73,17 @@ make db-backup     # Backup database
 make prisma-studio # Visual database browser
 ```
 
-### Production Deployment (VPS3)
+### Test/Staging Deployment (project-a-stg.blockcode.com.tw)
 ```bash
-# Deploy migrations to remote database via SSH tunnel
-make tunnel-vps3              # Open tunnel first (separate terminal)
-make prisma-vps3-status       # Check migration status
-make prisma-vps3-deploy       # Deploy migrations
-make prisma-vps3-seed         # Seed data (optional)
+# App：先 build/push 映像檔，再 SSH 部署（拉最新映像檔重啟）
+make push                     # Build + tag + push image to Docker Hub
+make tunnel-deploy-test       # SSH 到 stg 機執行 start.sh 拉 :latest 重啟
+
+# DB migrations（僅當本次有 schema 變更時）：
+make tunnel-test             # Open Postgres SSH tunnel first (separate terminal)
+make prisma-test-status       # Check migration status
+make prisma-test-deploy       # Deploy migrations
+make prisma-test-seed         # Seed data (optional)
 ```
 
 ## Architecture Overview
@@ -327,7 +331,7 @@ export type ProjectStatus = keyof typeof PROJECT_STATUSES
 Required in `.env` (see `.env.example`):
 ```bash
 DATABASE_URL_DEV      # Local PostgreSQL connection
-DATABASE_URL_VPS3     # Remote PostgreSQL via SSH tunnel
+DATABASE_URL_TEST     # Test/Staging (stg) PostgreSQL via SSH tunnel
 GOOGLE_CLIENT_ID      # Google OAuth credentials
 GOOGLE_CLIENT_SECRET
 NEXTAUTH_SECRET       # JWT signing secret
@@ -383,9 +387,10 @@ make schema-update    # Verify schema changes
 | `make schema-quick` | Quick update without migration |
 | `make clean` | Clean Docker containers and volumes |
 | `make db-shell` | PostgreSQL CLI |
-| `make prisma-vps3-deploy` | Deploy to remote VPS |
+| `make prisma-test-deploy` | Deploy migrations to Test/Staging (stg) DB |
+| `make tunnel-deploy-test` | Deploy app to Test/Staging (stg) via SSH |
 | `make prisma-dev-status` | 檢查 Dev Migration 狀態（建議先跑） |
-| `make prisma-dev-deploy` | 部署 migrations 到 VPS3（正式/遠端 DB 用） |
+| `make prisma-dev-deploy` | 部署 migrations 到本機 dev 容器 |
 | `make prisma-dev-seed` | Seed database (local dev) |
 | `make prisma-dev-studio` | Open Prisma Studio (local dev) |
 
