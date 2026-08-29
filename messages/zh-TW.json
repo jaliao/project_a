@@ -25,7 +25,7 @@
     "help": "聯絡管理者",
     "messages": "訊息",
     "menu": "選單",
-    "learning": "我的學習"
+    "learning": "分段式查經"
   },
   "auth": {
     "loginWithEmail": "以 Email 登入",
@@ -745,11 +745,11 @@
     "backToHome": "返回首頁"
   },
   "learning": {
-    "pageTitle": "我的學習",
-    "metaTitle": "我的學習 — 啟動事工",
+    "pageTitle": "分段式查經",
+    "metaTitle": "分段式查經 — 啟動事工",
     "backToProfile": "返回學員頁面",
     "intro": "針對已開始上課的課程，隨時記錄你的分段查經；可以多次撰寫，也可以不寫。學習筆記與特定開課不綁定。",
-    "lockedEmpty": "目前沒有可撰寫的課程。需先報名並由講師開始上課，才能使用「我的學習」。",
+    "lockedEmpty": "目前沒有可撰寫的課程。需先報名並由講師開始上課，才能使用「分段式查經」。",
     "lessonHeading": "課次",
     "noScripture": "本課次無分段查經。",
     "orphanSectionTitle": "其他（大綱已調整）",

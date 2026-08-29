@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
- * 我的學習 — 單一書籍（課程目錄）的課次卡片牆
- * 2026-08-28
+ * 分段式查經 — 單一書籍（課程目錄）的課次垂直可收合清單
+ * 2026-08-28 (Updated: 2026-08-29)
  * app/(user)/user/[spiritId]/learning/[catalogId]/page.tsx
  * [spiritId] 為 Spirit ID 小寫；[catalogId] 為 CourseCatalog.id
  * 僅本人可存取；catalogId 非法或無大綱 → 導回 /learning
@@ -23,11 +23,11 @@ import {
   getFilledOutlineSlots,
   outlineSlotKey,
 } from '@/lib/data/learning-study'
-import { LessonGrid } from '@/components/learning/lesson-grid'
+import { LessonAccordion } from '@/components/learning/lesson-accordion'
 import { StudyEntryCard } from '@/components/learning/study-entry-card'
 
 export const metadata: Metadata = {
-  title: '我的學習 — 啟動事工',
+  title: '分段式查經 — 啟動事工',
 }
 
 type Props = {
@@ -76,7 +76,7 @@ export default async function LearningCatalogPage({ params }: Props) {
     return (
       <div className="space-y-6">
         {backLink}
-        <h1 className="text-2xl font-semibold">{catalog.label}</h1>
+        <h1 className="text-2xl font-semibold">{t('pageTitle')} {catalog.label}</h1>
         <div className="flex items-center gap-2 rounded-lg border p-8 text-sm text-muted-foreground">
           <IconLock className="h-4 w-4 shrink-0" />
           {t('catalogLocked')}
@@ -110,13 +110,13 @@ export default async function LearningCatalogPage({ params }: Props) {
       {backLink}
 
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold">{catalog.label}</h1>
+        <h1 className="text-2xl font-semibold">{t('pageTitle')} {catalog.label}</h1>
         <p className="text-sm text-muted-foreground">
           {t('progressCount', { done: doneCount, total: totalCount })}
         </p>
       </div>
 
-      <LessonGrid
+      <LessonAccordion
         outline={outline}
         entriesBySlot={entriesBySlot}
         filledSlots={[...filledSlots]}

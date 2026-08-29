@@ -25,7 +25,7 @@
     "help": "Contact Admin",
     "messages": "Messages",
     "menu": "Menu",
-    "learning": "My Learning"
+    "learning": "Sectional Bible Study"
   },
   "auth": {
     "loginWithEmail": "Log in with Email",
@@ -745,11 +745,11 @@
     "backToHome": "Back to home"
   },
   "learning": {
-    "pageTitle": "My Learning",
-    "metaTitle": "My Learning — Activate Ministry",
+    "pageTitle": "Sectional Bible Study",
+    "metaTitle": "Sectional Bible Study — Activate Ministry",
     "backToProfile": "Back to member page",
     "intro": "Record your segmented Bible study anytime for courses that have started; write as many entries as you like, or none. Notes are not tied to any specific class.",
-    "lockedEmpty": "No courses available to write in yet. You need to enrol and have an instructor start the class before you can use My Learning.",
+    "lockedEmpty": "No courses available to write in yet. You need to enrol and have an instructor start the class before you can use Sectional Bible Study.",
     "lessonHeading": "Lesson",
     "noScripture": "This lesson has no segmented Bible study.",
     "orphanSectionTitle": "Other (outline changed)",

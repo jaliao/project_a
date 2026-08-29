@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
- * 我的學習 — 書籍（課程目錄）選擇頁
- * 2026-08-28
+ * 分段式查經 — 書籍（課程目錄）選擇頁
+ * 2026-08-28 (Updated: 2026-08-29)
  * app/(user)/user/[spiritId]/learning/page.tsx
  * [spiritId] 為 Spirit ID 小寫（例：pa260001）
  * 僅本人可存取；他人存取 redirect 至本人 /learning
@@ -26,7 +26,7 @@ import {
 } from '@/components/learning/learning-catalog-grid'
 
 export const metadata: Metadata = {
-  title: '我的學習 — 啟動事工',
+  title: '分段式查經 — 啟動事工',
 }
 
 type Props = {

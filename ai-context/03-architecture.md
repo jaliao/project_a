@@ -49,7 +49,7 @@ app/
 components/
 ├── ui/              # shadcn/ui 基礎元件
 ├── layout/
-│   └── topbar.tsx   # 頂部工具列（sticky；左側 Logo 可點回首頁＋truncate；桌機平鋪按鈕群 hidden md:flex；手機 <md 收合為「選單」Sheet（side=right）＋未讀 Badge；回首頁→/user/{spiritId}；媒合布告欄→/match-board；我的學習→/user/{spiritId}/learning；後台管理→/admin（admin only）；個人資料→/user/{spiritId}/profile；通知 Drawer 共用）
+│   └── topbar.tsx   # 頂部工具列（sticky；左側 Logo 可點回首頁＋truncate；桌機平鋪按鈕群 hidden md:flex；手機 <md 收合為「選單」Sheet（side=right）＋未讀 Badge；回首頁→/user/{spiritId}；媒合布告欄→/match-board；分段式查經→/user/{spiritId}/learning；後台管理→/admin（admin only）；個人資料→/user/{spiritId}/profile；通知 Drawer 共用）
 ├── notification/
 │   └── notification-drawer.tsx  # 右側通知 Drawer（Sheet，lazy load，標記已讀；SheetHeader pr-10 避免與 X 重疊）
 ├── dashboard/

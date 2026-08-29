@@ -26,7 +26,7 @@
     "help": "联络管理者",
     "messages": "讯息",
     "menu": "选单",
-    "learning": "我的学习"
+    "learning": "分段式查经"
   },
   "auth": {
     "loginWithEmail": "以 Email 登入",
@@ -746,11 +746,11 @@
     "backToHome": "返回首页"
   },
   "learning": {
-    "pageTitle": "我的学习",
-    "metaTitle": "我的学习 — 启动事工",
+    "pageTitle": "分段式查经",
+    "metaTitle": "分段式查经 — 启动事工",
     "backToProfile": "返回学员页面",
     "intro": "针对已开始上课的课程，随时记录你的分段查经；可以多次撰写，也可以不写。学习笔记与特定开课不绑定。",
-    "lockedEmpty": "目前没有可撰写的课程。需先报名并由讲师开始上课，才能使用「我的学习」。",
+    "lockedEmpty": "目前没有可撰写的课程。需先报名并由讲师开始上课，才能使用「分段式查经」。",
     "lessonHeading": "课次",
     "noScripture": "本课次无分段查经。",
     "orphanSectionTitle": "其他（大纲已调整）",

@@ -127,7 +127,7 @@ export function Topbar({ unreadCount = 0, unreadMessageCount = 0, roles, spiritI
           <IconClipboardList className="h-5 w-5" />
         </Button>
 
-        {/* 我的學習（所有登入會員；分段查經筆記入口） */}
+        {/* 分段式查經（所有登入會員；書籍子頁課次清單入口） */}
         <Button
           variant="ghost"
           size="icon"
