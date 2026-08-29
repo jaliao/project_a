@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 學員專屬頁面
- * 2026-03-24 (Updated: 2026-07-03)
+ * 2026-03-24 (Updated: 2026-08-29)
  * app/(user)/user/[spiritId]/page.tsx
  * [spiritId] 為 Spirit ID 小寫（例：pa260001）
  * ----------------------------------------------
@@ -18,7 +18,6 @@ import {
   IconShieldCheck,
   IconMessageCircle,
   IconChevronRight,
-  IconNotebook,
 } from '@tabler/icons-react'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
@@ -156,7 +155,7 @@ export default async function UserProfilePage({ params }: Props) {
   const showProfileBanner = process.env.REQUIRE_PROFILE_COMPLETION === 'false'
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* PWA 安裝提醒（僅本人可見，非 standalone 啟動時顯示） */}
       {isOwnPage && <InstallBanner />}
 
@@ -173,7 +172,7 @@ export default async function UserProfilePage({ params }: Props) {
       <h1 className="text-2xl font-semibold">首頁</h1>
 
       {/* 基本資料單元 */}
-      <div className="rounded-lg border p-5 space-y-4">
+      <section className="space-y-4">
         <div className="flex items-center gap-2">
           <IconUser className="h-5 w-5 text-primary" />
           <h2 className="text-base font-semibold">基本資料</h2>
@@ -223,10 +222,10 @@ export default async function UserProfilePage({ params }: Props) {
             />
           </div>
         </div>
-      </div>
+      </section>
 
       {/* 課程列表 */}
-      <div className="rounded-lg border p-5 space-y-4">
+      <section className="space-y-4 border-t pt-8">
         <div className="flex items-center gap-2">
           <IconBook className="h-5 w-5 text-primary" />
           <h2 className="text-base font-semibold">課程</h2>
@@ -256,40 +255,11 @@ export default async function UserProfilePage({ params }: Props) {
             ))}
           </CourseCardGrid>
         )}
-      </div>
-
-      {/* 我的學習（僅本人可見）：分段查經筆記入口 */}
-      {isOwnPage && (
-        <div className="rounded-lg border p-5">
-          <Link
-            href={`/user/${id}/learning`}
-            className="flex items-center gap-2 w-fit hover:opacity-70 transition-opacity"
-          >
-            <IconNotebook className="h-5 w-5 text-primary" />
-            <h2 className="text-base font-semibold">我的學習</h2>
-            <IconChevronRight className="h-4 w-4 text-muted-foreground" />
-          </Link>
-        </div>
-      )}
-
-      {/* 聯繫管理者（本人可見）：最近提問卡片 + 填寫新提問 */}
-      {isOwnPageEarly && (
-        <div className="rounded-lg border p-5 space-y-4">
-          <Link
-            href={`/user/${id}/inquiries`}
-            className="flex items-center gap-2 w-fit hover:opacity-70 transition-opacity"
-          >
-            <IconMessageCircle className="h-5 w-5 text-primary" />
-            <h2 className="text-base font-semibold">聯繫管理者</h2>
-            <IconChevronRight className="h-4 w-4 text-muted-foreground" />
-          </Link>
-          <ContactAdminCards inquiries={myRecentInquiries} />
-        </div>
-      )}
+      </section>
 
       {/* 授課單元（本人且具備講師身分；或管理者於講師頁代該老師建立） */}
       {((isOwnPage && canTeach) || showTeacherSectionForAdmin) && (
-        <div className="rounded-lg border p-5 space-y-4">
+        <section className="space-y-4 border-t pt-8">
           <div className="flex items-center gap-2">
             <IconChalkboard className="h-5 w-5 text-primary" />
             <h2 className="text-base font-semibold">
@@ -351,12 +321,12 @@ export default async function UserProfilePage({ params }: Props) {
             {/* 測試環境專用：一鍵建立測試授課（僅本人頁） */}
             {isOwnPage && process.env.NODE_ENV === 'development' && <TestCourseSessionButton />}
           </div>
-        </div>
+        </section>
       )}
 
       {/* 管理者單元（本人且為 admin/superadmin 才顯示） */}
       {isOwnPage && isAdmin && (
-        <div className="rounded-lg border p-5 space-y-4">
+        <section className="space-y-4 border-t pt-8">
           <div className="flex items-center gap-2">
             <IconShieldCheck className="h-5 w-5 text-primary" />
             <h2 className="text-base font-semibold">管理者</h2>
@@ -369,7 +339,22 @@ export default async function UserProfilePage({ params }: Props) {
               管理後台
             </Link>
           </div>
-        </div>
+        </section>
+      )}
+
+      {/* 聯繫管理者（本人可見）：最近提問卡片 + 填寫新提問（首頁最下方） */}
+      {isOwnPageEarly && (
+        <section className="space-y-4 border-t pt-8">
+          <Link
+            href={`/user/${id}/inquiries`}
+            className="flex items-center gap-2 w-fit hover:opacity-70 transition-opacity"
+          >
+            <IconMessageCircle className="h-5 w-5 text-primary" />
+            <h2 className="text-base font-semibold">聯繫管理者</h2>
+            <IconChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
+          <ContactAdminCards inquiries={myRecentInquiries} />
+        </section>
       )}
     </div>
   )

@@ -24,7 +24,9 @@
     "matchBoard": "媒合布告栏",
     "admin": "后台管理",
     "help": "联络管理者",
-    "messages": "讯息"
+    "messages": "讯息",
+    "menu": "选单",
+    "learning": "我的学习"
   },
   "auth": {
     "loginWithEmail": "以 Email 登入",

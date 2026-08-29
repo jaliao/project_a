@@ -23,7 +23,9 @@
     "matchBoard": "媒合布告欄",
     "admin": "後台管理",
     "help": "聯絡管理者",
-    "messages": "訊息"
+    "messages": "訊息",
+    "menu": "選單",
+    "learning": "我的學習"
   },
   "auth": {
     "loginWithEmail": "以 Email 登入",

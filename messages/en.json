@@ -23,7 +23,9 @@
     "matchBoard": "Match board",
     "admin": "Admin",
     "help": "Contact Admin",
-    "messages": "Messages"
+    "messages": "Messages",
+    "menu": "Menu",
+    "learning": "My Learning"
   },
   "auth": {
     "loginWithEmail": "Log in with Email",

@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * (user) Layout - 已登入使用者共用佈局
- * 2026-03-23 (Updated: 2026-04-07)
+ * 2026-03-23 (Updated: 2026-08-29)
  * app/(user)/layout.tsx
  * ----------------------------------------------
  */
@@ -32,7 +32,7 @@ export default async function UserLayout({
     if (isGuestRoute(pathname)) {
       return (
         <div className="min-h-screen flex flex-col">
-          <main className="flex-1 p-6">{children}</main>
+          <main className="flex-1 px-4 py-6 sm:p-6">{children}</main>
         </div>
       )
     }
@@ -70,7 +70,7 @@ export default async function UserLayout({
         spiritId={session?.user?.spiritId ?? undefined}
         avatarUrl={session?.user?.avatarUrl}
       />
-      <main className="flex-1 p-6">
+      <main className="flex-1 px-4 py-6 sm:p-6">
         {children}
       </main>
       <Footer />
