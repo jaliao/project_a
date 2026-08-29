@@ -2,15 +2,19 @@
 
 ## Purpose
 TBD - normalized for archive compatibility. Update Purpose for topbar.
-
 ## Requirements
-
 ### Requirement: Topbar 共用元件
 `(user)` layout SHALL 在所有已登入頁面頂部渲染 Topbar 元件，包含：系統標題、右側操作按鈕群組。
+
+Topbar 的 `<header>` 橫條（背景、底線、`sticky` 定位）SHALL 延伸整個視窗寬度；其**內容列**（品牌／Logo 與右側操作項目）SHALL 對齊 app 殼的最大寬度容器（1280px、水平置中，見 `app-shell`），使 Logo 靠內容框左緣、操作按鈕靠內容框右緣，與 `<main>` 內容左右對齊。內容列的水平內距 SHALL 與 `<main>` 的 gutter 一致（手機約 16px、`sm` 以上約 24px）。
 
 #### Scenario: 已登入頁面顯示 Topbar
 - **WHEN** 已登入使用者存取任何 `(user)` 路由下的頁面
 - **THEN** 頁面頂部顯示 Topbar
+
+#### Scenario: 寬螢幕 Topbar 內容對齊內容框
+- **WHEN** 已登入使用者在寬度大於 1280px 的視窗檢視 Topbar
+- **THEN** `<header>` 的背景與底線仍滿版，但 Logo 與操作按鈕對齊 1280px 置中容器的左右緣（與主內容區對齊）
 
 ### Requirement: 新增課程按鈕
 Topbar SHALL 包含「新增課程」按鈕（圖示 + 文字），點擊後開啟課程訂購 Dialog。
@@ -123,3 +127,25 @@ Logo 圖示標記 SHALL 使用與登入頁一致的視覺（隨主題色的 inli
 
 - **WHEN** 使用者點擊 Topbar 左側的 Logo / 系統名稱
 - **THEN** 系統導向使用者首頁（`/user/{spiritId}` 或 `/`）
+
+### Requirement: Topbar 我的學習入口
+
+Topbar 的操作項目集合 SHALL 包含「分段式查經」（原顯示文字「我的學習」），桌機（水平圖示按鈕列）與手機（收合選單）皆呈現，位置一致（於「媒合布告欄」之後）。點擊「分段式查經」SHALL 導向當前登入使用者的 `/user/{spiritId}/learning`。
+
+此項目 SHALL 對所有已登入使用者顯示（與「個人資料」「聯絡管理者」相同，不需特定身分），其文字 SHALL 以 i18n key（`nav.learning`）取用，SHALL NOT 於元件寫死中文。手機選單中該項目 SHALL 同時呈現圖示與文字標籤，整列可點擊；點擊後 SHALL 於導頁後關閉選單面板。
+
+#### Scenario: 桌機顯示分段式查經按鈕
+
+- **WHEN** 已登入使用者在視窗寬度大於或等於 768px 檢視 Topbar
+- **THEN** 水平按鈕列於「媒合布告欄」之後顯示「分段式查經」圖示按鈕，點擊導向 `/user/{spiritId}/learning`
+
+#### Scenario: 手機選單包含分段式查經項目
+
+- **WHEN** 已登入使用者在手機寬度開啟 Topbar「選單」
+- **THEN** 選單清單於「媒合布告欄」之後含「分段式查經」項目（圖示＋文字），點擊導向 `/user/{spiritId}/learning` 並關閉選單面板
+
+#### Scenario: 所有登入者皆可見
+
+- **WHEN** 任一已登入使用者（不論身分）檢視 Topbar
+- **THEN** 「分段式查經」入口存在（桌機按鈕列與手機選單）
+
