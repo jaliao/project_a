@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * (admin) Layout - 後台群組共用佈局與守衛
- * 2026-06-29
+ * 2026-06-29 (Updated: 2026-08-29)
  * app/(admin)/layout.tsx
  *
  * 統一後台守衛：登入 → 暫停 → 臨時密碼 → profile 完整度 → admin 身分。
@@ -18,6 +18,7 @@ import { Topbar } from '@/components/layout/topbar'
 import { Footer } from '@/components/layout/footer'
 import { getUnreadNotificationCount } from '@/lib/data/notification'
 import { getUnreadConversationCount } from '@/lib/data/conversation'
+import { cn, APP_MAX_WIDTH } from '@/lib/utils'
 
 export default async function AdminLayout({
   children,
@@ -63,7 +64,7 @@ export default async function AdminLayout({
         spiritId={session?.user?.spiritId ?? undefined}
         avatarUrl={session?.user?.avatarUrl}
       />
-      <main className="flex-1 p-6">
+      <main className={cn('flex-1', APP_MAX_WIDTH, 'px-4 py-6 sm:p-6')}>
         {children}
       </main>
       <Footer />

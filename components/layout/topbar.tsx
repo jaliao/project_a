@@ -16,6 +16,7 @@ import { useTranslations } from 'next-intl'
 import { NotificationDrawer } from '@/components/notification/notification-drawer'
 import { canAccessAdmin } from '@/lib/auth-roles'
 import { UserAvatar } from '@/components/shared/user-avatar'
+import { cn, APP_MAX_WIDTH } from '@/lib/utils'
 import {
   Sheet,
   SheetContent,
@@ -81,7 +82,9 @@ export function Topbar({ unreadCount = 0, unreadMessageCount = 0, roles, spiritI
   ]
 
   return (
-    <header className="sticky top-0 z-50 bg-background flex h-16 items-center border-b px-4 gap-4">
+    <header className="sticky top-0 z-50 border-b bg-background">
+      {/* 內容列對齊 app 殼 1280px 置中容器；橫條背景與底線維持滿版 */}
+      <div className={cn(APP_MAX_WIDTH, 'flex h-16 items-center gap-4 px-4 sm:px-6')}>
       {/* 品牌 / Logo（可點回首頁；窄螢幕以 truncate 收斂，不擠壓右側） */}
       <button
         type="button"
@@ -250,6 +253,7 @@ export function Topbar({ unreadCount = 0, unreadMessageCount = 0, roles, spiritI
         onOpenChange={setIsNotifOpen}
         initialUnreadCount={unreadCount}
       />
+      </div>
     </header>
   )
 }

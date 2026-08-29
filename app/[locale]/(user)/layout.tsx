@@ -15,6 +15,7 @@ import { Footer } from '@/components/layout/footer'
 import { getUnreadNotificationCount } from '@/lib/data/notification'
 import { isGuestRoute } from '@/lib/auth/route-access'
 import { getUnreadConversationCount } from '@/lib/data/conversation'
+import { cn, APP_MAX_WIDTH } from '@/lib/utils'
 
 export default async function UserLayout({
   children,
@@ -70,7 +71,7 @@ export default async function UserLayout({
         spiritId={session?.user?.spiritId ?? undefined}
         avatarUrl={session?.user?.avatarUrl}
       />
-      <main className="flex-1 px-4 py-6 sm:p-6">
+      <main className={cn('flex-1', APP_MAX_WIDTH, 'px-4 py-6 sm:p-6')}>
         {children}
       </main>
       <Footer />

@@ -17,7 +17,7 @@ app/
 │   ├── onboarding/      # 首次登入 Wizard（三步驟；頁面自行 auth 守衛）
 │   └── change-password/ # 已登入用戶主動變更密碼（頁面自行 auth 守衛）
 ├── (user)/          # 需登入群組
-│   ├── layout.tsx   # 登入 + 暫停 + 臨時密碼 + profile completion 守衛 + Topbar
+│   ├── layout.tsx   # 登入 + 暫停 + 臨時密碼 + profile completion 守衛 + Topbar；<main> 套 APP_MAX_WIDTH（max-w-[1280px] mx-auto 置中，>1280px 兩側留白）＋ px-4 py-6 sm:p-6
 │   ├── dashboard/       # redirect → /user/{id}（舊書籤相容）
 │   ├── user/[id]/       # 學員專屬頁面：基本資料 + 本人功能單元
 │   ├── user/[id]/courses/ # 我的開課列表（本人專屬，Spirit ID 小寫路由）
@@ -27,7 +27,7 @@ app/
 │   ├── profile/         # 舊路由相容：server redirect → /user/{spiritId}/profile
 │   └── user/[spiritId]/profile/  # 個人資料維護（新路由，含 profile-form.tsx）
 ├── (admin)/         # 需 admin 身分群組（URL 仍為 /admin/*）
-│   ├── layout.tsx   # (user) 守衛 + canAccessAdmin；後台各頁不再自行守衛
+│   ├── layout.tsx   # (user) 守衛 + canAccessAdmin；後台各頁不再自行守衛；<main> 同 (user) 套 APP_MAX_WIDTH ＋ px-4 py-6 sm:p-6
 │   └── admin/           # 管理後台：功能網格（儀錶板/課程/授課/教材/會員/教會/系統設定）
 │       ├── dashboard/       # 後台儀錶板（統計卡片 7 個）
 │       ├── course-sessions/ # 開課管理（全站；搜尋 + 篩選；純卡片列表——學員增刪/狀態/LOG 皆於前台課程頁操作）
@@ -49,7 +49,7 @@ app/
 components/
 ├── ui/              # shadcn/ui 基礎元件
 ├── layout/
-│   └── topbar.tsx   # 頂部工具列（sticky；左側 Logo 可點回首頁＋truncate；桌機平鋪按鈕群 hidden md:flex；手機 <md 收合為「選單」Sheet（side=right）＋未讀 Badge；回首頁→/user/{spiritId}；媒合布告欄→/match-board；分段式查經→/user/{spiritId}/learning；後台管理→/admin（admin only）；個人資料→/user/{spiritId}/profile；通知 Drawer 共用）
+│   └── topbar.tsx   # 頂部工具列（sticky；<header> 橫條/底線滿版、內容列套 APP_MAX_WIDTH 對齊主內容；左側 Logo 可點回首頁＋truncate；桌機平鋪按鈕群 hidden md:flex；手機 <md 收合為「選單」Sheet（side=right）＋未讀 Badge；回首頁→/user/{spiritId}；媒合布告欄→/match-board；分段式查經→/user/{spiritId}/learning；後台管理→/admin（admin only）；個人資料→/user/{spiritId}/profile；通知 Drawer 共用）
 ├── notification/
 │   └── notification-drawer.tsx  # 右側通知 Drawer（Sheet，lazy load，標記已讀；SheetHeader pr-10 避免與 X 重疊）
 ├── dashboard/
