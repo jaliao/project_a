@@ -23,6 +23,7 @@ app/
 │   ├── user/[id]/courses/ # 我的開課列表（本人專屬，Spirit ID 小寫路由）
 │   ├── notifications/   # 通知歷史頁面（分頁，每頁 20 則）
 │   ├── messages/       # 社群頁（原「訊息」；?tab=friends|messages、?with= 深連結；「好友」卡片格狀（手機1/桌機2–3欄：顯示名稱（性別）／單位／身分別〔roles 逐一 Badge，比照後台會員管理〕＋「傳訊息」「刪除」按鈕）＋「訊息」對話；加好友 Drawer＝行動條碼/掃碼/輸入啟動編號）
+│   │                   #   對話成員／邀請加入：標題列右側「成員」按鈕開 ConversationMembersDialog（桌機/手機一致，標題區不再行內顯示成員 chips/邀請框）；加入＝「從好友加入」名字即時過濾／「輸入啟動編號」兩鈕切換，皆走既有 inviteToConversation
 │   │                   #   訊息頁籤行動版面：面板 h-[calc(100dvh-13rem)]（sm: 回 100vh-16rem）＋ min-h-0 鏈，對話串 conversation-thread 用 message-scroller（自動捲底）、輸入框不被 Footer 遮蔽；手機無巢狀外框（面板/對話資訊框/scroller 皆 sm:border）、返回鍵在對話標題列右上角
 │   ├── course/[id]/     # 課程詳情頁（訪客可達，由 GUEST_PAGES 放行；管理者/該課講師可於「已核准學員」區塊增刪學員、操作重新招募/結業/取消作業、檢視課程操作 LOG）
 │   ├── course/[id]/graduate/  # 課程結業表單頁（填寫→預覽→送出）

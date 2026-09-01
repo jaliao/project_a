@@ -671,7 +671,15 @@
     "send": "Send",
     "sending": "Sending…",
     "sendSuccess": "Message sent",
-    "sendFail": "Failed to send, please try again later"
+    "sendFail": "Failed to send, please try again later",
+    "membersTitle": "Conversation members",
+    "membersHint": "View members or add new ones",
+    "addMember": "Add member",
+    "addByFriend": "From friends",
+    "addBySpiritId": "By Spirit ID",
+    "friendSearchPlaceholder": "Search friends by name",
+    "noFriendMatch": "No matching friend",
+    "noFriendsToAdd": "No friends available to add"
   },
   "community": {
     "title": "Community",

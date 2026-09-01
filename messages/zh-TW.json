@@ -671,7 +671,15 @@
     "send": "送出",
     "sending": "送出中…",
     "sendSuccess": "訊息已送出",
-    "sendFail": "送出失敗，請稍後再試"
+    "sendFail": "送出失敗，請稍後再試",
+    "membersTitle": "對話成員",
+    "membersHint": "查看對話成員，或加入新成員",
+    "addMember": "加入成員",
+    "addByFriend": "從好友加入",
+    "addBySpiritId": "輸入啟動編號",
+    "friendSearchPlaceholder": "搜尋好友名稱",
+    "noFriendMatch": "沒有符合的好友",
+    "noFriendsToAdd": "沒有可加入的好友"
   },
   "community": {
     "title": "社群",

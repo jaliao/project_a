@@ -672,7 +672,15 @@
     "send": "送出",
     "sending": "送出中…",
     "sendSuccess": "讯息已送出",
-    "sendFail": "送出失败，请稍后再试"
+    "sendFail": "送出失败，请稍后再试",
+    "membersTitle": "对话成员",
+    "membersHint": "查看对话成员，或加入新成员",
+    "addMember": "加入成员",
+    "addByFriend": "从好友加入",
+    "addBySpiritId": "输入启动编号",
+    "friendSearchPlaceholder": "搜寻好友名称",
+    "noFriendMatch": "没有符合的好友",
+    "noFriendsToAdd": "没有可加入的好友"
   },
   "community": {
     "title": "社群",

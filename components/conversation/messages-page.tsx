@@ -7,6 +7,9 @@
  * 2026-09-01（cr-spec-260901-004）：訊息頁籤行動裝置版面優化——面板改 100dvh
  * 彈性高（min-h-0 鏈，輸入框不被 Footer 遮蔽）、手機移除巢狀外框、
  * 返回頻道列表鍵移入對話標題列右上角（移除獨立返回列）。
+ * 2026-09-01（cr-spec-260901-006）：成員清單與邀請加入改由標題列「成員」按鈕
+ * 開啟的 ConversationMembersDialog（桌機/手機一致）；標題區不再行內顯示
+ * 成員 chips 與邀請輸入框。
  *
  * 取代原本的 MessageDrawerProvider + MessageDrawer（cr-spec-260814-001）：
  * 狀態邏輯與 UI 合併為單一頁面內容元件，不再包 Drawer wrapper，
@@ -29,6 +32,7 @@ import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { UserAvatar } from '@/components/shared/user-avatar'
 import { ConversationThread } from './conversation-thread'
+import { ConversationMembersDialog } from './conversation-members-dialog'
 import { AddFriendDrawer } from '@/components/community/add-friend-drawer'
 import { FriendsList } from '@/components/community/friends-list'
 import {
@@ -38,7 +42,6 @@ import {
   fetchPreviewNewConversation,
   sendConversationMessage,
   startConversation,
-  inviteToConversation,
   updateConversationTitle,
   togglePinConversation,
 } from '@/app/actions/conversation'
@@ -93,8 +96,7 @@ export function MessagesPage({
   const [mobileShowThread, setMobileShowThread] = useState(false)
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
-  const [inviteInput, setInviteInput] = useState('')
-  const [inviteLoading, setInviteLoading] = useState(false)
+  const [membersOpen, setMembersOpen] = useState(false)
   // 選擇模式：透過 ?with= 指定對象時，若已有既有對話，先顯示候選清單讓使用者挑選既有對話或開新對話
   const [pickingTargetUserId, setPickingTargetUserId] = useState<string | null>(null)
   const [pickingCandidates, setPickingCandidates] = useState<ConversationSummary[]>([])
@@ -197,20 +199,11 @@ export function MessagesPage({
     setEditingTitle(false)
   }
 
-  async function handleInviteSubmit() {
-    if (!inviteInput.trim() || !selected?.id) return
-    setInviteLoading(true)
-    const result = await inviteToConversation(selected.id, inviteInput.trim())
-    setInviteLoading(false)
-    if (result.success) {
-      toast.success(t('inviteSuccess'))
-      setInviteInput('')
-      setSelected(await fetchConversationMessages(selected.id))
-      refreshConversations()
-    } else {
-      toast.error(result.message ?? t('inviteFail'))
-    }
-  }
+  const handleMembersInvited = useCallback(async () => {
+    if (!selected?.id) return
+    setSelected(await fetchConversationMessages(selected.id))
+    refreshConversations()
+  }, [selected?.id, refreshConversations])
 
   async function handleTogglePin() {
     if (!selected?.id) return
@@ -380,6 +373,18 @@ export function MessagesPage({
                           )}
                         </Button>
                       )}
+                      {selected.id && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="size-8"
+                          aria-label={t('membersTitle')}
+                          title={t('membersTitle')}
+                          onClick={() => setMembersOpen(true)}
+                        >
+                          <IconUsers className="h-4 w-4" />
+                        </Button>
+                      )}
                     </>
                   )}
                   {/* 手機：返回頻道列表（與標題同一列、置右上角） */}
@@ -394,37 +399,16 @@ export function MessagesPage({
                     <IconArrowLeft className="h-4 w-4" />
                   </Button>
                 </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  {selected.participants.map((p) => (
-                    <div key={p.userId} className="flex items-center gap-1.5 rounded-full bg-muted px-2 py-1">
-                      <UserAvatar avatarUrl={p.avatarUrl} displayName={p.name} size="sm" />
-                      <span className="text-xs">{p.name}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {selected.id && (
-                  <div className="flex gap-2">
-                    <Input
-                      value={inviteInput}
-                      onChange={(e) => setInviteInput(e.target.value)}
-                      placeholder={t('invitePlaceholder')}
-                      className="h-8 flex-1"
-                      disabled={inviteLoading}
-                    />
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      className="size-8 shrink-0"
-                      onClick={handleInviteSubmit}
-                      disabled={inviteLoading || !inviteInput.trim()}
-                    >
-                      <IconUserPlus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
               </div>
+
+              <ConversationMembersDialog
+                open={membersOpen}
+                onOpenChange={setMembersOpen}
+                conversationId={selected.id ?? undefined}
+                participants={selected.participants}
+                friends={friends}
+                onInvited={handleMembersInvited}
+              />
 
               <ConversationThread
                 key={selected.id ?? selected.participants[0]?.userId}
