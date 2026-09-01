@@ -704,7 +704,14 @@
     "cameraUnsupported": "此裝置無法掃碼，改用輸入啟動編號",
     "genderMale": "男",
     "genderFemale": "女",
-    "cardMessage": "傳訊息"
+    "cardMessage": "傳訊息",
+    "searchPlaceholder": "搜尋名稱或啟動編號",
+    "searchEmpty": "查無符合的好友",
+    "pin": "釘選",
+    "unpin": "取消釘選",
+    "pageIndicator": "第 {page} / {total} 頁",
+    "prevPage": "上一頁",
+    "nextPage": "下一頁"
   },
   "pwa": {
     "homeLink": "安裝到手機桌面",

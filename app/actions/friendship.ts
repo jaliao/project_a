@@ -78,6 +78,25 @@ export async function removeFriend(friendUserId: string): Promise<ActionResponse
   return { success: true }
 }
 
+// ── 切換好友釘選（個人化置頂；不通知對方、不影響對方清單與傳訊息）──
+export async function togglePinFriend(friendUserId: string): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  const row = await prisma.friendship.findUnique({
+    where: { ownerId_friendId: { ownerId: session.user.id, friendId: friendUserId } },
+    select: { pinnedAt: true },
+  })
+  if (!row) return { success: false, message: '找不到該好友' }
+
+  await prisma.friendship.update({
+    where: { ownerId_friendId: { ownerId: session.user.id, friendId: friendUserId } },
+    data: { pinnedAt: row.pinnedAt ? null : new Date() },
+  })
+  revalidatePath('/messages')
+  return { success: true }
+}
+
 // ── 重新取得自己的好友清單（給 client tab 加/移除後刷新用）──
 export async function fetchMyFriends(): Promise<FriendListItem[]> {
   const session = await auth()

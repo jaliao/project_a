@@ -704,7 +704,14 @@
     "cameraUnsupported": "Scanning unavailable — add by Spirit ID instead",
     "genderMale": "Male",
     "genderFemale": "Female",
-    "cardMessage": "Message"
+    "cardMessage": "Message",
+    "searchPlaceholder": "Search by name or ID",
+    "searchEmpty": "No matching friends",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "pageIndicator": "Page {page} / {total}",
+    "prevPage": "Previous",
+    "nextPage": "Next"
   },
   "pwa": {
     "homeLink": "Install to home screen",

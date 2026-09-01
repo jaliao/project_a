@@ -10,13 +10,14 @@
  * 2026-09-01（cr-spec-260901-006）：成員清單與邀請加入改由標題列「成員」按鈕
  * 開啟的 ConversationMembersDialog（桌機/手機一致）；標題區不再行內顯示
  * 成員 chips 與邀請輸入框。
+ * 2026-09-01（cr-spec-260901-007）：openWithUser 改為「與對象已有一筆以上
+ * 既有對話 → 直接開啟其中『最後訊息時間最新』的一筆」，移除既有對話選擇
+ * 畫面（picker）與「開新對話」入口；尚無對話仍直接進新對話畫面。
  *
  * 取代原本的 MessageDrawerProvider + MessageDrawer（cr-spec-260814-001）：
  * 狀態邏輯與 UI 合併為單一頁面內容元件，不再包 Drawer wrapper，
  * 讓訊息文字在桌面瀏覽器可正常選取複製。透過 initialWithUserId
- * （對應網址 ?with=）指定初次要對話的對象，行為比照原本的
- * openMessageDrawer(targetUserId)：已有對話則進入選擇畫面，
- * 否則直接進入新對話畫面。
+ * （對應網址 ?with=）指定初次要對話的對象。
  * ----------------------------------------------
  */
 
@@ -97,39 +98,25 @@ export function MessagesPage({
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
   const [membersOpen, setMembersOpen] = useState(false)
-  // 選擇模式：透過 ?with= 指定對象時，若已有既有對話，先顯示候選清單讓使用者挑選既有對話或開新對話
-  const [pickingTargetUserId, setPickingTargetUserId] = useState<string | null>(null)
-  const [pickingCandidates, setPickingCandidates] = useState<ConversationSummary[]>([])
 
   const selectedSummary = selected?.id ? conversations.find((c) => c.id === selected.id) : undefined
   const selectedIsPinned = selectedSummary?.isPinned ?? false
-  const isPicking = pickingTargetUserId !== null
 
   const refreshConversations = useCallback(async () => {
     const list = await fetchMyConversations()
     setConversations(list)
   }, [])
 
-  const clearPicking = useCallback(() => {
-    setPickingTargetUserId(null)
-    setPickingCandidates([])
+  const startNewWithTarget = useCallback(async (targetUserId: string) => {
+    setLoading(true)
+    const detail = await fetchPreviewNewConversation(targetUserId)
+    setSelected(detail)
+    setLoading(false)
+    setMobileShowThread(true)
   }, [])
-
-  const startNewWithTarget = useCallback(
-    async (targetUserId: string) => {
-      setLoading(true)
-      const detail = await fetchPreviewNewConversation(targetUserId)
-      setSelected(detail)
-      setLoading(false)
-      clearPicking()
-      setMobileShowThread(true)
-    },
-    [clearPicking]
-  )
 
   const selectConversation = useCallback(
     async (conversationId: number) => {
-      clearPicking()
       setLoading(true)
       const detail = await fetchConversationMessages(conversationId)
       setSelected(detail)
@@ -137,11 +124,12 @@ export function MessagesPage({
       setMobileShowThread(true)
       refreshConversations()
     },
-    [refreshConversations, clearPicking]
+    [refreshConversations]
   )
 
-  // 以某對象起對話：無既有對話 → 直接開新對話；有 → 顯示選擇畫面
-  // （供 ?with= 深連結與「好友」頁籤點列共用）
+  // 以某對象起對話：無既有對話 → 直接開新對話畫面；
+  // 有一筆以上 → 直接開啟「最後訊息時間最新」的一筆（不再顯示選擇畫面）。
+  // （供 ?with= 深連結與「好友」頁籤卡片「傳訊息」共用）
   const openWithUser = useCallback(
     async (targetUserId: string) => {
       setLoading(true)
@@ -149,13 +137,14 @@ export function MessagesPage({
       setLoading(false)
       if (candidates.length === 0) {
         startNewWithTarget(targetUserId)
-      } else {
-        setPickingTargetUserId(targetUserId)
-        setPickingCandidates(candidates)
-        setMobileShowThread(true)
+        return
       }
+      const latest = [...candidates].sort(
+        (a, b) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime()
+      )[0]
+      selectConversation(latest.id)
     },
-    [startNewWithTarget]
+    [startNewWithTarget, selectConversation]
   )
 
   const reloadFriends = useCallback(async () => {
@@ -233,14 +222,6 @@ export function MessagesPage({
     selectConversation(conversationId)
   }
 
-  function handlePickExisting(conversationId: number) {
-    selectConversation(conversationId)
-  }
-
-  function handlePickNew() {
-    if (pickingTargetUserId) startNewWithTarget(pickingTargetUserId)
-  }
-
   return (
     <div className="mx-auto max-w-5xl">
       <div className="mb-4 flex items-center justify-between">
@@ -269,7 +250,10 @@ export function MessagesPage({
         </TabsContent>
 
         <TabsContent value="messages">
-      <div className="flex h-[calc(100dvh-13rem)] min-h-[24rem] overflow-hidden sm:h-[calc(100vh-16rem)] sm:min-h-[28rem] sm:rounded-lg sm:border">
+      {/* 手機面板高度＝100dvh 扣掉實際外框（Topbar 4rem＋main py-6 3rem＋頁首 ~2.75rem
+          ＋TabsList ~3.25rem＋Footer ~3rem ≒ 16rem）；扣太少會讓外層 document 可捲，
+          送出訊息後畫面被帶離輸入框（cr-spec-260901-007 修正，原為 13rem）。 */}
+      <div className="flex h-[calc(100dvh-16rem)] min-h-[24rem] overflow-hidden sm:h-[calc(100vh-16rem)] sm:min-h-[28rem] sm:rounded-lg sm:border">
         {/* 左側：頻道列表 */}
         <div
           className={`w-full shrink-0 overflow-y-auto sm:block sm:w-80 sm:border-r ${mobileShowThread ? 'hidden' : 'block'}`}
@@ -304,41 +288,7 @@ export function MessagesPage({
 
         {/* 右側：選擇畫面 or 選中頻道內容 */}
         <div className={`flex w-full flex-1 min-w-0 min-h-0 flex-col p-4 sm:flex ${mobileShowThread ? 'flex' : 'hidden'}`}>
-          {isPicking ? (
-            <div className="space-y-3">
-              <div className="mb-1 flex items-center justify-between gap-2 sm:hidden">
-                <span className="text-sm text-muted-foreground">{t('pickerHint')}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-8 shrink-0"
-                  aria-label={tCommon('back')}
-                  title={tCommon('back')}
-                  onClick={() => setMobileShowThread(false)}
-                >
-                  <IconArrowLeft className="h-4 w-4" />
-                </Button>
-              </div>
-              <p className="hidden text-sm text-muted-foreground sm:block">{t('pickerHint')}</p>
-              {pickingCandidates.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => handlePickExisting(c.id)}
-                  className="flex w-full items-center gap-3 rounded-lg border p-3 text-left hover:bg-muted/60"
-                >
-                  <ChannelAvatar conversation={c} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{c.displayTitle}</p>
-                    <p className="truncate text-xs text-muted-foreground">{c.lastMessagePreview}</p>
-                  </div>
-                </button>
-              ))}
-              <Button variant="outline" className="w-full" onClick={handlePickNew}>
-                {t('startNewConversation')}
-              </Button>
-            </div>
-          ) : selected ? (
+          {selected ? (
             <div className="flex min-h-0 flex-1 flex-col gap-3">
               {/* 對話資訊子區塊 */}
               <div className="space-y-2 border-b pb-3 sm:rounded-lg sm:border sm:p-3">

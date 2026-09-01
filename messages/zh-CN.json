@@ -705,7 +705,14 @@
     "cameraUnsupported": "此装置无法扫码，改用输入启动编号",
     "genderMale": "男",
     "genderFemale": "女",
-    "cardMessage": "传讯息"
+    "cardMessage": "传讯息",
+    "searchPlaceholder": "搜寻名称或启动编号",
+    "searchEmpty": "查无符合的好友",
+    "pin": "钉选",
+    "unpin": "取消钉选",
+    "pageIndicator": "第 {page} / {total} 页",
+    "prevPage": "上一页",
+    "nextPage": "下一页"
   },
   "pwa": {
     "homeLink": "安装到手机桌面",

@@ -3,6 +3,9 @@
  * Data Layer - 社群好友（單向）
  * 2026-09-01
  * lib/data/friendship.ts
+ *
+ * cr-spec-260901-007：FriendListItem 加 pinnedAt / searchText；
+ * getMyFriends orderBy 改「釘選優先（pinnedAt desc, nulls last）→ 加入時間新到舊」。
  * ----------------------------------------------
  */
 
@@ -19,18 +22,22 @@ export type FriendListItem = {
   gender: Gender
   unitLabel: string | null
   roles: UserRole[]
+  pinnedAt: Date | null
   addedAt: Date
+  // 前台好友清單搜尋用：姓名相關欄位＋啟動編號組成的小寫字串（子字串比對）
+  searchText: string
 }
 
 // ==========================================
-// 取得目前使用者的好友清單（依加入時間新到舊）
+// 取得目前使用者的好友清單（釘選優先，其餘依加入時間新到舊）
 // ==========================================
 export async function getMyFriends(userId: string): Promise<FriendListItem[]> {
   const rows = await prisma.friendship.findMany({
     where: { ownerId: userId },
-    orderBy: { createdAt: 'desc' },
+    orderBy: [{ pinnedAt: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }],
     select: {
       createdAt: true,
+      pinnedAt: true,
       friend: {
         select: {
           id: true,
@@ -64,7 +71,12 @@ export async function getMyFriends(userId: string): Promise<FriendListItem[]> {
           ? (r.friend.churchOther ?? null)
           : null,
     roles: r.friend.roles,
+    pinnedAt: r.pinnedAt,
     addedAt: r.createdAt,
+    searchText: [r.friend.realName, r.friend.englishName, r.friend.nickname, r.friend.spiritId]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase(),
   }))
 }
 

@@ -22,9 +22,10 @@ app/
 │   ├── user/[id]/       # 學員專屬頁面：基本資料 + 本人功能單元
 │   ├── user/[id]/courses/ # 我的開課列表（本人專屬，Spirit ID 小寫路由）
 │   ├── notifications/   # 通知歷史頁面（分頁，每頁 20 則）
-│   ├── messages/       # 社群頁（原「訊息」；?tab=friends|messages、?with= 深連結；「好友」卡片格狀（手機1/桌機2–3欄：顯示名稱（性別）／單位／身分別〔roles 逐一 Badge，比照後台會員管理〕＋「傳訊息」「刪除」按鈕）＋「訊息」對話；加好友 Drawer＝行動條碼/掃碼/輸入啟動編號）
+│   ├── messages/       # 社群頁（原「訊息」；?tab=friends|messages、?with= 深連結；「好友」卡片格狀（手機1/桌機2–3欄：GenderIcon 性別圖示＋顯示名稱／單位／身分別〔roles 逐一 Badge，比照後台會員管理〕＋「釘選」「傳訊息」「刪除」按鈕）＋上方名稱/啟動編號搜尋（client 端 searchText 子字串）＋每頁 50 筆換頁＋「訊息」對話；加好友 Drawer＝行動條碼/掃碼/輸入啟動編號）
 │   │                   #   對話成員／邀請加入：標題列右側「成員」按鈕開 ConversationMembersDialog（桌機/手機一致，標題區不再行內顯示成員 chips/邀請框）；加入＝「從好友加入」名字即時過濾／「輸入啟動編號」兩鈕切換，皆走既有 inviteToConversation
-│   │                   #   訊息頁籤行動版面：面板 h-[calc(100dvh-13rem)]（sm: 回 100vh-16rem）＋ min-h-0 鏈，對話串 conversation-thread 用 message-scroller（自動捲底）、輸入框不被 Footer 遮蔽；手機無巢狀外框（面板/對話資訊框/scroller 皆 sm:border）、返回鍵在對話標題列右上角
+│   │                   #   「傳訊息」入口（好友卡片／學員專頁／後台會員詳情／?with=）：與對象已有對話 → 直接開 lastMessageAt 最新的一筆；無 → 新對話畫面（cr-spec-260901-007 移除既有對話選擇 picker 與「開新對話」入口）
+│   │                   #   訊息頁籤行動版面：面板 h-[calc(100dvh-16rem)]（cr-spec-260901-007 由 13rem 校正為實際外框高，避免外層 document 溢出可捲；sm: 100vh-16rem）＋ min-h-0 鏈，對話串 conversation-thread 用 message-scroller（自動捲底、僅捲自身 viewport）、輸入框不被 Footer 遮蔽；手機無巢狀外框（面板/對話資訊框/scroller 皆 sm:border）、返回鍵在對話標題列右上角
 │   ├── course/[id]/     # 課程詳情頁（訪客可達，由 GUEST_PAGES 放行；管理者/該課講師可於「已核准學員」區塊增刪學員、操作重新招募/結業/取消作業、檢視課程操作 LOG）
 │   ├── course/[id]/graduate/  # 課程結業表單頁（填寫→預覽→送出）
 │   ├── profile/         # 舊路由相容：server redirect → /user/{spiritId}/profile
@@ -128,7 +129,7 @@ lib/
 │   ├── admin-logs.ts        # 管理操作紀錄查詢（getAdminLogs：最新在前、每頁 30 筆、inviteId 過濾；只讀快照欄不 join；供課程頁 LOG 區塊）
 │   ├── course-message.ts    # 課程 FAQ 留言查詢（getCourseMessages(inviteId, viewer)：1 對 1 可見性—老師見全部、會員僅見自己的串；提問升序＋回覆內嵌）
 │   ├── conversation.ts      # 站內訊息查詢（getMyConversations, getUnreadConversationCount, getConversationMessages, findConversationsWithUser…）
-│   └── friendship.ts        # 社群好友查詢（getMyFriends(userId) 依 createdAt desc → FriendListItem{ userId, spiritId, displayName, avatarUrl, gender, unitLabel（church.name/churchOther/null）, roles, addedAt }、isFriend(ownerId, friendId)）；單向好友，見 friendship.prisma
+│   └── friendship.ts        # 社群好友查詢（getMyFriends(userId) 依 [pinnedAt desc nulls last, createdAt desc] → FriendListItem{ userId, spiritId, displayName, avatarUrl, gender, unitLabel（church.name/churchOther/null）, roles, pinnedAt, addedAt, searchText（realName/englishName/nickname/spiritId 小寫串接，搜尋用） }、isFriend(ownerId, friendId)）；釘選切換＝action togglePinFriend；單向好友，見 friendship.prisma
 ├── ecpay/
 │   └── logistics.ts         # ECPay 物流工具（calcLogisticsCheckMacValue，MD5，物流 CMV-MD5 規格）
 └── utils.ts         # cn() 等工具函數
@@ -144,7 +145,7 @@ prisma/
 │   ├── admin-setting.prisma  # AdminSetting（key/value store；hierarchy_depth 預設 3）
 │   ├── admin-log.prisma      # AdminActionLog（管理操作紀錄；optional FK SetNull＋文字快照欄）
 │   ├── conversation.prisma   # Conversation / ConversationParticipant / ConversationMessage（站內訊息，支援多人群組）
-│   ├── friendship.prisma     # Friendship（社群好友，單向：ownerId→friendId，@@unique([ownerId,friendId])，cascade）
+│   ├── friendship.prisma     # Friendship（社群好友，單向：ownerId→friendId，@@unique([ownerId,friendId])，cascade；pinnedAt DateTime? 個人化置頂 cr-spec-260901-007）
 │   └── church.prisma         # Church（id, name @unique, isActive, sortOrder）+ ChurchType enum（church|other|none）
 └── seed.ts
 
