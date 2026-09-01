@@ -22,7 +22,7 @@ app/
 │   ├── user/[id]/       # 學員專屬頁面：基本資料 + 本人功能單元
 │   ├── user/[id]/courses/ # 我的開課列表（本人專屬，Spirit ID 小寫路由）
 │   ├── notifications/   # 通知歷史頁面（分頁，每頁 20 則）
-│   ├── messages/       # 社群頁（原「訊息」；?tab=friends|messages、?with= 深連結；「好友」清單＋「訊息」對話；加好友 Drawer＝行動條碼/掃碼/輸入啟動編號）
+│   ├── messages/       # 社群頁（原「訊息」；?tab=friends|messages、?with= 深連結；「好友」卡片格狀（手機1/桌機2–3欄：顯示名稱（性別）／單位／身分別〔roles 逐一 Badge，比照後台會員管理〕＋「傳訊息」「刪除」按鈕）＋「訊息」對話；加好友 Drawer＝行動條碼/掃碼/輸入啟動編號）
 │   │                   #   訊息頁籤行動版面：面板 h-[calc(100dvh-13rem)]（sm: 回 100vh-16rem）＋ min-h-0 鏈，對話串 conversation-thread 用 message-scroller（自動捲底）、輸入框不被 Footer 遮蔽；手機無巢狀外框（面板/對話資訊框/scroller 皆 sm:border）、返回鍵在對話標題列右上角
 │   ├── course/[id]/     # 課程詳情頁（訪客可達，由 GUEST_PAGES 放行；管理者/該課講師可於「已核准學員」區塊增刪學員、操作重新招募/結業/取消作業、檢視課程操作 LOG）
 │   ├── course/[id]/graduate/  # 課程結業表單頁（填寫→預覽→送出）
@@ -127,7 +127,7 @@ lib/
 │   ├── admin-logs.ts        # 管理操作紀錄查詢（getAdminLogs：最新在前、每頁 30 筆、inviteId 過濾；只讀快照欄不 join；供課程頁 LOG 區塊）
 │   ├── course-message.ts    # 課程 FAQ 留言查詢（getCourseMessages(inviteId, viewer)：1 對 1 可見性—老師見全部、會員僅見自己的串；提問升序＋回覆內嵌）
 │   ├── conversation.ts      # 站內訊息查詢（getMyConversations, getUnreadConversationCount, getConversationMessages, findConversationsWithUser…）
-│   └── friendship.ts        # 社群好友查詢（getMyFriends(userId) 依 createdAt desc、isFriend(ownerId, friendId)）；單向好友，見 friendship.prisma
+│   └── friendship.ts        # 社群好友查詢（getMyFriends(userId) 依 createdAt desc → FriendListItem{ userId, spiritId, displayName, avatarUrl, gender, unitLabel（church.name/churchOther/null）, roles, addedAt }、isFriend(ownerId, friendId)）；單向好友，見 friendship.prisma
 ├── ecpay/
 │   └── logistics.ts         # ECPay 物流工具（calcLogisticsCheckMacValue，MD5，物流 CMV-MD5 規格）
 └── utils.ts         # cn() 等工具函數

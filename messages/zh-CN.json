@@ -694,7 +694,10 @@
     "removeFriend": "移除好友",
     "removeConfirm": "确定要从好友清单移除？",
     "cameraDenied": "没有相机权限，改用输入启动编号",
-    "cameraUnsupported": "此装置无法扫码，改用输入启动编号"
+    "cameraUnsupported": "此装置无法扫码，改用输入启动编号",
+    "genderMale": "男",
+    "genderFemale": "女",
+    "cardMessage": "传讯息"
   },
   "pwa": {
     "homeLink": "安装到手机桌面",

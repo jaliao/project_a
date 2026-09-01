@@ -6,6 +6,7 @@
  * ----------------------------------------------
  */
 
+import type { Gender, UserRole } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { resolveAvatarUrl } from '@/lib/utils/avatar'
@@ -15,6 +16,9 @@ export type FriendListItem = {
   spiritId: string | null
   displayName: string
   avatarUrl: string | null
+  gender: Gender
+  unitLabel: string | null
+  roles: UserRole[]
   addedAt: Date
 }
 
@@ -37,6 +41,11 @@ export async function getMyFriends(userId: string): Promise<FriendListItem[]> {
           englishName: true,
           nickname: true,
           displayNameMode: true,
+          gender: true,
+          roles: true,
+          churchType: true,
+          churchOther: true,
+          church: { select: { name: true } },
         },
       },
     },
@@ -47,6 +56,14 @@ export async function getMyFriends(userId: string): Promise<FriendListItem[]> {
     spiritId: r.friend.spiritId,
     displayName: getMemberDisplayName(r.friend),
     avatarUrl: resolveAvatarUrl(r.friend),
+    gender: r.friend.gender,
+    unitLabel:
+      r.friend.churchType === 'church'
+        ? (r.friend.church?.name ?? null)
+        : r.friend.churchType === 'other'
+          ? (r.friend.churchOther ?? null)
+          : null,
+    roles: r.friend.roles,
     addedAt: r.createdAt,
   }))
 }

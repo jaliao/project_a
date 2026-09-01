@@ -693,7 +693,10 @@
     "removeFriend": "Remove friend",
     "removeConfirm": "Remove this friend?",
     "cameraDenied": "Camera blocked — add by Spirit ID instead",
-    "cameraUnsupported": "Scanning unavailable — add by Spirit ID instead"
+    "cameraUnsupported": "Scanning unavailable — add by Spirit ID instead",
+    "genderMale": "Male",
+    "genderFemale": "Female",
+    "cardMessage": "Message"
   },
   "pwa": {
     "homeLink": "Install to home screen",

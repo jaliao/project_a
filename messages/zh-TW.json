@@ -693,7 +693,10 @@
     "removeFriend": "移除好友",
     "removeConfirm": "確定要從好友清單移除？",
     "cameraDenied": "沒有相機權限，改用輸入啟動編號",
-    "cameraUnsupported": "此裝置無法掃碼，改用輸入啟動編號"
+    "cameraUnsupported": "此裝置無法掃碼，改用輸入啟動編號",
+    "genderMale": "男",
+    "genderFemale": "女",
+    "cardMessage": "傳訊息"
   },
   "pwa": {
     "homeLink": "安裝到手機桌面",
