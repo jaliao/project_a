@@ -1,13 +1,15 @@
 /*
  * ----------------------------------------------
  * ConversationThread - 訊息對話串（共用元件）
- * 2026-08-03 (Updated: 2026-08-03)
+ * 2026-08-03 (Updated: 2026-09-01)
  * components/conversation/conversation-thread.tsx
  *
  * 不含固定文案字串，寄件者名稱／訊息內容皆由 props 傳入，
  * placeholder／送出按鈕文字由呼叫端決定語言；
  * 不假設固定 conversationId，由呼叫端（MessageDrawer）決定
- * onSend 要建立新對話還是在既有對話中回覆（cr-spec-260803-004）
+ * onSend 要建立新對話還是在既有對話中回覆（cr-spec-260803-004）。
+ * 2026-09-01（cr-spec-260901-004）：最外層改彈性高（flex-1 min-h-0），
+ * 高度由父容器決定；MessageScroller 外框改 sm: 斷點——手機不套外框。
  * ----------------------------------------------
  */
 
@@ -81,9 +83,9 @@ export function ConversationThread({
   }
 
   return (
-    <div className="flex h-[60vh] min-h-[24rem] flex-col gap-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       <MessageScrollerProvider>
-        <MessageScroller className="flex-1 rounded-lg border">
+        <MessageScroller className="flex-1 min-h-0 sm:rounded-lg sm:border">
           <MessageScrollerViewport className="p-4">
             <MessageScrollerContent>
               {messages.map((m) => {

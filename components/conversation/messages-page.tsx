@@ -4,6 +4,10 @@
  * 2026-08-14 (Updated: 2026-09-01)
  * components/conversation/messages-page.tsx
  *
+ * 2026-09-01（cr-spec-260901-004）：訊息頁籤行動裝置版面優化——面板改 100dvh
+ * 彈性高（min-h-0 鏈，輸入框不被 Footer 遮蔽）、手機移除巢狀外框、
+ * 返回頻道列表鍵移入對話標題列右上角（移除獨立返回列）。
+ *
  * 取代原本的 MessageDrawerProvider + MessageDrawer（cr-spec-260814-001）：
  * 狀態邏輯與 UI 合併為單一頁面內容元件，不再包 Drawer wrapper，
  * 讓訊息文字在桌面瀏覽器可正常選取複製。透過 initialWithUserId
@@ -75,6 +79,7 @@ export function MessagesPage({
 }: MessagesPageProps) {
   const t = useTranslations('conversation')
   const tCommunity = useTranslations('community')
+  const tCommon = useTranslations('common')
   const router = useRouter()
   const [conversations, setConversations] = useState(initialConversations)
   const [friends, setFriends] = useState(initialFriends)
@@ -271,10 +276,10 @@ export function MessagesPage({
         </TabsContent>
 
         <TabsContent value="messages">
-      <div className="flex h-[calc(100vh-16rem)] min-h-[28rem] overflow-hidden rounded-lg border">
+      <div className="flex h-[calc(100dvh-13rem)] min-h-[24rem] overflow-hidden sm:h-[calc(100vh-16rem)] sm:min-h-[28rem] sm:rounded-lg sm:border">
         {/* 左側：頻道列表 */}
         <div
-          className={`w-full shrink-0 overflow-y-auto border-r sm:block sm:w-80 ${mobileShowThread ? 'hidden' : 'block'}`}
+          className={`w-full shrink-0 overflow-y-auto sm:block sm:w-80 sm:border-r ${mobileShowThread ? 'hidden' : 'block'}`}
         >
           {conversations.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">{t('emptyState')}</p>
@@ -305,16 +310,23 @@ export function MessagesPage({
         </div>
 
         {/* 右側：選擇畫面 or 選中頻道內容 */}
-        <div className={`flex w-full flex-1 min-w-0 flex-col p-4 sm:flex ${mobileShowThread ? 'flex' : 'hidden'}`}>
-          <div className="mb-2 flex items-center gap-2 sm:hidden">
-            <Button variant="ghost" size="icon" onClick={() => setMobileShowThread(false)}>
-              <IconArrowLeft className="h-4 w-4" />
-            </Button>
-          </div>
-
+        <div className={`flex w-full flex-1 min-w-0 min-h-0 flex-col p-4 sm:flex ${mobileShowThread ? 'flex' : 'hidden'}`}>
           {isPicking ? (
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">{t('pickerHint')}</p>
+              <div className="mb-1 flex items-center justify-between gap-2 sm:hidden">
+                <span className="text-sm text-muted-foreground">{t('pickerHint')}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 shrink-0"
+                  aria-label={tCommon('back')}
+                  title={tCommon('back')}
+                  onClick={() => setMobileShowThread(false)}
+                >
+                  <IconArrowLeft className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="hidden text-sm text-muted-foreground sm:block">{t('pickerHint')}</p>
               {pickingCandidates.map((c) => (
                 <button
                   key={c.id}
@@ -336,7 +348,7 @@ export function MessagesPage({
           ) : selected ? (
             <div className="flex min-h-0 flex-1 flex-col gap-3">
               {/* 對話資訊子區塊 */}
-              <div className="space-y-2 rounded-lg border p-3">
+              <div className="space-y-2 border-b pb-3 sm:rounded-lg sm:border sm:p-3">
                 <div className="flex items-center gap-2">
                   {editingTitle ? (
                     <>
@@ -370,6 +382,17 @@ export function MessagesPage({
                       )}
                     </>
                   )}
+                  {/* 手機：返回頻道列表（與標題同一列、置右上角） */}
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="size-8 shrink-0 sm:hidden"
+                    aria-label={tCommon('back')}
+                    title={tCommon('back')}
+                    onClick={() => setMobileShowThread(false)}
+                  >
+                    <IconArrowLeft className="h-4 w-4" />
+                  </Button>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
@@ -414,7 +437,26 @@ export function MessagesPage({
               />
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">{loading ? t('sending') : t('selectChannelHint')}</p>
+            <div className="space-y-3">
+              <div className="mb-1 flex items-center justify-between gap-2 sm:hidden">
+                <span className="text-sm text-muted-foreground">
+                  {loading ? t('sending') : t('selectChannelHint')}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 shrink-0"
+                  aria-label={tCommon('back')}
+                  title={tCommon('back')}
+                  onClick={() => setMobileShowThread(false)}
+                >
+                  <IconArrowLeft className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="hidden text-sm text-muted-foreground sm:block">
+                {loading ? t('sending') : t('selectChannelHint')}
+              </p>
+            </div>
           )}
         </div>
       </div>
