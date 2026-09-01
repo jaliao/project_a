@@ -1,7 +1,7 @@
 # admin-dashboard-monthly-report Specification
 
 ## Purpose
-TBD - created by archiving change cr-spec-260901-002. Update Purpose after archive.
+在 `/admin/dashboard` 提供「月報」區塊，讓管理者按月檢視事工整體發展狀況——第一冊（啟動靈人）／第二冊（啟動豐盛）累計參與人數與月成長、第一冊→第二冊已開課單位轉換率、教師世代倍增分布，以及逐 `Church` 單位的第一冊／第二冊發展數據。所有數字即時由既有時間戳（`InviteEnrollment.joinedAt` / `graduatedAt`、`CourseInvite.createdAt` / `startedAt`）以 `Asia/Taipei` 民用月邊界推導，不另存每月快照，可透過 `?month=YYYY-MM` 回看任一歷史月份。取代人工彙整月報投影片的流程。
 ## Requirements
 ### Requirement: 月報區塊與月份切換
 
