@@ -29,7 +29,7 @@ app/
 ├── (admin)/         # 需 admin 身分群組（URL 仍為 /admin/*）
 │   ├── layout.tsx   # (user) 守衛 + canAccessAdmin；後台各頁不再自行守衛；<main> 同 (user) 套 APP_MAX_WIDTH ＋ px-4 py-6 sm:p-6
 │   └── admin/           # 管理後台：功能網格（儀錶板/課程/授課/教材/會員/教會/系統設定）
-│       ├── dashboard/       # 後台儀錶板（統計卡片 7 個）
+│       ├── dashboard/       # 後台儀錶板（學員/講師/課程三區塊 + 「月報」區塊〔?month=YYYY-MM 切換月份；monthly-report-section.tsx；資料 lib/data/monthly-report.ts〕）
 │       ├── course-sessions/ # 開課管理（全站；搜尋 + 篩選；純卡片列表——學員增刪/狀態/LOG 皆於前台課程頁操作）
 │       ├── members/         # 會員管理清單（搜尋/篩選/翻頁/重設密碼/查看詳情/會員首頁〔新分頁開該會員 /user/<spiritId>〕；匯出：匯出 N 筆／匯出全部／匯出未找回帳號）
 │       ├── members/[id]/    # 會員詳情（Tabs：基本資料/學習階層/講師身分/特殊設定；頁首含「會員首頁」按鈕）
@@ -117,6 +117,7 @@ lib/
 │   ├── course-order.ts      # 課程訂購查詢（getAllCourseOrdersWithInvite, getCourseOrderForPrint）
 │   ├── members.ts           # 會員管理查詢（buildMemberWhere/hasAnyMemberFilter, searchMembers 分頁{total,items,page,pageCount}, getMemberDetail, exportMembers 吃 MemberFilters）
 │   ├── hierarchy.ts         # 師生傳承查詢（getMemberHierarchy，BFS，僅限啟動靈人 catalogId=1，graduatedAt IS NOT NULL）
+│   ├── monthly-report.ts    # 後台儀錶板「月報」推導（getMonthlyReport(month?)/getAvailableReportMonths；Asia/Taipei 民用月邊界；第一冊=catalogId 1、第二冊=catalogId 2；累計參與人數去重、逐 Church 單位、里程碑轉換率、世代倍增〔啟動靈人師生鏈遞迴 + 環路防護〕；即時推導不存快照）
 │   ├── admin-settings.ts    # 後台設定查詢（getAdminSetting, upsertAdminSetting）
 │   ├── churches.ts          # 教會管理查詢（getActiveChurches, getAllChurches, createChurch, updateChurch, toggleChurchActive, deleteChurch）
 │   ├── notification.ts      # 通知查詢（getNotifications, getUnreadNotificationCount, getNotificationsPaginated）

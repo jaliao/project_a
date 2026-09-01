@@ -1,15 +1,20 @@
 /*
  * ----------------------------------------------
  * 後台儀錶板頁面
- * 2026-04-03 (Updated: 2026-07-02)
+ * 2026-04-03 (Updated: 2026-09-01)
  * app/[locale]/(admin)/admin/dashboard/page.tsx
  * ----------------------------------------------
  */
 
 import type { Metadata } from 'next'
 import { getDashboardStats } from '@/lib/data/dashboard'
+import {
+  getAvailableReportMonths,
+  getMonthlyReport,
+} from '@/lib/data/monthly-report'
 import { ChurchDistributionCharts } from './church-distribution-charts'
 import { GenderPieCard, AgeBarCard } from './member-demographics-charts'
+import MonthlyReportSection from './monthly-report-section'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,9 +40,18 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-export default async function AdminDashboardPage() {
+export default async function AdminDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string }>
+}) {
   // 守衛（登入 + admin 身分）由 (admin)/layout.tsx 統一處理
-  const stats = await getDashboardStats()
+  const { month } = await searchParams
+  const [stats, report, months] = await Promise.all([
+    getDashboardStats(),
+    getMonthlyReport(month),
+    getAvailableReportMonths(),
+  ])
 
   return (
     <div className="space-y-8">
@@ -73,6 +87,9 @@ export default async function AdminDashboardPage() {
         <StatCard label="已結業課程總數" value={stats.completedCourseSessions} />
         <StatCard label="已放棄課程總數" value={stats.cancelledCourseSessions} />
       </Section>
+
+      {/* 月報 */}
+      <MonthlyReportSection report={report} months={months} />
     </div>
   )
 }
