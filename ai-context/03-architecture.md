@@ -31,13 +31,15 @@ app/
 │   └── admin/           # 管理後台：功能網格（儀錶板/課程/授課/教材/會員/教會/系統設定）
 │       ├── dashboard/       # 後台儀錶板（統計卡片 7 個）
 │       ├── course-sessions/ # 開課管理（全站；搜尋 + 篩選；純卡片列表——學員增刪/狀態/LOG 皆於前台課程頁操作）
-│       ├── members/         # 會員管理清單（搜尋/篩選/翻頁/重設密碼/查看詳情/會員首頁〔新分頁開該會員 /user/<spiritId>〕）
+│       ├── members/         # 會員管理清單（搜尋/篩選/翻頁/重設密碼/查看詳情/會員首頁〔新分頁開該會員 /user/<spiritId>〕；匯出：匯出 N 筆／匯出全部／匯出未找回帳號）
 │       ├── members/[id]/    # 會員詳情（Tabs：基本資料/學習階層/講師身分/特殊設定；頁首含「會員首頁」按鈕）
 │       ├── members/inactive/ # 未啟用會員清單（lastLoginAt 為 null；有 spiritId 者亦提供「會員首頁」）
 │       ├── materials/       # 教材申請管理（查看、確認已寄送、出貨單列印）
 │       ├── churches/        # redirect → /admin/settings?tab=churches（舊路由相容）
 │       └── settings/        # 系統設定 Tabs（hierarchy_depth/教會/課程目錄）
 ├── api/auth/        # NextAuth handlers
+├── api/admin/members/export/            # GET：會員 .xlsx 匯出（吃 q/gender/role/church；non-admin 401）
+├── api/admin/members/unrecovered/export/ # GET：未找回帳號名冊 .xlsx（登入 Email 仍為 @seed.iwillshare.org.tw；範圍固定不吃 query；8 欄：啟動編號/真實姓名/Email/性別/所屬教會/授課老師/身分別〔講師|學員〕/講師編號；non-admin 401）
 ├── api/ecpay/
 │   ├── store-map/       # GET：產生 ECPay MapCVS auto-submit form（Mock 模式支援）
 │   └── store-callback/  # POST：接收 ECPay 門市選擇結果，postMessage 回前端後關閉視窗

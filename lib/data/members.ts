@@ -1,16 +1,21 @@
 /*
  * ----------------------------------------------
  * Data Layer - 會員管理
- * 2026-04-01 (Updated: 2026-07-14)
+ * 2026-04-01 (Updated: 2026-09-01)
  * lib/data/members.ts
  * ----------------------------------------------
  */
 
 import { prisma } from '@/lib/prisma'
 import type { Gender, UserRole, Prisma } from '@prisma/client'
+import { getMemberDisplayName } from '@/lib/utils/member-display'
 
 // 會員清單每頁筆數
 export const MEMBER_PAGE_SIZE = 30
+
+// 名冊 seed 合成登入信箱網域（{spiritId}@seed.iwillshare.org.tw，見 member-roster-seed spec）
+// 與 lib/mailer.ts 的 SYNTHETIC_EMAIL_DOMAIN 同值
+const SEED_SYNTHETIC_EMAIL_DOMAIN = '@seed.iwillshare.org.tw'
 
 // 會員篩選條件（church：churchId 數字字串 / 'other' / 'none'）
 export type MemberFilters = {
@@ -234,4 +239,61 @@ export async function exportMembers(f: MemberFilters = {}) {
     ...rest,
     hasPassword: passwordHash != null,
   }))
+}
+
+// ==========================================
+// 匯出「尚未找回帳號」的名冊會員
+// （登入 Email 仍為 seed 合成網域 @seed.iwillshare.org.tw，即未走完找回帳號流程）
+// ==========================================
+export async function exportUnrecoveredSeedMembers() {
+  const rows = await prisma.user.findMany({
+    where: { email: { endsWith: SEED_SYNTHETIC_EMAIL_DOMAIN, mode: 'insensitive' } },
+    orderBy: [{ spiritId: { sort: 'asc', nulls: 'last' } }],
+    select: {
+      spiritId: true,
+      realName: true,
+      email: true,
+      gender: true,
+      roles: true,
+      teacherNo: true,
+      church: { select: { name: true } },
+      churchOther: true,
+      churchType: true,
+      // 授課老師＝已核准報名課程的建立者
+      inviteEnrollments: {
+        where: { status: 'approved' },
+        select: {
+          invite: {
+            select: {
+              createdBy: {
+                select: {
+                  realName: true,
+                  name: true,
+                  englishName: true,
+                  nickname: true,
+                  displayNameMode: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+
+  return rows.map((r) => {
+    const { inviteEnrollments, ...rest } = r
+    // 授課老師：去重、保留出現順序
+    const seen = new Set<string>()
+    const teacherNames: string[] = []
+    for (const e of inviteEnrollments) {
+      const t = e.invite.createdBy
+      const label = (t.realName?.trim() || getMemberDisplayName(t)).trim()
+      if (label && !seen.has(label)) {
+        seen.add(label)
+        teacherNames.push(label)
+      }
+    }
+    return { ...rest, teacherNames }
+  })
 }

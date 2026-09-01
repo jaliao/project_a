@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * 後台會員管理頁
- * 2026-04-01 (Updated: 2026-07-03)
+ * 2026-04-01 (Updated: 2026-09-01)
  * app/(user)/admin/members/page.tsx
  * ----------------------------------------------
  */
@@ -84,6 +84,14 @@ export default async function AdminMembersPage({
             className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
           >
             匯出全部
+          </a>
+          {/* 未找回帳號名冊匯出：範圍固定（登入信箱仍為 @seed.iwillshare.org.tw），不帶篩選參數 */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a
+            href="/api/admin/members/unrecovered/export"
+            className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+          >
+            匯出未找回帳號
           </a>
         </div>
       </div>
