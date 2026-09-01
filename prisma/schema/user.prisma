@@ -152,6 +152,10 @@ model User {
   adminLogsActed    AdminActionLog[] @relation("AdminLogActor")
   adminLogsTargeted AdminActionLog[] @relation("AdminLogTarget")
 
+  // 社群好友（單向）關聯
+  friendshipsOwned    Friendship[] @relation("FriendshipOwner")
+  friendshipsAsFriend Friendship[] @relation("FriendshipFriend")
+
   @@map("users")
 }
 

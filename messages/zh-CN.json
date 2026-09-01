@@ -25,6 +25,7 @@
     "admin": "后台管理",
     "help": "联络管理者",
     "messages": "讯息",
+    "community": "社群",
     "menu": "选单",
     "learning": "分段式查经"
   },
@@ -672,6 +673,28 @@
     "sending": "送出中…",
     "sendSuccess": "讯息已送出",
     "sendFail": "送出失败，请稍后再试"
+  },
+  "community": {
+    "title": "社群",
+    "addFriend": "加好友",
+    "tabFriends": "好友",
+    "tabMessages": "讯息",
+    "friendsEmpty": "还没有好友，点「加好友」开始",
+    "myQrTitle": "我的行动条码",
+    "myQrHint": "请对方扫描，或提供你的启动编号",
+    "scanToggle": "切换扫描行动条码",
+    "scanBackToQr": "显示我的行动条码",
+    "manualLabel": "输入启动编号加好友",
+    "manualPlaceholder": "例：PA260001",
+    "add": "加入",
+    "added": "已加入好友",
+    "alreadyFriend": "已经是好友了",
+    "addSelfError": "无法加自己为好友",
+    "notFoundError": "找不到该启动编号对应的会员",
+    "removeFriend": "移除好友",
+    "removeConfirm": "确定要从好友清单移除？",
+    "cameraDenied": "没有相机权限，改用输入启动编号",
+    "cameraUnsupported": "此装置无法扫码，改用输入启动编号"
   },
   "pwa": {
     "homeLink": "安装到手机桌面",

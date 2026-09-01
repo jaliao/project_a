@@ -24,6 +24,7 @@
     "admin": "後台管理",
     "help": "聯絡管理者",
     "messages": "訊息",
+    "community": "社群",
     "menu": "選單",
     "learning": "分段式查經"
   },
@@ -671,6 +672,28 @@
     "sending": "送出中…",
     "sendSuccess": "訊息已送出",
     "sendFail": "送出失敗，請稍後再試"
+  },
+  "community": {
+    "title": "社群",
+    "addFriend": "加好友",
+    "tabFriends": "好友",
+    "tabMessages": "訊息",
+    "friendsEmpty": "還沒有好友，點「加好友」開始",
+    "myQrTitle": "我的行動條碼",
+    "myQrHint": "請對方掃描，或提供你的啟動編號",
+    "scanToggle": "切換掃描行動條碼",
+    "scanBackToQr": "顯示我的行動條碼",
+    "manualLabel": "輸入啟動編號加好友",
+    "manualPlaceholder": "例：PA260001",
+    "add": "加入",
+    "added": "已加入好友",
+    "alreadyFriend": "已經是好友了",
+    "addSelfError": "無法加自己為好友",
+    "notFoundError": "找不到該啟動編號對應的會員",
+    "removeFriend": "移除好友",
+    "removeConfirm": "確定要從好友清單移除？",
+    "cameraDenied": "沒有相機權限，改用輸入啟動編號",
+    "cameraUnsupported": "此裝置無法掃碼，改用輸入啟動編號"
   },
   "pwa": {
     "homeLink": "安裝到手機桌面",

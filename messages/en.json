@@ -24,6 +24,7 @@
     "admin": "Admin",
     "help": "Contact Admin",
     "messages": "Messages",
+    "community": "Community",
     "menu": "Menu",
     "learning": "Sectional Bible Study"
   },
@@ -671,6 +672,28 @@
     "sending": "Sending…",
     "sendSuccess": "Message sent",
     "sendFail": "Failed to send, please try again later"
+  },
+  "community": {
+    "title": "Community",
+    "addFriend": "Add friend",
+    "tabFriends": "Friends",
+    "tabMessages": "Messages",
+    "friendsEmpty": "No friends yet — tap \"Add friend\" to start",
+    "myQrTitle": "My QR code",
+    "myQrHint": "Let others scan this, or share your Spirit ID",
+    "scanToggle": "Scan a QR code",
+    "scanBackToQr": "Show my QR code",
+    "manualLabel": "Add by Spirit ID",
+    "manualPlaceholder": "e.g. PA260001",
+    "add": "Add",
+    "added": "Friend added",
+    "alreadyFriend": "Already friends",
+    "addSelfError": "You can't add yourself",
+    "notFoundError": "No member found for that Spirit ID",
+    "removeFriend": "Remove friend",
+    "removeConfirm": "Remove this friend?",
+    "cameraDenied": "Camera blocked — add by Spirit ID instead",
+    "cameraUnsupported": "Scanning unavailable — add by Spirit ID instead"
   },
   "pwa": {
     "homeLink": "Install to home screen",

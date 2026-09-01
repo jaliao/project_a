@@ -166,3 +166,15 @@ createdAt       DateTime
 ```
 > 開課門檻（`lib/utils/course-start-gate.ts`）：≥1 已核准學員 + **教材需求已處理**（`remaining` 繁/簡皆 0 **或** `CourseInvite.materialFinalizedAt != null`）+ 所有教材訂單 `receivedAt != null`；全班不需教材（總需求 0、無訂單）時後兩項自動成立。`startCourseSession` 與課程詳情頁「開始上課」按鈕共用此判定（server 端以 `getEnrollmentMaterialSummary`＋訂單繁/簡加總重算 remaining），未達門檻按鈕停用並列出原因。
 > 教材申請進度（`lib/utils/material-progress.ts`）：總需求＝已核准學員 materialChoice 統計、已申請＝訂單繁/簡加總、尚未申請＝差值——**參考統計、不設上限**。申請採**逐本清單**（單一地址預設全選未指派書、可改版本/取消勾選；多地址逐本指派、未指派＝本次不申請）＋**加購項目**（`MaterialShipmentItem.enrollmentId = null`，書名須輸入，無預設值）；版本覆寫只寫入訂單快照、不回寫 `materialChoice`。教材作業授權為**講師或管理者**（購買人快照一律取課程講師，`submittedById` 記操作者）；「完成教材申請」`finalizeMaterialOrders`/`reopenMaterialOrders`（寫 `materialFinalizedAt`＋AdminActionLog）完成時停用申請並豁免開課教材需求。講師操作區為三區塊（教材申請／開始上課／取消上課）。
+
+### Friendship（社群好友，單向；cr-spec-260901-003）
+```
+id        Int（主鍵，autoincrement）
+ownerId   String（關聯 User UUID；加好友的人＝清單擁有者）
+friendId  String（關聯 User UUID；被加入的對象）
+createdAt DateTime
+
+@@unique([ownerId, friendId])
+@@index([ownerId])
+```
+> 單向：A 加 B 只建立 `{ ownerId: A, friendId: B }`，B 的好友清單不因此出現 A。加好友即時生效、免對方同意（`app/actions/friendship.ts addFriendBySpiritId`），成功新增後 fire-and-forget 通知對方；`removeFriend` 僅刪自己這筆。owner/friend 對 User 皆 `onDelete: Cascade`。**不影響傳訊息權限**——傳訊息仍為任何會員互傳，好友只是「快速開對話」清單（前台 `/messages` 社群頁「好友」頁籤）。

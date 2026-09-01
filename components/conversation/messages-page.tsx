@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
- * MessagesPage - 訊息頁面內容（頻道列表＋選中頻道訊息）
- * 2026-08-14
+ * MessagesPage - 社群頁面內容（頁首＋「好友 | 訊息」頁籤；訊息＝頻道列表＋選中頻道）
+ * 2026-08-14 (Updated: 2026-09-01)
  * components/conversation/messages-page.tsx
  *
  * 取代原本的 MessageDrawerProvider + MessageDrawer（cr-spec-260814-001）：
@@ -16,13 +16,17 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { IconArrowLeft, IconUsers, IconPin, IconPinFilled, IconPencil, IconCheck, IconUserPlus } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { UserAvatar } from '@/components/shared/user-avatar'
 import { ConversationThread } from './conversation-thread'
+import { AddFriendDrawer } from '@/components/community/add-friend-drawer'
+import { FriendsList } from '@/components/community/friends-list'
 import {
   fetchMyConversations,
   fetchConversationMessages,
@@ -34,13 +38,18 @@ import {
   updateConversationTitle,
   togglePinConversation,
 } from '@/app/actions/conversation'
+import { fetchMyFriends } from '@/app/actions/friendship'
 import type { ConversationSummary, ConversationWithMessages } from '@/lib/data/conversation'
+import type { FriendListItem } from '@/lib/data/friendship'
 
 type ActionResult = { success: boolean; message?: string; errors?: Record<string, string[]> }
 
 type MessagesPageProps = {
   initialConversations: ConversationSummary[]
+  initialFriends: FriendListItem[]
   currentUserId: string
+  mySpiritId: string | null
+  initialTab?: 'friends' | 'messages'
   initialWithUserId?: string
 }
 
@@ -56,9 +65,24 @@ function ChannelAvatar({ conversation }: { conversation: ConversationSummary }) 
   return <UserAvatar avatarUrl={other?.avatarUrl ?? null} displayName={conversation.displayTitle} />
 }
 
-export function MessagesPage({ initialConversations, currentUserId, initialWithUserId }: MessagesPageProps) {
+export function MessagesPage({
+  initialConversations,
+  initialFriends,
+  currentUserId,
+  mySpiritId,
+  initialTab,
+  initialWithUserId,
+}: MessagesPageProps) {
   const t = useTranslations('conversation')
+  const tCommunity = useTranslations('community')
+  const router = useRouter()
   const [conversations, setConversations] = useState(initialConversations)
+  const [friends, setFriends] = useState(initialFriends)
+  const [addOpen, setAddOpen] = useState(false)
+  // 頁籤：帶 ?with= 時強制「訊息」，否則依 ?tab=（預設「好友」）
+  const [tab, setTab] = useState<'friends' | 'messages'>(
+    initialWithUserId ? 'messages' : initialTab ?? 'friends'
+  )
   const [selected, setSelected] = useState<ConversationWithMessages | null>(null)
   const [loading, setLoading] = useState(false)
   const [mobileShowThread, setMobileShowThread] = useState(false)
@@ -109,20 +133,42 @@ export function MessagesPage({ initialConversations, currentUserId, initialWithU
     [refreshConversations, clearPicking]
   )
 
-  // 掛載時若帶入指定對象（?with=），比照原本 openMessageDrawer(targetUserId) 的邏輯
-  useEffect(() => {
-    if (!initialWithUserId) return
-    setLoading(true)
-    fetchConversationsWithUser(initialWithUserId).then((candidates) => {
+  // 以某對象起對話：無既有對話 → 直接開新對話；有 → 顯示選擇畫面
+  // （供 ?with= 深連結與「好友」頁籤點列共用）
+  const openWithUser = useCallback(
+    async (targetUserId: string) => {
+      setLoading(true)
+      const candidates = await fetchConversationsWithUser(targetUserId)
       setLoading(false)
       if (candidates.length === 0) {
-        startNewWithTarget(initialWithUserId)
+        startNewWithTarget(targetUserId)
       } else {
-        setPickingTargetUserId(initialWithUserId)
+        setPickingTargetUserId(targetUserId)
         setPickingCandidates(candidates)
         setMobileShowThread(true)
       }
-    })
+    },
+    [startNewWithTarget]
+  )
+
+  const reloadFriends = useCallback(async () => {
+    setFriends(await fetchMyFriends())
+  }, [])
+
+  // 切換頁籤並同步 ?tab=（淺導航，不重載）
+  const changeTab = useCallback(
+    (next: string) => {
+      const value = next === 'messages' ? 'messages' : 'friends'
+      setTab(value)
+      router.replace(`/messages?tab=${value}`, { scroll: false })
+    },
+    [router]
+  )
+
+  // 掛載時若帶入指定對象（?with=），比照原本 openMessageDrawer(targetUserId) 的邏輯
+  useEffect(() => {
+    if (!initialWithUserId) return
+    openWithUser(initialWithUserId)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialWithUserId])
 
@@ -199,9 +245,33 @@ export function MessagesPage({ initialConversations, currentUserId, initialWithU
 
   return (
     <div className="mx-auto max-w-5xl">
-      <h1 className="mb-4 text-xl font-semibold">{t('pageTitle')}</h1>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-xl font-semibold">{tCommunity('title')}</h1>
+        <Button size="sm" onClick={() => setAddOpen(true)}>
+          <IconUserPlus className="mr-1 h-4 w-4" />
+          {tCommunity('addFriend')}
+        </Button>
+      </div>
 
-      <div className="flex h-[calc(100vh-12rem)] min-h-[28rem] overflow-hidden rounded-lg border">
+      <Tabs value={tab} onValueChange={changeTab}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="friends">{tCommunity('tabFriends')}</TabsTrigger>
+          <TabsTrigger value="messages">{tCommunity('tabMessages')}</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="friends">
+          <FriendsList
+            friends={friends}
+            onOpenConversation={(uid) => {
+              changeTab('messages')
+              openWithUser(uid)
+            }}
+            onRemoved={reloadFriends}
+          />
+        </TabsContent>
+
+        <TabsContent value="messages">
+      <div className="flex h-[calc(100vh-16rem)] min-h-[28rem] overflow-hidden rounded-lg border">
         {/* 左側：頻道列表 */}
         <div
           className={`w-full shrink-0 overflow-y-auto border-r sm:block sm:w-80 ${mobileShowThread ? 'hidden' : 'block'}`}
@@ -348,6 +418,15 @@ export function MessagesPage({ initialConversations, currentUserId, initialWithU
           )}
         </div>
       </div>
+        </TabsContent>
+      </Tabs>
+
+      <AddFriendDrawer
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        mySpiritId={mySpiritId}
+        onFriendAdded={reloadFriends}
+      />
     </div>
   )
 }

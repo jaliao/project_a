@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * Topbar - 頂部工具列
- * 2026-03-23 (Updated: 2026-08-29)
+ * 2026-03-23 (Updated: 2026-09-01)
  * components/layout/topbar.tsx
  * ----------------------------------------------
  */
@@ -10,7 +10,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { IconUser, IconBell, IconHome, IconLayoutDashboard, IconClipboardList, IconMessageCircle, IconMessage, IconMenu2, IconNotebook } from '@tabler/icons-react'
+import { IconUser, IconBell, IconHome, IconLayoutDashboard, IconClipboardList, IconMessageCircle, IconUsersGroup, IconMenu2, IconNotebook } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { useTranslations } from 'next-intl'
 import { NotificationDrawer } from '@/components/notification/notification-drawer'
@@ -68,7 +68,7 @@ export function Topbar({ unreadCount = 0, unreadMessageCount = 0, roles, spiritI
       : []),
     { key: 'profile', icon: IconUser, label: t('profile'), onClick: () => go(profileUrl) },
     { key: 'help', icon: IconMessageCircle, label: t('help'), onClick: () => go(inquiriesUrl) },
-    { key: 'messages', icon: IconMessage, label: t('messages'), badge: unreadMessageCount, onClick: () => go('/messages') },
+    { key: 'messages', icon: IconUsersGroup, label: t('community'), badge: unreadMessageCount, onClick: () => go('/messages') },
     {
       key: 'notifications',
       icon: IconBell,
@@ -176,15 +176,15 @@ export function Topbar({ unreadCount = 0, unreadMessageCount = 0, roles, spiritI
           <IconMessageCircle className="h-5 w-5" />
         </Button>
 
-        {/* 訊息（所有登入會員） */}
+        {/* 社群（所有登入會員） */}
         <Button
           variant="ghost"
           size="icon"
           onClick={() => router.push('/messages')}
-          title={t('messages')}
+          title={t('community')}
           className="relative"
         >
-          <IconMessage className="h-5 w-5" />
+          <IconUsersGroup className="h-5 w-5" />
           {unreadMessageCount > 0 && (
             <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white leading-none">
               {unreadMessageCount > 99 ? '99+' : unreadMessageCount}

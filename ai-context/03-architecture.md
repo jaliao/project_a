@@ -22,6 +22,7 @@ app/
 │   ├── user/[id]/       # 學員專屬頁面：基本資料 + 本人功能單元
 │   ├── user/[id]/courses/ # 我的開課列表（本人專屬，Spirit ID 小寫路由）
 │   ├── notifications/   # 通知歷史頁面（分頁，每頁 20 則）
+│   ├── messages/       # 社群頁（原「訊息」；?tab=friends|messages、?with= 深連結；「好友」清單＋「訊息」對話；加好友 Drawer＝行動條碼/掃碼/輸入啟動編號）
 │   ├── course/[id]/     # 課程詳情頁（訪客可達，由 GUEST_PAGES 放行；管理者/該課講師可於「已核准學員」區塊增刪學員、操作重新招募/結業/取消作業、檢視課程操作 LOG）
 │   ├── course/[id]/graduate/  # 課程結業表單頁（填寫→預覽→送出）
 │   ├── profile/         # 舊路由相容：server redirect → /user/{spiritId}/profile
@@ -51,7 +52,7 @@ app/
 components/
 ├── ui/              # shadcn/ui 基礎元件
 ├── layout/
-│   └── topbar.tsx   # 頂部工具列（sticky；<header> 橫條/底線滿版、內容列套 APP_MAX_WIDTH 對齊主內容；左側 Logo 可點回首頁＋truncate；桌機平鋪按鈕群 hidden md:flex；手機 <md 收合為「選單」Sheet（side=right）＋未讀 Badge；回首頁→/user/{spiritId}；媒合布告欄→/match-board；分段式查經→/user/{spiritId}/learning；後台管理→/admin（admin only）；個人資料→/user/{spiritId}/profile；通知 Drawer 共用）
+│   └── topbar.tsx   # 頂部工具列（sticky；<header> 橫條/底線滿版、內容列套 APP_MAX_WIDTH 對齊主內容；左側 Logo 可點回首頁＋truncate；桌機平鋪按鈕群 hidden md:flex；手機 <md 收合為「選單」Sheet（side=right）＋未讀 Badge；回首頁→/user/{spiritId}；媒合布告欄→/match-board；分段式查經→/user/{spiritId}/learning；社群→/messages（原「訊息」，IconUsersGroup＋未讀角標）；後台管理→/admin（admin only）；個人資料→/user/{spiritId}/profile；通知 Drawer 共用）
 ├── notification/
 │   └── notification-drawer.tsx  # 右側通知 Drawer（Sheet，lazy load，標記已讀；SheetHeader pr-10 避免與 X 重疊）
 ├── dashboard/
@@ -123,7 +124,9 @@ lib/
 │   ├── notification.ts      # 通知查詢（getNotifications, getUnreadNotificationCount, getNotificationsPaginated）
 │   ├── invite-students.ts   # findMemberByEmail：email 查既有會員（課程頁新增學員確認列用）
 │   ├── admin-logs.ts        # 管理操作紀錄查詢（getAdminLogs：最新在前、每頁 30 筆、inviteId 過濾；只讀快照欄不 join；供課程頁 LOG 區塊）
-│   └── course-message.ts    # 課程 FAQ 留言查詢（getCourseMessages(inviteId, viewer)：1 對 1 可見性—老師見全部、會員僅見自己的串；提問升序＋回覆內嵌）
+│   ├── course-message.ts    # 課程 FAQ 留言查詢（getCourseMessages(inviteId, viewer)：1 對 1 可見性—老師見全部、會員僅見自己的串；提問升序＋回覆內嵌）
+│   ├── conversation.ts      # 站內訊息查詢（getMyConversations, getUnreadConversationCount, getConversationMessages, findConversationsWithUser…）
+│   └── friendship.ts        # 社群好友查詢（getMyFriends(userId) 依 createdAt desc、isFriend(ownerId, friendId)）；單向好友，見 friendship.prisma
 ├── ecpay/
 │   └── logistics.ts         # ECPay 物流工具（calcLogisticsCheckMacValue，MD5，物流 CMV-MD5 規格）
 └── utils.ts         # cn() 等工具函數
@@ -138,6 +141,8 @@ prisma/
 │   ├── course-catalog.prisma # CourseCatalog（id, label, description?, isActive, sortOrder, prerequisites 自關聯）
 │   ├── admin-setting.prisma  # AdminSetting（key/value store；hierarchy_depth 預設 3）
 │   ├── admin-log.prisma      # AdminActionLog（管理操作紀錄；optional FK SetNull＋文字快照欄）
+│   ├── conversation.prisma   # Conversation / ConversationParticipant / ConversationMessage（站內訊息，支援多人群組）
+│   ├── friendship.prisma     # Friendship（社群好友，單向：ownerId→friendId，@@unique([ownerId,friendId])，cascade）
 │   └── church.prisma         # Church（id, name @unique, isActive, sortOrder）+ ChurchType enum（church|other|none）
 └── seed.ts
 

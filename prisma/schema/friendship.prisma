@@ -1,0 +1,28 @@
+/**
+ * ----------------------------------------------
+ * Prisma Schema - 社群好友（單向）
+ * 2026-09-01
+ * prisma/schema/friendship.prisma
+ * ----------------------------------------------
+ */
+
+// ==========================================
+// 單向好友關係（cr-spec-260901-003）
+// A 將 B 加入好友 → 只建立一筆 { ownerId: A, friendId: B }；
+// B 的好友清單不因此出現 A（需 B 自己另外加）。
+// 加好友即時生效、免對方同意；不影響傳訊息權限。
+// ==========================================
+model Friendship {
+  id       Int    @id @default(autoincrement())
+  ownerId  String @db.Uuid // 加好友的人（清單擁有者）
+  friendId String @db.Uuid // 被加入的對象
+
+  owner  User @relation("FriendshipOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  friend User @relation("FriendshipFriend", fields: [friendId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([ownerId, friendId])
+  @@index([ownerId])
+  @@map("friendships")
+}
