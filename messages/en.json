@@ -816,5 +816,16 @@
     "lessonTodo": "To fill in",
     "lessonNoScripture": "No entry needed",
     "progressCount": "{done} / {total} lessons done"
+  },
+  "footer": {
+    "description": "Chidao Ministry online platform — course enrollment, learning records, and community.",
+    "sectionExplore": "Explore",
+    "sectionLegal": "Legal",
+    "linkHome": "Home",
+    "linkCourses": "Courses",
+    "linkInstallApp": "Install app",
+    "linkTerms": "Terms of Service",
+    "linkPrivacy": "Privacy Policy",
+    "copyright": "© {year} Chidao Ministry. All rights reserved."
   }
 }

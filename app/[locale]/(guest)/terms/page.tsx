@@ -8,12 +8,13 @@
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { Footer } from '@/components/layout/footer'
 
 export const metadata: Metadata = {
   title: '服務條款 — 啟動事工',
 }
 
-export default function TermsPage() {
+export default async function TermsPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-3xl px-6 py-12">
@@ -95,6 +96,7 @@ export default function TermsPage() {
 
         </div>
       </div>
+      <Footer />
     </div>
   )
 }

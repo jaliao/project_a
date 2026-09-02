@@ -1,8 +1,7 @@
-# footer-version-info Specification
+# footer-version-info Delta（cr-spec-260902-002）
 
-## Purpose
-TBD - created by archiving change cr-spec-260708-001. Update Purpose after archive.
-## Requirements
+## MODIFIED Requirements
+
 ### Requirement: Footer 顯示版本與系統更新日期
 
 系統 SHALL 於**共用 Footer 的底部列**（見 `site-footer`）顯示目前系統版本號與系統更新日期，格式為 `v{version} · {updatedAt}`（如 `v0.1.196 · 2026-09-02`），與版權、法律連結同列呈現。資料源 SHALL 為 `config/version.json` 的 `version` 與 `updatedAt` 欄位。
@@ -32,4 +31,3 @@ TBD - created by archiving change cr-spec-260708-001. Update Purpose after archi
 
 - **WHEN** 套用變更使 `version` 由 `0.1.128` 遞增為 `0.1.129`
 - **THEN** `updatedAt` 同步更新為套用當日日期，Footer 顯示新版本與新日期
-

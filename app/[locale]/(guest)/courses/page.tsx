@@ -16,6 +16,8 @@ import { getTranslations } from 'next-intl/server'
 import { getActiveCourses } from '@/lib/data/course-catalog'
 import { getSiteUrl } from '@/lib/utils/site-url'
 import { JsonLd, orgJsonLd, websiteJsonLd, graphJsonLd } from '@/components/seo/json-ld'
+import { BrandLogo } from '@/components/layout/brand-logo'
+import { Footer } from '@/components/layout/footer'
 
 export async function generateMetadata({
   params,
@@ -83,8 +85,8 @@ export default async function CoursesPage({
 
       {/* Header */}
       <header className="flex items-center justify-between border-b px-6 py-4">
-        <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
-          啟動事工
+        <Link href="/" aria-label="啟動事工">
+          <BrandLogo textClassName="text-lg" />
         </Link>
         <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground">
           {t('ctaEnroll')}
@@ -134,22 +136,8 @@ export default async function CoursesPage({
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t px-6 py-4 text-center text-xs text-muted-foreground">
-        <span>© 2026 啟動事工</span>
-        <span className="mx-2">·</span>
-        <Link href="/terms" className="underline underline-offset-4 hover:text-foreground">
-          服務條款
-        </Link>
-        <span className="mx-2">·</span>
-        <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
-          隱私政策
-        </Link>
-        <span className="mx-2">·</span>
-        <Link href="/" className="underline underline-offset-4 hover:text-foreground">
-          {t('backToHome')}
-        </Link>
-      </footer>
+      {/* Footer（共用多欄） */}
+      <Footer />
     </div>
   )
 }

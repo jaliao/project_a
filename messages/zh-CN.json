@@ -817,5 +817,16 @@
     "lessonTodo": "待填写",
     "lessonNoScripture": "无需填写",
     "progressCount": "已完成 {done} / 共 {total} 课"
+  },
+  "footer": {
+    "description": "启动事工线上系统——课程报名、学习历程与社群连结。",
+    "sectionExplore": "探索",
+    "sectionLegal": "条款与隐私",
+    "linkHome": "首页",
+    "linkCourses": "课程介绍",
+    "linkInstallApp": "安装 App",
+    "linkTerms": "服务条款",
+    "linkPrivacy": "隐私政策",
+    "copyright": "© {year} 启动事工．保留一切权利。"
   }
 }

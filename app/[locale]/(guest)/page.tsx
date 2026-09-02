@@ -13,6 +13,8 @@ import { getTranslations } from 'next-intl/server'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { JsonLd, orgJsonLd, websiteJsonLd, graphJsonLd } from '@/components/seo/json-ld'
+import { BrandLogo } from '@/components/layout/brand-logo'
+import { Footer } from '@/components/layout/footer'
 
 // metadata 由 app/[locale]/layout.tsx 的 generateMetadata 提供（title.default／description／canonical '/' 皆已含關鍵字）
 
@@ -28,7 +30,6 @@ export default async function HomePage({
   }
 
   const { locale } = await params
-  const tPwa = await getTranslations({ locale, namespace: 'pwa' })
   const tHome = await getTranslations({ locale, namespace: 'home' })
   const tCourses = await getTranslations({ locale, namespace: 'courses' })
 
@@ -38,21 +39,9 @@ export default async function HomePage({
 
       {/* ── 頂部 Header ── */}
       <header className="flex items-center justify-between px-6 py-4 border-b">
-        <div className="flex items-center gap-2 font-semibold text-lg">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-5 w-5"
-          >
-            <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-          </svg>
-          啟動事工
-        </div>
+        <Link href="/" aria-label="啟動事工">
+          <BrandLogo textClassName="text-lg" />
+        </Link>
         <Link
           href="/login"
           className={cn(buttonVariants({ variant: 'ghost' }), 'text-sm')}
@@ -126,18 +115,8 @@ export default async function HomePage({
         </div>
       </main>
 
-      {/* ── 底部 Footer ── */}
-      <footer className="border-t px-6 py-4 text-center text-xs text-muted-foreground">
-        <span>© 2026 啟動事工</span>
-        <span className="mx-2">·</span>
-        <Link href="/terms" className="hover:text-foreground underline underline-offset-4">服務條款</Link>
-        <span className="mx-2">·</span>
-        <Link href="/privacy" className="hover:text-foreground underline underline-offset-4">隱私政策</Link>
-        <span className="mx-2">·</span>
-        <Link href="/courses" className="hover:text-foreground underline underline-offset-4">{tCourses('homeLink')}</Link>
-        <span className="mx-2">·</span>
-        <Link href="/pwa-install" className="hover:text-foreground underline underline-offset-4">{tPwa('homeLink')}</Link>
-      </footer>
+      {/* ── 底部 Footer（共用多欄）── */}
+      <Footer />
 
     </div>
   )

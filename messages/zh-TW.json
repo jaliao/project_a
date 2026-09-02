@@ -816,5 +816,16 @@
     "lessonTodo": "待填寫",
     "lessonNoScripture": "無需填寫",
     "progressCount": "已完成 {done} / 共 {total} 課"
+  },
+  "footer": {
+    "description": "啟動事工線上系統——課程報名、學習歷程與社群連結。",
+    "sectionExplore": "探索",
+    "sectionLegal": "條款與隱私",
+    "linkHome": "首頁",
+    "linkCourses": "課程介紹",
+    "linkInstallApp": "安裝 App",
+    "linkTerms": "服務條款",
+    "linkPrivacy": "隱私政策",
+    "copyright": "© {year} 啟動事工．保留一切權利。"
   }
 }

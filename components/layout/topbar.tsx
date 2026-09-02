@@ -1,8 +1,10 @@
 /*
  * ----------------------------------------------
  * Topbar - 頂部工具列
- * 2026-03-23 (Updated: 2026-09-01)
+ * 2026-03-23 (Updated: 2026-09-02)
  * components/layout/topbar.tsx
+ *
+ * cr-spec-260902-002：品牌 logo 改用共用 BrandLogo（藍底白「A」標記）。
  * ----------------------------------------------
  */
 
@@ -16,6 +18,7 @@ import { useTranslations } from 'next-intl'
 import { NotificationDrawer } from '@/components/notification/notification-drawer'
 import { canAccessAdmin } from '@/lib/auth-roles'
 import { UserAvatar } from '@/components/shared/user-avatar'
+import { BrandLogo } from '@/components/layout/brand-logo'
 import { cn, APP_MAX_WIDTH } from '@/lib/utils'
 import {
   Sheet,
@@ -35,7 +38,6 @@ interface TopbarProps {
 
 export function Topbar({ unreadCount = 0, unreadMessageCount = 0, roles, spiritId, avatarUrl }: TopbarProps) {
   const t = useTranslations('nav')
-  const tc = useTranslations('common')
   const router = useRouter()
   const [isNotifOpen, setIsNotifOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -92,20 +94,7 @@ export function Topbar({ unreadCount = 0, unreadMessageCount = 0, roles, spiritI
         aria-label={t('home')}
         className="flex min-w-0 flex-1 items-center gap-2"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden
-          className="h-5 w-5 shrink-0"
-        >
-          <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-        </svg>
-        <span className="truncate text-lg font-semibold">{tc('appName')}</span>
+        <BrandLogo size={20} textClassName="text-lg" className="min-w-0" />
       </button>
 
       {/* 右側操作按鈕群組（桌機平鋪；手機收合至下方選單） */}

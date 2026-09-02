@@ -22,9 +22,10 @@ app/
 │   ├── user/[id]/       # 學員專屬頁面：基本資料 + 本人功能單元
 │   ├── user/[id]/courses/ # 我的開課列表（本人專屬，Spirit ID 小寫路由）
 │   ├── notifications/   # 通知歷史頁面（分頁，每頁 20 則）
-│   ├── messages/       # 社群頁（原「訊息」；?tab=friends|messages、?with= 深連結；「好友」卡片格狀（手機1/桌機2–3欄：GenderIcon 性別圖示＋顯示名稱／單位／身分別〔roles 逐一 Badge，比照後台會員管理〕＋「釘選」「傳訊息」「刪除」按鈕）＋上方名稱/啟動編號搜尋（client 端 searchText 子字串）＋每頁 50 筆換頁＋「訊息」對話；加好友 Drawer＝行動條碼/掃碼/輸入啟動編號）
+│   ├── messages/       # 社群頁（原「訊息」；?tab=friends|messages、?with= 深連結；「好友」卡片格狀（手機1/桌機2–3欄：GenderIcon 性別圖示＋顯示名稱／單位／身分別〔roles 逐一 Badge，比照後台會員管理〕＋「釘選」「傳訊息」「刪除」按鈕）＋上方名稱/啟動編號搜尋（client 端 searchText 子字串）＋每頁 50 筆換頁＋「訊息」對話；加好友＝置中彈窗 AddFriendDialog：行動條碼/掃碼/輸入啟動編號）
 │   │                   #   對話成員／邀請加入：標題列右側「成員」按鈕開 ConversationMembersDialog（桌機/手機一致，標題區不再行內顯示成員 chips/邀請框）；加入＝「從好友加入」名字即時過濾／「輸入啟動編號」兩鈕切換，皆走既有 inviteToConversation
-│   │                   #   「傳訊息」入口（好友卡片／學員專頁／後台會員詳情／?with=）：與對象已有對話 → 直接開 lastMessageAt 最新的一筆；無 → 新對話畫面（cr-spec-260901-007 移除既有對話選擇 picker 與「開新對話」入口）
+│   │                   #   「傳訊息」入口（好友卡片／學員專頁／後台會員詳情／?with=）：只鎖定與對象的「一對一」對話——已有一對一對話 → 直接開 lastMessageAt 最新的一筆；無 → 新對話畫面；不跳進雙方共同所屬的群組（cr-spec-260902-001；cr-spec-260901-007 已移除既有對話選擇 picker 與「開新對話」入口）
+│   │                   #   加好友：置中彈窗 AddFriendDialog（cr-spec-260902-001，原底部 Sheet add-friend-drawer；行動條碼/掃碼/輸入啟動編號；onOpenAutoFocus preventDefault → 手機開啟不自動彈鍵盤）
 │   │                   #   訊息頁籤行動版面：面板 h-[calc(100dvh-16rem)]（cr-spec-260901-007 由 13rem 校正為實際外框高，避免外層 document 溢出可捲；sm: 100vh-16rem）＋ min-h-0 鏈，對話串 conversation-thread 用 message-scroller（自動捲底、僅捲自身 viewport）、輸入框不被 Footer 遮蔽；手機無巢狀外框（面板/對話資訊框/scroller 皆 sm:border）、返回鍵在對話標題列右上角
 │   ├── course/[id]/     # 課程詳情頁（訪客可達，由 GUEST_PAGES 放行；管理者/該課講師可於「已核准學員」區塊增刪學員、操作重新招募/結業/取消作業、檢視課程操作 LOG）
 │   ├── course/[id]/graduate/  # 課程結業表單頁（填寫→預覽→送出）
@@ -55,7 +56,9 @@ app/
 components/
 ├── ui/              # shadcn/ui 基礎元件
 ├── layout/
-│   └── topbar.tsx   # 頂部工具列（sticky；<header> 橫條/底線滿版、內容列套 APP_MAX_WIDTH 對齊主內容；左側 Logo 可點回首頁＋truncate；桌機平鋪按鈕群 hidden md:flex；手機 <md 收合為「選單」Sheet（side=right）＋未讀 Badge；回首頁→/user/{spiritId}；媒合布告欄→/match-board；分段式查經→/user/{spiritId}/learning；社群→/messages（原「訊息」，IconUsersGroup＋未讀角標）；後台管理→/admin（admin only）；個人資料→/user/{spiritId}/profile；通知 Drawer 共用）
+│   ├── topbar.tsx   # 頂部工具列（sticky；<header> 橫條/底線滿版、內容列套 APP_MAX_WIDTH 對齊主內容；左側 Logo＝共用 BrandLogo（藍底白「A」）可點回首頁＋truncate；桌機平鋪按鈕群 hidden md:flex；手機 <md 收合為「選單」Sheet（side=right）＋未讀 Badge；回首頁→/user/{spiritId}；媒合布告欄→/match-board；分段式查經→/user/{spiritId}/learning；社群→/messages（原「訊息」，IconUsersGroup＋未讀角標）；後台管理→/admin（admin only）；個人資料→/user/{spiritId}/profile；通知 Drawer 共用）
+│   ├── brand-logo.tsx  # 共用品牌標記（cr-spec-260902-002）：lib/pwa/brand-icon.tsx BrandIconMark（藍底白「A」，與 favicon/PWA icon 同源）＋ common.appName 文字；純呈現，Topbar／公開頁 Header／Footer 共用
+│   └── footer.tsx   # 共用多欄 Footer（cr-spec-260902-002）：async server；品牌欄（BrandLogo＋footer.description）＋連結區塊（SECTIONS 常數＝探索/條款與隱私，站內公開路由，i18n footer.*、@/i18n/navigation Link）＋底部列（footer.copyright{year}＋法律連結＋v{version}·{updatedAt} 同一列，讀 config/version.json）；對齊 APP_MAX_WIDTH；用於 (user)/(admin) layout ＋ 公開行銷頁 /、/courses、/terms、/privacy（不進 (guest)/layout）
 ├── notification/
 │   └── notification-drawer.tsx  # 右側通知 Drawer（Sheet，lazy load，標記已讀；SheetHeader pr-10 避免與 X 重疊）
 ├── dashboard/
@@ -128,7 +131,7 @@ lib/
 │   ├── invite-students.ts   # findMemberByEmail：email 查既有會員（課程頁新增學員確認列用）
 │   ├── admin-logs.ts        # 管理操作紀錄查詢（getAdminLogs：最新在前、每頁 30 筆、inviteId 過濾；只讀快照欄不 join；供課程頁 LOG 區塊）
 │   ├── course-message.ts    # 課程 FAQ 留言查詢（getCourseMessages(inviteId, viewer)：1 對 1 可見性—老師見全部、會員僅見自己的串；提問升序＋回覆內嵌）
-│   ├── conversation.ts      # 站內訊息查詢（getMyConversations, getUnreadConversationCount, getConversationMessages, findConversationsWithUser…）
+│   ├── conversation.ts      # 站內訊息查詢（getMyConversations, getUnreadConversationCount, getConversationMessages, findConversationsWithUser〔限一對一，排除雙方共同群組；cr-spec-260902-001〕…）
 │   └── friendship.ts        # 社群好友查詢（getMyFriends(userId) 依 [pinnedAt desc nulls last, createdAt desc] → FriendListItem{ userId, spiritId, displayName, avatarUrl, gender, unitLabel（church.name/churchOther/null）, roles, pinnedAt, addedAt, searchText（realName/englishName/nickname/spiritId 小寫串接，搜尋用） }、isFriend(ownerId, friendId)）；釘選切換＝action togglePinFriend；單向好友，見 friendship.prisma
 ├── ecpay/
 │   └── logistics.ts         # ECPay 物流工具（calcLogisticsCheckMacValue，MD5，物流 CMV-MD5 規格）
