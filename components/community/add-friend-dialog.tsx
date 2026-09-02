@@ -1,12 +1,14 @@
 /*
  * ----------------------------------------------
- * AddFriendDrawer - 加好友（我的行動條碼 / 相機掃碼 / 手動輸入啟動編號）
- * 2026-09-01
- * components/community/add-friend-drawer.tsx
+ * AddFriendDialog - 加好友（我的行動條碼 / 相機掃碼 / 手動輸入啟動編號）
+ * 2026-09-01 (Updated: 2026-09-02)
+ * components/community/add-friend-dialog.tsx
  *
  * cr-spec-260901-003：單向即時加好友。QR payload = `spiritfriend:{spiritId}`，
  * 掃描端亦接受純 spiritId 字串。qrcode.react 與 @zxing/browser 皆 client-only、
  * 經 next/dynamic ssr:false 動態載入，不進首屏 bundle。
+ * cr-spec-260902-001：底部 Sheet → 置中 Dialog（彈窗）；開啟時不自動聚焦輸入欄位
+ * （onOpenAutoFocus preventDefault），避免手機自動彈鍵盤遮住 QR。
  * ----------------------------------------------
  */
 
@@ -18,11 +20,11 @@ import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { IconScan, IconQrcode } from '@tabler/icons-react'
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { addFriendBySpiritId } from '@/app/actions/friendship'
@@ -47,7 +49,7 @@ function parseSpiritId(text: string): string {
   return raw.trim().toUpperCase()
 }
 
-export function AddFriendDrawer({ open, onOpenChange, mySpiritId, onFriendAdded }: Props) {
+export function AddFriendDialog({ open, onOpenChange, mySpiritId, onFriendAdded }: Props) {
   const t = useTranslations('community')
   const [view, setView] = useState<'qr' | 'scan'>('qr')
   const [manual, setManual] = useState('')
@@ -86,7 +88,7 @@ export function AddFriendDrawer({ open, onOpenChange, mySpiritId, onFriendAdded 
     [t, onFriendAdded, view, stopCamera]
   )
 
-  // 掃描檢視：掛載相機（僅在使用者切到 scan 且 Drawer 開啟時）
+  // 掃描檢視：掛載相機（僅在使用者切到 scan 且 Dialog 開啟時）
   useEffect(() => {
     if (!open || view !== 'scan') return
     let cancelled = false
@@ -125,7 +127,7 @@ export function AddFriendDrawer({ open, onOpenChange, mySpiritId, onFriendAdded 
     }
   }, [open, view, handleAdd, stopCamera, t])
 
-  // Drawer 關閉：釋放相機並回到 QR 檢視
+  // Dialog 關閉：釋放相機並回到 QR 檢視
   useEffect(() => {
     if (open) return
     stopCamera()
@@ -154,13 +156,16 @@ export function AddFriendDrawer({ open, onOpenChange, mySpiritId, onFriendAdded 
   )
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="mx-auto max-w-md">
-        <SheetHeader>
-          <SheetTitle>{view === 'qr' ? t('myQrTitle') : t('scanToggle')}</SheetTitle>
-        </SheetHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="max-w-sm sm:max-w-sm max-h-[90dvh] overflow-y-auto"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
+        <DialogHeader>
+          <DialogTitle>{view === 'qr' ? t('myQrTitle') : t('scanToggle')}</DialogTitle>
+        </DialogHeader>
 
-        <div className="space-y-4 px-4 pb-6">
+        <div className="space-y-4">
           {view === 'qr' ? (
             <>
               <div className="flex flex-col items-center gap-2">
@@ -211,7 +216,7 @@ export function AddFriendDrawer({ open, onOpenChange, mySpiritId, onFriendAdded 
             </>
           )}
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   )
 }

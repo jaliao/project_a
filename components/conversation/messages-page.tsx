@@ -13,6 +13,9 @@
  * 2026-09-01（cr-spec-260901-007）：openWithUser 改為「與對象已有一筆以上
  * 既有對話 → 直接開啟其中『最後訊息時間最新』的一筆」，移除既有對話選擇
  * 畫面（picker）與「開新對話」入口；尚無對話仍直接進新對話畫面。
+ * 2026-09-02（cr-spec-260902-001）：加好友介面改置中彈窗（AddFriendDialog）；
+ * 「傳訊息」入口只開一對一對話（由 lib/data/conversation.ts findConversationsWithUser
+ * 收斂實現，本檔 openWithUser 不改）。
  *
  * 取代原本的 MessageDrawerProvider + MessageDrawer（cr-spec-260814-001）：
  * 狀態邏輯與 UI 合併為單一頁面內容元件，不再包 Drawer wrapper，
@@ -34,7 +37,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { UserAvatar } from '@/components/shared/user-avatar'
 import { ConversationThread } from './conversation-thread'
 import { ConversationMembersDialog } from './conversation-members-dialog'
-import { AddFriendDrawer } from '@/components/community/add-friend-drawer'
+import { AddFriendDialog } from '@/components/community/add-friend-dialog'
 import { FriendsList } from '@/components/community/friends-list'
 import {
   fetchMyConversations,
@@ -397,7 +400,7 @@ export function MessagesPage({
         </TabsContent>
       </Tabs>
 
-      <AddFriendDrawer
+      <AddFriendDialog
         open={addOpen}
         onOpenChange={setAddOpen}
         mySpiritId={mySpiritId}

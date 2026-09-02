@@ -1,8 +1,11 @@
 /*
  * ----------------------------------------------
  * Data Layer - 訊息（任何會員互傳，支援多人群組）
- * 2026-08-03 (Updated: 2026-08-03)
+ * 2026-08-03 (Updated: 2026-09-02)
  * lib/data/conversation.ts
+ *
+ * cr-spec-260902-001：findConversationsWithUser 收斂為「僅一對一」，
+ * 避免「傳訊息」入口跳進雙方共同所屬的群組。
  * ----------------------------------------------
  */
 
@@ -160,10 +163,15 @@ export async function getMyConversations(userId: string): Promise<ConversationSu
   return getConversationSummaries(userId, { participants: { some: { userId } } })
 }
 
-// ── 會員：與某位對象共同參與的所有對話（供「傳訊息」入口選擇既有對話 vs 開新對話）──
+// ── 會員：與某位對象的「一對一」既有對話（供「傳訊息」入口取最新一筆；SHALL NOT 含雙方共同所屬的群組）──
+// 前兩個 some 保證雙方都在；every 保證沒有第三人 → 結果集恰為雙方一對一對話（可為多筆各自獨立的一對一對話）。
 export async function findConversationsWithUser(viewerId: string, targetUserId: string): Promise<ConversationSummary[]> {
   return getConversationSummaries(viewerId, {
-    AND: [{ participants: { some: { userId: viewerId } } }, { participants: { some: { userId: targetUserId } } }],
+    AND: [
+      { participants: { some: { userId: viewerId } } },
+      { participants: { some: { userId: targetUserId } } },
+      { participants: { every: { userId: { in: [viewerId, targetUserId] } } } },
+    ],
   })
 }
 
