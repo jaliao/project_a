@@ -1,8 +1,10 @@
 /*
  * ----------------------------------------------
  * Server Actions - 使用者頭像上傳/移除
- * 2026-08-03
+ * 2026-08-03 (Updated: 2026-09-03)
  * app/actions/avatar.ts
+ *
+ * cr-spec-260903-001：成功/登入訊息統一為 i18n key（失敗鍵沿用既有 validation.*）
  * ----------------------------------------------
  */
 
@@ -30,7 +32,7 @@ const MAX_SIZE = 2 * 1024 * 1024 // 2MB
 // ── 上傳/更換頭像 ──────────────────────────────
 export async function uploadAvatar(formData: FormData): Promise<ActionResponse> {
   const session = await auth()
-  if (!session?.user?.id) return { success: false, message: '請先登入' }
+  if (!session?.user?.id) return { success: false, message: 'profile.toast.mustLogin' }
 
   const file = formData.get('file')
   if (!(file instanceof File)) {
@@ -66,20 +68,20 @@ export async function uploadAvatar(formData: FormData): Promise<ActionResponse> 
   }
 
   revalidatePath('/', 'layout')
-  return { success: true, message: '頭像已更新' }
+  return { success: true, message: 'profile.toast.avatarUpdated' }
 }
 
 // ── 移除頭像 ──────────────────────────────────
 export async function removeAvatar(): Promise<ActionResponse> {
   const session = await auth()
-  if (!session?.user?.id) return { success: false, message: '請先登入' }
+  if (!session?.user?.id) return { success: false, message: 'profile.toast.mustLogin' }
 
   const existing = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { avatarKey: true },
   })
   if (!existing?.avatarKey) {
-    return { success: true, message: '頭像已移除' }
+    return { success: true, message: 'profile.toast.avatarRemoved' }
   }
 
   await prisma.user.update({
@@ -92,5 +94,5 @@ export async function removeAvatar(): Promise<ActionResponse> {
   })
 
   revalidatePath('/', 'layout')
-  return { success: true, message: '頭像已移除' }
+  return { success: true, message: 'profile.toast.avatarRemoved' }
 }

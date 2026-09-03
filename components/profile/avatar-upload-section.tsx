@@ -1,10 +1,11 @@
 /*
  * ----------------------------------------------
  * AvatarUploadSection - 個人資料頁頭像管理區塊
- * 2026-08-03
+ * 2026-08-03 (Updated: 2026-09-03)
  * components/profile/avatar-upload-section.tsx
  *
  * 選檔後立即上傳（無額外送出按鈕）；avatarKey 有值時才顯示「移除頭像」
+ * cr-spec-260903-001：字串改以 profile i18n 命名空間取用；action 訊息以 t() 呈現
  * ----------------------------------------------
  */
 
@@ -13,6 +14,7 @@
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { UserAvatar } from '@/components/shared/user-avatar'
 import { Button } from '@/components/ui/button'
 import { uploadAvatar, removeAvatar } from '@/app/actions/avatar'
@@ -24,6 +26,7 @@ type AvatarUploadSectionProps = {
 }
 
 export function AvatarUploadSection({ avatarUrl, avatarKey, displayName }: AvatarUploadSectionProps) {
+  const t = useTranslations()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
@@ -40,10 +43,10 @@ export function AvatarUploadSection({ avatarUrl, avatarKey, displayName }: Avata
     e.target.value = ''
 
     if (result.success) {
-      toast.success(result.message ?? '頭像已更新')
+      toast.success(t(result.message ?? 'profile.toast.avatarUpdated'))
       router.refresh()
     } else {
-      toast.error(result.message ?? '上傳失敗，請稍後再試')
+      toast.error(t(result.message ?? 'profile.toast.avatarUploadFailed'))
     }
   }
 
@@ -53,10 +56,10 @@ export function AvatarUploadSection({ avatarUrl, avatarKey, displayName }: Avata
     setLoading(false)
 
     if (result.success) {
-      toast.success(result.message ?? '頭像已移除')
+      toast.success(t(result.message ?? 'profile.toast.avatarRemoved'))
       router.refresh()
     } else {
-      toast.error(result.message ?? '移除失敗，請稍後再試')
+      toast.error(t(result.message ?? 'profile.toast.avatarRemoveFailed'))
     }
   }
 
@@ -72,15 +75,15 @@ export function AvatarUploadSection({ avatarUrl, avatarKey, displayName }: Avata
             disabled={loading}
             onClick={() => fileInputRef.current?.click()}
           >
-            {loading ? '處理中…' : '上傳新頭像'}
+            {loading ? t('profile.processing') : t('profile.avatarUpload')}
           </Button>
           {avatarKey && (
             <Button type="button" variant="ghost" size="sm" disabled={loading} onClick={handleRemove}>
-              移除頭像
+              {t('profile.avatarRemove')}
             </Button>
           )}
         </div>
-        <p className="text-xs text-muted-foreground">支援 JPG／PNG／WebP，大小 2MB 以內</p>
+        <p className="text-xs text-muted-foreground">{t('profile.avatarHint')}</p>
       </div>
       <input
         ref={fileInputRef}

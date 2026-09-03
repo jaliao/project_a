@@ -1,8 +1,10 @@
 /*
  * ----------------------------------------------
  * 個人資料頁面
- * 2026-03-23 (Updated: 2026-07-08)
+ * 2026-03-23 (Updated: 2026-09-03)
  * app/(user)/user/[spiritId]/profile/page.tsx
+ *
+ * cr-spec-260903-001：個人資料頁字串 i18n 化（profile 命名空間）
  * ----------------------------------------------
  */
 
@@ -47,31 +49,34 @@ export default async function ProfilePage({ searchParams }: Props) {
   const linkedProviders = user.accounts.map((a) => a.provider)
   const hasPassword = user.passwordHash !== null
 
+  const loginMethods = [
+    hasPassword ? t('profile.loginMethodPassword') : null,
+    linkedProviders.includes('google') ? t('profile.loginMethodGoogle') : null,
+  ].filter(Boolean)
+
   return (
     <div className="container mx-auto max-w-2xl py-8 space-y-8">
-      <h1 className="text-2xl font-bold">個人資料</h1>
+      <h1 className="text-2xl font-bold">{t('profile.pageTitle')}</h1>
 
       {/* 強制填寫提示（由 profile completion guard 轉導時顯示） */}
       {isIncomplete && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-          請先填寫必要資料（真實姓名、手機號碼），才能繼續使用系統。
+          {t('profile.incompleteBanner')}
         </div>
       )}
 
       {/* Spirit ID＋啟動帳號資訊 唯讀顯示 */}
       <div className="rounded-lg border p-4 space-y-3">
         <div className="space-y-1">
-          <p className="text-sm text-muted-foreground">啟動事工編號</p>
+          <p className="text-sm text-muted-foreground">{t('profile.spiritIdLabel')}</p>
           <p className="text-lg font-mono font-semibold">{user.spiritId ?? '—'}</p>
         </div>
         <div className="space-y-1 border-t pt-3">
-          <p className="text-sm text-muted-foreground">啟動帳號資訊</p>
+          <p className="text-sm text-muted-foreground">{t('profile.accountInfoLabel')}</p>
           <p className="font-medium break-all">{user.email}</p>
           <p className="text-xs text-muted-foreground">
-            登入方式：
-            {[hasPassword ? '密碼登入' : null, linkedProviders.includes('google') ? 'Google 登入' : null]
-              .filter(Boolean)
-              .join('、') || '—'}
+            {t('profile.loginMethodLabel')}
+            {loginMethods.join('、') || '—'}
           </p>
         </div>
       </div>
@@ -79,7 +84,7 @@ export default async function ProfilePage({ searchParams }: Props) {
       {/* 需要補填提示 */}
       {(!user.realName || !user.phone) && (
         <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800">
-          請完成個人資料填寫，以便後續課程登記與書本寄送。
+          {t('profile.completionHint')}
         </div>
       )}
 

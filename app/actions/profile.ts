@@ -1,8 +1,12 @@
 /*
  * ----------------------------------------------
  * Server Actions - 個人資料相關
- * 2026-03-23
+ * 2026-03-23 (Updated: 2026-09-03)
  * app/actions/profile.ts
+ *
+ * cr-spec-260903-001：個人資料頁相關 action 訊息 i18n key 化
+ * （updateProfile／updateCommEmail／resendCommVerification／unlinkGoogleAccount／changeMyAccountEmail；
+ *  updateGender／verifyCommEmail 不在範圍，維持繁體）
  * ----------------------------------------------
  */
 
@@ -30,7 +34,7 @@ export async function updateProfile(
   formData: FormData
 ): Promise<ActionResponse> {
   const session = await auth()
-  if (!session?.user?.id) return { success: false, message: '請先登入' }
+  if (!session?.user?.id) return { success: false, message: 'profile.toast.mustLogin' }
 
   const churchIdRaw = formData.get('churchId')
   const parsed = updateProfileSchema.safeParse({
@@ -51,7 +55,7 @@ export async function updateProfile(
   if (!parsed.success) {
     return {
       success: false,
-      message: '部分欄位填寫有誤，請檢查後再試',
+      message: 'profile.toast.formHasErrors',
       errors: parsed.error.flatten().fieldErrors,
     }
   }
@@ -76,7 +80,7 @@ export async function updateProfile(
   })
 
   revalidatePath('/(user)/profile')
-  return { success: true, message: '個人資料已更新' }
+  return { success: true, message: 'profile.toast.profileUpdated' }
 }
 
 // ── 首頁性別補填對話框專用：僅更新單一欄位 gender（cr-spec-260803-002） ──
@@ -105,7 +109,7 @@ export async function updateCommEmail(
   formData: FormData
 ): Promise<ActionResponse> {
   const session = await auth()
-  if (!session?.user?.id) return { success: false, message: '請先登入' }
+  if (!session?.user?.id) return { success: false, message: 'profile.toast.mustLogin' }
 
   const parsed = commEmailSchema.safeParse({
     commEmail: formData.get('commEmail'),
@@ -136,7 +140,7 @@ export async function updateCommEmail(
   })
 
   revalidatePath('/(user)/profile')
-  return { success: true, message: '通訊 Email 已更新，請查收驗證信' }
+  return { success: true, message: 'profile.toast.commEmailUpdated' }
 }
 
 // ── 驗證通訊 Email Token ──────────────────────
@@ -170,14 +174,14 @@ export async function verifyCommEmail(token: string): Promise<ActionResponse> {
 // ── 重發通訊 Email 驗證信 ─────────────────────
 export async function resendCommVerification(): Promise<ActionResponse> {
   const session = await auth()
-  if (!session?.user?.id) return { success: false, message: '請先登入' }
+  if (!session?.user?.id) return { success: false, message: 'profile.toast.mustLogin' }
 
   const user = await prisma.user.findUnique({ where: { id: session.user.id } })
   if (!user?.commEmail) {
-    return { success: false, message: '尚未設定通訊 Email' }
+    return { success: false, message: 'profile.toast.commEmailNotSet' }
   }
   if (user.isCommVerified) {
-    return { success: false, message: '通訊 Email 已驗證' }
+    return { success: false, message: 'profile.toast.commEmailAlreadyVerified' }
   }
 
   const token = randomBytes(32).toString('hex')
@@ -192,24 +196,24 @@ export async function resendCommVerification(): Promise<ActionResponse> {
     console.error('[resendCommVerification] 寄信失敗：', err)
   })
 
-  return { success: true, message: '驗證信已重新發送' }
+  return { success: true, message: 'profile.toast.verificationResent' }
 }
 
 // ── 解除 Google 帳號連結 ─────────────────────
 export async function unlinkGoogleAccount(): Promise<ActionResponse> {
   const session = await auth()
-  if (!session?.user?.id) return { success: false, message: '請先登入' }
+  if (!session?.user?.id) return { success: false, message: 'profile.toast.mustLogin' }
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: { accounts: true },
   })
 
-  if (!user) return { success: false, message: '帳號不存在' }
+  if (!user) return { success: false, message: 'profile.toast.accountNotFound' }
 
   const googleAccount = user.accounts.find((a) => a.provider === 'google')
   if (!googleAccount) {
-    return { success: false, message: '尚未連結 Google 帳號' }
+    return { success: false, message: 'profile.toast.googleNotLinked' }
   }
 
   // 防護：若無密碼且只有此一連結方式，禁止解除
@@ -217,14 +221,14 @@ export async function unlinkGoogleAccount(): Promise<ActionResponse> {
   if (!user.passwordHash && otherAccounts.length === 0) {
     return {
       success: false,
-      message: '請先設定密碼再解除連結，以免無法登入',
+      message: 'profile.toast.googleUnlinkNeedsPassword',
     }
   }
 
   await prisma.account.delete({ where: { id: googleAccount.id } })
 
   revalidatePath('/(user)/profile')
-  return { success: true, message: 'Google 帳號已解除連結' }
+  return { success: true, message: 'profile.toast.googleUnlinked' }
 }
 
 // ── 本人修改登入帳號 Email ──────────────────────
@@ -234,28 +238,39 @@ export async function changeMyAccountEmail(
   currentPassword: string
 ): Promise<ActionResponse> {
   const session = await auth()
-  if (!session?.user?.id) return { success: false, message: '請先登入' }
+  if (!session?.user?.id) return { success: false, message: 'profile.toast.mustLogin' }
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { id: true, email: true, passwordHash: true },
   })
-  if (!user) return { success: false, message: '帳號不存在' }
+  if (!user) return { success: false, message: 'profile.toast.accountNotFound' }
 
   if (!user.passwordHash) {
-    return { success: false, message: 'Google 登入帳號請洽管理員協助修改' }
+    return { success: false, message: 'profile.toast.accountEmailGoogleOnly' }
   }
 
   const passwordOk = await bcrypt.compare(currentPassword, user.passwordHash)
   if (!passwordOk) {
-    return { success: false, errors: { currentPassword: ['密碼不正確'] } }
+    return { success: false, errors: { currentPassword: ['validation.passwordWrong'] } }
   }
 
   const check = await validateNewAccountEmail(user.id, user.email, newEmail)
-  if (!check.ok) return { success: false, errors: check.errors }
+  if (!check.ok) {
+    // validateNewAccountEmail 為 admin 共用（回傳繁體字面），此處就地映射為 i18n key，不動共用模組
+    const MAP: Record<string, string> = {
+      'Email 格式不正確': 'validation.emailInvalid',
+      '與目前帳號相同': 'validation.emailSameAsCurrent',
+      '此 Email 已被使用': 'validation.emailTaken',
+    }
+    const errors = Object.fromEntries(
+      Object.entries(check.errors).map(([field, msgs]) => [field, msgs.map((m) => MAP[m] ?? m)])
+    )
+    return { success: false, errors }
+  }
 
   await applyAccountEmailChange(user.id, user.email, check.email)
 
   revalidatePath('/', 'layout')
-  return { success: true, message: `帳號已更新為 ${check.email}，下次登入請使用新帳號` }
+  return { success: true, message: 'profile.toast.accountEmailUpdated' }
 }

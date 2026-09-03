@@ -1,8 +1,10 @@
 /*
  * ----------------------------------------------
  * Server Actions - 認證相關
- * 2026-03-23
+ * 2026-03-23 (Updated: 2026-09-03)
  * app/actions/auth.ts
+ *
+ * cr-spec-260903-001：僅 changePassword 的訊息 i18n key 化（個人資料頁變更密碼卡）
  * ----------------------------------------------
  */
 
@@ -131,12 +133,13 @@ export async function changeTempPassword(
 }
 
 // ── 會員主動變更密碼（不修改 isTempPassword）────
+// cr-spec-260903-001：個人資料頁「變更密碼」卡使用，訊息改回傳 i18n key（changeTempPassword 不在範圍）
 export async function changePassword(
   formData: FormData
 ): Promise<ActionResponse> {
   const session = await auth()
   if (!session?.user?.id) {
-    return { success: false, message: '請先登入' }
+    return { success: false, message: 'profile.toast.mustLogin' }
   }
 
   const parsed = changePasswordSchema.safeParse({
@@ -153,12 +156,12 @@ export async function changePassword(
 
   const user = await prisma.user.findUnique({ where: { id: session.user.id } })
   if (!user?.passwordHash) {
-    return { success: false, message: '帳號不支援密碼登入' }
+    return { success: false, message: 'profile.toast.passwordAccountUnsupported' }
   }
 
   const isValid = await bcrypt.compare(currentPassword, user.passwordHash)
   if (!isValid) {
-    return { success: false, errors: { currentPassword: ['目前密碼不正確'] } }
+    return { success: false, errors: { currentPassword: ['validation.currentPasswordWrong'] } }
   }
 
   const newHash = await bcrypt.hash(newPassword, 12)
@@ -167,7 +170,7 @@ export async function changePassword(
     data: { passwordHash: newHash },
   })
 
-  return { success: true, message: '密碼已成功更新' }
+  return { success: true, message: 'profile.toast.passwordUpdated' }
 }
 
 // ── Onboarding 基本資料填寫 ───────────────────

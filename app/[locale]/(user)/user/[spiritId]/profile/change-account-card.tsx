@@ -1,11 +1,12 @@
 /*
  * ----------------------------------------------
  * ChangeAccountCard - 帳號修改卡（登入 Email 變更）
- * 2026-07-14
+ * 2026-07-14 (Updated: 2026-09-03)
  * app/[locale]/(user)/user/[spiritId]/profile/change-account-card.tsx
  *
  * 有密碼者：新 email＋目前密碼＋確認視窗後立即生效；
  * Google-only（無密碼）：顯示「請洽管理員協助修改」說明卡。
+ * cr-spec-260903-001：字串改以 profile i18n 命名空間取用；action 訊息以 t() 呈現
  * ----------------------------------------------
  */
 
@@ -14,6 +15,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { IconAt } from '@tabler/icons-react'
 import { changeMyAccountEmail } from '@/app/actions/profile'
 import { Button } from '@/components/ui/button'
@@ -37,6 +39,7 @@ export function ChangeAccountCard({
   currentEmail: string
   hasPassword: boolean
 }) {
+  const t = useTranslations()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [newEmail, setNewEmail] = useState('')
@@ -50,10 +53,10 @@ export function ChangeAccountCard({
       <div className="rounded-lg border p-4 space-y-2">
         <div className="flex items-center gap-2">
           <IconAt className="h-5 w-5 text-primary" />
-          <h2 className="text-base font-semibold">帳號修改</h2>
+          <h2 className="text-base font-semibold">{t('profile.changeAccountTitle')}</h2>
         </div>
         <p className="text-sm text-muted-foreground">
-          您目前以 Google 帳號登入（未設定密碼），如需修改登入帳號請洽管理員協助。
+          {t('profile.changeAccountGoogleOnly')}
         </p>
       </div>
     )
@@ -65,13 +68,13 @@ export function ChangeAccountCard({
       const res = await changeMyAccountEmail(newEmail, currentPassword)
       setConfirmOpen(false)
       if (res.success) {
-        toast.success(res.message ?? '帳號已更新')
+        toast.success(t(res.message ?? 'profile.toast.accountEmailUpdated'))
         setNewEmail('')
         setCurrentPassword('')
         router.refresh()
       } else {
         if (res.errors) setErrors(res.errors)
-        if (res.message) toast.error(res.message)
+        if (res.message) toast.error(t(res.message))
       }
     })
   }
@@ -82,24 +85,24 @@ export function ChangeAccountCard({
     <div className="rounded-lg border p-4 space-y-4">
       <div className="flex items-center gap-2">
         <IconAt className="h-5 w-5 text-primary" />
-        <h2 className="text-base font-semibold">帳號修改</h2>
+        <h2 className="text-base font-semibold">{t('profile.changeAccountTitle')}</h2>
       </div>
       <p className="text-sm text-muted-foreground">
-        變更登入帳號（Email）。目前帳號：<span className="font-medium">{currentEmail}</span>
+        {t('profile.changeAccountDesc')}<span className="font-medium">{currentEmail}</span>
       </p>
       <div className="space-y-1.5">
-        <Label htmlFor="account-new-email">新帳號 Email</Label>
+        <Label htmlFor="account-new-email">{t('profile.changeAccountNewEmail')}</Label>
         <Input
           id="account-new-email"
           type="email"
           value={newEmail}
           onChange={(e) => setNewEmail(e.target.value)}
-          placeholder="new@example.com"
+          placeholder={t('profile.placeholderNewEmail')}
         />
-        {errors.email?.[0] && <p className="text-sm text-destructive">{errors.email[0]}</p>}
+        {errors.email?.[0] && <p className="text-sm text-destructive">{t(errors.email[0])}</p>}
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="account-current-password">目前密碼</Label>
+        <Label htmlFor="account-current-password">{t('profile.changeAccountCurrentPassword')}</Label>
         <Input
           id="account-current-password"
           type="password"
@@ -107,38 +110,38 @@ export function ChangeAccountCard({
           onChange={(e) => setCurrentPassword(e.target.value)}
         />
         {errors.currentPassword?.[0] && (
-          <p className="text-sm text-destructive">{errors.currentPassword[0]}</p>
+          <p className="text-sm text-destructive">{t(errors.currentPassword[0])}</p>
         )}
       </div>
       <Button onClick={() => setConfirmOpen(true)} disabled={!canOpenConfirm || isPending}>
-        修改帳號
+        {t('profile.changeAccountSubmit')}
       </Button>
 
       {/* 確認視窗：新舊 email 並列＋下次登入提醒 */}
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>確認修改登入帳號？</AlertDialogTitle>
+            <AlertDialogTitle>{t('profile.changeAccountConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2">
                 <p>
-                  <span className="text-muted-foreground">目前帳號：</span>
+                  <span className="text-muted-foreground">{t('profile.changeAccountConfirmCurrent')}</span>
                   {currentEmail}
                 </p>
                 <p>
-                  <span className="text-muted-foreground">新帳號：</span>
+                  <span className="text-muted-foreground">{t('profile.changeAccountConfirmNew')}</span>
                   <span className="font-semibold">{newEmail.trim().toLowerCase()}</span>
                 </p>
                 <p className="text-amber-700">
-                  ⚠️ 確認後立即生效，下次登入請使用新帳號。請務必核對新帳號拼字是否正確。
+                  {t('profile.changeAccountConfirmWarn')}
                 </p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>取消</AlertDialogCancel>
+            <AlertDialogCancel disabled={isPending}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleSubmit} disabled={isPending}>
-              {isPending ? '處理中…' : '確認修改'}
+              {isPending ? t('profile.processing') : t('profile.changeAccountConfirmSubmit')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

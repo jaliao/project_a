@@ -1,8 +1,10 @@
 /*
  * ----------------------------------------------
  * ChangePasswordCard - 會員主動變更密碼
- * 2026-04-07
+ * 2026-04-07 (Updated: 2026-09-03)
  * app/(user)/user/[spiritId]/profile/change-password-card.tsx
+ *
+ * cr-spec-260903-001：卡片內寫死字串改以 profile i18n 命名空間取用
  * ----------------------------------------------
  */
 
@@ -43,28 +45,28 @@ export function ChangePasswordCard() {
       formData.set('confirmPassword', data.confirmPassword)
       const result = await changePassword(formData)
       if (result.success) {
-        toast.success(result.message ?? '密碼已更新')
+        toast.success(t(result.message ?? 'profile.toast.passwordUpdated'))
         reset()
       } else {
         const errKey = result.errors?.currentPassword?.[0] ?? result.errors?.newPassword?.[0]
-        toast.error(errKey ? t(errKey) : (result.message ?? '更新失敗'))
+        toast.error(errKey ? t(errKey) : (result.message ? t(result.message) : t('profile.toast.formHasErrors')))
       }
     })
   }
 
   return (
     <div className="rounded-lg border p-5 space-y-4">
-      <h2 className="text-sm font-medium text-muted-foreground">變更密碼</h2>
+      <h2 className="text-sm font-medium text-muted-foreground">{t('profile.changePasswordTitle')}</h2>
 
       <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
         {/* 目前密碼 */}
         <div className="grid gap-1.5">
-          <Label htmlFor="cp-currentPassword">目前密碼</Label>
+          <Label htmlFor="cp-currentPassword">{t('profile.changePasswordCurrent')}</Label>
           <div className="relative">
             <Input
               id="cp-currentPassword"
               type={showCurrent ? 'text' : 'password'}
-              placeholder="輸入目前密碼"
+              placeholder={t('profile.changePasswordCurrentPlaceholder')}
               autoComplete="current-password"
               disabled={isPending}
               className="pr-10"
@@ -86,12 +88,12 @@ export function ChangePasswordCard() {
 
         {/* 新密碼 */}
         <div className="grid gap-1.5">
-          <Label htmlFor="cp-newPassword">新密碼</Label>
+          <Label htmlFor="cp-newPassword">{t('profile.changePasswordNew')}</Label>
           <div className="relative">
             <Input
               id="cp-newPassword"
               type={showNew ? 'text' : 'password'}
-              placeholder="至少 8 個字元"
+              placeholder={t('profile.changePasswordNewPlaceholder')}
               autoComplete="new-password"
               disabled={isPending}
               className="pr-10"
@@ -113,12 +115,12 @@ export function ChangePasswordCard() {
 
         {/* 確認新密碼 */}
         <div className="grid gap-1.5">
-          <Label htmlFor="cp-confirmPassword">確認新密碼</Label>
+          <Label htmlFor="cp-confirmPassword">{t('profile.changePasswordConfirm')}</Label>
           <div className="relative">
             <Input
               id="cp-confirmPassword"
               type={showConfirm ? 'text' : 'password'}
-              placeholder="再次輸入新密碼"
+              placeholder={t('profile.changePasswordConfirmPlaceholder')}
               autoComplete="new-password"
               disabled={isPending}
               className="pr-10"
@@ -139,7 +141,7 @@ export function ChangePasswordCard() {
         </div>
 
         <Button type="submit" disabled={isPending} className="w-fit">
-          {isPending ? '更新中...' : '更新密碼'}
+          {isPending ? t('profile.changePasswordSubmitting') : t('profile.changePasswordSubmit')}
         </Button>
       </form>
     </div>

@@ -1,8 +1,10 @@
 /*
  * ----------------------------------------------
  * 個人資料表單（Client Component）
- * 2026-03-23 (Updated: 2026-04-02)
+ * 2026-03-23 (Updated: 2026-09-03)
  * app/(user)/user/[spiritId]/profile/profile-form.tsx
+ *
+ * cr-spec-260903-001：字串改以 profile i18n 命名空間取用；action toast 以 t() 呈現
  * ----------------------------------------------
  */
 
@@ -13,6 +15,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { signIn } from 'next-auth/react'
 import { updateProfile, updateCommEmail, resendCommVerification, unlinkGoogleAccount } from '@/app/actions/profile'
 import { updateProfileSchema, commEmailSchema } from '@/lib/schemas/profile'
@@ -59,6 +62,7 @@ function toSelectValue(churchType: string, churchId: number | null): string {
 }
 
 export default function ProfileForm({ user, activeChurches, linkedProviders, spiritId }: ProfileFormProps) {
+  const t = useTranslations()
   const [isPending, startTransition] = useTransition()
   const [selectValue, setSelectValue] = useState(toSelectValue(user.churchType, user.churchId))
 
@@ -123,7 +127,9 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
       fd.set('churchId', data.churchId ? String(data.churchId) : '')
       fd.set('churchOther', data.churchOther ?? '')
       const result = await updateProfile(fd)
-      result.success ? toast.success(result.message) : toast.error(result.message)
+      result.success
+        ? toast.success(result.message ? t(result.message) : t('profile.toast.profileUpdated'))
+        : toast.error(result.message ? t(result.message) : t('profile.toast.formHasErrors'))
     })
   }
 
@@ -132,14 +138,18 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
       const fd = new FormData()
       fd.set('commEmail', data.commEmail)
       const result = await updateCommEmail(fd)
-      result.success ? toast.success(result.message) : toast.error(result.message)
+      result.success
+        ? toast.success(result.message ? t(result.message) : t('profile.toast.profileUpdated'))
+        : toast.error(result.message ? t(result.message) : t('profile.toast.formHasErrors'))
     })
   }
 
   const handleResendVerification = () => {
     startTransition(async () => {
       const result = await resendCommVerification()
-      result.success ? toast.success(result.message) : toast.error(result.message)
+      result.success
+        ? toast.success(result.message ? t(result.message) : t('profile.toast.profileUpdated'))
+        : toast.error(result.message ? t(result.message) : t('profile.toast.formHasErrors'))
     })
   }
 
@@ -152,7 +162,9 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
   const handleUnlinkGoogle = () => {
     startTransition(async () => {
       const result = await unlinkGoogleAccount()
-      result.success ? toast.success(result.message) : toast.error(result.message)
+      result.success
+        ? toast.success(result.message ? t(result.message) : t('profile.toast.profileUpdated'))
+        : toast.error(result.message ? t(result.message) : t('profile.toast.formHasErrors'))
     })
   }
 
@@ -184,10 +196,10 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
 
       {/* ── 個人資料 ── */}
       <section className="rounded-lg border p-6 space-y-4">
-        <h2 className="text-lg font-semibold">基本資料</h2>
+        <h2 className="text-lg font-semibold">{t('profile.sectionBasic')}</h2>
         <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">中文姓名（若無中文姓名請填上您護照上的拼音姓名） *</label>
+            <label className="block text-sm font-medium mb-1">{t('profile.fieldRealName')} *</label>
             <input
               {...profileForm.register('realName')}
               className="w-full rounded-md border px-3 py-2"
@@ -198,20 +210,20 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">英文名稱</label>
+            <label className="block text-sm font-medium mb-1">{t('profile.fieldEnglishName')}</label>
             <input
               {...profileForm.register('englishName')}
               className="w-full rounded-md border px-3 py-2"
-              placeholder="English name（選填）"
+              placeholder={t('profile.placeholderEnglishName')}
               disabled={isPending}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">暱稱</label>
+            <label className="block text-sm font-medium mb-1">{t('profile.fieldNickname')}</label>
             <input
               {...profileForm.register('nickname')}
               className="w-full rounded-md border px-3 py-2"
-              placeholder="最多 20 個字（選填）"
+              placeholder={t('profile.placeholderNickname')}
               disabled={isPending}
             />
             {profileForm.formState.errors.nickname && (
@@ -220,42 +232,42 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">性別</label>
+              <label className="block text-sm font-medium mb-1">{t('profile.fieldGender')}</label>
               <select
                 {...profileForm.register('gender')}
                 className="w-full rounded-md border px-3 py-2 text-sm bg-background"
                 disabled={isPending}
               >
-                <option value="male">男</option>
-                <option value="female">女</option>
+                <option value="male">{t('profile.genderMale')}</option>
+                <option value="female">{t('profile.genderFemale')}</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">顯示名稱方式</label>
+              <label className="block text-sm font-medium mb-1">{t('profile.fieldDisplayNameMode')}</label>
               <select
                 {...profileForm.register('displayNameMode')}
                 className="w-full rounded-md border px-3 py-2 text-sm bg-background"
                 disabled={isPending}
               >
-                <option value="nickname">暱稱</option>
-                <option value="nickname_zh">暱稱（中文名稱）</option>
-                <option value="nickname_en">暱稱（英文名稱）</option>
+                <option value="nickname">{t('profile.displayModeNickname')}</option>
+                <option value="nickname_zh">{t('profile.displayModeNicknameZh')}</option>
+                <option value="nickname_en">{t('profile.displayModeNicknameEn')}</option>
               </select>
             </div>
           </div>
           <div className="rounded-md bg-muted px-3 py-2 text-sm">
-            <span className="text-muted-foreground">顯示名稱預覽：</span>
+            <span className="text-muted-foreground">{t('profile.displayNamePreview')}</span>
             <span className="font-medium ml-1">{displayNamePreview}</span>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">出生年（西元）</label>
+            <label className="block text-sm font-medium mb-1">{t('profile.fieldBirthYear')}</label>
             <input
               {...profileForm.register('birthYear')}
               type="number"
               inputMode="numeric"
               min={1900}
               max={new Date().getFullYear()}
-              placeholder={`例：1990（選填）`}
+              placeholder={t('profile.placeholderBirthYear')}
               className="w-full rounded-md border px-3 py-2"
               disabled={isPending}
             />
@@ -264,11 +276,11 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">手機號碼</label>
+            <label className="block text-sm font-medium mb-1">{t('profile.fieldPhone')}</label>
             <input
               {...profileForm.register('phone')}
               className="w-full rounded-md border px-3 py-2"
-              placeholder="09xxxxxxxx"
+              placeholder={t('profile.placeholderPhone')}
               disabled={isPending}
             />
             {profileForm.formState.errors.phone && (
@@ -276,7 +288,7 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">收件地址</label>
+            <label className="block text-sm font-medium mb-1">{t('profile.fieldAddress')}</label>
             <input
               {...profileForm.register('address')}
               className="w-full rounded-md border px-3 py-2"
@@ -286,26 +298,26 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
 
           {/* 所屬教會/單位 */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium">所屬教會/單位</label>
+            <label className="block text-sm font-medium">{t('profile.fieldChurch')}</label>
             <select
               className="w-full rounded-md border px-3 py-2 text-sm bg-background"
               value={selectValue}
               onChange={(e) => handleChurchSelectChange(e.target.value)}
               disabled={isPending}
             >
-              <option value="none">無</option>
+              <option value="none">{t('profile.churchNone')}</option>
               {churchOptions.map((c) => (
                 <option key={c.id} value={`church:${c.id}`}>
-                  {c.name}{!c.isActive ? '（已停用）' : ''}
+                  {c.name}{!c.isActive ? t('profile.churchInactiveSuffix') : ''}
                 </option>
               ))}
-              <option value="other">其他</option>
+              <option value="other">{t('profile.churchOther')}</option>
             </select>
             {showOtherInput && (
               <input
                 {...profileForm.register('churchOther')}
                 className="w-full rounded-md border px-3 py-2 text-sm"
-                placeholder="請填寫教會/單位名稱"
+                placeholder={t('profile.placeholderChurchOther')}
                 disabled={isPending}
               />
             )}
@@ -319,21 +331,21 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
             disabled={isPending}
             className="rounded-md bg-primary px-4 py-2 text-white disabled:opacity-50"
           >
-            儲存資料
+            {t('profile.save')}
           </button>
         </form>
       </section>
 
       {/* ── 通訊 Email ── */}
       <section className="rounded-lg border p-6 space-y-4">
-        <h2 className="text-lg font-semibold">通訊 Email</h2>
+        <h2 className="text-lg font-semibold">{t('profile.sectionCommEmail')}</h2>
         <form onSubmit={commEmailForm.handleSubmit(onCommEmailSubmit)} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">
-              通訊 Email
+              {t('profile.sectionCommEmail')}
               {user.commEmail && (
                 <span className={`ml-2 text-xs px-1.5 py-0.5 rounded ${user.isCommVerified ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                  {user.isCommVerified ? '已驗證' : '未驗證'}
+                  {user.isCommVerified ? t('profile.commVerified') : t('profile.commUnverified')}
                 </span>
               )}
             </label>
@@ -353,7 +365,7 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
               disabled={isPending}
               className="rounded-md bg-primary px-4 py-2 text-white disabled:opacity-50"
             >
-              更新通訊 Email
+              {t('profile.updateCommEmail')}
             </button>
             {user.commEmail && !user.isCommVerified && (
               <button
@@ -362,7 +374,7 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
                 disabled={isPending}
                 className="rounded-md border px-4 py-2 disabled:opacity-50"
               >
-                重發驗證信
+                {t('profile.resendVerification')}
               </button>
             )}
           </div>
@@ -371,12 +383,12 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
 
       {/* ── 帳號連動 ── */}
       <section className="rounded-lg border p-6 space-y-4">
-        <h2 className="text-lg font-semibold">帳號連動</h2>
+        <h2 className="text-lg font-semibold">{t('profile.sectionAccountLinking')}</h2>
         <div className="flex items-center justify-between">
           <div>
             <p className="font-medium">Google</p>
             <p className="text-sm text-muted-foreground">
-              {isGoogleLinked ? '已連結' : '未連結'}
+              {isGoogleLinked ? t('profile.providerLinked') : t('profile.providerUnlinked')}
             </p>
           </div>
           {isGoogleLinked ? (
@@ -385,7 +397,7 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
               disabled={isPending}
               className="rounded-md border px-4 py-2 text-sm disabled:opacity-50"
             >
-              解除連結
+              {t('profile.unlink')}
             </button>
           ) : (
             <button
@@ -393,17 +405,17 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
               disabled={isPending}
               className="rounded-md border px-4 py-2 text-sm disabled:opacity-50"
             >
-              連結帳號
+              {t('profile.link')}
             </button>
           )}
         </div>
         <div className="flex items-center justify-between opacity-60">
           <div>
             <p className="font-medium">LINE</p>
-            <p className="text-sm text-muted-foreground">未連結</p>
+            <p className="text-sm text-muted-foreground">{t('profile.providerUnlinked')}</p>
           </div>
           <button disabled className="rounded-md border px-4 py-2 text-sm opacity-50">
-            即將推出
+            {t('profile.comingSoon')}
           </button>
         </div>
       </section>
