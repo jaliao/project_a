@@ -1,8 +1,16 @@
 /*
  * ----------------------------------------------
  * 課程結業表單頁
- * 2026-03-27
+ * 2026-03-27 (Updated: 2026-09-14)
  * app/(user)/course/[id]/graduate/page.tsx
+ *
+ * cr-spec-260914-003：不再於 `completedAt` 已設時用 redirect() 導離本頁
+ * ——結業送出（Server Action）本身會讓 Next.js 對本頁觸發一次隱含的
+ * Server Component 重新渲染，若此時仍 redirect()，會搶在「將會為您
+ * 製作證書」提示對話框顯示之前就把頁面換掉（且會連帶吃掉 action 回應，
+ * 使前端連 toast 都來不及顯示）。改以 `alreadyCompleted` prop 交給
+ * GraduationForm 自行決定顯示方式（該元件以掛載時的值為準，之後的
+ * prop 更新不影響已進行中的送出流程狀態機）。
  * ----------------------------------------------
  */
 
@@ -50,11 +58,6 @@ export default async function GraduatePage({
     redirect(`/course/${numId}`)
   }
 
-  // 已結業：導回詳情頁
-  if (course.completedAt) {
-    redirect(`/course/${numId}`)
-  }
-
   const students = course.approvedEnrollments.map((e) => ({
     enrollmentId: e.id,
     userId: e.user.id,
@@ -82,7 +85,7 @@ export default async function GraduatePage({
         <p className="text-sm text-muted-foreground mt-1">{course.title}</p>
       </div>
 
-      <GraduationForm inviteId={numId} students={students} />
+      <GraduationForm inviteId={numId} students={students} alreadyCompleted={!!course.completedAt} />
     </div>
   )
 }

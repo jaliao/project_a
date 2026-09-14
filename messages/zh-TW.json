@@ -354,7 +354,12 @@
       "overallOptional": "（選填）",
       "ratingLabel": "整體評分",
       "testimonyLabel": "見證",
-      "testimonyPlaceholder": "分享本次帶班的見證…"
+      "testimonyPlaceholder": "分享本次帶班的見證…",
+      "certDialogTitle": "將會為您製作證書",
+      "certDialogMessage": "課程結業已完成，接下來系統將為已結業學員製作結業證書，請留意後續通知。",
+      "certDialogConfirm": "我知道了",
+      "alreadyCompleted": "此課程已結業，無法重複執行結業程序。",
+      "backToDetail": "返回課程詳情頁"
     },
     "card": {
       "publicRecruiting": "公開媒合・招募中",

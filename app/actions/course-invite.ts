@@ -454,7 +454,12 @@ export async function graduateCourse(
 
   const { revalidatePath } = await import('next/cache')
   revalidatePath(`/course/${inviteId}`)
-  revalidatePath(`/course/${inviteId}/graduate`)
+  // 注意：結業頁（/course/[id]/graduate，`page.tsx`）已改為不再對
+  // `completedAt` 做 redirect()（cr-spec-260914-003：改用 alreadyCompleted
+  // prop 交給 GraduationForm 決定顯示方式），故本頁是否 revalidate 已與
+  // 「將會為您製作證書」提示對話框能否顯示無關；此處仍不特別 revalidate
+  // 結業頁，因該頁 `dynamic = 'force-dynamic'`、下次真正導覽即會取得最新
+  // 資料，不 revalidate 不影響正確性。
 
   try {
     await createNotification(

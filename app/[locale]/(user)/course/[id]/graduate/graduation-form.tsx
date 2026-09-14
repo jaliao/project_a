@@ -1,8 +1,21 @@
 /*
  * ----------------------------------------------
  * GraduationForm - 課程結業三步驟表單
- * 2026-03-27
+ * 2026-03-27 (Updated: 2026-09-14)
  * app/(user)/course/[id]/graduate/graduation-form.tsx
+ *
+ * cr-spec-260914-003：送出結業成功且本次有已結業學員時，於本頁顯示
+ * 「將會為您製作證書」提示對話框，確認後才導回課程詳情頁。
+ *
+ * 重要：結業頁 page.tsx 不再於 `completedAt` 已設時 redirect() 導離本頁
+ * ——結業送出（Server Action）本身會讓 Next.js 對本頁觸發一次隱含的
+ * Server Component 重新渲染（等同隱含 router.refresh()），若 page.tsx
+ * 仍對 `completedAt` 做 redirect()，會搶在此對話框顯示之前就把頁面換掉，
+ * 且會連帶讓 action 回應被導向吃掉，使前端連 `result.success` 都拿不到。
+ * 改為 page.tsx 一律渲染本元件、以 `alreadyCompleted` prop 告知目前狀態；
+ * 本元件僅在**掛載當下**依該 prop 決定要顯示「已結業」訊息或表單本身
+ * （`initiallyCompleted` 以 lazy state 初始化、之後的 prop 更新不影響已
+ * 進行中的送出流程狀態機），確保送出成功後 Dialog 能穩定顯示與被點擊。
  * ----------------------------------------------
  */
 
@@ -17,6 +30,14 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   Select,
   SelectContent,
@@ -49,6 +70,7 @@ type Step = 'fill' | 'preview'
 type Props = {
   inviteId: number
   students: Student[]
+  alreadyCompleted: boolean
 }
 
 // ── 五星評分（onChange 省略＝唯讀）──────────────
@@ -71,7 +93,7 @@ function StarRating({ value, onChange }: { value: number; onChange?: (v: number)
   )
 }
 
-export function GraduationForm({ inviteId, students }: Props) {
+export function GraduationForm({ inviteId, students, alreadyCompleted }: Props) {
   const t = useTranslations('course.gradForm')
   // value 送至後端（保留），label 在地化
   const NON_GRADUATE_REASONS: { value: string; label: string }[] = [
@@ -83,6 +105,10 @@ export function GraduationForm({ inviteId, students }: Props) {
     other: t('reasonOther'),
   }
   const router = useRouter()
+  // 掛載當下是否已結業（lazy state：只採用初次掛載時的值，避免結業送出後
+  // 隱含重新渲染帶來的新 prop 值把表單／對話框狀態機打斷，見檔頭註解）
+  const [initiallyCompleted] = useState(alreadyCompleted)
+  const [showCertDialog, setShowCertDialog] = useState(false)
   const [step, setStep] = useState<Step>('fill')
   // 最後一堂課程日期
   const [lastCourseDate, setLastCourseDate] = useState('')
@@ -168,8 +194,13 @@ export function GraduationForm({ inviteId, students }: Props) {
     setSubmitting(false)
 
     if (result.success) {
-      toast.success(t('success'))
-      router.push(`/course/${inviteId}`)
+      if (graduatedStudents.length > 0) {
+        // 有已結業學員：停留本頁顯示「將會為您製作證書」提示，確認後才導回詳情頁
+        setShowCertDialog(true)
+      } else {
+        toast.success(t('success'))
+        router.push(`/course/${inviteId}`)
+      }
     } else {
       toast.error(result.message ?? t('fail'))
     }
@@ -178,6 +209,19 @@ export function GraduationForm({ inviteId, students }: Props) {
   // ── 計算摘要 ──────────────────────────────────
   const graduatedStudents = students.filter((s) => studentStates[s.userId].graduated)
   const nonGraduatedStudents = students.filter((s) => !studentStates[s.userId].graduated)
+
+  // ── 掛載當下已結業：僅顯示提示，不顯示表單（不會發生在本次剛送出的情境，
+  // 因 initiallyCompleted 以掛載時的值為準；僅發生於直接造訪已結業課程的結業頁）──
+  if (initiallyCompleted) {
+    return (
+      <div className="rounded-lg border p-5 space-y-3">
+        <p className="text-sm text-muted-foreground">{t('alreadyCompleted')}</p>
+        <Button variant="outline" onClick={() => router.push(`/course/${inviteId}`)}>
+          {t('backToDetail')}
+        </Button>
+      </div>
+    )
+  }
 
   // ── 填寫步驟 ──────────────────────────────────
   if (step === 'fill') {
@@ -395,6 +439,26 @@ export function GraduationForm({ inviteId, students }: Props) {
           {submitting ? t('processing') : t('confirmSubmit')}
         </Button>
       </div>
+
+      {/* 送出結業成功且有已結業學員：提示接下來將製作結業證書，確認後才導回課程詳情頁 */}
+      <Dialog open={showCertDialog} onOpenChange={() => {}}>
+        <DialogContent
+          className="max-w-sm"
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          showCloseButton={false}
+        >
+          <DialogHeader>
+            <DialogTitle>{t('certDialogTitle')}</DialogTitle>
+            <DialogDescription>{t('certDialogMessage')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => router.push(`/course/${inviteId}`)}>
+              {t('certDialogConfirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -355,7 +355,12 @@
       "overallOptional": "（选填）",
       "ratingLabel": "整体评分",
       "testimonyLabel": "见证",
-      "testimonyPlaceholder": "分享本次带班的见证…"
+      "testimonyPlaceholder": "分享本次带班的见证…",
+      "certDialogTitle": "将会为您制作证书",
+      "certDialogMessage": "课程结业已完成，接下来系统将为已结业学员制作结业证书，请留意后续通知。",
+      "certDialogConfirm": "我知道了",
+      "alreadyCompleted": "此课程已结业，无法重复执行结业程序。",
+      "backToDetail": "返回课程详情页"
     },
     "card": {
       "publicRecruiting": "公开媒合・招募中",

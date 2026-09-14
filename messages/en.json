@@ -354,7 +354,12 @@
       "overallOptional": "(optional)",
       "ratingLabel": "Overall rating",
       "testimonyLabel": "Testimony",
-      "testimonyPlaceholder": "Share a testimony from leading this class…"
+      "testimonyPlaceholder": "Share a testimony from leading this class…",
+      "certDialogTitle": "Certificates will be produced for you",
+      "certDialogMessage": "Graduation is complete. The system will now produce graduation certificates for the graduated students — please watch for further notice.",
+      "certDialogConfirm": "Got it",
+      "alreadyCompleted": "This course has already graduated; the graduation process cannot be repeated.",
+      "backToDetail": "Back to course details"
     },
     "card": {
       "publicRecruiting": "Public match · Recruiting",
