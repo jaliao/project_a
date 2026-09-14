@@ -242,14 +242,14 @@ function OrderDetail({
             <div>
               <span className="text-muted-foreground">取貨方式：</span>
               {DELIVERY_METHOD_LABELS[order.deliveryMethod] ?? order.deliveryMethod}
-              {order.deliveryMethod === 'sevenEleven' && (
+              {order.deliveryMethod !== 'delivery' && (
                 <span className="ml-1 text-muted-foreground">
                   {order.storeName && order.storeId
                     ? `— ${order.storeName}（${order.storeId}）`
                     : order.deliveryAddress ? `— ${order.deliveryAddress}` : ''}
                 </span>
               )}
-              {order.deliveryMethod !== 'sevenEleven' && order.deliveryAddress && (
+              {order.deliveryMethod === 'delivery' && order.deliveryAddress && (
                 <span className="ml-1 text-muted-foreground">— {order.deliveryAddress}</span>
               )}
             </div>
