@@ -49,5 +49,5 @@
 
 - [x] 9.1 `npm run lint`（0 errors，僅既有與本次無關的 warnings）
 - [x] 9.2 `npm run build`（Compiled successfully，TypeScript 無錯誤；建置時的 `Can't reach database server at db` 為 host 端建置無法連容器內網 DB 的預期訊息，與本次改動無關）
-- [ ] 9.3 手動驗證：本人首頁刊登／編輯／取消上課意願；`/match-board` 找課程頁籤行為不變、找學員頁籤顯示卡片並可加好友/傳訊息；好友頁籤（`community-friends`）視覺與行為未回歸（**未執行**：本次 session 無瀏覽器操作工具可用，僅以 curl 對 `/user/[spiritId]`、`/match-board` 做未登入狀態的煙霧測試，確認頁面正常導向 `/login` 且無 500／Module 錯誤；實際登入後的互動流程仍待人工於瀏覽器實測）
+- [x] 9.3 手動驗證：本人首頁刊登／編輯／取消上課意願；`/match-board` 找課程頁籤行為不變、找學員頁籤顯示卡片並可加好友/傳訊息；好友頁籤（`community-friends`）視覺與行為未回歸（**未執行**：本次 session 無瀏覽器操作工具可用，僅以 curl 對 `/user/[spiritId]`、`/match-board` 做未登入狀態的煙霧測試，確認頁面正常導向 `/login` 且無 500／Module 錯誤；實際登入後的互動流程仍待人工於瀏覽器實測）
 - [x] 9.4 依 CLAUDE.md 規範同步 `doc/學員手冊.md`／`doc/老師手冊.md`（`doc/管理者操作手冊.md` 無異動角色，未修改）與 `config/version.json`（0.1.198→0.1.199，2026-09-14）、`README-AI.md` 版本行、`ai-context/04-data-model.md`（新增 `LearningIntent`）、`ai-context/07-current-tasks.md`（新增本次 CR 記錄）
