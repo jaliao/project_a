@@ -1,0 +1,36 @@
+/**
+ * ----------------------------------------------
+ * Prisma Schema - 學員上課意願
+ * 2026-09-14
+ * prisma/schema/learning-intent.prisma
+ * ----------------------------------------------
+ */
+
+// 上課時間條件（可複選）
+enum LearningTimePreference {
+  weekday_day // 平日白天
+  weekday_night // 平日晚上
+  weekend // 假日
+  anytime // 時間不拘
+  other // 其他（otherNote 補充說明）
+}
+
+// ==========================================
+// 學員上課意願（cr-spec-260914-001）
+// 每位會員至多一筆刊登中的意願；取消刊登 = 刪除該筆記錄。
+// ==========================================
+model LearningIntent {
+  id     Int    @id @default(autoincrement())
+  userId String @unique @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  courseCatalogIds Int[] // 想上的課程（CourseCatalog.id，至少 1 筆；快照，不建強關聯）
+  timePreferences  LearningTimePreference[] // 上課時間條件（至少 1 個）
+  otherNote        String? // 時間條件含 other 時的補充說明
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("learning_intents")
+}

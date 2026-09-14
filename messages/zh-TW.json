@@ -522,7 +522,14 @@
     "metaTitle": "媒合布告欄 — 啟動事工",
     "title": "媒合布告欄",
     "desc": "以下為公開招募中的課程，點擊卡片可前往課程頁報名。",
-    "empty": "目前沒有公開招募中的課程"
+    "empty": "目前沒有公開招募中的課程",
+    "tabCourses": "找課程",
+    "tabStudents": "找學員",
+    "emptyStudents": "目前沒有學員刊登上課意願",
+    "addFriend": "加好友",
+    "addFriendSuccess": "已加入好友",
+    "addFriendFailed": "加好友失敗，請稍後再試",
+    "sendMessage": "傳訊息"
   },
   "recover": {
     "metaTitle": "找回帳號 — 啟動事工",
@@ -592,7 +599,11 @@
     "currentPasswordWrong": "目前密碼不正確",
     "passwordWrong": "密碼不正確",
     "emailSameAsCurrent": "與目前帳號相同",
-    "emailTaken": "此 Email 已被使用"
+    "emailTaken": "此 Email 已被使用",
+    "learningIntentCoursesRequired": "請至少選擇 1 門課程",
+    "learningIntentTimeRequired": "請至少選擇 1 個時間條件",
+    "learningIntentOtherNoteRequired": "請填寫補充說明",
+    "learningIntentOtherNoteMax200": "補充說明最長 200 字"
   },
   "status": {
     "recruiting": "招生中",
@@ -683,7 +694,12 @@
     "addBySpiritId": "輸入啟動編號",
     "friendSearchPlaceholder": "搜尋好友名稱",
     "noFriendMatch": "沒有符合的好友",
-    "noFriendsToAdd": "沒有可加入的好友"
+    "noFriendsToAdd": "沒有可加入的好友",
+    "leaveGroup": "離開群組",
+    "leaveConfirm": "確定要離開這個群組嗎？離開後可由其他成員重新邀請加入。",
+    "leaveConfirmNo": "再想想",
+    "leaveSuccess": "已離開群組",
+    "leaveFail": "離開失敗，請稍後再試"
   },
   "community": {
     "title": "社群",
@@ -716,6 +732,30 @@
     "pageIndicator": "第 {page} / {total} 頁",
     "prevPage": "上一頁",
     "nextPage": "下一頁"
+  },
+  "learningIntent": {
+    "createButton": "我想上課",
+    "editButton": "已刊登，編輯",
+    "dialogTitle": "刊登上課意願",
+    "coursesLabel": "想上的課程",
+    "timePreferenceLabel": "上課時間條件",
+    "timePreference": {
+      "weekday_day": "平日白天",
+      "weekday_night": "平日晚上",
+      "weekend": "假日",
+      "anytime": "時間不拘",
+      "other": "其他"
+    },
+    "otherNoteLabel": "補充說明",
+    "otherNotePlaceholder": "請說明可配合的時間",
+    "submit": "送出",
+    "cancelPosting": "取消刊登",
+    "cancelConfirm": "確定要取消刊登上課意願嗎？",
+    "cancelConfirmNo": "再想想",
+    "savedSuccess": "已刊登上課意願",
+    "saveFailed": "刊登失敗，請稍後再試",
+    "cancelledSuccess": "已取消刊登",
+    "cancelFailed": "取消失敗，請稍後再試"
   },
   "pwa": {
     "homeLink": "安裝到手機桌面",

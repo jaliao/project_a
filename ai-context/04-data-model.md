@@ -178,3 +178,17 @@ createdAt DateTime
 @@index([ownerId])
 ```
 > 單向：A 加 B 只建立 `{ ownerId: A, friendId: B }`，B 的好友清單不因此出現 A。加好友即時生效、免對方同意（`app/actions/friendship.ts addFriendBySpiritId`），成功新增後 fire-and-forget 通知對方；`removeFriend` 僅刪自己這筆。owner/friend 對 User 皆 `onDelete: Cascade`。**不影響傳訊息權限**——傳訊息仍為任何會員互傳，好友只是「快速開對話」清單（前台 `/messages` 社群頁「好友」頁籤）。
+
+### LearningIntent（學員上課意願；cr-spec-260914-001）
+```
+id               Int（主鍵，autoincrement）
+userId           String（關聯 User UUID，@unique——每人至多一筆刊登中意願）
+courseCatalogIds Int[]（想上的課程，CourseCatalog.id 陣列，快照，不建強關聯）
+timePreferences  LearningTimePreference[]（weekday_day／weekday_night／weekend／anytime／other，至少 1 個）
+otherNote        String?（timePreferences 含 other 時的補充說明）
+createdAt        DateTime
+updatedAt        DateTime
+
+@@map("learning_intents")
+```
+> 學員於個人首頁（`/user/[spiritId]`）「我想上課」按鈕刊登／編輯（upsert by `userId`，`app/actions/learning-intent.ts saveLearningIntent`），取消刊登即刪除該筆（`cancelLearningIntent`）。媒合布告欄（`/match-board`）「找學員」頁籤（`lib/data/learning-intent.ts getMatchableStudents`）列出所有刊登中學員（排除自己），卡片與社群好友卡片共用呈現元件 `components/community/student-card.tsx`，依好友關係顯示「加好友」（`addFriendByUserId`，與 `addFriendBySpiritId` 共用 `createFriendshipCore`）或「傳訊息」。User 刪除時 `onDelete: Cascade`。

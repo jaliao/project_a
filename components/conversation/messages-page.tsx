@@ -197,6 +197,12 @@ export function MessagesPage({
     refreshConversations()
   }, [selected?.id, refreshConversations])
 
+  const handleMembersLeft = useCallback(() => {
+    setMembersOpen(false)
+    setSelected(null)
+    refreshConversations()
+  }, [refreshConversations])
+
   async function handleTogglePin() {
     if (!selected?.id) return
     await togglePinConversation(selected.id)
@@ -361,6 +367,7 @@ export function MessagesPage({
                 participants={selected.participants}
                 friends={friends}
                 onInvited={handleMembersInvited}
+                onLeft={handleMembersLeft}
               />
 
               <ConversationThread

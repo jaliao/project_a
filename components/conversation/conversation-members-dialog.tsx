@@ -8,6 +8,9 @@
  * 內含成員清單，以及「加入成員」——「從好友加入」（輸入名字即時過濾好友清單、
  * 點一位即加入）與「輸入啟動編號」兩種方式，以切換鈕互切。兩者皆走既有
  * inviteToConversation（好友加入時傳其 spiritId），伺服器端零改動。
+ * cr-spec-260914-002：成員清單下方新增「離開群組」（僅目前參與者 > 2 人時
+ * 顯示），AlertDialog 確認後呼叫 leaveConversation，成功後由 onLeft 回呼
+ * 通知父層關閉彈窗／取消選取該對話／重新整理頻道列表。
  * ----------------------------------------------
  */
 
@@ -26,8 +29,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { UserAvatar } from '@/components/shared/user-avatar'
-import { inviteToConversation } from '@/app/actions/conversation'
+import { inviteToConversation, leaveConversation } from '@/app/actions/conversation'
 import type { FriendListItem } from '@/lib/data/friendship'
 
 type Participant = { userId: string; name: string; avatarUrl: string | null }
@@ -39,6 +52,7 @@ type Props = {
   participants: Participant[]
   friends: FriendListItem[]
   onInvited: () => void
+  onLeft: () => void
 }
 
 export function ConversationMembersDialog({
@@ -48,12 +62,14 @@ export function ConversationMembersDialog({
   participants,
   friends,
   onInvited,
+  onLeft,
 }: Props) {
   const t = useTranslations('conversation')
   const [mode, setMode] = useState<'friends' | 'spiritId'>('friends')
   const [q, setQ] = useState('')
   const [spiritIdInput, setSpiritIdInput] = useState('')
   const [busy, setBusy] = useState(false)
+  const [leaving, setLeaving] = useState(false)
 
   const participantIds = useMemo(
     () => new Set(participants.map((p) => p.userId)),
@@ -80,6 +96,19 @@ export function ConversationMembersDialog({
       onInvited()
     } else {
       toast.error(result.message ?? t('inviteFail'))
+    }
+  }
+
+  async function handleLeave() {
+    if (!conversationId || leaving) return
+    setLeaving(true)
+    const result = await leaveConversation(conversationId)
+    setLeaving(false)
+    if (result.success) {
+      toast.success(t('leaveSuccess'))
+      onLeft()
+    } else {
+      toast.error(result.message ?? t('leaveFail'))
     }
   }
 
@@ -172,6 +201,35 @@ export function ConversationMembersDialog({
                 </Button>
               </div>
             )}
+          </div>
+        )}
+
+        {/* 離開群組：僅目前參與者超過 2 人（群組對話）時顯示 */}
+        {conversationId != null && participants.length > 2 && (
+          <div className="border-t pt-3">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full text-destructive hover:text-destructive"
+                  disabled={leaving}
+                >
+                  {t('leaveGroup')}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t('leaveConfirm')}</AlertDialogTitle>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t('leaveConfirmNo')}</AlertDialogCancel>
+                  <AlertDialogAction disabled={leaving} onClick={handleLeave}>
+                    {t('leaveGroup')}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         )}
       </DialogContent>

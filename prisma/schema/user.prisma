@@ -156,6 +156,9 @@ model User {
   friendshipsOwned    Friendship[] @relation("FriendshipOwner")
   friendshipsAsFriend Friendship[] @relation("FriendshipFriend")
 
+  // 上課意願刊登（cr-spec-260914-001）
+  learningIntent LearningIntent?
+
   @@map("users")
 }
 

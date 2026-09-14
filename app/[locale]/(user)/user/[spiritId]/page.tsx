@@ -47,6 +47,8 @@ import { getActiveCourses, getAllCourses } from '@/lib/data/course-catalog'
 import { getMyInquiries } from '@/lib/data/support-inquiry'
 import { ContactAdminCards } from '@/components/support-inquiry/contact-admin-cards'
 import { getAdminSetting, CLASS_MAX_CAPACITY_KEY, CLASS_MAX_CAPACITY_DEFAULT } from '@/lib/data/admin-settings'
+import { getMyLearningIntent } from '@/lib/data/learning-intent'
+import { LearningIntentDialog } from '@/components/dashboard/learning-intent-dialog'
 
 export const metadata: Metadata = {
   title: '首頁 — 啟動事工',
@@ -105,6 +107,8 @@ export default async function UserProfilePage({ params }: Props) {
   const certificates = await getMyCompletionCertificates(user.id)
   // 本人：最近提問（聯繫管理者，僅本人可見）
   const myRecentInquiries = isOwnPageEarly ? (await getMyInquiries(user.id)).slice(0, 2) : []
+  // 本人：目前刊登中的上課意願（首頁「我想上課」按鈕狀態／編輯預填用）
+  const myLearningIntent = isOwnPageEarly ? await getMyLearningIntent(user.id) : null
   // 課程目錄（基本資料區塊進度三卡固定顯示）
   const allCourses = await getAllCourses()
   // 學習進度三卡：三態（未完成／進行中／已完成）＋作業完成度
@@ -169,7 +173,10 @@ export default async function UserProfilePage({ params }: Props) {
         <GenderPromptDialog />
       )}
 
-      <h1 className="text-2xl font-semibold">首頁</h1>
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-2xl font-semibold">首頁</h1>
+        {isOwnPage && <LearningIntentDialog courses={activeCourses} myIntent={myLearningIntent} />}
+      </div>
 
       {/* 基本資料單元 */}
       <section className="space-y-4">

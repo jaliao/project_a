@@ -1,8 +1,11 @@
 /*
  * ----------------------------------------------
  * 媒合布告欄頁面
- * 2026-06-06
+ * 2026-06-06 (Updated: 2026-09-14)
  * app/(user)/match-board/page.tsx
+ *
+ * cr-spec-260914-001：改為頁籤結構（找課程／找學員），原列表內容
+ * 移入 MatchBoardTabs 的「找課程」頁籤，新增「找學員」頁籤。
  * ----------------------------------------------
  */
 
@@ -11,8 +14,8 @@ import { redirect } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { auth } from '@/lib/auth'
 import { getPublicMatchingSessions } from '@/lib/data/course-sessions'
-import { CourseSessionCard } from '@/components/course-session/course-session-card'
-import { CourseCardGrid } from '@/components/course-session/course-card-grid'
+import { getMatchableStudents } from '@/lib/data/learning-intent'
+import { MatchBoardTabs } from '@/components/match-board/match-board-tabs'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,15 +31,21 @@ export async function generateMetadata({
 
 export default async function MatchBoardPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>
+  searchParams: Promise<{ tab?: string }>
 }) {
   const session = await auth()
-  if (!session?.user) redirect('/login')
+  if (!session?.user?.id) redirect('/login')
 
   const { locale } = await params
+  const { tab } = await searchParams
   const t = await getTranslations({ locale, namespace: 'matchBoard' })
-  const items = await getPublicMatchingSessions()
+  const [courseItems, students] = await Promise.all([
+    getPublicMatchingSessions(),
+    getMatchableStudents(session.user.id),
+  ])
 
   return (
     <div className="space-y-6">
@@ -47,33 +56,11 @@ export default async function MatchBoardPage({
         </p>
       </div>
 
-      {items.length === 0 ? (
-        <p className="rounded-lg border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
-          {t('empty')}
-        </p>
-      ) : (
-        <CourseCardGrid>
-          {items.map((item) => (
-            <CourseSessionCard
-              inviteId={item.id}
-              key={item.id}
-              title={item.title}
-              courseCatalogId={item.courseCatalogId}
-              courseCatalogLabel={item.courseCatalogLabel}
-              courseDate={item.courseDate}
-              maxCount={item.maxCount}
-              enrolledCount={item.enrolledCount}
-              expiredAt={item.expiredAt}
-              startedAt={item.startedAt}
-              cancelledAt={item.cancelledAt}
-              completedAt={item.completedAt}
-              matchNote={item.matchNote}
-              showMatchBadge
-              href={`/course/${item.id}`}
-            />
-          ))}
-        </CourseCardGrid>
-      )}
+      <MatchBoardTabs
+        courseItems={courseItems}
+        students={students}
+        initialTab={tab === 'students' ? 'students' : 'courses'}
+      />
     </div>
   )
 }

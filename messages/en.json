@@ -522,7 +522,14 @@
     "metaTitle": "Match board — 啟動事工",
     "title": "Match board",
     "desc": "Below are publicly recruiting courses. Click a card to view and enroll.",
-    "empty": "No publicly recruiting courses at the moment"
+    "empty": "No publicly recruiting courses at the moment",
+    "tabCourses": "Find Courses",
+    "tabStudents": "Find Students",
+    "emptyStudents": "No students have posted learning interest yet",
+    "addFriend": "Add Friend",
+    "addFriendSuccess": "Friend added",
+    "addFriendFailed": "Failed to add friend, please try again later",
+    "sendMessage": "Message"
   },
   "recover": {
     "metaTitle": "Recover account — 啟動事工",
@@ -592,7 +599,11 @@
     "currentPasswordWrong": "Current password is incorrect",
     "passwordWrong": "Password is incorrect",
     "emailSameAsCurrent": "Same as your current account",
-    "emailTaken": "This email is already in use"
+    "emailTaken": "This email is already in use",
+    "learningIntentCoursesRequired": "Please select at least 1 course",
+    "learningIntentTimeRequired": "Please select at least 1 time preference",
+    "learningIntentOtherNoteRequired": "Please fill in the additional note",
+    "learningIntentOtherNoteMax200": "Additional note must be at most 200 characters"
   },
   "status": {
     "recruiting": "Recruiting",
@@ -683,7 +694,12 @@
     "addBySpiritId": "By Spirit ID",
     "friendSearchPlaceholder": "Search friends by name",
     "noFriendMatch": "No matching friend",
-    "noFriendsToAdd": "No friends available to add"
+    "noFriendsToAdd": "No friends available to add",
+    "leaveGroup": "Leave Group",
+    "leaveConfirm": "Are you sure you want to leave this group? You can be re-invited by another member later.",
+    "leaveConfirmNo": "Keep it",
+    "leaveSuccess": "Left the group",
+    "leaveFail": "Failed to leave, please try again later"
   },
   "community": {
     "title": "Community",
@@ -716,6 +732,30 @@
     "pageIndicator": "Page {page} / {total}",
     "prevPage": "Previous",
     "nextPage": "Next"
+  },
+  "learningIntent": {
+    "createButton": "I Want to Learn",
+    "editButton": "Posted, Edit",
+    "dialogTitle": "Post Learning Interest",
+    "coursesLabel": "Courses You Want to Take",
+    "timePreferenceLabel": "Preferred Time",
+    "timePreference": {
+      "weekday_day": "Weekday Daytime",
+      "weekday_night": "Weekday Evening",
+      "weekend": "Weekend",
+      "anytime": "Anytime",
+      "other": "Other"
+    },
+    "otherNoteLabel": "Additional Note",
+    "otherNotePlaceholder": "Describe the time that works for you",
+    "submit": "Submit",
+    "cancelPosting": "Cancel Posting",
+    "cancelConfirm": "Are you sure you want to cancel your learning interest posting?",
+    "cancelConfirmNo": "Keep it",
+    "savedSuccess": "Learning interest posted",
+    "saveFailed": "Failed to save, please try again later",
+    "cancelledSuccess": "Posting cancelled",
+    "cancelFailed": "Failed to cancel, please try again later"
   },
   "pwa": {
     "homeLink": "Install to home screen",

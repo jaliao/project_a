@@ -167,6 +167,27 @@ export async function inviteToConversation(conversationId: number, targetSpiritI
   return { success: true, message: '已邀請加入', conversationId }
 }
 
+// ── 群組對話（目前參與者 > 2 人）的參與者：離開該對話（僅移除自己）──
+export async function leaveConversation(conversationId: number): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  if (!(await isParticipant(conversationId, session.user.id))) {
+    return { success: false, message: '無權限' }
+  }
+
+  const participantCount = await prisma.conversationParticipant.count({ where: { conversationId } })
+  if (participantCount <= 2) {
+    return { success: false, message: '此非群組對話，無法離開' }
+  }
+
+  await prisma.conversationParticipant.delete({
+    where: { conversationId_userId: { conversationId, userId: session.user.id } },
+  })
+
+  return { success: true, message: '已離開群組', conversationId }
+}
+
 // ── 任一參與者：修改對話標題（清空則恢復自動命名）──
 export async function updateConversationTitle(conversationId: number, title: string): Promise<ActionResponse> {
   const session = await auth()
