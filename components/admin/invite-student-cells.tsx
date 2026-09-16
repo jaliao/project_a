@@ -1,28 +1,24 @@
 /*
  * ----------------------------------------------
  * 後台班級學員管理 - 新增/移除學員元件
- * 2026-07-14 (Updated: 2026-07-17)
+ * 2026-07-14 (Updated: 2026-09-16)
  * components/admin/invite-student-cells.tsx
  *
- * AddStudentDialog：Email 或啟動編號查找既有會員（確認列）＋補登結業，
- * 僅限既有會員，查無則不可送出。
+ * AddStudentDialog：透過「學員選擇元件」StudentPicker 單選既有會員（模糊搜尋／
+ * 社群好友直接點選）＋補登結業，僅限既有會員。
  * RemoveStudentButton：已結業報名醒目警示確認後移除。
+ * cr-spec-260916-004：移除原「輸入 Email 或啟動編號」文字框，改用 StudentPicker。
  * ----------------------------------------------
  */
 
 'use client'
 
-import { useEffect, useRef, useState, useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { IconUserPlus, IconAlertTriangle } from '@tabler/icons-react'
-import {
-  addStudentToInvite,
-  removeStudentFromInvite,
-  lookupMemberByIdentifier,
-} from '@/app/actions/invite-students'
+import { addStudentToInvite, removeStudentFromInvite, searchStudentsForInvite } from '@/app/actions/invite-students'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
@@ -44,11 +40,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-
-type LookupState =
-  | { kind: 'idle' }
-  | { kind: 'existing'; displayName: string; spiritId: string | null }
-  | { kind: 'new' }
+import { Input } from '@/components/ui/input'
+import { StudentPicker, type StudentPickerSelection } from '@/components/shared/student-picker'
+import type { FriendListItem } from '@/lib/data/friendship'
 
 // ==========================================
 // 新增學員 Dialog
@@ -60,6 +54,8 @@ export function AddStudentDialog({
   approvedCount,
   capacity,
   isAdmin,
+  friends,
+  excludeUserIds,
   triggerVariant = 'default',
   triggerSize = 'default',
 }: {
@@ -69,46 +65,26 @@ export function AddStudentDialog({
   approvedCount: number
   capacity: number
   isAdmin: boolean
+  friends: FriendListItem[]
+  excludeUserIds: string[]
   triggerVariant?: 'default' | 'outline'
   triggerSize?: 'default' | 'sm'
 }) {
   const atCapacity = !isAdmin && approvedCount >= capacity
   const router = useRouter()
   const [open, setOpen] = useState(autoOpen)
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
 
-  const [identifier, setIdentifier] = useState('')
+  const [selectedStudent, setSelectedStudent] = useState<StudentPickerSelection | null>(null)
   const [graduated, setGraduated] = useState(false)
   const [graduatedAt, setGraduatedAt] = useState('')
-  const [lookup, setLookup] = useState<LookupState>({ kind: 'idle' })
   const [errors, setErrors] = useState<Record<string, string[]>>({})
-  const lookupSeq = useRef(0)
-
-  // 輸入後查詢既有會員（確認列）；空白時延後重置避免 effect 內同步 setState
-  useEffect(() => {
-    const value = identifier.trim()
-    const seq = ++lookupSeq.current
-    const timer = setTimeout(
-      async () => {
-        if (!value) {
-          setLookup({ kind: 'idle' })
-          return
-        }
-        const res = await lookupMemberByIdentifier(inviteId, value)
-        if (seq !== lookupSeq.current) return // 過期查詢結果丟棄
-        const member = res.success ? res.data?.member : null
-        setLookup(member ? { kind: 'existing', displayName: member.displayName, spiritId: member.spiritId } : { kind: 'new' })
-      },
-      value ? 400 : 0
-    )
-    return () => clearTimeout(timer)
-  }, [identifier, inviteId])
 
   const resetForm = () => {
-    setIdentifier('')
+    setSelectedStudent(null)
     setGraduated(false)
     setGraduatedAt('')
-    setLookup({ kind: 'idle' })
     setErrors({})
   }
 
@@ -118,11 +94,12 @@ export function AddStudentDialog({
   }
 
   const handleSubmit = () => {
+    if (!selectedStudent) return
     setErrors({})
     startTransition(async () => {
       const res = await addStudentToInvite({
         inviteId,
-        identifier,
+        userId: selectedStudent.userId,
         graduated,
         graduatedAt: graduated ? graduatedAt : undefined,
       })
@@ -147,7 +124,7 @@ export function AddStudentDialog({
         <DialogHeader>
           <DialogTitle>新增學員</DialogTitle>
           <DialogDescription>
-            以 Email 或啟動編號查找既有會員並加入班級；查無帳號時請先至會員管理新增。
+            選擇既有會員（搜尋或自社群好友清單點選）並加入班級；查無帳號時請先至會員管理新增。
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -157,27 +134,35 @@ export function AddStudentDialog({
             </p>
           )}
           <div className="space-y-1.5">
-            <Label htmlFor="student-identifier">Email 或啟動編號</Label>
-            <Input
-              id="student-identifier"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="student@example.com 或 PA260001"
-            />
-            {errors.identifier?.[0] && <p className="text-sm text-destructive">{errors.identifier[0]}</p>}
-            {/* 既有會員確認列 */}
-            {lookup.kind === 'existing' && (
-              <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                將加入既有會員：<span className="font-semibold">{lookup.displayName}</span>
-                {lookup.spiritId && <span className="font-mono">（{lookup.spiritId}）</span>}
-                ，不會變更其帳號資料
-              </p>
+            <Label>學員</Label>
+            {selectedStudent ? (
+              <div className="flex items-center justify-between gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                <span>
+                  <span className="font-semibold">{selectedStudent.displayName}</span>
+                  {selectedStudent.spiritId && <span className="font-mono">（{selectedStudent.spiritId}）</span>}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={() => setSelectedStudent(null)}
+                  disabled={isPending}
+                >
+                  重新選擇
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => setPickerOpen(true)}
+                disabled={atCapacity}
+              >
+                <IconUserPlus className="h-4 w-4" />
+                選擇學員
+              </Button>
             )}
-            {lookup.kind === 'new' && (
-              <p className="rounded-md border bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
-                查無此會員，請確認 Email 或啟動編號
-              </p>
-            )}
+            {errors.userId?.[0] && <p className="text-sm text-destructive">{errors.userId[0]}</p>}
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
@@ -209,12 +194,20 @@ export function AddStudentDialog({
             <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isPending}>
               取消
             </Button>
-            <Button onClick={handleSubmit} disabled={isPending || atCapacity || lookup.kind !== 'existing'}>
+            <Button onClick={handleSubmit} disabled={isPending || atCapacity || !selectedStudent}>
               {isPending ? '處理中…' : '新增'}
             </Button>
           </div>
         </div>
       </DialogContent>
+      <StudentPicker
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        friends={friends}
+        onSearch={(query) => searchStudentsForInvite(inviteId, query)}
+        onSelect={(student) => setSelectedStudent(student)}
+        excludeUserIds={excludeUserIds}
+      />
     </Dialog>
   )
 }

@@ -12,6 +12,7 @@ import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { conversationMessageSchema } from '@/lib/schemas/conversation'
 import { createNotification } from '@/app/actions/notification'
+import { searchStudentCandidates, type StudentPickerCandidate } from '@/lib/data/student-picker'
 import {
   getMyConversations,
   getConversationMessages,
@@ -26,6 +27,12 @@ type ActionResponse = {
   message?: string
   errors?: Record<string, string[]>
   conversationId?: number
+}
+
+type SearchMembersResponse = {
+  success: boolean
+  message?: string
+  data?: { candidates: StudentPickerCandidate[] }
 }
 
 // 通知該對話中除寄件者外的所有其他參與者（群組時等於通知所有其他成員）
@@ -137,7 +144,7 @@ export async function markConversationRead(conversationId: number): Promise<Acti
 }
 
 // ── 任一參與者：以對方 Spirit ID 邀請其加入對話（不需對方同意）──
-export async function inviteToConversation(conversationId: number, targetSpiritId: string): Promise<ActionResponse> {
+export async function inviteToConversation(conversationId: number, targetUserId: string): Promise<ActionResponse> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
 
@@ -145,15 +152,12 @@ export async function inviteToConversation(conversationId: number, targetSpiritI
     return { success: false, message: '無權限' }
   }
 
-  const target = await prisma.user.findUnique({
-    where: { spiritId: targetSpiritId.trim().toUpperCase() },
-    select: { id: true },
-  })
-  if (!target) return { success: false, message: '找不到該啟動編號對應的會員' }
-
-  if (target.id === session.user.id) {
+  if (targetUserId === session.user.id) {
     return { success: false, message: '無法邀請自己' }
   }
+
+  const target = await prisma.user.findUnique({ where: { id: targetUserId }, select: { id: true } })
+  if (!target) return { success: false, message: '所選會員不存在，請重新選擇' }
 
   if (!(await isParticipant(conversationId, target.id))) {
     await prisma.conversationParticipant.create({
@@ -165,6 +169,28 @@ export async function inviteToConversation(conversationId: number, targetSpiritI
   }
 
   return { success: true, message: '已邀請加入', conversationId }
+}
+
+// ── 依關鍵字模糊搜尋既有會員，供「成員」彈窗的「加入成員」（StudentPicker）使用 ──
+export async function searchMembersForConversation(
+  conversationId: number,
+  query: string
+): Promise<SearchMembersResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  if (!(await isParticipant(conversationId, session.user.id))) {
+    return { success: false, message: '無權限' }
+  }
+
+  const participants = await prisma.conversationParticipant.findMany({
+    where: { conversationId },
+    select: { userId: true },
+  })
+  const excludeUserIds = participants.map((p) => p.userId)
+
+  const candidates = await searchStudentCandidates(session.user.id, query, excludeUserIds)
+  return { success: true, data: { candidates } }
 }
 
 // ── 群組對話（目前參與者 > 2 人）的參與者：離開該對話（僅移除自己）──
@@ -186,6 +212,41 @@ export async function leaveConversation(conversationId: number): Promise<ActionR
   })
 
   return { success: true, message: '已離開群組', conversationId }
+}
+
+// ── 群組對話（目前參與者 > 2 人）的參與者：移除其他任一參與者（不含自己）──
+export async function removeConversationParticipant(
+  conversationId: number,
+  targetUserId: string
+): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  if (!(await isParticipant(conversationId, session.user.id))) {
+    return { success: false, message: '無權限' }
+  }
+
+  if (targetUserId === session.user.id) {
+    return { success: false, message: '請使用「離開群組」移除自己' }
+  }
+
+  const participantCount = await prisma.conversationParticipant.count({ where: { conversationId } })
+  if (participantCount <= 2) {
+    return { success: false, message: '此非群組對話，無法移除成員' }
+  }
+
+  const removed = await prisma.conversationParticipant.deleteMany({
+    where: { conversationId, userId: targetUserId },
+  })
+  if (removed.count === 0) {
+    return { success: false, message: '該成員已不在對話中' }
+  }
+
+  createNotification(targetUserId, '已被移出對話', '您已被移出一段訊息對話。').catch((e) => {
+    console.error('[conversation] 移除成員通知寫入失敗', e)
+  })
+
+  return { success: true, message: '已移除成員', conversationId }
 }
 
 // ── 任一參與者：修改對話標題（清空則恢復自動命名）──

@@ -364,9 +364,10 @@ export function MessagesPage({
                 open={membersOpen}
                 onOpenChange={setMembersOpen}
                 conversationId={selected.id ?? undefined}
+                currentUserId={currentUserId}
                 participants={selected.participants}
                 friends={friends}
-                onInvited={handleMembersInvited}
+                onMembersChanged={handleMembersInvited}
                 onLeft={handleMembersLeft}
               />
 

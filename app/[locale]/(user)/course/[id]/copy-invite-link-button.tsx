@@ -11,6 +11,10 @@
  * ⚠️ 不可用「navigator.share 是否存在」判斷手機／桌機：Windows 版
  * Edge／Chrome 桌面瀏覽器也實作了 Web Share API（會叫出 Windows 內建
  * 分享面板），會誤判為手機而跳過引導對話視窗，故改用 UA 判斷裝置類型。
+ *
+ * cr-spec-260916-005：「使用系統內建訊息邀請」改用通用學員選擇元件
+ * StudentPicker（模糊搜尋或自好友清單點選），取代原本的 Email／啟動編號
+ * 文字輸入；選定後直接送出，不需額外確認按鈕。
  * ----------------------------------------------
  */
 
@@ -19,24 +23,26 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
-import { IconShare, IconCopy, IconBrandLine, IconMail, IconMessage } from '@tabler/icons-react'
+import { IconShare, IconCopy, IconBrandLine, IconMail, IconUserPlus } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Link } from '@/i18n/navigation'
-import { inviteMemberByMessage } from '@/app/actions/course-invite'
+import { StudentPicker, type StudentPickerSelection } from '@/components/shared/student-picker'
+import { inviteMemberByMessage, searchMembersForCourseInvite } from '@/app/actions/course-invite'
+import type { FriendListItem } from '@/lib/data/friendship'
 
 type Props = {
   courseId: number
   courseTitle: string
+  friends: FriendListItem[]
 }
 
-export function CopyInviteLinkButton({ courseId, courseTitle }: Props) {
+export function CopyInviteLinkButton({ courseId, courseTitle, friends }: Props) {
   const t = useTranslations('course.copyLink')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [identifier, setIdentifier] = useState('')
-  const [sending, setSending] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [sentToUserId, setSentToUserId] = useState<string | null>(null)
 
   function courseUrl() {
@@ -78,21 +84,14 @@ export function CopyInviteLinkButton({ courseId, courseTitle }: Props) {
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
   }
 
-  async function handleSendInvite() {
-    const value = identifier.trim()
-    if (!value) return
-
-    setSending(true)
-    const result = await inviteMemberByMessage(courseId, value)
-    setSending(false)
-
+  async function handleSelectMember(student: StudentPickerSelection) {
+    setSentToUserId(null)
+    const result = await inviteMemberByMessage(courseId, student.userId)
     if (result.success) {
       toast.success(result.message ?? t('inviteSuccess'))
-      setIdentifier('')
       setSentToUserId(result.data?.targetUserId ?? null)
     } else {
-      const firstFieldError = result.errors ? Object.values(result.errors)[0]?.[0] : undefined
-      toast.error(firstFieldError ?? result.message ?? t('inviteFail'))
+      toast.error(result.message ?? t('inviteFail'))
     }
   }
 
@@ -140,21 +139,14 @@ export function CopyInviteLinkButton({ courseId, courseTitle }: Props) {
 
           <div className="space-y-1.5 border-t pt-3">
             <label className="text-sm font-medium flex items-center gap-1.5">
-              <IconMessage className="h-4 w-4" />
+              <IconUserPlus className="h-4 w-4" />
               {t('messageInviteTitle')}
             </label>
             <p className="text-xs text-muted-foreground">{t('messageInviteDesc')}</p>
-            <div className="flex gap-2">
-              <Input
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                placeholder={t('identifierPlaceholder')}
-                disabled={sending}
-              />
-              <Button onClick={handleSendInvite} disabled={sending || !identifier.trim()} className="shrink-0">
-                {t('sendInvite')}
-              </Button>
-            </div>
+            <Button variant="outline" onClick={() => setPickerOpen(true)} className="w-full gap-1.5">
+              <IconUserPlus className="h-4 w-4" />
+              {t('selectMember')}
+            </Button>
             {sentToUserId && (
               <Link
                 href={`/messages?with=${sentToUserId}`}
@@ -166,6 +158,14 @@ export function CopyInviteLinkButton({ courseId, courseTitle }: Props) {
           </div>
         </DialogContent>
       </Dialog>
+
+      <StudentPicker
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        friends={friends}
+        onSearch={(query) => searchMembersForCourseInvite(courseId, query)}
+        onSelect={handleSelectMember}
+      />
     </>
   )
 }

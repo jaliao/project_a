@@ -42,6 +42,7 @@ import { InstructorFeedbackButton } from './instructor-feedback-button'
 import { ApprovedStudentsSection } from './approved-students-section'
 import { CourseOperationLog } from './course-operation-log'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
+import { getMyFriends } from '@/lib/data/friendship'
 import { CourseStatusBadge } from '@/components/course-session/course-status-badge'
 import { getCourseStatus } from '@/components/course-session/course-status'
 import { CourseCatalogBadge } from '@/components/course-session/course-catalog-badge'
@@ -148,6 +149,9 @@ export default async function CourseDetailPage({
     !isInstructor && currentUserId && !myEnrollment && !isCancelled && !isCompleted
       ? await checkPrerequisites(currentUserId, courseSession.courseCatalogId)
       : []
+
+  // 「新增學員」學員選擇元件用：操作者的社群好友清單（僅管理者／該課講師需要）
+  const myFriends = canEditInfo && currentUserId ? await getMyFriends(currentUserId) : []
 
   return (
     <div className="space-y-6">
@@ -363,7 +367,7 @@ export default async function CourseDetailPage({
             )}
             {/* 複製邀請連結：該課講師或管理者 */}
             {(isInstructor || isAdmin) && (
-              <CopyInviteLinkButton courseId={courseSession.id} courseTitle={courseSession.title} />
+              <CopyInviteLinkButton courseId={courseSession.id} courseTitle={courseSession.title} friends={myFriends} />
             )}
             {/* 聯繫管理者：講師向管理者求助的管道，維持講師專屬 */}
             {isInstructor && <CourseContactAdminButton courseId={courseSession.id} />}
@@ -383,6 +387,10 @@ export default async function CourseDetailPage({
         canManage={(isInstructor || isAdmin) === true}
         isAdmin={isAdmin === true}
         capacity={classMaxCapacity}
+        friends={myFriends}
+        excludeUserIds={[...courseSession.approvedEnrollments, ...courseSession.pendingEnrollments].map(
+          (enrollment) => enrollment.user.id
+        )}
         students={courseSession.approvedEnrollments.map((enrollment) => ({
           enrollmentId: enrollment.id,
           displayName: getMemberDisplayName(enrollment.user),

@@ -22,7 +22,7 @@ import { getAppUrl } from '@/lib/utils/app-url'
 import { evaluateCourseStartGate } from '@/lib/utils/course-start-gate'
 import { computeMaterialProgress } from '@/lib/utils/material-progress'
 import { getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
-import { findMemberByIdentifier } from '@/lib/data/invite-students'
+import { searchStudentCandidates, type StudentPickerCandidate } from '@/lib/data/student-picker'
 import { findConversationsWithUser } from '@/lib/data/conversation'
 import { sendConversationMessage, startConversation } from '@/app/actions/conversation'
 import {
@@ -77,10 +77,39 @@ export async function inviteBySpirtId(
   return { success: true, message: '邀請通知已送出' }
 }
 
+/** 該課講師或管理者才可用「使用系統內建訊息邀請」相關功能 */
+function canManageCourseInvite(
+  roles: Parameters<typeof canAccessAdmin>[0],
+  userId: string,
+  invite: { createdById: string }
+): boolean {
+  return invite.createdById === userId || canAccessAdmin(roles)
+}
+
+// ── 依關鍵字模糊搜尋既有會員，供分享 Dialog 的「使用系統內建訊息邀請」（StudentPicker）使用 ──
+export async function searchMembersForCourseInvite(
+  inviteId: number,
+  query: string
+): Promise<ActionResponse<{ candidates: StudentPickerCandidate[] }>> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  const invite = await prisma.courseInvite.findUnique({
+    where: { id: inviteId },
+    select: { createdById: true },
+  })
+  if (!invite || !canManageCourseInvite(session.user.roles, session.user.id, invite)) {
+    return { success: false, message: '無權限' }
+  }
+
+  const candidates = await searchStudentCandidates(session.user.id, query, [])
+  return { success: true, data: { candidates } }
+}
+
 // ── 透過系統內建訊息邀請會員（分享 Dialog 用）─────
 export async function inviteMemberByMessage(
   inviteId: number,
-  identifier: string
+  targetUserId: string
 ): Promise<ActionResponse<{ targetUserId: string }>> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
@@ -90,30 +119,28 @@ export async function inviteMemberByMessage(
     select: { id: true, title: true, createdById: true },
   })
   if (!invite) return { success: false, message: '找不到課程' }
-  if (invite.createdById !== session.user.id && !canAccessAdmin(session.user.roles)) {
+  if (!canManageCourseInvite(session.user.roles, session.user.id, invite)) {
     return { success: false, message: '無權限' }
   }
 
-  const value = identifier.trim()
-  if (!value) return { success: false, errors: { identifier: ['請輸入 Email 或啟動編號'] } }
+  if (targetUserId === session.user.id) return { success: false, message: '無法邀請自己' }
 
-  const target = await findMemberByIdentifier(value)
-  if (!target) return { success: false, errors: { identifier: ['查無此會員，請確認 Email 或啟動編號'] } }
-  if (target.userId === session.user.id) return { success: false, message: '無法邀請自己' }
+  const target = await prisma.user.findUnique({ where: { id: targetUserId }, select: { id: true } })
+  if (!target) return { success: false, message: '所選會員不存在，請重新選擇' }
 
   const inviteLink = `${getAppUrl()}/course/${inviteId}`
   const body = `邀請您加入「${invite.title}」課程，請點擊連結查看詳情：${inviteLink}`
 
-  const existing = await findConversationsWithUser(session.user.id, target.userId)
+  const existing = await findConversationsWithUser(session.user.id, target.id)
   if (existing.length > 0) {
     const sendResult = await sendConversationMessage(existing[0].id, body)
     if (!sendResult.success) return { success: false, message: sendResult.message }
   } else {
-    const startResult = await startConversation(target.userId, body)
+    const startResult = await startConversation(target.id, body)
     if (!startResult.success) return { success: false, message: startResult.message, errors: startResult.errors }
   }
 
-  return { success: true, message: '邀請訊息已送出', data: { targetUserId: target.userId } }
+  return { success: true, message: '邀請訊息已送出', data: { targetUserId: target.id } }
 }
 
 // ── 取消課程 ──────────────────────────────────

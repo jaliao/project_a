@@ -1,14 +1,16 @@
 /*
  * ----------------------------------------------
  * Server Actions - 課程學員管理（課程頁）
- * 2026-07-14 (Updated: 2026-08-18)
+ * 2026-07-14 (Updated: 2026-09-16)
  * app/actions/invite-students.ts
  *
- * 新增學員（僅限既有會員，以 Email 或啟動編號查找、可補登結業）、移除學員，
- * 皆於單一交易內完成並寫入管理操作紀錄（AdminActionLog）。
+ * 新增學員（僅限既有會員，透過「學員選擇元件」StudentPicker 單選、可補登結業）、
+ * 移除學員，皆於單一交易內完成並寫入管理操作紀錄（AdminActionLog）。
  * 操作權限：管理者或該課建立者（canManageInvite）。
  * 移除學員須填寫必填原因，成功後 fire-and-forget 通知管理者群組（見 createNotification）。
  * 新增學員仍不寄信、不發 Inbox 通知。
+ * cr-spec-260916-004：新增 searchStudentsForInvite 供 StudentPicker 模糊搜尋；
+ * addStudentToInvite 改吃 userId（取代原 identifier 字串輸入）；移除 lookupMemberByIdentifier。
  * ----------------------------------------------
  */
 
@@ -19,7 +21,7 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { canAccessAdmin } from '@/lib/auth-roles'
-import { findMemberByIdentifier, type MemberByIdentifier } from '@/lib/data/invite-students'
+import { searchStudentCandidates, type StudentPickerCandidate } from '@/lib/data/student-picker'
 import { resolveMaxCapacity } from '@/lib/data/admin-settings'
 import { getDefaultMaterialChoiceForUser } from '@/lib/data/material-items'
 import { createNotification } from '@/app/actions/notification'
@@ -55,13 +57,14 @@ function canManageInvite(
 }
 
 /**
- * 以 Email 或啟動編號查既有會員（新增學員表單的確認列用）
- * 以 inviteId 綁定課程歸屬授權（管理者或該課建立者），避免任意講師枚舉會員資料
+ * 依關鍵字模糊搜尋既有會員，供「學員選擇元件」（StudentPicker）使用。
+ * 以 inviteId 綁定課程歸屬授權（管理者或該課建立者），避免任意講師枚舉會員資料；
+ * 伺服器端依 inviteId 當下的報名名單自動排除已在該班級的學員。
  */
-export async function lookupMemberByIdentifier(
+export async function searchStudentsForInvite(
   inviteId: number,
-  identifier: string
-): Promise<ActionResponse<{ member: MemberByIdentifier | null }>> {
+  query: string
+): Promise<ActionResponse<{ candidates: StudentPickerCandidate[] }>> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
 
@@ -73,17 +76,20 @@ export async function lookupMemberByIdentifier(
     return { success: false, message: '無權限' }
   }
 
-  const value = identifier.trim()
-  if (!value) return { success: true, data: { member: null } }
+  const existingEnrollments = await prisma.inviteEnrollment.findMany({
+    where: { inviteId },
+    select: { userId: true },
+  })
+  const excludeUserIds = existingEnrollments.map((e) => e.userId)
 
-  const member = await findMemberByIdentifier(value)
-  return { success: true, data: { member } }
+  const candidates = await searchStudentCandidates(session.user.id, query, excludeUserIds)
+  return { success: true, data: { candidates } }
 }
 
 const addStudentSchema = z
   .object({
     inviteId: z.number().int().positive(),
-    identifier: z.string().trim().min(1, '請輸入 Email 或啟動編號'),
+    userId: z.string().trim().min(1, '請選擇學員'),
     graduated: z.boolean().default(false),
     graduatedAt: z
       .string()
@@ -96,12 +102,13 @@ const addStudentSchema = z
   })
 
 /**
- * 對班級新增學員：僅限既有會員，以 Email 或啟動編號查找並直接掛報名；查無則拒絕、不建立帳號。
+ * 對班級新增學員：僅限既有會員，透過「學員選擇元件」（StudentPicker）單選出的既有
+ * userId 直接掛報名；選定後帳號若已不存在（極端邊界情況）則拒絕。
  * 勾選已結業時 graduatedAt=joinedAt=結業日；班級未結業則同交易補 completedAt。
  */
 export async function addStudentToInvite(input: {
   inviteId: number
-  identifier: string
+  userId: string
   graduated: boolean
   graduatedAt?: string
 }): Promise<ActionResponse> {
@@ -112,7 +119,7 @@ export async function addStudentToInvite(input: {
   if (!parsed.success) {
     return { success: false, errors: parsed.error.flatten().fieldErrors }
   }
-  const { inviteId, identifier, graduated } = parsed.data
+  const { inviteId, userId, graduated } = parsed.data
   const graduatedDate = graduated ? new Date(`${parsed.data.graduatedAt}T00:00:00`) : null
 
   const invite = await prisma.courseInvite.findUnique({
@@ -135,10 +142,13 @@ export async function addStudentToInvite(input: {
     return { success: false, message: `已達班級人數上限（${effective} 人），如需超過請洽管理者` }
   }
 
-  // 僅限既有會員：查無時直接拒絕，不建立任何新帳號
-  const existingUser = await findMemberByIdentifier(identifier)
+  // 選定後、送出前帳號已不存在（極端邊界情況）：拒絕、不建立任何報名
+  const existingUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, realName: true, email: true },
+  })
   if (!existingUser) {
-    return { success: false, errors: { identifier: ['查無此會員，請確認 Email 或啟動編號'] } }
+    return { success: false, errors: { userId: ['所選學員不存在，請重新選擇'] } }
   }
 
   // 操作管理者快照
@@ -150,13 +160,13 @@ export async function addStudentToInvite(input: {
 
   // 重複報名事前檢查（unique 約束為最終防線）
   const dup = await prisma.inviteEnrollment.findUnique({
-    where: { inviteId_userId: { inviteId, userId: existingUser.userId } },
+    where: { inviteId_userId: { inviteId, userId: existingUser.id } },
     select: { id: true },
   })
-  if (dup) return { success: false, errors: { identifier: ['該學員已在此班級'] } }
+  if (dup) return { success: false, errors: { userId: ['該學員已在此班級'] } }
 
   // 教材選擇預設值：曾在其他班級被核准過（上過課）視為已有教材，否則預設帶入繁體教材
-  const defaultMaterialChoice = await getDefaultMaterialChoiceForUser(existingUser.userId)
+  const defaultMaterialChoice = await getDefaultMaterialChoiceForUser(existingUser.id)
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -164,7 +174,7 @@ export async function addStudentToInvite(input: {
       await tx.inviteEnrollment.create({
         data: {
           inviteId,
-          userId: existingUser.userId,
+          userId: existingUser.id,
           status: 'approved',
           materialChoice: defaultMaterialChoice,
           ...(graduatedDate ? { joinedAt: graduatedDate, graduatedAt: graduatedDate } : {}),
@@ -184,7 +194,7 @@ export async function addStudentToInvite(input: {
         data: {
           action: 'enrollment_add',
           actorId: session.user.id,
-          targetUserId: existingUser.userId,
+          targetUserId: existingUser.id,
           inviteId,
           actorName,
           targetName: targetSnapshot(existingUser.realName, existingUser.email),

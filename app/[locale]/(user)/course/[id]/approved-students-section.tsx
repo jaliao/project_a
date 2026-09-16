@@ -17,6 +17,7 @@ import { useTranslations } from 'next-intl'
 import { IconUsers, IconUserMinus } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { AddStudentDialog, RemoveStudentButton } from '@/components/admin/invite-student-cells'
+import type { FriendListItem } from '@/lib/data/friendship'
 
 const MATERIAL_COLORS: Record<string, string> = {
   none: 'bg-gray-100 text-gray-600',
@@ -50,6 +51,8 @@ export function ApprovedStudentsSection({
   isAdmin,
   capacity,
   students,
+  friends,
+  excludeUserIds,
 }: {
   inviteId: number
   inviteCompleted: boolean
@@ -57,6 +60,8 @@ export function ApprovedStudentsSection({
   isAdmin: boolean
   capacity: number
   students: ApprovedStudentItem[]
+  friends: FriendListItem[]
+  excludeUserIds: string[]
 }) {
   const t = useTranslations()
   const [removeMode, setRemoveMode] = useState(false)
@@ -80,6 +85,8 @@ export function ApprovedStudentsSection({
               approvedCount={students.length}
               capacity={capacity}
               isAdmin={isAdmin}
+              friends={friends}
+              excludeUserIds={excludeUserIds}
               triggerVariant="outline"
               triggerSize="sm"
             />
