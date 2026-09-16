@@ -10,8 +10,8 @@
 
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
-import { canAccessAdmin, canTeachAny, canTeachBook } from '@/lib/auth-roles'
-import { createInviteSchema, instructorFeedbackSchema } from '@/lib/schemas/course-invite'
+import { canAccessAdmin } from '@/lib/auth-roles'
+import { instructorFeedbackSchema } from '@/lib/schemas/course-invite'
 import { checkPrerequisites } from '@/lib/data/course-catalog'
 import { createNotification } from '@/app/actions/notification'
 import { sendGraduationEmail } from '@/lib/mailer'
@@ -22,6 +22,9 @@ import { getAppUrl } from '@/lib/utils/app-url'
 import { evaluateCourseStartGate } from '@/lib/utils/course-start-gate'
 import { computeMaterialProgress } from '@/lib/utils/material-progress'
 import { getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
+import { findMemberByIdentifier } from '@/lib/data/invite-students'
+import { findConversationsWithUser } from '@/lib/data/conversation'
+import { sendConversationMessage, startConversation } from '@/app/actions/conversation'
 import {
   getAdminSetting,
   GRADUATION_EMAIL_SUBJECT_KEY,
@@ -35,62 +38,6 @@ type ActionResponse<T = undefined> = {
   message?: string
   data?: T
   errors?: Record<string, string[]>
-}
-
-// ── 建立開課邀請 ──────────────────────────────
-export async function createInvite(
-  formData: Record<string, string>
-): Promise<ActionResponse<{ id: number }>> {
-  const session = await auth()
-  if (!session?.user?.id) return { success: false, message: '請先登入' }
-
-  // 開課前置：須具任一書籍講師身分（管理者／超級管理者視同具開課權限）
-  if (!canTeachAny(session.user.roles)) {
-    return { success: false, message: '需具講師身分方可開課' }
-  }
-
-  const parsed = createInviteSchema.safeParse(formData)
-  if (!parsed.success) {
-    return { success: false, errors: parsed.error.flatten().fieldErrors }
-  }
-
-  const { courseCatalogId, maxCount, courseOrderId } = parsed.data
-
-  // 取得課程資料
-  const course = await prisma.courseCatalog.findUnique({
-    where: { id: courseCatalogId },
-    select: { id: true, label: true, isActive: true },
-  })
-  if (!course) return { success: false, message: '找不到課程' }
-  if (!course.isActive) return { success: false, message: '此課程目前未開放' }
-
-  // 開課資格：須具該書對應的講師身分（admin／superadmin 不受限）
-  if (!canTeachBook(session.user.roles, courseCatalogId)) {
-    return { success: false, message: `須具備${course.label}講師身分才能授課` }
-  }
-
-  const invite = await prisma.courseInvite.create({
-    data: {
-      title: course.label,
-      courseCatalogId,
-      maxCount,
-      createdById: session.user.id,
-    },
-  })
-
-  // 若建立時選擇沿用既有教材訂單，將該訂單關聯至此課程（一對多：order → invite）
-  if (courseOrderId) {
-    await prisma.courseOrder.update({
-      where: { id: courseOrderId },
-      data: { courseInviteId: invite.id },
-    })
-  }
-
-  return {
-    success: true,
-    message: '邀請已建立',
-    data: { id: invite.id },
-  }
 }
 
 // ── 透過 Spirit ID 邀請學員 ───────────────────
@@ -130,47 +77,43 @@ export async function inviteBySpirtId(
   return { success: true, message: '邀請通知已送出' }
 }
 
-// ── 查詢當前使用者建立的邀請列表 ──────────────
-export async function getMyInvites() {
+// ── 透過系統內建訊息邀請會員（分享 Dialog 用）─────
+export async function inviteMemberByMessage(
+  inviteId: number,
+  identifier: string
+): Promise<ActionResponse<{ targetUserId: string }>> {
   const session = await auth()
-  if (!session?.user?.id) return []
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
 
-  return prisma.courseInvite.findMany({
-    where: { createdById: session.user.id },
-    orderBy: { createdAt: 'desc' },
-    include: {
-      courseCatalog: { select: { id: true, label: true } },
-      orders: { select: { id: true, buyerNameZh: true, courseDate: true }, orderBy: { createdAt: 'asc' } },
-      enrollments: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              realName: true,
-              englishName: true,
-              nickname: true,
-              displayNameMode: true,
-            },
-          },
-        },
-        orderBy: { joinedAt: 'asc' },
-      },
-    },
+  const invite = await prisma.courseInvite.findUnique({
+    where: { id: inviteId },
+    select: { id: true, title: true, createdById: true },
   })
-}
+  if (!invite) return { success: false, message: '找不到課程' }
+  if (invite.createdById !== session.user.id && !canAccessAdmin(session.user.roles)) {
+    return { success: false, message: '無權限' }
+  }
 
-// ── 查詢當前使用者的 CourseOrder 清單（供建立邀請選單用）──
-export async function getMyOrders() {
-  const session = await auth()
-  if (!session?.user?.id) return []
+  const value = identifier.trim()
+  if (!value) return { success: false, errors: { identifier: ['請輸入 Email 或啟動編號'] } }
 
-  return prisma.courseOrder.findMany({
-    where: { submittedById: session.user.id },
-    orderBy: { createdAt: 'desc' },
-    select: { id: true, buyerNameZh: true, courseDate: true },
-  })
+  const target = await findMemberByIdentifier(value)
+  if (!target) return { success: false, errors: { identifier: ['查無此會員，請確認 Email 或啟動編號'] } }
+  if (target.userId === session.user.id) return { success: false, message: '無法邀請自己' }
+
+  const inviteLink = `${getAppUrl()}/course/${inviteId}`
+  const body = `邀請您加入「${invite.title}」課程，請點擊連結查看詳情：${inviteLink}`
+
+  const existing = await findConversationsWithUser(session.user.id, target.userId)
+  if (existing.length > 0) {
+    const sendResult = await sendConversationMessage(existing[0].id, body)
+    if (!sendResult.success) return { success: false, message: sendResult.message }
+  } else {
+    const startResult = await startConversation(target.userId, body)
+    if (!startResult.success) return { success: false, message: startResult.message, errors: startResult.errors }
+  }
+
+  return { success: true, message: '邀請訊息已送出', data: { targetUserId: target.userId } }
 }
 
 // ── 取消課程 ──────────────────────────────────
@@ -283,6 +226,46 @@ export async function applyToCourse(
   }
 
   return { success: true, message: '申請已送出，等待講師審核' }
+}
+
+// ── 已核准學員自行變更教材選擇（教材申請尚未被講師確認完成前）────
+export async function updateMyMaterialChoice(
+  inviteId: number,
+  materialChoice: 'none' | 'traditional' | 'simplified' | 'english',
+  bookName?: string
+): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  const enrollment = await prisma.inviteEnrollment.findUnique({
+    where: { inviteId_userId: { inviteId, userId: session.user.id } },
+    include: { invite: { select: { materialFinalizedAt: true } } },
+  })
+  if (!enrollment) return { success: false, message: '無權限' }
+  if (enrollment.status !== 'approved') return { success: false, message: '尚未核准，無法變更教材選擇' }
+  if (enrollment.invite.materialFinalizedAt) {
+    return { success: false, message: '教材已確認申請，如需異動請洽老師' }
+  }
+
+  // 教材所屬姓名（僅需購買版本）：必填，空白即拒絕，比照 applyToCourse 規則
+  let materialBookName: string | null = null
+  if (materialChoice !== 'none') {
+    const trimmed = bookName?.trim()
+    if (!trimmed) {
+      return { success: false, message: '請填寫教材所屬姓名' }
+    }
+    materialBookName = trimmed.slice(0, 100)
+  }
+
+  await prisma.inviteEnrollment.update({
+    where: { id: enrollment.id },
+    data: { materialChoice, materialBookName },
+  })
+
+  const { revalidatePath } = await import('next/cache')
+  revalidatePath(`/course/${inviteId}`)
+
+  return { success: true, message: '教材選擇已更新' }
 }
 
 // ── 講師開始上課（招生中 → 進行中）──────────────────

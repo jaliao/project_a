@@ -35,6 +35,14 @@ export async function getDefaultBookNameForUser(userId: string): Promise<string>
   return defaultBookName({ realName: u?.realName ?? null, englishName: u?.englishName ?? null })
 }
 
+// 取某會員的預設教材選擇（申請/申購對話框預選用）：曾上過任一課程（有 approved 報名）→ 已有教材，否則（新生）→ 繁體教材
+export async function getDefaultMaterialChoiceForUser(userId: string): Promise<'none' | 'traditional'> {
+  const priorCount = await prisma.inviteEnrollment.count({
+    where: { userId, status: 'approved' },
+  })
+  return priorCount > 0 ? 'none' : 'traditional'
+}
+
 // 取得某課程的書本項目清單（已核准、materialChoice ≠ none）
 export async function getCourseBookItems(inviteId: number): Promise<BookItem[]> {
   const rows = await prisma.inviteEnrollment.findMany({

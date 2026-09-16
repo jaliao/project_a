@@ -17,6 +17,7 @@ type MyEnrollment = {
   id: number
   status: string
   materialChoice: string
+  materialBookName: string | null
 } | null
 
 type Props = {
@@ -30,6 +31,8 @@ type Props = {
   instructorName: string
   missingPrerequisites: { id: number; label: string }[]
   defaultBookName?: string
+  defaultMaterialChoice?: 'none' | 'traditional'
+  materialFinalizedAt: Date | null
 }
 
 export function StudentApplySection({
@@ -43,9 +46,13 @@ export function StudentApplySection({
   instructorName,
   missingPrerequisites,
   defaultBookName,
+  defaultMaterialChoice,
+  materialFinalizedAt,
 }: Props) {
   const t = useTranslations('course.apply')
+  const tEnroll = useTranslations('course.material')
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
 
   // 課程已取消或結業
   if (isCancelled || isCompleted) return null
@@ -53,9 +60,40 @@ export function StudentApplySection({
   // 已有申請記錄
   if (myEnrollment) {
     if (myEnrollment.status === 'approved') {
+      const materialChoice = myEnrollment.materialChoice as 'none' | 'traditional' | 'simplified' | 'english'
+      const materialLabel = tEnroll(materialChoice)
+      const canChangeMaterial = !materialFinalizedAt
       return (
-        <div className="rounded-lg border bg-green-50 border-green-200 p-4 text-sm text-green-700 font-medium">
-          ✓ {t('joined')}
+        <div className="rounded-lg border bg-green-50 border-green-200 p-4 text-sm text-green-700 font-medium space-y-2">
+          <p>✓ {t('joined')}</p>
+          <p className="font-normal text-green-800">
+            {t('materialLabel')}
+            {materialLabel}
+          </p>
+          {canChangeMaterial ? (
+            <button
+              type="button"
+              className="text-xs font-normal underline underline-offset-2 text-green-800 hover:text-green-900"
+              onClick={() => setEditDialogOpen(true)}
+            >
+              {t('changeMaterial')}
+            </button>
+          ) : (
+            <p className="text-xs font-normal text-muted-foreground">{t('materialLocked')}</p>
+          )}
+          {canChangeMaterial && (
+            <EnrollmentApplicationDialog
+              mode="edit"
+              inviteId={inviteId}
+              open={editDialogOpen}
+              onOpenChange={setEditDialogOpen}
+              courseTitle={courseTitle}
+              courseDate={courseDate}
+              instructorName={instructorName}
+              initialMaterialChoice={materialChoice}
+              initialBookName={myEnrollment.materialBookName ?? defaultBookName}
+            />
+          )}
         </div>
       )
     }
@@ -108,6 +146,7 @@ export function StudentApplySection({
           courseDate={courseDate}
           instructorName={instructorName}
           defaultBookName={defaultBookName}
+          initialMaterialChoice={defaultMaterialChoice}
         />
       )}
     </div>

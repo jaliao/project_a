@@ -28,7 +28,6 @@ export default function robots(): MetadataRoute.Robots {
         '/reset-password',
         '/change-password',
         '/account-suspended',
-        '/invites',
         '/messages',
         '/notifications',
         '/recover-account',

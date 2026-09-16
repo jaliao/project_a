@@ -26,7 +26,7 @@ import { getTranslations } from 'next-intl/server'
 import { auth } from '@/lib/auth'
 import { canAccessAdmin } from '@/lib/auth-roles'
 import { getAdminSetting, CLASS_MAX_CAPACITY_KEY, CLASS_MAX_CAPACITY_DEFAULT } from '@/lib/data/admin-settings'
-import { getDefaultBookNameForUser, getUnassignedBookItems } from '@/lib/data/material-items'
+import { getDefaultBookNameForUser, getDefaultMaterialChoiceForUser, getUnassignedBookItems } from '@/lib/data/material-items'
 import { getCourseSessionById, getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
 import { evaluateCourseStartGate } from '@/lib/utils/course-start-gate'
 import { computeMaterialProgress } from '@/lib/utils/material-progress'
@@ -136,6 +136,12 @@ export default async function CourseDetailPage({
   // 申購書本名字預設（學員申購對話框預帶）
   const applicantBookNameDefault =
     currentUserId && !isInstructor && !myEnrollment ? await getDefaultBookNameForUser(currentUserId) : ''
+
+  // 申請教材選擇預設（依是否曾上過課判斷：曾上過課→已有教材，新生→繁體教材）
+  const applicantDefaultMaterialChoice =
+    currentUserId && !isInstructor && !myEnrollment
+      ? await getDefaultMaterialChoiceForUser(currentUserId)
+      : undefined
 
   // 學員先修資格檢查（講師本人、已有申請、已取消/結業時不需要）
   const missingPrerequisites =
@@ -356,7 +362,9 @@ export default async function CourseDetailPage({
               />
             )}
             {/* 複製邀請連結：該課講師或管理者 */}
-            {(isInstructor || isAdmin) && <CopyInviteLinkButton courseId={courseSession.id} />}
+            {(isInstructor || isAdmin) && (
+              <CopyInviteLinkButton courseId={courseSession.id} courseTitle={courseSession.title} />
+            )}
             {/* 聯繫管理者：講師向管理者求助的管道，維持講師專屬 */}
             {isInstructor && <CourseContactAdminButton courseId={courseSession.id} />}
           </div>
@@ -399,6 +407,8 @@ export default async function CourseDetailPage({
           instructorName={teacherName}
           missingPrerequisites={missingPrerequisites}
           defaultBookName={applicantBookNameDefault}
+          defaultMaterialChoice={applicantDefaultMaterialChoice}
+          materialFinalizedAt={courseSession.materialFinalizedAt}
         />
       )}
 

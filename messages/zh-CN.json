@@ -143,20 +143,9 @@
     "prev": "上一页",
     "next": "下一页"
   },
-  "invites": {
-    "metaTitle": "邀请进度 — 启动事工",
-    "title": "邀请进度",
-    "empty": "尚未建立任何邀请",
-    "capacity": "预计 {max} 人・已确认 {approved} 人",
-    "orders": "教材订单 {count} 笔",
-    "createdAtPrefix": "建立于",
-    "noStudents": "尚无学员加入",
-    "name": "姓名",
-    "joinedAt": "加入时间"
-  },
   "course": {
     "material": {
-      "none": "无须购买",
+      "none": "已有教材",
       "traditional": "繁体教材",
       "simplified": "简体教材",
       "english": "英文教材",
@@ -415,7 +404,7 @@
       "saving": "储存中…"
     },
     "enroll": {
-      "noneDesc": "已有教材或不需要购买",
+      "noneDesc": "已有个人教材不需要购买",
       "tradDesc": "购买繁体中文版教材",
       "simpDesc": "购买简体中文版教材",
       "engDesc": "购买英文版教材",
@@ -430,7 +419,10 @@
       "teacherLabel": "讲师：",
       "expectedStart": "预计开课：",
       "submitting": "送出中...",
-      "confirm": "确认申请"
+      "confirm": "确认申请",
+      "editTitle": "变更教材选择",
+      "confirmEdit": "确认变更",
+      "editSuccess": "教材选择已更新"
     },
     "sessionDialog": {
       "newCourse": "新增授课"
@@ -485,7 +477,10 @@
       "pending": "申请审核中，等待讲师同意",
       "deadline": "报名截止",
       "apply": "申请参加",
-      "prereqHint": "尚未符合报名资格，须先完成以下课程："
+      "prereqHint": "尚未符合报名资格，须先完成以下课程：",
+      "materialLabel": "教材选择：",
+      "changeMaterial": "变更教材选择",
+      "materialLocked": "教材已确认申请，如需异动请洽老师"
     },
     "match": {
       "updated": "已更新",
@@ -521,7 +516,21 @@
       "courseLink": "课程连结",
       "copied": "已复制课程连结！",
       "copiedShort": "已复制！",
-      "share": "分享"
+      "share": "分享",
+      "dialogTitle": "分享课程",
+      "dialogDesc": "复制下方连结，或透过 LINE、Email、系统内建讯息邀请对方加入课程",
+      "copyButton": "复制连结",
+      "lineButton": "透过 LINE 分享",
+      "emailButton": "透过 Email 分享",
+      "emailSubject": "课程邀请：{title}",
+      "messageInviteTitle": "使用系统内建讯息邀请",
+      "messageInviteDesc": "输入对方的 Email 或启动编号，系统将透过站内讯息直接发送课程连结给对方",
+      "identifierPlaceholder": "Email 或启动编号",
+      "sendInvite": "送出邀请",
+      "inviteSuccess": "邀请讯息已送出",
+      "inviteFail": "送出失败，请稍后再试",
+      "goToConversation": "前往对话",
+      "shareText": "邀请您加入「{title}」课程，请点击连结查看详情：{link}"
     }
   },
   "matchBoard": {

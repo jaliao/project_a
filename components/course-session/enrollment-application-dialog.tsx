@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
-import { applyToCourse } from '@/app/actions/course-invite'
+import { applyToCourse, updateMyMaterialChoice } from '@/app/actions/course-invite'
 
 type MaterialChoice = 'none' | 'traditional' | 'simplified' | 'english'
 
@@ -34,24 +34,41 @@ type Props = {
   courseDate?: string | null
   instructorName: string
   defaultBookName?: string
+  mode?: 'apply' | 'edit'
+  initialMaterialChoice?: MaterialChoice
+  initialBookName?: string
 }
 
-export function EnrollmentApplicationDialog({ inviteId, open, onOpenChange, courseTitle, courseDate, instructorName, defaultBookName = '' }: Props) {
+export function EnrollmentApplicationDialog({
+  inviteId,
+  open,
+  onOpenChange,
+  courseTitle,
+  courseDate,
+  instructorName,
+  defaultBookName = '',
+  mode = 'apply',
+  initialMaterialChoice,
+  initialBookName,
+}: Props) {
   const t = useTranslations()
   const MATERIAL_OPTIONS: { value: MaterialChoice; label: string; desc: string }[] = [
-    { value: 'none', label: t('course.material.none'), desc: t('course.enroll.noneDesc') },
     { value: 'traditional', label: t('course.material.traditional'), desc: t('course.enroll.tradDesc') },
     { value: 'simplified', label: t('course.material.simplified'), desc: t('course.enroll.simpDesc') },
     { value: 'english', label: t('course.material.english'), desc: t('course.enroll.engDesc') },
+    { value: 'none', label: t('course.material.none'), desc: t('course.enroll.noneDesc') },
   ]
   const router = useRouter()
-  const [selected, setSelected] = useState<MaterialChoice | ''>('')
-  const [bookName, setBookName] = useState(defaultBookName)
+  // 申請模式預選繁體教材，降低操作步驟；變更模式帶入該筆報名目前的選擇
+  const initialChoice: MaterialChoice = initialMaterialChoice ?? 'traditional'
+  const initialName = initialBookName ?? defaultBookName
+  const [selected, setSelected] = useState<MaterialChoice | ''>(initialChoice)
+  const [bookName, setBookName] = useState(initialName)
   const [loading, setLoading] = useState(false)
 
   function handleClose() {
-    setSelected('')
-    setBookName(defaultBookName)
+    setSelected(initialChoice)
+    setBookName(initialName)
     onOpenChange(false)
   }
 
@@ -66,10 +83,13 @@ export function EnrollmentApplicationDialog({ inviteId, open, onOpenChange, cour
       return
     }
     setLoading(true)
-    const result = await applyToCourse(inviteId, selected, selected === 'none' ? undefined : bookName)
+    const result =
+      mode === 'edit'
+        ? await updateMyMaterialChoice(inviteId, selected, selected === 'none' ? undefined : bookName)
+        : await applyToCourse(inviteId, selected, selected === 'none' ? undefined : bookName)
     setLoading(false)
     if (result.success) {
-      toast.success(t('course.enroll.success'))
+      toast.success(mode === 'edit' ? t('course.enroll.editSuccess') : t('course.enroll.success'))
       handleClose()
       router.refresh()
     } else {
@@ -81,7 +101,7 @@ export function EnrollmentApplicationDialog({ inviteId, open, onOpenChange, cour
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('course.enroll.chooseBook')}</DialogTitle>
+          <DialogTitle>{mode === 'edit' ? t('course.enroll.editTitle') : t('course.enroll.chooseBook')}</DialogTitle>
         </DialogHeader>
 
         {/* 課程資訊確認區塊 */}
@@ -134,7 +154,11 @@ export function EnrollmentApplicationDialog({ inviteId, open, onOpenChange, cour
             {t('common.cancel')}
           </Button>
           <Button onClick={handleConfirm} disabled={loading || !selected}>
-            {loading ? t('course.enroll.submitting') : t('course.enroll.confirm')}
+            {loading
+              ? t('course.enroll.submitting')
+              : mode === 'edit'
+                ? t('course.enroll.confirmEdit')
+                : t('course.enroll.confirm')}
           </Button>
         </DialogFooter>
       </DialogContent>

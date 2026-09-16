@@ -21,6 +21,7 @@ import { auth } from '@/lib/auth'
 import { canAccessAdmin } from '@/lib/auth-roles'
 import { findMemberByIdentifier, type MemberByIdentifier } from '@/lib/data/invite-students'
 import { resolveMaxCapacity } from '@/lib/data/admin-settings'
+import { getDefaultMaterialChoiceForUser } from '@/lib/data/material-items'
 import { createNotification } from '@/app/actions/notification'
 
 type ActionResponse<T = undefined> = {
@@ -154,6 +155,9 @@ export async function addStudentToInvite(input: {
   })
   if (dup) return { success: false, errors: { identifier: ['該學員已在此班級'] } }
 
+  // 教材選擇預設值：曾在其他班級被核准過（上過課）視為已有教材，否則預設帶入繁體教材
+  const defaultMaterialChoice = await getDefaultMaterialChoiceForUser(existingUser.userId)
+
   try {
     await prisma.$transaction(async (tx) => {
       // 建立報名（補登結業時 joinedAt 對齊結業日，避免入班晚於結業）
@@ -162,6 +166,7 @@ export async function addStudentToInvite(input: {
           inviteId,
           userId: existingUser.userId,
           status: 'approved',
+          materialChoice: defaultMaterialChoice,
           ...(graduatedDate ? { joinedAt: graduatedDate, graduatedAt: graduatedDate } : {}),
         },
       })

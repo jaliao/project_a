@@ -142,20 +142,9 @@
     "prev": "Previous",
     "next": "Next"
   },
-  "invites": {
-    "metaTitle": "Invite progress — 啟動事工",
-    "title": "Invite progress",
-    "empty": "No invites created yet",
-    "capacity": "Planned {max} · Approved {approved}",
-    "orders": "{count} material orders",
-    "createdAtPrefix": "Created on",
-    "noStudents": "No students joined yet",
-    "name": "Name",
-    "joinedAt": "Joined at"
-  },
   "course": {
     "material": {
-      "none": "No purchase needed",
+      "none": "Already have materials",
       "traditional": "Traditional Chinese textbook",
       "simplified": "Simplified Chinese textbook",
       "english": "English textbook",
@@ -414,7 +403,7 @@
       "saving": "Saving…"
     },
     "enroll": {
-      "noneDesc": "Already have the textbook or don't need it",
+      "noneDesc": "Already have your own materials, no purchase needed",
       "tradDesc": "Buy Traditional Chinese textbook",
       "simpDesc": "Buy Simplified Chinese textbook",
       "engDesc": "Buy English textbook",
@@ -429,7 +418,10 @@
       "teacherLabel": "Instructor:",
       "expectedStart": "Expected start:",
       "submitting": "Submitting...",
-      "confirm": "Confirm application"
+      "confirm": "Confirm application",
+      "editTitle": "Change material choice",
+      "confirmEdit": "Confirm change",
+      "editSuccess": "Material choice updated"
     },
     "sessionDialog": {
       "newCourse": "New course"
@@ -484,7 +476,10 @@
       "pending": "Application under review, awaiting instructor approval",
       "deadline": "Enrollment closed",
       "apply": "Apply to join",
-      "prereqHint": "Not yet eligible. Please complete the following courses first:"
+      "prereqHint": "Not yet eligible. Please complete the following courses first:",
+      "materialLabel": "Material choice:",
+      "changeMaterial": "Change material choice",
+      "materialLocked": "Material request already confirmed. Please contact your instructor for changes."
     },
     "match": {
       "updated": "Updated",
@@ -520,7 +515,21 @@
       "courseLink": "Course link",
       "copied": "Course link copied!",
       "copiedShort": "Copied!",
-      "share": "Share"
+      "share": "Share",
+      "dialogTitle": "Share Course",
+      "dialogDesc": "Copy the link below, or invite them via LINE, Email, or the built-in message system",
+      "copyButton": "Copy Link",
+      "lineButton": "Share via LINE",
+      "emailButton": "Share via Email",
+      "emailSubject": "Course Invitation: {title}",
+      "messageInviteTitle": "Invite via Built-in Message",
+      "messageInviteDesc": "Enter their Email or Spirit ID — the system will send the course link directly via an in-app message",
+      "identifierPlaceholder": "Email or Spirit ID",
+      "sendInvite": "Send Invitation",
+      "inviteSuccess": "Invitation message sent",
+      "inviteFail": "Failed to send, please try again later",
+      "goToConversation": "Go to Conversation",
+      "shareText": "You're invited to join the course \"{title}\": {link}"
     }
   },
   "matchBoard": {

@@ -1,0 +1,56 @@
+## MODIFIED Requirements
+
+### Requirement: 新增學員（僅限既有會員）
+
+**管理者或該課講師**（`canAccessAdmin` 或 `CourseInvite.createdById === 當前使用者`）SHALL 能對班級新增學員，表單填寫 **Email 或啟動編號（spiritId）**（必填，單一輸入欄位）與可勾選「已結業」與指定結業日。系統 SHALL 依輸入格式（含 `@` 視為 Email，否則視為啟動編號）查詢既有帳號：
+
+- **找到既有會員**：SHALL 直接以該帳號建立報名；送出前 UI SHALL 顯示既有會員之姓名與啟動編號供操作者確認，避免掛錯人。
+- **查無會員**：系統 SHALL NOT 建立任何新帳號，SHALL 回傳欄位錯誤（提示「查無此會員，請確認 Email 或啟動編號」），UI SHALL 停用送出按鈕。
+
+查詢既有會員之介面（lookup）SHALL 以課程歸屬授權（帶 `inviteId`，僅管理者或該課講師可查），避免任意講師枚舉會員資料。報名 SHALL 以 `status=approved` 建立，`materialChoice` SHALL 依該學員是否曾於任一班級有 `status=approved` 之報名記錄決定，不落到欄位預設值 `none`：曾有（視為上過課）SHALL 設為 `none`（已有教材）；從未有（視為新生）SHALL 設為 `traditional`（繁體教材）。同一學員於同班已有報名時 SHALL 回傳欄位錯誤、不重複建立。建報名（含補登結業）SHALL 於單一交易內完成，失敗全部回滾。
+
+**人數上限**：操作者非管理者（`canAccessAdmin` 為否，含該課講師本人）時，新增後之**已核准（approved）人數**若超過「班級人數上限」設定（`class_max_capacity`，預設 7），系統 SHALL 拒絕新增並回傳訊息「已達班級人數上限（N 人），如需超過請洽管理者」，不建立任何報名。**管理者**新增學員 SHALL NOT 受此上限限制。UI SHALL 於已核准人數達上限、操作者非管理者時停用送出按鈕並顯示提示，不需等送出後才被拒絕。
+
+#### Scenario: Email 對應既有會員（新生）
+- **WHEN** 管理者或該課講師輸入的 Email 對應既有帳號並確認送出，且該帳號從未有任何班級的 `status=approved` 報名記錄
+- **THEN** 該帳號被加入班級（`status=approved`，`materialChoice=traditional`），不建立新帳號、不變更該帳號既有資料
+
+#### Scenario: 啟動編號對應既有會員（新生）
+- **WHEN** 管理者或該課講師輸入既有會員的啟動編號（spiritId）並確認送出，且該帳號從未有任何班級的 `status=approved` 報名記錄
+- **THEN** 該帳號被加入班級（`status=approved`，`materialChoice=traditional`）
+
+#### Scenario: 加入已上過課的學員
+- **WHEN** 管理者或該課講師新增的既有會員，於其他任一班級已有 `status=approved` 之報名記錄（曾上過課）
+- **THEN** 該帳號被加入班級（`status=approved`，`materialChoice=none`，視為已有教材）
+
+#### Scenario: 查無對應會員時拒絕且不建帳號
+- **WHEN** 輸入的 Email 或啟動編號查無對應帳號
+- **THEN** 系統回傳欄位錯誤「查無此會員，請確認 Email 或啟動編號」，SHALL NOT 建立任何新帳號，UI 送出按鈕為停用狀態
+
+#### Scenario: 重複報名擋下
+- **WHEN** 對某班新增該班已有報名的學員
+- **THEN** 回傳欄位錯誤（如「該學員已在此班級」），不建立資料
+
+#### Scenario: 非該課講師的講師無法操作
+- **WHEN** 具講師身分但非該課建立者、亦非管理者的使用者呼叫新增學員或查詢
+- **THEN** 回傳 `{ success: false, message: '無權限' }`
+
+#### Scenario: 老師新增達班級人數上限 — 拒絕
+- **WHEN** 該課講師（非管理者）對已核准人數等於「班級人數上限」設定值（預設 7）的班級新增學員
+- **THEN** 系統回傳 `{ success: false, message: '已達班級人數上限（7 人），如需超過請洽管理者' }`，不建立報名，班級已核准人數不變
+
+#### Scenario: 老師新增未達上限 — 允許
+- **WHEN** 該課講師（非管理者）對已核准人數小於「班級人數上限」設定值的班級新增學員，且該學員為既有會員、從未上過課
+- **THEN** 該帳號被加入班級（`status=approved`，`materialChoice=traditional`）
+
+#### Scenario: 管理者新增可超過上限
+- **WHEN** 管理者對已核准人數已達或超過「班級人數上限」設定值的班級新增學員，且該學員為既有會員、從未上過課
+- **THEN** 該帳號被加入班級（`status=approved`，`materialChoice=traditional`），不受人數上限限制
+
+#### Scenario: UI 已核准人數達上限時提前停用（非管理者）
+- **WHEN** 該課講師（非管理者）開啟新增學員對話框，班級已核准人數已達「班級人數上限」設定值
+- **THEN** 對話框顯示已達上限提示，送出按鈕為停用狀態，即使輸入查得到既有會員亦不可送出
+
+#### Scenario: 新增後學員可自行變更教材選擇
+- **WHEN** 老師新增學員完成，該學員登入查看課程詳情頁，且該班教材申請尚未被講師確認完成
+- **THEN** 學員可見目前教材選擇（依是否上過課為「繁體教材」或「已有教材」），並可透過「變更教材選擇」入口自行改選（見 `course-enrollment-application` 規格之「已核准學員之教材選擇檢視與變更」需求）

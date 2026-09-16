@@ -1,9 +1,27 @@
-# course-enrollment-application Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - normalized for archive compatibility. Update Purpose for course-enrollment-application.
+### Requirement: 書籍選購 Dialog
+點擊「申請參加」SHALL 彈出書籍選購 Dialog，學員選擇書籍需求後送出申請。Dialog 開啟時 SHALL 預先選取「繁體教材」選項（學員送出前仍可自由改選其他三個選項或「已有教材」）。
 
-## Requirements
+#### Scenario: 開啟書籍選購 Dialog
+- **WHEN** 學員點擊「申請參加」
+- **THEN** 彈出 Dialog，標題「選擇書籍」，提供四個選項：已有教材、繁體教材、簡體教材、英文教材，且「繁體教材」為預先選取狀態
+
+#### Scenario: 送出申請
+- **WHEN** 學員選擇一項書籍選項後點擊「確認申請」
+- **THEN** 系統建立 InviteEnrollment（status=pending, materialChoice=對應值），顯示「申請已送出，等待講師審核」toast，Dialog 關閉
+
+#### Scenario: 未選擇書籍選項
+- **WHEN** 送出時 Dialog 內部狀態為未選擇任一選項（正常操作流程下因預選「繁體教材」不會發生，僅作為程式防禦性檢查）
+- **THEN** 顯示「請選擇書籍選項」提示，不送出
+
+#### Scenario: 申請失敗
+- **WHEN** Server Action 回傳錯誤
+- **THEN** 顯示錯誤 toast，Dialog 維持開啟
+
+#### Scenario: 選擇英文教材送出申請
+- **WHEN** 學員將預選之「繁體教材」改選為「英文教材」選項後點擊「確認申請」
+- **THEN** 系統建立 InviteEnrollment（status=pending, materialChoice=english），顯示「申請已送出，等待講師審核」toast，Dialog 關閉
 
 ### Requirement: 學員申請參加按鈕
 課程詳情頁 SHALL 在學員視圖（非講師）顯示「申請參加」按鈕。若報名截止日期已過，顯示「報名截止」狀態取代按鈕；若學員已有申請記錄（pending 或 approved），顯示對應狀態而非按鈕。已核准（approved）狀態 SHALL 額外顯示目前教材選擇摘要與（未鎖定時的）變更入口，詳見「已核准學員之教材選擇檢視與變更」需求。
@@ -24,33 +42,6 @@ TBD - normalized for archive compatibility. Update Purpose for course-enrollment
 - **WHEN** 當前學員已有 status=approved 的 InviteEnrollment
 - **THEN** 顯示「已加入」狀態與目前教材選擇摘要，不顯示「申請參加」按鈕
 
-### Requirement: 書籍選購 Dialog
-點擊「申請參加」SHALL 彈出書籍選購 Dialog，學員選擇書籍需求後送出申請。Dialog 開啟時 SHALL 依該學員是否曾於任一課程有 `status=approved` 之報名記錄，預先選取對應選項：曾上過課 SHALL 預選「已有教材」，從未上過課（新生）SHALL 預選「繁體教材」；學員送出前仍可自由改選其他選項。選項顯示順序 SHALL 為「繁體教材、簡體教材、英文教材、已有教材」。
-
-#### Scenario: 開啟書籍選購 Dialog（新生）
-- **WHEN** 從未上過課的學員點擊「申請參加」
-- **THEN** 彈出 Dialog，標題「選擇書籍」，依序顯示「繁體教材、簡體教材、英文教材、已有教材」四個選項，且「繁體教材」為預先選取狀態
-
-#### Scenario: 開啟書籍選購 Dialog（曾上過課）
-- **WHEN** 曾上過任一課程（曾有 `status=approved` 報名記錄）的學員點擊「申請參加」
-- **THEN** 彈出 Dialog，選項顯示順序同上，且「已有教材」為預先選取狀態
-
-#### Scenario: 送出申請
-- **WHEN** 學員選擇一項書籍選項後點擊「確認申請」
-- **THEN** 系統建立 InviteEnrollment（status=pending, materialChoice=對應值），顯示「申請已送出，等待講師審核」toast，Dialog 關閉
-
-#### Scenario: 未選擇書籍選項
-- **WHEN** 送出時 Dialog 內部狀態為未選擇任一選項（正常操作流程下因一律有預選值不會發生，僅作為程式防禦性檢查）
-- **THEN** 顯示「請選擇書籍選項」提示，不送出
-
-#### Scenario: 申請失敗
-- **WHEN** Server Action 回傳錯誤
-- **THEN** 顯示錯誤 toast，Dialog 維持開啟
-
-#### Scenario: 改選其他選項送出申請
-- **WHEN** 學員將預選項目改選為其他選項（例如「英文教材」）後點擊「確認申請」
-- **THEN** 系統建立 InviteEnrollment（status=pending, materialChoice=改選後的值），顯示「申請已送出，等待講師審核」toast，Dialog 關閉
-
 ### Requirement: 學員申請資料模型
 `InviteEnrollment` SHALL 包含 `status EnrollmentStatus`（預設 `pending`）與 `materialChoice MaterialChoice`（預設 `none`）欄位。
 
@@ -61,6 +52,8 @@ TBD - normalized for archive compatibility. Update Purpose for course-enrollment
 #### Scenario: 現有記錄向後相容
 - **WHEN** 資料庫執行 migration
 - **THEN** 現有 InviteEnrollment 記錄的 status 設為 approved（視為已核准）
+
+## ADDED Requirements
 
 ### Requirement: 已核准學員之教材選擇檢視與變更
 已核准（approved）的學員 SHALL 能在課程詳情頁檢視自己目前的教材選擇，並在該班教材申請尚未被講師「確認完成」（`CourseInvite.materialFinalizedAt` 為 null）前，重新開啟書籍選購 Dialog 變更教材選擇（含教材所屬姓名）。變更 SHALL 僅限學員本人操作，且僅能修改自己的 `InviteEnrollment`。教材申請一旦被講師「確認完成」，系統 SHALL 拒絕變更並提示「教材已確認申請，如需異動請洽老師」。

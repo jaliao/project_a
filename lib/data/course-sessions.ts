@@ -211,6 +211,7 @@ type EnrollmentRecord = {
   joinedAt: Date
   status: string
   materialChoice: string
+  materialBookName: string | null
   graduatedAt: Date | null
   nonGraduateReason: string | null
   teacherRecommended: boolean | null
@@ -348,6 +349,7 @@ export async function getCourseSessionById(
           joinedAt: true,
           status: true,
           materialChoice: true,
+          materialBookName: true,
           graduatedAt: true,
           nonGraduateReason: true,
           teacherRecommended: true,
