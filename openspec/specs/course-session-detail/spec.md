@@ -90,7 +90,7 @@ TBD - normalized for archive compatibility. Update Purpose for course-session-de
   1. **複製連結**：唯讀欄位顯示 `/course/{id}` 連結，按鈕點擊後複製至剪貼簿，按鈕短暫顯示「已複製！」。
   2. **透過 LINE 分享**：開啟 LINE 分享連結（新分頁），帶入邀請文字與課程連結。
   3. **透過 Email 分享**：開啟 `mailto:` 連結，帶入邀請主旨與內文（邀請文字與課程連結）。
-  4. **使用系統內建訊息邀請**：輸入對方 Email 或啟動編號，送出後呼叫 `inviteMemberByMessage`，透過系統既有「傳訊息」機制（沿用既有一對一對話則接續最新一筆，否則建立新對話）直接發送一則含課程連結的邀請訊息給對方。
+  4. **使用系統內建訊息邀請**：透過通用「學員選擇元件」（`StudentPicker`，見 `student-picker` 規格）選定一位既有會員（模糊搜尋啟動編號／姓名／暱稱／Email，或直接自操作者的社群好友清單點選），選定後立即呼叫 `inviteMemberByMessage`，透過系統既有「傳訊息」機制（沿用既有一對一對話則接續最新一筆，否則建立新對話）直接發送一則含課程連結的邀請訊息給對方。
 
 #### Scenario: 手機裝置直接叫用原生分享
 - **WHEN** 該課講師或管理者以手機／平板裝置（且支援 `navigator.share`）點擊「分享」按鈕
@@ -113,16 +113,16 @@ TBD - normalized for archive compatibility. Update Purpose for course-session-de
 - **THEN** 開啟預設郵件用戶端的撰寫視窗，主旨與內文已帶入邀請文字與課程連結
 
 #### Scenario: 使用系統內建訊息邀請成功
-- **WHEN** 使用者輸入有效的 Email 或啟動編號並送出「使用系統內建訊息邀請」
-- **THEN** 系統查得對應會員，透過既有對話（若有）或新建對話送出一則含課程連結的邀請訊息，顯示「邀請訊息已送出」提示
+- **WHEN** 使用者於「使用系統內建訊息邀請」開啟學員選擇元件，模糊搜尋或自好友清單選定一位既有會員
+- **THEN** 系統透過既有對話（若有）或新建對話送出一則含課程連結的邀請訊息給該會員，顯示「邀請訊息已送出」提示
 
-#### Scenario: 使用系統內建訊息邀請查無會員
-- **WHEN** 使用者輸入的 Email 或啟動編號查無對應會員
-- **THEN** 系統回傳欄位錯誤「查無此會員，請確認 Email 或啟動編號」，不建立任何對話或訊息
+#### Scenario: 選定會員於送出前已被刪除（邊界情況）
+- **WHEN** 操作者於學員選擇元件選定某會員後、系統處理送出前，該帳號恰好被刪除
+- **THEN** 系統回傳錯誤，不建立任何對話或訊息
 
 #### Scenario: 非該課講師或管理者無權限使用內建訊息邀請
-- **WHEN** 非該課講師、亦非管理者的使用者呼叫 `inviteMemberByMessage`
-- **THEN** 系統回傳 `{ success: false, message: '無權限' }`，不建立任何對話或訊息
+- **WHEN** 非該課講師、亦非管理者的使用者呼叫 `inviteMemberByMessage` 或 `searchMembersForCourseInvite`
+- **THEN** 系統回傳 `{ success: false, message: '無權限' }`，不建立任何對話或訊息，亦不回傳任何搜尋結果
 
 #### Scenario: 分享按鈕位置
 - **WHEN** 該課講師或管理者開啟課程詳情頁
