@@ -739,7 +739,7 @@
     "nextPage": "下一頁"
   },
   "learningIntent": {
-    "createButton": "我想上課",
+    "createButton": "刊登上課需求",
     "editButton": "已刊登，編輯",
     "dialogTitle": "刊登上課意願",
     "coursesLabel": "想上的課程",

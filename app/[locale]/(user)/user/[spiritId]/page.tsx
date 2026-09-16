@@ -175,7 +175,6 @@ export default async function UserProfilePage({ params }: Props) {
 
       <div className="flex items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">首頁</h1>
-        {isOwnPage && <LearningIntentDialog courses={activeCourses} myIntent={myLearningIntent} />}
       </div>
 
       {/* 基本資料單元 */}
@@ -261,6 +260,12 @@ export default async function UserProfilePage({ params }: Props) {
               />
             ))}
           </CourseCardGrid>
+        )}
+
+        {isOwnPage && (
+          <div className="flex flex-wrap items-center gap-2">
+            <LearningIntentDialog courses={activeCourses} myIntent={myLearningIntent} />
+          </div>
         )}
       </section>
 

@@ -740,7 +740,7 @@
     "nextPage": "下一页"
   },
   "learningIntent": {
-    "createButton": "我想上课",
+    "createButton": "刊登上课需求",
     "editButton": "已刊登，编辑",
     "dialogTitle": "刊登上课意愿",
     "coursesLabel": "想上的课程",

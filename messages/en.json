@@ -739,7 +739,7 @@
     "nextPage": "Next"
   },
   "learningIntent": {
-    "createButton": "I Want to Learn",
+    "createButton": "Post Learning Request",
     "editButton": "Posted, Edit",
     "dialogTitle": "Post Learning Interest",
     "coursesLabel": "Courses You Want to Take",

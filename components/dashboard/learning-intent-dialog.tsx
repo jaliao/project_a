@@ -40,6 +40,7 @@ import { saveLearningIntent, cancelLearningIntent } from '@/app/actions/learning
 import { LEARNING_TIME_PREFERENCE_VALUES } from '@/lib/schemas/learning-intent'
 import type { CourseCatalogEntry } from '@/lib/data/course-catalog'
 import type { MyLearningIntent } from '@/lib/data/learning-intent'
+import { IconPlus, IconEdit } from '@tabler/icons-react'
 
 type Props = {
   courses: CourseCatalogEntry[]
@@ -115,7 +116,8 @@ export function LearningIntentDialog({ courses, myIntent }: Props) {
         if (next) resetToCurrent()
       }}
     >
-      <Button variant={myIntent ? 'outline' : 'default'} size="sm" onClick={() => setOpen(true)}>
+      <Button variant={myIntent ? 'outline' : 'default'} onClick={() => setOpen(true)}>
+        {myIntent ? <IconEdit className="mr-2 h-4 w-4" /> : <IconPlus className="mr-2 h-4 w-4" />}
         {myIntent ? t('editButton') : t('createButton')}
       </Button>
 
