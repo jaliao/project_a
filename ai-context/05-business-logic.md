@@ -18,7 +18,7 @@
 - `CourseCatalog` 為 DB 唯一來源（不使用 `config/course-catalog.ts`）
 - Admin UI：`/admin/course-catalog`；可設定名稱、isActive、先修課程（多選）
 - `isActive = true` 才可被選為開課目標
-- 先修驗證：`checkPrerequisites(userId, catalogId)` 回傳未完成先修清單（空 = 通過）
+- 先修驗證：`checkPrerequisites(userId, catalogId)` 回傳未完成先修清單（空 = 通過）；格式化訊息共用 `formatMissingPrerequisites(missing)`。呼叫點：學員自行報名 `applyToCourse`、老師/管理者直接新增學員 `addStudentToInvite`（`cr-spec-260924-002`，檢查對象皆為被加入者本人，不因操作者角色豁免）
 - 結業後 `InviteEnrollment.graduatedAt` 有值，`getGraduatedCatalogIds(userId)` 回傳 Set
 
 ### 身分標籤

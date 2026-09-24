@@ -106,6 +106,13 @@ export async function checkPrerequisites(
 }
 
 /**
+ * 將缺少的先修課程清單格式化為以「、」串接的名稱字串，供錯誤訊息使用
+ */
+export function formatMissingPrerequisites(missing: { id: number; label: string }[]): string {
+  return missing.map((p) => p.label).join('、')
+}
+
+/**
  * 取得使用者已結業的課程 id 集合
  */
 export async function getGraduatedCatalogIds(userId: string): Promise<Set<number>> {

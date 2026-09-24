@@ -12,7 +12,7 @@ import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { canAccessAdmin } from '@/lib/auth-roles'
 import { instructorFeedbackSchema } from '@/lib/schemas/course-invite'
-import { checkPrerequisites } from '@/lib/data/course-catalog'
+import { checkPrerequisites, formatMissingPrerequisites } from '@/lib/data/course-catalog'
 import { createNotification } from '@/app/actions/notification'
 import { sendGraduationEmail } from '@/lib/mailer'
 import { resolveContactEmail } from '@/lib/utils/contact-email'
@@ -218,7 +218,7 @@ export async function applyToCourse(
   if (missingPrereqs.length > 0) {
     return {
       success: false,
-      message: `需先完成${missingPrereqs.map((p) => p.label).join('、')}才能加入此課程`,
+      message: `需先完成${formatMissingPrerequisites(missingPrereqs)}才能加入此課程`,
     }
   }
 

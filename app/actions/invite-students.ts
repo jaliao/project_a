@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * Server Actions - 課程學員管理（課程頁）
- * 2026-07-14 (Updated: 2026-09-16)
+ * 2026-07-14 (Updated: 2026-09-24)
  * app/actions/invite-students.ts
  *
  * 新增學員（僅限既有會員，透過「學員選擇元件」StudentPicker 單選、可補登結業）、
@@ -11,6 +11,8 @@
  * 新增學員仍不寄信、不發 Inbox 通知。
  * cr-spec-260916-004：新增 searchStudentsForInvite 供 StudentPicker 模糊搜尋；
  * addStudentToInvite 改吃 userId（取代原 identifier 字串輸入）；移除 lookupMemberByIdentifier。
+ * cr-spec-260924-002：addStudentToInvite 新增先修課程驗證（checkPrerequisites），
+ * 不分操作者角色，被加入學員未完成先修一律拒絕。
  * ----------------------------------------------
  */
 
@@ -22,6 +24,7 @@ import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { canAccessAdmin } from '@/lib/auth-roles'
 import { searchStudentCandidates, type StudentPickerCandidate } from '@/lib/data/student-picker'
+import { checkPrerequisites, formatMissingPrerequisites } from '@/lib/data/course-catalog'
 import { resolveMaxCapacity } from '@/lib/data/admin-settings'
 import { getDefaultMaterialChoiceForUser } from '@/lib/data/material-items'
 import { createNotification } from '@/app/actions/notification'
@@ -124,7 +127,14 @@ export async function addStudentToInvite(input: {
 
   const invite = await prisma.courseInvite.findUnique({
     where: { id: inviteId },
-    select: { id: true, title: true, completedAt: true, cancelledAt: true, createdById: true },
+    select: {
+      id: true,
+      title: true,
+      completedAt: true,
+      cancelledAt: true,
+      createdById: true,
+      courseCatalogId: true,
+    },
   })
   if (!invite) return { success: false, message: '找不到此班級' }
   if (!canManageInvite(session.user.roles, session.user.id, invite)) {
@@ -164,6 +174,15 @@ export async function addStudentToInvite(input: {
     select: { id: true },
   })
   if (dup) return { success: false, errors: { userId: ['該學員已在此班級'] } }
+
+  // 先修驗證：不分操作者角色（管理者與該課講師一律受限），檢查對象為被加入的學員本人
+  const missingPrereqs = await checkPrerequisites(existingUser.id, invite.courseCatalogId)
+  if (missingPrereqs.length > 0) {
+    return {
+      success: false,
+      errors: { userId: [`需先完成${formatMissingPrerequisites(missingPrereqs)}才能加入此班級`] },
+    }
+  }
 
   // 教材選擇預設值：曾在其他班級被核准過（上過課）視為已有教材，否則預設帶入繁體教材
   const defaultMaterialChoice = await getDefaultMaterialChoiceForUser(existingUser.id)
