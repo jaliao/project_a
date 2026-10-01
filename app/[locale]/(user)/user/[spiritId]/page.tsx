@@ -11,6 +11,7 @@ import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import {
   IconUser,
   IconBook,
@@ -50,17 +51,26 @@ import { getAdminSetting, CLASS_MAX_CAPACITY_KEY, CLASS_MAX_CAPACITY_DEFAULT } f
 import { getMyLearningIntent } from '@/lib/data/learning-intent'
 import { LearningIntentDialog } from '@/components/dashboard/learning-intent-dialog'
 
-export const metadata: Metadata = {
-  title: '首頁 — 啟動事工',
-}
-
 type Props = {
   params: Promise<{ spiritId: string }>
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'studentProfile' })
+  return { title: t('metaTitle') }
 }
 
 export default async function UserProfilePage({ params }: Props) {
   const { spiritId: id } = await params
   const session = await auth()
+  const t = await getTranslations('studentProfile')
+  const tRole = await getTranslations('role')
+  const tConversation = await getTranslations('conversation')
 
   // 查詢使用者基本資料（以 spiritId 查詢，URL 為小寫，DB 存大寫）
   const user = await prisma.user.findUnique({
@@ -142,7 +152,7 @@ export default async function UserProfilePage({ params }: Props) {
   const displayName = getMemberDisplayName(user)
 
   // 計算身分標籤（系統管理員優先，講師標籤依書籍講師身分推導）
-  const identityTags = getIdentityTags(user.roles)
+  const identityTags = getIdentityTags(user.roles, tRole)
 
   // 判斷是否為本人頁面
   const isOwnPage = session?.user?.spiritId?.toLowerCase() === id
@@ -174,36 +184,36 @@ export default async function UserProfilePage({ params }: Props) {
       )}
 
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-2xl font-semibold">首頁</h1>
+        <h1 className="text-2xl font-semibold">{t('pageTitle')}</h1>
       </div>
 
       {/* 基本資料單元 */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
           <IconUser className="h-5 w-5 text-primary" />
-          <h2 className="text-base font-semibold">基本資料</h2>
+          <h2 className="text-base font-semibold">{t('basicInfo')}</h2>
         </div>
 
         <div className="space-y-3">
           {/* 姓名 */}
           <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground w-20 shrink-0">姓名</span>
+            <span className="text-sm text-muted-foreground w-20 shrink-0">{t('nameLabel')}</span>
             <UserAvatar avatarUrl={resolveAvatarUrl(user)} displayName={displayName} size="sm" />
             <span className="text-sm font-medium">{displayName}</span>
-            {!isOwnPage && <SendMessageButton targetUserId={user.id} label="傳訊息" />}
+            {!isOwnPage && <SendMessageButton targetUserId={user.id} label={tConversation('cardMessage')} />}
           </div>
 
           {/* Spirit ID */}
           {user.spiritId && (
             <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground w-20 shrink-0">啟動編號</span>
+              <span className="text-sm text-muted-foreground w-20 shrink-0">{t('spiritIdLabel')}</span>
               <span className="text-sm font-mono">{user.spiritId}</span>
             </div>
           )}
 
           {/* 身分標籤 */}
           <div className="flex items-start gap-3">
-            <span className="text-sm text-muted-foreground w-20 shrink-0 pt-0.5">身分標籤</span>
+            <span className="text-sm text-muted-foreground w-20 shrink-0 pt-0.5">{t('identityTagsLabel')}</span>
             {identityTags.length > 0 ? (
               <div className="flex flex-wrap gap-1.5">
                 {identityTags.map((tag) => (
@@ -217,7 +227,7 @@ export default async function UserProfilePage({ params }: Props) {
 
           {/* 學習進度三卡（公開；已結業顯示學業完成時間） */}
           <div className="pt-1">
-            <span className="text-sm text-muted-foreground block mb-2">學習進度</span>
+            <span className="text-sm text-muted-foreground block mb-2">{t('learningProgressLabel')}</span>
             <CourseProgressCards
               allCourses={allCourses}
               certificates={certificates}
@@ -234,11 +244,11 @@ export default async function UserProfilePage({ params }: Props) {
       <section className="space-y-4 border-t pt-8">
         <div className="flex items-center gap-2">
           <IconBook className="h-5 w-5 text-primary" />
-          <h2 className="text-base font-semibold">課程</h2>
+          <h2 className="text-base font-semibold">{t('coursesSection')}</h2>
         </div>
 
         {enrollments.length === 0 ? (
-          <p className="text-sm text-muted-foreground">尚無課程紀錄</p>
+          <p className="text-sm text-muted-foreground">{t('noEnrollments')}</p>
         ) : (
           <CourseCardGrid>
             {enrollments.map((e) => (
@@ -275,10 +285,10 @@ export default async function UserProfilePage({ params }: Props) {
           <div className="flex items-center gap-2">
             <IconChalkboard className="h-5 w-5 text-primary" />
             <h2 className="text-base font-semibold">
-              授課
+              {t('teachingSection')}
               {showTeacherSectionForAdmin && (
                 <span className="ml-2 text-sm font-normal text-muted-foreground">
-                  （代 {displayName} 建立）
+                  {t('teachingOnBehalf', { name: displayName })}
                 </span>
               )}
             </h2>
@@ -286,7 +296,7 @@ export default async function UserProfilePage({ params }: Props) {
 
           {/* 最近授課預覽 */}
           {myCourseSessions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">尚無授課紀錄</p>
+            <p className="text-sm text-muted-foreground">{t('noCourseSessions')}</p>
           ) : (
             <CourseCardGrid>
               {myCourseSessions.slice(0, 3).map((item) => (
@@ -310,7 +320,7 @@ export default async function UserProfilePage({ params }: Props) {
               {myCourseSessions.length > 3 && (
                 <Link href={`/user/${id}/courses`} className="block">
                   <div className="rounded-lg border bg-card p-4 h-full flex items-center justify-center text-sm font-medium text-muted-foreground hover:bg-muted transition-colors cursor-pointer">
-                    更多授課資訊
+                    {t('moreCourseSessions')}
                   </div>
                 </Link>
               )}
@@ -341,14 +351,14 @@ export default async function UserProfilePage({ params }: Props) {
         <section className="space-y-4 border-t pt-8">
           <div className="flex items-center gap-2">
             <IconShieldCheck className="h-5 w-5 text-primary" />
-            <h2 className="text-base font-semibold">管理者</h2>
+            <h2 className="text-base font-semibold">{t('adminSection')}</h2>
           </div>
           <div className="flex flex-col gap-2">
             <Link
               href="/admin"
               className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
             >
-              管理後台
+              {t('adminPanelLink')}
             </Link>
           </div>
         </section>
@@ -362,7 +372,7 @@ export default async function UserProfilePage({ params }: Props) {
             className="flex items-center gap-2 w-fit hover:opacity-70 transition-opacity"
           >
             <IconMessageCircle className="h-5 w-5 text-primary" />
-            <h2 className="text-base font-semibold">聯繫管理者</h2>
+            <h2 className="text-base font-semibold">{t('contactAdminSection')}</h2>
             <IconChevronRight className="h-4 w-4 text-muted-foreground" />
           </Link>
           <ContactAdminCards inquiries={myRecentInquiries} />

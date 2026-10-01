@@ -25,13 +25,20 @@ import {
 } from '@/lib/data/learning-study'
 import { LessonAccordion } from '@/components/learning/lesson-accordion'
 import { StudyEntryCard } from '@/components/learning/study-entry-card'
-
-export const metadata: Metadata = {
-  title: '分段式查經 — 啟動事工',
-}
+import { translateCatalogLabel } from '@/lib/utils/catalog-label'
 
 type Props = {
   params: Promise<{ spiritId: string; catalogId: string }>
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'learning' })
+  return { title: t('metaTitle') }
 }
 
 export default async function LearningCatalogPage({ params }: Props) {
@@ -58,6 +65,8 @@ export default async function LearningCatalogPage({ params }: Props) {
   if (!catalog) redirect(`/user/${spiritId}/learning`)
 
   const t = await getTranslations('learning')
+  const tCatalog = await getTranslations('catalog')
+  const catalogLabel = translateCatalogLabel(tCatalog, catalog.label)
 
   const unlockedIds = await getUnlockedLearningCatalogIds(user.id)
   const unlocked = unlockedIds.includes(catalogId)
@@ -76,7 +85,7 @@ export default async function LearningCatalogPage({ params }: Props) {
     return (
       <div className="space-y-6">
         {backLink}
-        <h1 className="text-2xl font-semibold">{t('pageTitle')} {catalog.label}</h1>
+        <h1 className="text-2xl font-semibold">{t('pageTitle')} {catalogLabel}</h1>
         <div className="flex items-center gap-2 rounded-lg border p-8 text-sm text-muted-foreground">
           <IconLock className="h-4 w-4 shrink-0" />
           {t('catalogLocked')}
@@ -110,7 +119,7 @@ export default async function LearningCatalogPage({ params }: Props) {
       {backLink}
 
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold">{t('pageTitle')} {catalog.label}</h1>
+        <h1 className="text-2xl font-semibold">{t('pageTitle')} {catalogLabel}</h1>
         <p className="text-sm text-muted-foreground">
           {t('progressCount', { done: doneCount, total: totalCount })}
         </p>

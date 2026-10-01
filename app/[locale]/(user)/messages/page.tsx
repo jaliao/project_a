@@ -11,13 +11,20 @@
 
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { auth } from '@/lib/auth'
 import { getMyConversations } from '@/lib/data/conversation'
 import { getMyFriends } from '@/lib/data/friendship'
 import { MessagesPage as MessagesPageContent } from '@/components/conversation/messages-page'
 
-export const metadata: Metadata = {
-  title: '社群 — 啟動事工',
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'pageMeta' })
+  return { title: t('messages') }
 }
 
 interface PageProps {

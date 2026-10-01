@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "啟動事工",
+    "appName": "Activate Ministry",
     "backToLogin": "Back to login",
     "backToHome": "Back to home",
     "save": "Save",
@@ -305,7 +305,46 @@
       "enrollCountLabel": "Enrolled",
       "peopleSuffix": "",
       "approvedCount": "Approved students ({count})",
-      "noApproved": "No approved students yet"
+      "noApproved": "No approved students yet",
+      "addStudentButton": "Add student",
+      "removeStudentButton": "Remove student",
+      "removeStudentButtonDone": "Done removing",
+      "operationLogTitle": "Course Operation Log",
+      "operationLogCount": "Showing last {limit} · {total} total",
+      "operationLogEmpty": "No operation records yet",
+      "operationLogActorPrefix": "By: ",
+      "operationLogTargetPrefix": "Target: ",
+      "startGateMaterialNotReceived": "Material orders not all received yet ({received} / {total} received)",
+      "startGateNoApprovedStudent": "No approved students yet",
+      "startGateMaterialRemaining": "Materials not yet requested (Trad. {traditional}, Simp. {simplified}, Eng. {english})"
+    },
+    "inviteStudent": {
+      "addDialogTitle": "Add student",
+      "addDialogDesc": "Select an existing member (search or pick from your friend list) and add them to the class. If their account doesn't exist yet, please add it in member management first.",
+      "capacityWarning": "Class is at capacity ({capacity}). Please contact an admin to exceed this limit.",
+      "studentLabel": "Student",
+      "reselect": "Reselect",
+      "selectStudent": "Select student",
+      "graduatedCheckbox": "Graduated (backfill historical data)",
+      "graduatedWarning": "⚠️ This class has not graduated yet; submitting will also mark the class as graduated.",
+      "cancel": "Cancel",
+      "processing": "Processing…",
+      "submit": "Add",
+      "toastAdded": "Student added",
+      "removeTrigger": "Remove",
+      "removeConfirmTitleGraduated": "Remove graduated student?",
+      "removeConfirmTitle": "Remove student?",
+      "removeConfirmDescLine": "This will remove <strong>{name}</strong>'s enrollment from this class.",
+      "removeGraduatedWarningTitle": "This enrollment is <strong>graduated</strong>. Removing it will affect:",
+      "removeGraduatedWarningItem1": "The certificate production list (the tier card may disappear)",
+      "removeGraduatedWarningItem2": "Teacher-student tier relationships",
+      "removeGraduatedWarningItem3": "Prerequisite eligibility for later courses",
+      "removeShipmentWarning": "⚠️ This enrollment already has material shipment records. The admin will be notified after removal — please follow up on material handling.",
+      "removeReasonLabel": "Reason for removal (required)",
+      "removeReasonPlaceholder": "Please describe the reason for removal",
+      "removeConfirmAction": "Confirm removal",
+      "toastRemoved": "Student removed",
+      "toastRemoveFail": "Removal failed"
     },
     "graduate": {
       "metaTitle": "Course graduation — 啟動事工",
@@ -626,11 +665,41 @@
   },
   "role": {
     "user": "Member",
-    "teacher_1": "Activate Spirit Instructor",
+    "teacher_1": "Activate Spiritman Instructor",
     "teacher_2": "Activate Abundance Instructor",
     "teacher_3": "Activate Victory Instructor",
     "admin": "Administrator",
-    "superadmin": "Super Administrator"
+    "superadmin": "Super Administrator",
+    "systemAdmin": "System Administrator"
+  },
+  "pageMeta": {
+    "terms": "Terms of Service — Activate Ministry",
+    "privacy": "Privacy Policy — Activate Ministry",
+    "myCourses": "My Courses — Activate Ministry",
+    "messages": "Community — Activate Ministry",
+    "accountSuspended": "Account Suspended — Activate Ministry",
+    "changePassword": "Set Password — Activate Ministry"
+  },
+  "catalog": {
+    "啟動事工": "Activate Ministry",
+    "啟動靈人": "Activate Spiritman",
+    "啟動豐盛": "Activate Abundance",
+    "啟動得勝": "Activate Victory"
+  },
+  "materialOrderStatus": {
+    "pending_quote": "Pending quote",
+    "pending_payment": "Pending payment",
+    "pending_confirm": "Pending payment confirmation",
+    "pending_ship": "Pending shipment",
+    "shipped": "Shipped",
+    "received": "Received"
+  },
+  "adminLogAction": {
+    "enrollment_add": "Add student",
+    "enrollment_remove": "Remove student",
+    "material_finalize": "Finish material requests",
+    "material_reopen": "Reopen material requests",
+    "member_delete": "Delete member"
   },
   "language": {
     "label": "Language",
@@ -661,6 +730,7 @@
     "deploymentMismatch": "This page has been updated. Please refresh and try again.",
     "refreshPage": "Refresh",
     "backToProfile": "Back to profile",
+    "metaTitle": "Contact Admin — Activate Ministry",
     "myInquiriesTitle": "Contact Admin",
     "noInquiries": "No inquiries yet",
     "createdAtPrefix": "Submitted at: ",
@@ -817,8 +887,8 @@
     }
   },
   "seo": {
-    "defaultTitle": "KUA Ministry | Activate Spirit, Abundance & Victory Courses",
-    "description": "KUA Ministry offers the three-stage discipleship courses Activate Spirit (啟動靈人), Activate Abundance (啟動豐盛) and Activate Victory (啟動得勝) for church and small-group leaders. Online enrolment, material requests and learning progress in one place."
+    "defaultTitle": "Activate Ministry | Activate Spiritman, Abundance & Victory Courses",
+    "description": "Activate Ministry offers the three-stage discipleship courses Activate Spiritman, Activate Abundance and Activate Victory for church and small-group leaders. Online enrolment, material requests and learning progress in one place."
   },
   "home": {
     "heroSubtitle": "Activate Spirit · Activate Abundance · Activate Victory — discipleship course platform",
@@ -826,15 +896,15 @@
   },
   "courses": {
     "metaTitle": "Courses",
-    "metaDescription": "Learn about KUA Ministry's three-stage courses 啟動靈人 / 啟動豐盛 / 啟動得勝: content, who they are for, and how to enrol.",
+    "metaDescription": "Learn about Activate Ministry's three-stage courses 啟動靈人 / 啟動豐盛 / 啟動得勝: content, who they are for, and how to enrol.",
     "introHeading": "啟動靈人 · 啟動豐盛 · 啟動得勝 — Course Overview",
-    "introBody": "KUA Ministry is a progressive discipleship training programme made up of three stages — 啟動靈人 (Activate Spirit), 啟動豐盛 (Activate Abundance) and 啟動得勝 (Activate Victory) — for Christians, small-group leaders and church co-workers who long to grow. 啟動靈人 helps you know and experience the presence of the Holy Spirit; 啟動豐盛 builds you up in gifts and service; 啟動得勝 equips you to stand firm in spiritual battle and lead others.",
+    "introBody": "Activate Ministry is a progressive discipleship training programme made up of three stages — 啟動靈人 (Activate Spiritman), 啟動豐盛 (Activate Abundance) and 啟動得勝 (Activate Victory) — for Christians, small-group leaders and church co-workers who long to grow. 啟動靈人 helps you know and experience the presence of the Holy Spirit; 啟動豐盛 builds you up in gifts and service; 啟動得勝 equips you to stand firm in spiritual battle and lead others.",
     "listHeading": "Courses currently offered",
     "noCourses": "No courses are open for enrolment right now. Please check back for updates.",
     "fallback": {
-      "啟動靈人": "The 啟動靈人 course leads students to know the Holy Spirit and practise a Spirit-led life; suitable for new or renewing believers.",
-      "啟動豐盛": "The 啟動豐盛 course builds students who have completed 啟動靈人 in gifts, character and service toward an abundant life.",
-      "啟動得勝": "The 啟動得勝 course equips students to stand firm in spiritual battle, experience breakthrough and lead others to victory."
+      "啟動靈人": "The Activate Spiritman course leads students to know the Holy Spirit and practise a Spirit-led life; suitable for new or renewing believers.",
+      "啟動豐盛": "The Activate Abundance course builds students who have completed Activate Spiritman in gifts, character and service toward an abundant life.",
+      "啟動得勝": "The Activate Victory course equips students to stand firm in spiritual battle, experience breakthrough and lead others to victory."
     },
     "fallbackGeneric": "A detailed introduction for this course is coming soon. Please sign in or contact us for enrolment details.",
     "ctaEnroll": "Sign in / Enrol",
@@ -875,7 +945,7 @@
     "progressCount": "{done} / {total} lessons done"
   },
   "footer": {
-    "description": "Chidao Ministry online platform — course enrollment, learning records, and community.",
+    "description": "Activate Ministry online platform — course enrollment, learning records, and community.",
     "sectionExplore": "Explore",
     "sectionLegal": "Legal",
     "linkHome": "Home",
@@ -883,7 +953,7 @@
     "linkInstallApp": "Install app",
     "linkTerms": "Terms of Service",
     "linkPrivacy": "Privacy Policy",
-    "copyright": "© {year} Chidao Ministry. All rights reserved."
+    "copyright": "© {year} Activate Ministry. All rights reserved."
   },
   "profile": {
     "pageTitle": "My Profile",
@@ -979,5 +1049,27 @@
       "avatarRemoveFailed": "Removal failed, please try again later",
       "mustLogin": "Please sign in first"
     }
+  },
+  "studentProfile": {
+    "metaTitle": "Home — Activate Ministry",
+    "pageTitle": "Home",
+    "basicInfo": "Basic Info",
+    "nameLabel": "Name",
+    "spiritIdLabel": "Spirit ID",
+    "identityTagsLabel": "Identity tags",
+    "learningProgressLabel": "Learning progress",
+    "graduatedAtPrefix": "Graduated: ",
+    "statusInProgress": "In progress",
+    "statusNotStarted": "Not started",
+    "progressCount": "Completed {done} / {total} lessons",
+    "coursesSection": "Courses",
+    "noEnrollments": "No course records yet",
+    "teachingSection": "Teaching",
+    "teachingOnBehalf": "(on behalf of {name})",
+    "noCourseSessions": "No teaching records yet",
+    "moreCourseSessions": "More teaching info",
+    "adminSection": "Admin",
+    "adminPanelLink": "Admin panel",
+    "contactAdminSection": "Contact Admin"
   }
 }

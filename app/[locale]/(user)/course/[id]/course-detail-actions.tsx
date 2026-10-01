@@ -214,6 +214,7 @@ export function CourseDetailActions({
   const router = useRouter()
   const t = useTranslations('course.material')
   const ta = useTranslations('course.actions')
+  const tStatus = useTranslations('materialOrderStatus')
   const versionLabels = {
     trad: t('versionShortTraditional'),
     simp: t('versionShortSimplified'),
@@ -409,7 +410,7 @@ export function CourseDetailActions({
                           {bookLabel(order.traditionalQty, order.simplifiedQty, order.englishQty, versionLabels)}
                         </span>
                       </span>
-                      <span className={cn('rounded px-2 py-0.5 text-xs', status.tone)}>{status.label}</span>
+                      <span className={cn('rounded px-2 py-0.5 text-xs', status.tone)}>{tStatus(status.key)}</span>
                     </div>
 
                     {/* 內嵌顯示訂單寄送資訊 */}

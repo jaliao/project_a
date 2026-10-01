@@ -15,6 +15,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { IconUserPlus, IconAlertTriangle } from '@tabler/icons-react'
 import { addStudentToInvite, removeStudentFromInvite, searchStudentsForInvite } from '@/app/actions/invite-students'
@@ -72,6 +73,8 @@ export function AddStudentDialog({
 }) {
   const atCapacity = !isAdmin && approvedCount >= capacity
   const router = useRouter()
+  const t = useTranslations('course.inviteStudent')
+  const td = useTranslations('course.detail')
   const [open, setOpen] = useState(autoOpen)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -104,7 +107,7 @@ export function AddStudentDialog({
         graduatedAt: graduated ? graduatedAt : undefined,
       })
       if (res.success) {
-        toast.success(res.message ?? '已新增學員')
+        toast.success(res.message ?? t('toastAdded'))
         router.refresh()
         handleOpenChange(false)
       } else {
@@ -118,23 +121,21 @@ export function AddStudentDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <Button variant={triggerVariant} size={triggerSize} onClick={() => setOpen(true)}>
         <IconUserPlus className="h-4 w-4" />
-        新增學員
+        {td('addStudentButton')}
       </Button>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>新增學員</DialogTitle>
-          <DialogDescription>
-            選擇既有會員（搜尋或自社群好友清單點選）並加入班級；查無帳號時請先至會員管理新增。
-          </DialogDescription>
+          <DialogTitle>{t('addDialogTitle')}</DialogTitle>
+          <DialogDescription>{t('addDialogDesc')}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           {atCapacity && (
             <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              已達班級人數上限（{capacity} 人），如需超過請洽管理者
+              {t('capacityWarning', { capacity })}
             </p>
           )}
           <div className="space-y-1.5">
-            <Label>學員</Label>
+            <Label>{t('studentLabel')}</Label>
             {selectedStudent ? (
               <div className="flex items-center justify-between gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
                 <span>
@@ -148,7 +149,7 @@ export function AddStudentDialog({
                   onClick={() => setSelectedStudent(null)}
                   disabled={isPending}
                 >
-                  重新選擇
+                  {t('reselect')}
                 </Button>
               </div>
             ) : (
@@ -159,7 +160,7 @@ export function AddStudentDialog({
                 disabled={atCapacity}
               >
                 <IconUserPlus className="h-4 w-4" />
-                選擇學員
+                {t('selectStudent')}
               </Button>
             )}
             {errors.userId?.[0] && <p className="text-sm text-destructive">{errors.userId[0]}</p>}
@@ -171,7 +172,7 @@ export function AddStudentDialog({
                 checked={graduated}
                 onCheckedChange={(v) => setGraduated(v === true)}
               />
-              <Label htmlFor="student-graduated">已結業（補登歷史資料）</Label>
+              <Label htmlFor="student-graduated">{t('graduatedCheckbox')}</Label>
             </div>
             {graduated && (
               <div className="space-y-1.5 pl-6">
@@ -185,17 +186,17 @@ export function AddStudentDialog({
                   <p className="text-sm text-destructive">{errors.graduatedAt[0]}</p>
                 )}
                 {!inviteCompleted && (
-                  <p className="text-sm text-amber-700">⚠️ 本班級尚未結業，送出後班級將一併標記結業</p>
+                  <p className="text-sm text-amber-700">{t('graduatedWarning')}</p>
                 )}
               </div>
             )}
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isPending}>
-              取消
+              {t('cancel')}
             </Button>
             <Button onClick={handleSubmit} disabled={isPending || atCapacity || !selectedStudent}>
-              {isPending ? '處理中…' : '新增'}
+              {isPending ? t('processing') : t('submit')}
             </Button>
           </div>
         </div>
@@ -227,6 +228,7 @@ export function RemoveStudentButton({
   hasShipmentItems: boolean
 }) {
   const router = useRouter()
+  const t = useTranslations('course.inviteStudent')
   const [isPending, startTransition] = useTransition()
   const [reason, setReason] = useState('')
   const [reasonError, setReasonError] = useState<string | null>(null)
@@ -235,14 +237,14 @@ export function RemoveStudentButton({
     startTransition(async () => {
       const res = await removeStudentFromInvite(enrollmentId, reason)
       if (res.success) {
-        toast.success(res.message ?? '已移除學員')
+        toast.success(res.message ?? t('toastRemoved'))
         setReason('')
         setReasonError(null)
         router.refresh()
       } else if (res.errors?.reason) {
         setReasonError(res.errors.reason[0])
       } else {
-        toast.error(res.message ?? '移除失敗')
+        toast.error(res.message ?? t('toastRemoveFail'))
       }
     })
   }
@@ -258,41 +260,44 @@ export function RemoveStudentButton({
     >
       <AlertDialogTrigger asChild>
         <Button variant="outline" size="sm" className="text-destructive" disabled={isPending}>
-          移除
+          {t('removeTrigger')}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className={graduated ? 'flex items-center gap-2 text-destructive' : undefined}>
             {graduated && <IconAlertTriangle className="h-5 w-5" />}
-            {graduated ? '移除已結業學員？' : '移除學員？'}
+            {graduated ? t('removeConfirmTitleGraduated') : t('removeConfirmTitle')}
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-2">
               <p>
-                將自本班級移除 <span className="font-semibold">{studentName}</span> 的報名紀錄。
+                {t.rich('removeConfirmDescLine', {
+                  name: studentName,
+                  strong: (chunks) => <span className="font-semibold">{chunks}</span>,
+                })}
               </p>
               {graduated && (
                 <div className="rounded-md border border-destructive/50 bg-destructive/5 px-3 py-2 text-destructive">
-                  此報名<strong>已結業</strong>，移除將影響：
+                  {t.rich('removeGraduatedWarningTitle', { strong: (chunks) => <strong>{chunks}</strong> })}
                   <ul className="mt-1 list-inside list-disc">
-                    <li>證書製作清單（該階層卡片可能消失）</li>
-                    <li>師生階層關係</li>
-                    <li>後續課程的擋修資格</li>
+                    <li>{t('removeGraduatedWarningItem1')}</li>
+                    <li>{t('removeGraduatedWarningItem2')}</li>
+                    <li>{t('removeGraduatedWarningItem3')}</li>
                   </ul>
                 </div>
               )}
               {hasShipmentItems && (
-                <p className="text-amber-700">⚠️ 此報名已有教材寄送紀錄，移除後管理者將收到通知，請留意後續教材處理。</p>
+                <p className="text-amber-700">{t('removeShipmentWarning')}</p>
               )}
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="space-y-1.5 px-1">
-          <Label htmlFor={`remove-reason-${enrollmentId}`}>移除原因（必填）</Label>
+          <Label htmlFor={`remove-reason-${enrollmentId}`}>{t('removeReasonLabel')}</Label>
           <Textarea
             id={`remove-reason-${enrollmentId}`}
-            placeholder="請說明移除原因"
+            placeholder={t('removeReasonPlaceholder')}
             value={reason}
             onChange={(e) => {
               setReason(e.target.value)
@@ -303,7 +308,7 @@ export function RemoveStudentButton({
           {reasonError && <p className="text-sm text-destructive">{reasonError}</p>}
         </div>
         <AlertDialogFooter>
-          <AlertDialogCancel>取消</AlertDialogCancel>
+          <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
           <AlertDialogAction
             className="bg-destructive text-white hover:bg-destructive/90"
             disabled={!reason.trim() || isPending}
@@ -312,7 +317,7 @@ export function RemoveStudentButton({
               handleRemove()
             }}
           >
-            確認移除
+            {t('removeConfirmAction')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

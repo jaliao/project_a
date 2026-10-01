@@ -10,8 +10,8 @@
  */
 
 import { IconClipboardList } from '@tabler/icons-react'
+import { getTranslations } from 'next-intl/server'
 import { getAdminLogs } from '@/lib/data/admin-logs'
-import { getAdminLogActionLabel } from '@/config/admin-log-action'
 import { Badge } from '@/components/ui/badge'
 
 function fmtDateTime(d: Date): string {
@@ -26,19 +26,23 @@ function fmtDateTime(d: Date): string {
 
 export async function CourseOperationLog({ inviteId }: { inviteId: number }) {
   const result = await getAdminLogs({ inviteId, page: 1 })
+  const t = await getTranslations('course.detail')
+  const tAction = await getTranslations('adminLogAction')
 
   return (
     <div className="rounded-lg border p-5 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <IconClipboardList className="h-5 w-5 text-primary" />
-          <h2 className="text-base font-semibold">課程操作 LOG</h2>
+          <h2 className="text-base font-semibold">{t('operationLogTitle')}</h2>
         </div>
-        <span className="text-xs text-muted-foreground">顯示最近 30 筆・共 {result.total} 筆</span>
+        <span className="text-xs text-muted-foreground">
+          {t('operationLogCount', { limit: 30, total: result.total })}
+        </span>
       </div>
 
       {result.items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">尚無操作紀錄</p>
+        <p className="text-sm text-muted-foreground">{t('operationLogEmpty')}</p>
       ) : (
         <div className="space-y-3">
           {result.items.map((log) => (
@@ -53,14 +57,17 @@ export async function CourseOperationLog({ inviteId }: { inviteId: number }) {
                         : 'border-green-200 text-green-700'
                     }
                   >
-                    {getAdminLogActionLabel(log.action)}
+                    {tAction(log.action)}
                   </Badge>
                   <span className="text-muted-foreground">{fmtDateTime(log.createdAt)}</span>
                 </div>
-                <span className="text-muted-foreground">操作者：{log.actorName}</span>
+                <span className="text-muted-foreground">
+                  {t('operationLogActorPrefix')}
+                  {log.actorName}
+                </span>
               </div>
               <p className="break-words">
-                <span className="text-muted-foreground">對象：</span>
+                <span className="text-muted-foreground">{t('operationLogTargetPrefix')}</span>
                 {log.targetName}
               </p>
               {log.detail && <p className="break-words text-muted-foreground">{log.detail}</p>}

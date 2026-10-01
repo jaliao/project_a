@@ -15,6 +15,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
+import { translateCatalogLabel } from '@/lib/utils/catalog-label'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
@@ -50,6 +51,7 @@ type Props = {
 export function LearningIntentDialog({ courses, myIntent }: Props) {
   const router = useRouter()
   const t = useTranslations('learningIntent')
+  const tCatalog = useTranslations('catalog')
   const tValidation = useTranslations('validation')
   const [open, setOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -138,7 +140,7 @@ export function LearningIntentDialog({ courses, myIntent }: Props) {
                     onCheckedChange={() => toggleCourse(c.id)}
                   />
                   <Label htmlFor={`course-${c.id}`} className="font-normal">
-                    {c.label}
+                    {translateCatalogLabel(tCatalog, c.label)}
                   </Label>
                 </div>
               ))}

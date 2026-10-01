@@ -25,12 +25,18 @@ import {
   type LearningCatalogCard,
 } from '@/components/learning/learning-catalog-grid'
 
-export const metadata: Metadata = {
-  title: '分段式查經 — 啟動事工',
-}
-
 type Props = {
   params: Promise<{ spiritId: string }>
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'learning' })
+  return { title: t('metaTitle') }
 }
 
 export default async function LearningPage({ params }: Props) {

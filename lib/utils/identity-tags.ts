@@ -11,11 +11,17 @@
 
 import { canAccessAdmin, TEACHER_ROLES, ROLE_LABELS, type Roles } from '@/lib/auth-roles'
 
-export function getIdentityTags(roles: Roles): string[] {
+type RoleTranslator = (key: string) => string
+
+/**
+ * t 省略時維持原繁體 ROLE_LABELS（供後台等非 i18n 情境使用）；
+ * 傳入 t（限定在 role 命名空間，如 useTranslations('role')）時改走 i18n。
+ */
+export function getIdentityTags(roles: Roles, t?: RoleTranslator): string[] {
   const tags: string[] = []
-  if (canAccessAdmin(roles)) tags.push('系統管理員')
+  if (canAccessAdmin(roles)) tags.push(t ? t('systemAdmin') : '系統管理員')
   for (const role of TEACHER_ROLES) {
-    if (roles?.includes(role)) tags.push(ROLE_LABELS[role])
+    if (roles?.includes(role)) tags.push(t ? t(role) : ROLE_LABELS[role])
   }
   return tags
 }

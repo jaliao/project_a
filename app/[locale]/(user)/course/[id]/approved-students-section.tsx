@@ -97,7 +97,7 @@ export function ApprovedStudentsSection({
               disabled={students.length === 0}
             >
               <IconUserMinus className="h-4 w-4" />
-              {removeMode ? '完成移除' : '移除學員'}
+              {removeMode ? t('course.detail.removeStudentButtonDone') : t('course.detail.removeStudentButton')}
             </Button>
           </div>
         )}

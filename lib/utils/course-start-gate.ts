@@ -49,3 +49,39 @@ export function evaluateCourseStartGate(input: {
 
   return { canStart: reasons.length === 0, reasons }
 }
+
+export type CourseStartGateUIReason =
+  | { code: 'no_approved_student' }
+  | { code: 'material_remaining'; traditional: number; simplified: number; english: number }
+  | { code: 'material_not_received'; received: number; total: number }
+
+/**
+ * 與 evaluateCourseStartGate 判定條件相同，但回傳結構化原因（不含繁體字串），
+ * 供 UI 層依當前語言另行組字串顯示；server action 判斷與拒絕訊息不受影響，見 evaluateCourseStartGate。
+ */
+export function evaluateCourseStartGateReasonCodes(input: {
+  approvedCount: number
+  remaining: { traditional: number; simplified: number; english: number }
+  orders: CourseStartGateOrder[]
+  materialFinalized?: boolean
+}): CourseStartGateUIReason[] {
+  const reasons: CourseStartGateUIReason[] = []
+
+  if (input.approvedCount < 1) {
+    reasons.push({ code: 'no_approved_student' })
+  }
+
+  const { traditional, simplified, english } = input.remaining
+  if (!input.materialFinalized && traditional + simplified + english > 0) {
+    reasons.push({ code: 'material_remaining', traditional, simplified, english })
+  }
+
+  if (input.orders.length > 0) {
+    const received = input.orders.filter((o) => o.receivedAt != null).length
+    if (received < input.orders.length) {
+      reasons.push({ code: 'material_not_received', received, total: input.orders.length })
+    }
+  }
+
+  return reasons
+}

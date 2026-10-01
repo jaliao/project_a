@@ -13,6 +13,7 @@ import { useTranslations } from 'next-intl'
 import { IconLock, IconChevronRight } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
 import { CourseCardGrid } from '@/components/course-session/course-card-grid'
+import { translateCatalogLabel } from '@/lib/utils/catalog-label'
 
 export type LearningCatalogCard = {
   id: number
@@ -31,6 +32,7 @@ type Props = {
 
 export function LearningCatalogGrid({ spiritId, catalogs }: Props) {
   const t = useTranslations('learning')
+  const tCatalog = useTranslations('catalog')
 
   return (
     <CourseCardGrid>
@@ -43,7 +45,7 @@ export function LearningCatalogGrid({ spiritId, catalogs }: Props) {
               className="flex h-full flex-col gap-2 rounded-lg border bg-card p-4 transition-colors hover:bg-muted/50"
             >
               <div className="flex items-start justify-between gap-2">
-                <span className="text-sm font-semibold">{c.label}</span>
+                <span className="text-sm font-semibold">{translateCatalogLabel(tCatalog, c.label)}</span>
                 <IconChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
               </div>
               {typeof c.doneCount === 'number' && typeof c.totalCount === 'number' && (
@@ -64,7 +66,7 @@ export function LearningCatalogGrid({ spiritId, catalogs }: Props) {
             )}
           >
             <div className="flex items-start justify-between gap-2">
-              <span className="text-sm font-semibold">{c.label}</span>
+              <span className="text-sm font-semibold">{translateCatalogLabel(tCatalog, c.label)}</span>
               <IconLock className="h-4 w-4 shrink-0" />
             </div>
             <span className="text-xs">

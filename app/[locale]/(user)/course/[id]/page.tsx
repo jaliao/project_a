@@ -23,12 +23,13 @@ import {
   IconCertificate,
 } from '@tabler/icons-react'
 import { getTranslations } from 'next-intl/server'
+import { translateCatalogLabel } from '@/lib/utils/catalog-label'
 import { auth } from '@/lib/auth'
 import { canAccessAdmin } from '@/lib/auth-roles'
 import { getAdminSetting, CLASS_MAX_CAPACITY_KEY, CLASS_MAX_CAPACITY_DEFAULT } from '@/lib/data/admin-settings'
 import { getDefaultBookNameForUser, getDefaultMaterialChoiceForUser, getUnassignedBookItems } from '@/lib/data/material-items'
 import { getCourseSessionById, getEnrollmentMaterialSummary } from '@/lib/data/course-sessions'
-import { evaluateCourseStartGate } from '@/lib/utils/course-start-gate'
+import { evaluateCourseStartGate, evaluateCourseStartGateReasonCodes } from '@/lib/utils/course-start-gate'
 import { computeMaterialProgress } from '@/lib/utils/material-progress'
 import { checkPrerequisites } from '@/lib/data/course-catalog'
 import { CourseDetailActions } from './course-detail-actions'
@@ -72,6 +73,7 @@ export default async function CourseDetailPage({
 }) {
   const { id, locale } = await params
   const t = await getTranslations({ locale })
+  const tCatalog = await getTranslations({ locale, namespace: 'catalog' })
   const numId = parseInt(id, 10)
   if (isNaN(numId)) notFound()
 
@@ -84,7 +86,7 @@ export default async function CourseDetailPage({
   const courseSession = await getCourseSessionById(numId)
   if (!courseSession) notFound()
 
-  const levelLabel = courseSession.courseCatalogLabel
+  const levelLabel = translateCatalogLabel(tCatalog, courseSession.courseCatalogLabel)
 
   const teacherName = getMemberDisplayName(courseSession.createdBy)
 
@@ -121,6 +123,23 @@ export default async function CourseDetailPage({
     remaining: materialProgress.remaining,
     orders: courseSession.orders,
     materialFinalized: !!courseSession.materialFinalizedAt,
+  })
+  // UI 顯示用（在地化）；server 判斷與拒絕訊息仍以上方 startGate.reasons（繁體）為準
+  const startGateReasonCodes = evaluateCourseStartGateReasonCodes({
+    approvedCount: courseSession.approvedEnrollments.length,
+    remaining: materialProgress.remaining,
+    orders: courseSession.orders,
+    materialFinalized: !!courseSession.materialFinalizedAt,
+  })
+  const startReasonsDisplay = startGateReasonCodes.map((r) => {
+    if (r.code === 'no_approved_student') return t('course.detail.startGateNoApprovedStudent')
+    if (r.code === 'material_remaining')
+      return t('course.detail.startGateMaterialRemaining', {
+        traditional: r.traditional,
+        simplified: r.simplified,
+        english: r.english,
+      })
+    return t('course.detail.startGateMaterialNotReceived', { received: r.received, total: r.total })
   })
 
   // 當前使用者的申請記錄
@@ -243,7 +262,7 @@ export default async function CourseDetailPage({
                         <InstructorFeedbackButton
                           enrollmentId={e.id}
                           studentName={getMemberDisplayName(e.user)}
-                          bookLabel={courseSession.courseCatalogLabel}
+                          bookLabel={levelLabel}
                           initialRecommended={e.teacherRecommended}
                           initialNote={e.teacherFeedbackNote}
                         />
@@ -439,7 +458,7 @@ export default async function CourseDetailPage({
           progress={materialProgress}
           materialFinalizedAt={courseSession.materialFinalizedAt}
           canStart={startGate.canStart}
-          startReasons={startGate.reasons}
+          startReasons={startReasonsDisplay}
           defaultRecipient={{
             name: courseSession.createdBy.realName || courseSession.createdBy.name || '',
             phone: courseSession.createdBy.phone || '',

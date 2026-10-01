@@ -10,10 +10,17 @@
  */
 
 import type { Metadata } from 'next'
+import { getTranslations } from 'next-intl/server'
 import { ChangePasswordForm } from './change-password-form'
 
-export const metadata: Metadata = {
-  title: '設定密碼 — 啟動事工',
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'pageMeta' })
+  return { title: t('changePassword') }
 }
 
 export default function ChangePasswordPage() {

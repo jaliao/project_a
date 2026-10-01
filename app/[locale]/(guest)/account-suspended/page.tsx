@@ -11,11 +11,18 @@
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
 
-export const metadata: Metadata = {
-  title: '帳號已暫停 — 啟動事工',
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'pageMeta' })
+  return { title: t('accountSuspended') }
 }
 
 export default function AccountSuspendedPage() {

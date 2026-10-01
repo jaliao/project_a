@@ -18,6 +18,7 @@ import { getSiteUrl } from '@/lib/utils/site-url'
 import { JsonLd, orgJsonLd, websiteJsonLd, graphJsonLd } from '@/components/seo/json-ld'
 import { BrandLogo } from '@/components/layout/brand-logo'
 import { Footer } from '@/components/layout/footer'
+import { translateCatalogLabel } from '@/lib/utils/catalog-label'
 
 export async function generateMetadata({
   params,
@@ -26,7 +27,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'courses' })
-  const title = `${t('metaTitle')} — 啟動事工`
+  const tCommon = await getTranslations({ locale, namespace: 'common' })
+  const title = `${t('metaTitle')} — ${tCommon('appName')}`
   const description = t('metaDescription')
   return {
     title,
@@ -47,6 +49,8 @@ export default async function CoursesPage({
 }) {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'courses' })
+  const tCatalog = await getTranslations({ locale, namespace: 'catalog' })
+  const tCommon = await getTranslations({ locale, namespace: 'common' })
 
   const courses = await getActiveCourses()
   const base = getSiteUrl()
@@ -85,7 +89,7 @@ export default async function CoursesPage({
 
       {/* Header */}
       <header className="flex items-center justify-between border-b px-6 py-4">
-        <Link href="/" aria-label="啟動事工">
+        <Link href="/" aria-label={tCommon('appName')}>
           <BrandLogo textClassName="text-lg" />
         </Link>
         <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground">
@@ -109,7 +113,7 @@ export default async function CoursesPage({
             <ul className="space-y-6">
               {courses.map((c) => (
                 <li key={c.id} className="space-y-2 rounded-lg border p-5">
-                  <h3 className="text-lg font-semibold">{c.label}</h3>
+                  <h3 className="text-lg font-semibold">{translateCatalogLabel(tCatalog, c.label)}</h3>
                   <p className="text-sm leading-relaxed text-muted-foreground">
                     {descFor(c.label, c.description)}
                   </p>

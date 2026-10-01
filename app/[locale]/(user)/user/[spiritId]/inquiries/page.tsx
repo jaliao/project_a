@@ -19,12 +19,18 @@ import { getMyInquiries } from '@/lib/data/support-inquiry'
 import { SupportInquiryForm } from '@/components/support-inquiry/support-inquiry-form'
 import { InquiryCard } from '@/components/support-inquiry/inquiry-card'
 
-export const metadata: Metadata = {
-  title: '聯繫管理者 — 啟動事工',
-}
-
 type Props = {
   params: Promise<{ spiritId: string }>
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'supportInquiry' })
+  return { title: t('metaTitle') }
 }
 
 export default async function MyInquiriesPage({ params }: Props) {

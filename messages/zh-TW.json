@@ -305,7 +305,46 @@
       "enrollCountLabel": "報名人數",
       "peopleSuffix": "人",
       "approvedCount": "已核准學員（{count} 人）",
-      "noApproved": "尚無已核准學員"
+      "noApproved": "尚無已核准學員",
+      "addStudentButton": "新增學員",
+      "removeStudentButton": "移除學員",
+      "removeStudentButtonDone": "完成移除",
+      "operationLogTitle": "課程操作 LOG",
+      "operationLogCount": "顯示最近 {limit} 筆・共 {total} 筆",
+      "operationLogEmpty": "尚無操作紀錄",
+      "operationLogActorPrefix": "操作者：",
+      "operationLogTargetPrefix": "對象：",
+      "startGateMaterialNotReceived": "教材訂單尚未全部收件（{received} / {total} 已收件）",
+      "startGateNoApprovedStudent": "尚無已核准學員",
+      "startGateMaterialRemaining": "尚有教材未申請（繁 {traditional}、簡 {simplified}、英 {english}）"
+    },
+    "inviteStudent": {
+      "addDialogTitle": "新增學員",
+      "addDialogDesc": "選擇既有會員（搜尋或自社群好友清單點選）並加入班級；查無帳號時請先至會員管理新增。",
+      "capacityWarning": "已達班級人數上限（{capacity} 人），如需超過請洽管理者",
+      "studentLabel": "學員",
+      "reselect": "重新選擇",
+      "selectStudent": "選擇學員",
+      "graduatedCheckbox": "已結業（補登歷史資料）",
+      "graduatedWarning": "⚠️ 本班級尚未結業，送出後班級將一併標記結業",
+      "cancel": "取消",
+      "processing": "處理中…",
+      "submit": "新增",
+      "toastAdded": "已新增學員",
+      "removeTrigger": "移除",
+      "removeConfirmTitleGraduated": "移除已結業學員？",
+      "removeConfirmTitle": "移除學員？",
+      "removeConfirmDescLine": "將自本班級移除 <strong>{name}</strong> 的報名紀錄。",
+      "removeGraduatedWarningTitle": "此報名<strong>已結業</strong>，移除將影響：",
+      "removeGraduatedWarningItem1": "證書製作清單（該階層卡片可能消失）",
+      "removeGraduatedWarningItem2": "師生階層關係",
+      "removeGraduatedWarningItem3": "後續課程的擋修資格",
+      "removeShipmentWarning": "⚠️ 此報名已有教材寄送紀錄，移除後管理者將收到通知，請留意後續教材處理。",
+      "removeReasonLabel": "移除原因（必填）",
+      "removeReasonPlaceholder": "請說明移除原因",
+      "removeConfirmAction": "確認移除",
+      "toastRemoved": "已移除學員",
+      "toastRemoveFail": "移除失敗"
     },
     "graduate": {
       "metaTitle": "課程結業 — 啟動事工",
@@ -630,7 +669,37 @@
     "teacher_2": "啟動豐盛講師",
     "teacher_3": "啟動得勝講師",
     "admin": "管理者",
-    "superadmin": "超級管理者"
+    "superadmin": "超級管理者",
+    "systemAdmin": "系統管理員"
+  },
+  "pageMeta": {
+    "terms": "服務條款 — 啟動事工",
+    "privacy": "隱私政策 — 啟動事工",
+    "myCourses": "我的開課 — 啟動事工",
+    "messages": "社群 — 啟動事工",
+    "accountSuspended": "帳號已暫停 — 啟動事工",
+    "changePassword": "設定密碼 — 啟動事工"
+  },
+  "catalog": {
+    "啟動事工": "啟動事工",
+    "啟動靈人": "啟動靈人",
+    "啟動豐盛": "啟動豐盛",
+    "啟動得勝": "啟動得勝"
+  },
+  "materialOrderStatus": {
+    "pending_quote": "待批價",
+    "pending_payment": "待付款",
+    "pending_confirm": "待確認收款",
+    "pending_ship": "待寄送",
+    "shipped": "已寄送",
+    "received": "已收件"
+  },
+  "adminLogAction": {
+    "enrollment_add": "新增學員",
+    "enrollment_remove": "移除學員",
+    "material_finalize": "完成教材申請",
+    "material_reopen": "重新開放教材申請",
+    "member_delete": "刪除會員"
   },
   "language": {
     "label": "語言",
@@ -661,6 +730,7 @@
     "deploymentMismatch": "頁面已更新，請重新整理後再試一次",
     "refreshPage": "重新整理",
     "backToProfile": "返回學員頁面",
+    "metaTitle": "聯繫管理者 — 啟動事工",
     "myInquiriesTitle": "聯繫管理者",
     "noInquiries": "尚無提問紀錄",
     "createdAtPrefix": "提問時間：",
@@ -979,5 +1049,27 @@
       "avatarRemoveFailed": "移除失敗，請稍後再試",
       "mustLogin": "請先登入"
     }
+  },
+  "studentProfile": {
+    "metaTitle": "首頁 — 啟動事工",
+    "pageTitle": "首頁",
+    "basicInfo": "基本資料",
+    "nameLabel": "姓名",
+    "spiritIdLabel": "啟動編號",
+    "identityTagsLabel": "身分標籤",
+    "learningProgressLabel": "學習進度",
+    "graduatedAtPrefix": "學業完成：",
+    "statusInProgress": "進行中",
+    "statusNotStarted": "未完成",
+    "progressCount": "已完成 {done} / 共 {total} 課",
+    "coursesSection": "課程",
+    "noEnrollments": "尚無課程紀錄",
+    "teachingSection": "授課",
+    "teachingOnBehalf": "（代 {name} 建立）",
+    "noCourseSessions": "尚無授課紀錄",
+    "moreCourseSessions": "更多授課資訊",
+    "adminSection": "管理者",
+    "adminPanelLink": "管理後台",
+    "contactAdminSection": "聯繫管理者"
   }
 }

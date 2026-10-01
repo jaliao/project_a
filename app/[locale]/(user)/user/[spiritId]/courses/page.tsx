@@ -12,14 +12,21 @@ import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { IconArrowLeft, IconChalkboard } from '@tabler/icons-react'
+import { getTranslations } from 'next-intl/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getMyCourseSessions } from '@/lib/data/course-sessions'
 import { CourseSessionCard } from '@/components/course-session/course-session-card'
 import { CourseCardGrid } from '@/components/course-session/course-card-grid'
 
-export const metadata: Metadata = {
-  title: '我的開課 — 啟動事工',
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'pageMeta' })
+  return { title: t('myCourses') }
 }
 
 type Props = {

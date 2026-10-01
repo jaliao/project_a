@@ -8,10 +8,17 @@
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { Footer } from '@/components/layout/footer'
 
-export const metadata: Metadata = {
-  title: '隱私政策 — 啟動事工',
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'pageMeta' })
+  return { title: t('privacy') }
 }
 
 export default async function PrivacyPage() {

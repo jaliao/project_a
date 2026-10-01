@@ -7,6 +7,7 @@
  */
 
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import {
   IconCircleCheck,
   IconCircleDashed,
@@ -15,6 +16,7 @@ import {
 } from '@tabler/icons-react'
 import type { CourseCatalogEntry } from '@/lib/data/course-catalog'
 import type { CompletionCertificate } from '@/lib/data/course-sessions'
+import { translateCatalogLabel } from '@/lib/utils/catalog-label'
 
 interface CourseProgressCardsProps {
   allCourses: CourseCatalogEntry[]
@@ -35,7 +37,7 @@ interface CourseProgressCardsProps {
  * 已完成／進行中且該目錄有大綱時，顯示「已完成 X / 共 Y 課」作業完成度（公開）。
  * 本人視角下，已完成／進行中且有大綱的卡片可點進 /user/{spiritId}/learning/{catalogId}。
  */
-export function CourseProgressCards({
+export async function CourseProgressCards({
   allCourses,
   certificates,
   inProgressCatalogIds,
@@ -43,6 +45,8 @@ export function CourseProgressCards({
   spiritId,
   isOwnPage,
 }: CourseProgressCardsProps) {
+  const t = await getTranslations('studentProfile')
+  const tCatalog = await getTranslations('catalog')
   const certByCatalogId = new Map(certificates.map((c) => [c.courseCatalogId, c]))
 
   return (
@@ -80,7 +84,7 @@ export function CourseProgressCards({
               ) : (
                 <IconCircleDashed className="h-4 w-4 shrink-0" />
               )}
-              <span>{course.label}</span>
+              <span>{translateCatalogLabel(tCatalog, course.label)}</span>
               {linkable && (
                 <IconChevronRight className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
               )}
@@ -89,19 +93,22 @@ export function CourseProgressCards({
             <div className="pl-6 space-y-0.5">
               {cert ? (
                 <>
-                  <p className="text-xs text-foreground">學業完成：{dateStr}</p>
+                  <p className="text-xs text-foreground">
+                    {t('graduatedAtPrefix')}
+                    {dateStr}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {cert.title} · {cert.teacherName}
                   </p>
                 </>
               ) : isInProgress ? (
-                <p className="text-xs">進行中</p>
+                <p className="text-xs">{t('statusInProgress')}</p>
               ) : (
-                <p className="text-xs">未完成</p>
+                <p className="text-xs">{t('statusNotStarted')}</p>
               )}
               {progress != null && (cert || isInProgress) && (
                 <p className="text-xs text-muted-foreground">
-                  已完成 {progress.done} / 共 {progress.total} 課
+                  {t('progressCount', { done: progress.done, total: progress.total })}
                 </p>
               )}
             </div>

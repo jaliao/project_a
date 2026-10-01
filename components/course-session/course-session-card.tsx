@@ -16,6 +16,7 @@ import { CourseStatusBadge } from '@/components/course-session/course-status-bad
 import { getCourseStatus } from '@/components/course-session/course-status'
 import { CourseCatalogBadge } from '@/components/course-session/course-catalog-badge'
 import { Badge } from '@/components/ui/badge'
+import { translateCatalogLabel } from '@/lib/utils/catalog-label'
 
 type CourseSessionCardProps = {
   inviteId: number // 課程編號（所有使用處一律顯示 #編號）
@@ -65,6 +66,7 @@ export function CourseSessionCard({
 }: CourseSessionCardProps) {
   const status = getCourseStatus({ cancelledAt, completedAt, startedAt })
   const t = useTranslations('course.card')
+  const tCatalog = useTranslations('catalog')
   const progressRatio = maxCount > 0 ? Math.min(enrolledCount / maxCount, 1) : 0
 
   const card = (
@@ -82,7 +84,11 @@ export function CourseSessionCard({
           {showMatchBadge && (
             <Badge className="bg-emerald-600 text-white hover:bg-emerald-600 text-xs">{t('publicRecruiting')}</Badge>
           )}
-          <CourseCatalogBadge catalogId={courseCatalogId} label={courseCatalogLabel} size="sm" />
+          <CourseCatalogBadge
+            catalogId={courseCatalogId}
+            label={translateCatalogLabel(tCatalog, courseCatalogLabel)}
+            size="sm"
+          />
           {status && <CourseStatusBadge status={status} size="sm" />}
           {archivedAt && (
             <Badge className="bg-slate-200 text-slate-700 hover:bg-slate-200 text-xs">{t('archived')}</Badge>

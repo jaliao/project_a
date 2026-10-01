@@ -306,7 +306,46 @@
       "enrollCountLabel": "报名人数",
       "peopleSuffix": "人",
       "approvedCount": "已核准学员（{count} 人）",
-      "noApproved": "尚无已核准学员"
+      "noApproved": "尚无已核准学员",
+      "addStudentButton": "新增学员",
+      "removeStudentButton": "移除学员",
+      "removeStudentButtonDone": "完成移除",
+      "operationLogTitle": "课程操作 LOG",
+      "operationLogCount": "显示最近 {limit} 笔・共 {total} 笔",
+      "operationLogEmpty": "尚无操作纪录",
+      "operationLogActorPrefix": "操作者：",
+      "operationLogTargetPrefix": "对象：",
+      "startGateMaterialNotReceived": "教材订单尚未全部收件（{received} / {total} 已收件）",
+      "startGateNoApprovedStudent": "尚无已核准学员",
+      "startGateMaterialRemaining": "尚有教材未申请（繁 {traditional}、简 {simplified}、英 {english}）"
+    },
+    "inviteStudent": {
+      "addDialogTitle": "新增学员",
+      "addDialogDesc": "选择既有会员（搜寻或自社群好友清单点选）并加入班级；查无帐号时请先至会员管理新增。",
+      "capacityWarning": "已达班级人数上限（{capacity} 人），如需超过请洽管理者",
+      "studentLabel": "学员",
+      "reselect": "重新选择",
+      "selectStudent": "选择学员",
+      "graduatedCheckbox": "已结业（补登历史资料）",
+      "graduatedWarning": "⚠️ 本班级尚未结业，送出后班级将一并标记结业",
+      "cancel": "取消",
+      "processing": "处理中…",
+      "submit": "新增",
+      "toastAdded": "已新增学员",
+      "removeTrigger": "移除",
+      "removeConfirmTitleGraduated": "移除已结业学员？",
+      "removeConfirmTitle": "移除学员？",
+      "removeConfirmDescLine": "将自本班级移除 <strong>{name}</strong> 的报名纪录。",
+      "removeGraduatedWarningTitle": "此报名<strong>已结业</strong>，移除将影响：",
+      "removeGraduatedWarningItem1": "证书制作清单（该阶层卡片可能消失）",
+      "removeGraduatedWarningItem2": "师生阶层关系",
+      "removeGraduatedWarningItem3": "后续课程的挡修资格",
+      "removeShipmentWarning": "⚠️ 此报名已有教材寄送纪录，移除后管理者将收到通知，请留意后续教材处理。",
+      "removeReasonLabel": "移除原因（必填）",
+      "removeReasonPlaceholder": "请说明移除原因",
+      "removeConfirmAction": "确认移除",
+      "toastRemoved": "已移除学员",
+      "toastRemoveFail": "移除失败"
     },
     "graduate": {
       "metaTitle": "课程结业 — 启动事工",
@@ -631,7 +670,37 @@
     "teacher_2": "启动丰盛讲师",
     "teacher_3": "启动得胜讲师",
     "admin": "管理者",
-    "superadmin": "超级管理者"
+    "superadmin": "超级管理者",
+    "systemAdmin": "系统管理员"
+  },
+  "pageMeta": {
+    "terms": "服务条款 — 启动事工",
+    "privacy": "隐私政策 — 启动事工",
+    "myCourses": "我的开课 — 启动事工",
+    "messages": "社群 — 启动事工",
+    "accountSuspended": "帐号已暂停 — 启动事工",
+    "changePassword": "设定密码 — 启动事工"
+  },
+  "catalog": {
+    "啟動事工": "启动事工",
+    "啟動靈人": "启动灵人",
+    "啟動豐盛": "启动丰盛",
+    "啟動得勝": "启动得胜"
+  },
+  "materialOrderStatus": {
+    "pending_quote": "待批价",
+    "pending_payment": "待付款",
+    "pending_confirm": "待确认收款",
+    "pending_ship": "待寄送",
+    "shipped": "已寄送",
+    "received": "已收件"
+  },
+  "adminLogAction": {
+    "enrollment_add": "新增学员",
+    "enrollment_remove": "移除学员",
+    "material_finalize": "完成教材申请",
+    "material_reopen": "重新开放教材申请",
+    "member_delete": "删除会员"
   },
   "language": {
     "label": "语言",
@@ -662,6 +731,7 @@
     "deploymentMismatch": "页面已更新，请重新整理后再试一次",
     "refreshPage": "重新整理",
     "backToProfile": "返回学员页面",
+    "metaTitle": "联系管理者 — 启动事工",
     "myInquiriesTitle": "联系管理者",
     "noInquiries": "尚无提问纪录",
     "createdAtPrefix": "提问时间：",
@@ -980,5 +1050,27 @@
       "avatarRemoveFailed": "移除失败，请稍后再试",
       "mustLogin": "请先登入"
     }
+  },
+  "studentProfile": {
+    "metaTitle": "首页 — 启动事工",
+    "pageTitle": "首页",
+    "basicInfo": "基本资料",
+    "nameLabel": "姓名",
+    "spiritIdLabel": "启动编号",
+    "identityTagsLabel": "身分标签",
+    "learningProgressLabel": "学习进度",
+    "graduatedAtPrefix": "学业完成：",
+    "statusInProgress": "进行中",
+    "statusNotStarted": "未完成",
+    "progressCount": "已完成 {done} / 共 {total} 课",
+    "coursesSection": "课程",
+    "noEnrollments": "尚无课程纪录",
+    "teachingSection": "授课",
+    "teachingOnBehalf": "（代 {name} 建立）",
+    "noCourseSessions": "尚无授课纪录",
+    "moreCourseSessions": "更多授课资讯",
+    "adminSection": "管理者",
+    "adminPanelLink": "管理后台",
+    "contactAdminSection": "联系管理者"
   }
 }

@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import type { CourseCatalogEntry } from '@/lib/data/course-catalog'
+import { translateCatalogLabel } from '@/lib/utils/catalog-label'
 import { IconCheck } from '@tabler/icons-react'
 
 interface Step1CourseCardProps {
@@ -33,6 +34,7 @@ export function Step1CourseCard({
   isAdmin,
 }: Step1CourseCardProps) {
   const t = useTranslations('course.wizard')
+  const tCatalog = useTranslations('catalog')
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">{t('selectCourse')}</p>
@@ -42,6 +44,7 @@ export function Step1CourseCard({
           const isSelected = selected === course.id
           const hasQualification =
             isAdmin || teachableCatalogIds.includes(course.id)
+          const label = translateCatalogLabel(tCatalog, course.label)
 
           return (
             <button
@@ -66,12 +69,12 @@ export function Step1CourseCard({
                 </span>
               )}
 
-              <p className="font-semibold text-sm">{course.label}</p>
+              <p className="font-semibold text-sm">{label}</p>
 
               {/* 無授課資格提示 */}
               {!hasQualification && (
                 <p className="mt-1.5 text-xs text-muted-foreground">
-                  {t('needRolePrefix')}{course.label}{t('needRoleSuffix')}
+                  {t('needRolePrefix')}{label}{t('needRoleSuffix')}
                 </p>
               )}
             </button>

@@ -12,6 +12,7 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { EnrollmentApplicationDialog } from '@/components/course-session/enrollment-application-dialog'
+import { translateCatalogLabel } from '@/lib/utils/catalog-label'
 
 type MyEnrollment = {
   id: number
@@ -50,6 +51,7 @@ export function StudentApplySection({
   materialFinalizedAt,
 }: Props) {
   const t = useTranslations('course.apply')
+  const tCatalog = useTranslations('catalog')
   const tEnroll = useTranslations('course.material')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
@@ -130,7 +132,7 @@ export function StudentApplySection({
             {missingPrerequisites.map((p) => (
               <li key={p.id} className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                {p.label}
+                {translateCatalogLabel(tCatalog, p.label)}
               </li>
             ))}
           </ul>

@@ -11,6 +11,7 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import type { CourseCatalogEntry } from '@/lib/data/course-catalog'
+import { translateCatalogLabel } from '@/lib/utils/catalog-label'
 import { Step1CourseCard } from './step-1-course-card'
 import { Step2BasicInfo, type Step2FormValues } from './step-2-basic-info'
 import { Step3Preview } from './step-3-preview'
@@ -47,6 +48,7 @@ export function CreateCourseWizard({
   // 代建立時課程選單限於該老師持有的書別（不套用管理者全放行）；一般管理者仍可選任一課程
   const canPickAnyBook = isAdmin && !isOnBehalf
   const t = useTranslations('course.wizard')
+  const tCatalog = useTranslations('catalog')
   const STEP_TITLES: Record<WizardStep, string> = {
     1: t('step1'),
     2: t('step2'),
@@ -102,7 +104,10 @@ export function CreateCourseWizard({
       {step === 2 && selectedCatalogId !== null && (
         <Step2BasicInfo
           courseCatalogId={selectedCatalogId}
-          courseCatalogLabel={activeCourses.find((c) => c.id === selectedCatalogId)?.label ?? ''}
+          courseCatalogLabel={translateCatalogLabel(
+            tCatalog,
+            activeCourses.find((c) => c.id === selectedCatalogId)?.label ?? ''
+          )}
           instructorName={displayInstructorName}
           classMaxCapacity={classMaxCapacity}
           defaultValues={formValues ?? undefined}
