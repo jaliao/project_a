@@ -323,6 +323,7 @@
       "addDialogDesc": "選擇既有會員（搜尋或自社群好友清單點選）並加入班級；查無帳號時請先至會員管理新增。",
       "capacityWarning": "已達班級人數上限（{capacity} 人），如需超過請洽管理者",
       "studentLabel": "學員",
+      "materialChoiceLabel": "教材版本",
       "reselect": "重新選擇",
       "selectStudent": "選擇學員",
       "graduatedCheckbox": "已結業（補登歷史資料）",

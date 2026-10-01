@@ -89,6 +89,29 @@ export async function searchStudentsForInvite(
   return { success: true, data: { candidates } }
 }
 
+/**
+ * 供「新增學員」Dialog 選定學員後查詢其教材選擇預設值（曾上過課 → 已有教材，
+ * 新生 → 繁體教材），讓 Dialog 能預先選取合理選項；授權範圍同 searchStudentsForInvite。
+ */
+export async function getMaterialChoiceDefaultForStudent(
+  inviteId: number,
+  userId: string
+): Promise<ActionResponse<{ defaultMaterialChoice: 'none' | 'traditional' }>> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  const invite = await prisma.courseInvite.findUnique({
+    where: { id: inviteId },
+    select: { createdById: true },
+  })
+  if (!invite || !canManageInvite(session.user.roles, session.user.id, invite)) {
+    return { success: false, message: '無權限' }
+  }
+
+  const defaultMaterialChoice = await getDefaultMaterialChoiceForUser(userId)
+  return { success: true, data: { defaultMaterialChoice } }
+}
+
 const addStudentSchema = z
   .object({
     inviteId: z.number().int().positive(),
@@ -98,10 +121,16 @@ const addStudentSchema = z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, '結業日格式不正確')
       .optional(),
+    materialChoice: z.enum(['none', 'traditional', 'simplified', 'english']).optional(),
+    materialBookName: z.string().trim().optional(),
   })
   .refine((v) => !v.graduated || !!v.graduatedAt, {
     message: '請選擇結業日',
     path: ['graduatedAt'],
+  })
+  .refine((v) => !v.materialChoice || v.materialChoice === 'none' || !!v.materialBookName, {
+    message: '請填寫教材所屬姓名',
+    path: ['materialBookName'],
   })
 
 /**
@@ -114,6 +143,8 @@ export async function addStudentToInvite(input: {
   userId: string
   graduated: boolean
   graduatedAt?: string
+  materialChoice?: 'none' | 'traditional' | 'simplified' | 'english'
+  materialBookName?: string
 }): Promise<ActionResponse> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
@@ -184,8 +215,12 @@ export async function addStudentToInvite(input: {
     }
   }
 
-  // 教材選擇預設值：曾在其他班級被核准過（上過課）視為已有教材，否則預設帶入繁體教材
+  // 教材選擇：呼叫端（新增學員 Dialog）帶入人工選擇值則採用，否則沿用自動判定
+  // （曾在其他班級被核准過（上過課）視為已有教材，否則預設帶入繁體教材）
   const defaultMaterialChoice = await getDefaultMaterialChoiceForUser(existingUser.id)
+  const resolvedMaterialChoice = parsed.data.materialChoice ?? defaultMaterialChoice
+  const resolvedMaterialBookName =
+    resolvedMaterialChoice === 'none' ? null : parsed.data.materialBookName ?? null
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -195,7 +230,8 @@ export async function addStudentToInvite(input: {
           inviteId,
           userId: existingUser.id,
           status: 'approved',
-          materialChoice: defaultMaterialChoice,
+          materialChoice: resolvedMaterialChoice,
+          materialBookName: resolvedMaterialBookName,
           ...(graduatedDate ? { joinedAt: graduatedDate, graduatedAt: graduatedDate } : {}),
         },
       })

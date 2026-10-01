@@ -324,6 +324,7 @@
       "addDialogDesc": "选择既有会员（搜寻或自社群好友清单点选）并加入班级；查无帐号时请先至会员管理新增。",
       "capacityWarning": "已达班级人数上限（{capacity} 人），如需超过请洽管理者",
       "studentLabel": "学员",
+      "materialChoiceLabel": "教材版本",
       "reselect": "重新选择",
       "selectStudent": "选择学员",
       "graduatedCheckbox": "已结业（补登历史资料）",

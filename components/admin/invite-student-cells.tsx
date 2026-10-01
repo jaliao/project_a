@@ -18,7 +18,12 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { IconUserPlus, IconAlertTriangle } from '@tabler/icons-react'
-import { addStudentToInvite, removeStudentFromInvite, searchStudentsForInvite } from '@/app/actions/invite-students'
+import {
+  addStudentToInvite,
+  getMaterialChoiceDefaultForStudent,
+  removeStudentFromInvite,
+  searchStudentsForInvite,
+} from '@/app/actions/invite-students'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -44,6 +49,9 @@ import {
 import { Input } from '@/components/ui/input'
 import { StudentPicker, type StudentPickerSelection } from '@/components/shared/student-picker'
 import type { FriendListItem } from '@/lib/data/friendship'
+import { cn } from '@/lib/utils'
+
+type MaterialChoice = 'none' | 'traditional' | 'simplified' | 'english'
 
 // ==========================================
 // 新增學員 Dialog
@@ -75,25 +83,49 @@ export function AddStudentDialog({
   const router = useRouter()
   const t = useTranslations('course.inviteStudent')
   const td = useTranslations('course.detail')
+  const tm = useTranslations('course.material')
+  const te = useTranslations('course.enroll')
   const [open, setOpen] = useState(autoOpen)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
 
+  const MATERIAL_OPTIONS: { value: MaterialChoice; label: string; desc: string }[] = [
+    { value: 'traditional', label: tm('traditional'), desc: te('tradDesc') },
+    { value: 'simplified', label: tm('simplified'), desc: te('simpDesc') },
+    { value: 'english', label: tm('english'), desc: te('engDesc') },
+    { value: 'none', label: tm('none'), desc: te('noneDesc') },
+  ]
+
   const [selectedStudent, setSelectedStudent] = useState<StudentPickerSelection | null>(null)
   const [graduated, setGraduated] = useState(false)
   const [graduatedAt, setGraduatedAt] = useState('')
+  const [materialChoice, setMaterialChoice] = useState<MaterialChoice>('traditional')
+  const [materialBookName, setMaterialBookName] = useState('')
   const [errors, setErrors] = useState<Record<string, string[]>>({})
 
   const resetForm = () => {
     setSelectedStudent(null)
     setGraduated(false)
     setGraduatedAt('')
+    setMaterialChoice('traditional')
+    setMaterialBookName('')
     setErrors({})
   }
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next)
     if (!next) resetForm()
+  }
+
+  const handleSelectStudent = (student: StudentPickerSelection) => {
+    setSelectedStudent(student)
+    setMaterialBookName('')
+    startTransition(async () => {
+      const res = await getMaterialChoiceDefaultForStudent(inviteId, student.userId)
+      if (res.success && res.data) {
+        setMaterialChoice(res.data.defaultMaterialChoice)
+      }
+    })
   }
 
   const handleSubmit = () => {
@@ -105,6 +137,8 @@ export function AddStudentDialog({
         userId: selectedStudent.userId,
         graduated,
         graduatedAt: graduated ? graduatedAt : undefined,
+        materialChoice,
+        materialBookName: materialChoice === 'none' ? undefined : materialBookName,
       })
       if (res.success) {
         toast.success(res.message ?? t('toastAdded'))
@@ -166,6 +200,38 @@ export function AddStudentDialog({
             {errors.userId?.[0] && <p className="text-sm text-destructive">{errors.userId[0]}</p>}
           </div>
           <div className="space-y-1.5">
+            <Label>{t('materialChoiceLabel')}</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {MATERIAL_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setMaterialChoice(opt.value)}
+                  className={cn(
+                    'rounded-lg border p-2.5 text-left transition-colors',
+                    materialChoice === opt.value ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
+                  )}
+                >
+                  <p className="text-sm font-medium">{opt.label}</p>
+                  <p className="text-xs text-muted-foreground">{opt.desc}</p>
+                </button>
+              ))}
+            </div>
+            {materialChoice !== 'none' && (
+              <div className="space-y-1.5 pt-1">
+                <Label htmlFor="student-material-book-name">{te('bookNameLabel')}</Label>
+                <Input
+                  id="student-material-book-name"
+                  value={materialBookName}
+                  onChange={(e) => setMaterialBookName(e.target.value)}
+                />
+                {errors.materialBookName?.[0] && (
+                  <p className="text-sm text-destructive">{errors.materialBookName[0]}</p>
+                )}
+              </div>
+            )}
+          </div>
+          <div className="space-y-1.5">
             <div className="flex items-center gap-2">
               <Checkbox
                 id="student-graduated"
@@ -206,7 +272,7 @@ export function AddStudentDialog({
         onOpenChange={setPickerOpen}
         friends={friends}
         onSearch={(query) => searchStudentsForInvite(inviteId, query)}
-        onSelect={(student) => setSelectedStudent(student)}
+        onSelect={handleSelectStudent}
         excludeUserIds={excludeUserIds}
       />
     </Dialog>

@@ -323,6 +323,7 @@
       "addDialogDesc": "Select an existing member (search or pick from your friend list) and add them to the class. If their account doesn't exist yet, please add it in member management first.",
       "capacityWarning": "Class is at capacity ({capacity}). Please contact an admin to exceed this limit.",
       "studentLabel": "Student",
+      "materialChoiceLabel": "Material version",
       "reselect": "Reselect",
       "selectStudent": "Select student",
       "graduatedCheckbox": "Graduated (backfill historical data)",
