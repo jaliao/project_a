@@ -28,6 +28,10 @@ export const ADMIN_LOG_ACTIONS = {
     label: '刪除會員',
     trigger: '管理者於會員詳情頁刪除一個會員帳號時（此類紀錄無關聯班級）。',
   },
+  course_invite_transfer: {
+    label: '轉移班級',
+    trigger: '管理者於會員詳情頁將該老師名下班級轉移給另一位老師時（每個被轉移的班級各一筆）。',
+  },
 } as const
 
 export type AdminLogAction = keyof typeof ADMIN_LOG_ACTIONS

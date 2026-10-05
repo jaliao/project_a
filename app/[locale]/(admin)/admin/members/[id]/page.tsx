@@ -28,6 +28,7 @@ import { MemberResetButton } from '@/components/admin/member-reset-button'
 import { MemberHomeLink } from '@/components/admin/member-home-link'
 import { MemberEmailForm } from '@/components/admin/member-email-form'
 import { MemberDeleteButton } from '@/components/admin/member-delete-button'
+import { MemberCourseInviteTransfer } from '@/components/admin/member-course-invite-transfer'
 import { MemberHierarchyTree } from '@/components/admin/member-hierarchy-tree'
 import { MemberTeacherRoles } from '@/components/admin/member-teacher-roles'
 import { MemberSpecialRoles } from '@/components/admin/member-special-roles'
@@ -223,7 +224,19 @@ export default async function MemberDetailPage({
 
           {/* 授課紀錄（標準課程卡片牆） */}
           <div className="rounded-lg border">
-            <div className="px-4 py-3 border-b bg-muted/40"><h2 className="font-medium text-sm">授課紀錄</h2></div>
+            <div className="px-4 py-3 border-b bg-muted/40 flex items-center justify-between">
+              <h2 className="font-medium text-sm">授課紀錄</h2>
+              <MemberCourseInviteTransfer
+                fromUserId={member.id}
+                invites={member.courseInvites.map((invite) => ({
+                  id: invite.id,
+                  title: invite.title,
+                  courseCatalogId: invite.courseCatalogId,
+                  courseCatalogLabel: invite.courseCatalog.label,
+                  enrolledCount: invite._count.enrollments,
+                }))}
+              />
+            </div>
             {member.courseInvites.length > 0 ? (
               <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
                 {member.courseInvites.map((invite) => (
