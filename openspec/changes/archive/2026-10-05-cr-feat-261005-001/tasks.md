@@ -29,4 +29,6 @@
 - [x] 4.7 情境：轉移後，該班級下學員的 `InviteEnrollment`（報名記錄／結業時間）維持不變，僅 `createdById` 改變。**已實測**：轉移前後比對同一筆 `InviteEnrollment` 完整內容（含 `graduatedAt`）序列化結果相同
 - [x] 4.8 情境：Dialog 取消勾選部分班級後確認 → 僅勾選的班級被轉移，未勾選的班級 `createdById` 不變。**已實測**（Server Action 層級，等同於前端只勾選其中一個班級送出）：只轉移 inviteA，inviteB 的 `createdById` 轉移前後不變
 
-**注意**：以上皆為 Server Action / Prisma 交易層級驗證（於 `docker compose exec web` 容器內，對 project_a 自己的 dev DB），非瀏覽器實際操作——容器內無瀏覽器也無現成管理者登入 session。前端 Dialog 的畫面呈現（勾選框操作、StudentPicker 搜尋結果呈現、toast 顯示）建議使用者有空時於瀏覽器實際操作一次確認。測試用暫存帳號／班級／報名記錄／AdminActionLog 皆已於腳本內清除，並以 `user.findMany({ email contains '@example.invalid' })` 二次確認殘留數量為 0。
+**注意**：以上皆為 Server Action / Prisma 交易層級驗證（於 `docker compose exec web` 容器內，對 project_a 自己的 dev DB），非瀏覽器實際操作——容器內無瀏覽器也無現成管理者登入 session。測試用暫存帳號／班級／報名記錄／AdminActionLog 皆已於腳本內清除，並以 `user.findMany({ email contains '@example.invalid' })` 二次確認殘留數量為 0。
+
+**前端 Dialog 實際瀏覽器驗收（2026-10-05，使用者確認）**：勾選框操作、StudentPicker 搜尋結果呈現、toast 顯示皆正常，班級轉移功能無問題。
