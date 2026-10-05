@@ -6,6 +6,13 @@
 #  */
 
 services:
+  db:
+    # 僅開發環境對外開 port，方便 host 端工具（psql／prisma CLI）直連除錯；
+    # 固定用 15433（而非預設 5432），避免跟其他專案的 Postgres 容器搶同一個 host port
+    # （本機同時跑多個專案的 db 容器，5432 常被別的專案佔走，host 連線會連錯到別人的資料庫且無明顯錯誤）
+    ports:
+      - "127.0.0.1:15433:5432"
+
   studio:
     build:
       context: .
