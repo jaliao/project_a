@@ -21,6 +21,7 @@ import {
   IconUserStar,
   IconUsers,
   IconUserExclamation,
+  IconUsersGroup,
   IconSettings,
   IconMessageCircle,
   IconHistory,
@@ -87,6 +88,13 @@ const ADMIN_FEATURES = [
     description: '查詢從未登入過的會員',
     icon: IconUserExclamation,
     href: '/admin/members/inactive',
+    superadminOnly: false,
+  },
+  {
+    title: '疑似重複帳號',
+    description: '比對可能重複建立的帳號',
+    icon: IconUsersGroup,
+    href: '/admin/members/duplicates',
     superadminOnly: false,
   },
   {
