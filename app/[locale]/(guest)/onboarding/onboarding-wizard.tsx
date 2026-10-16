@@ -358,10 +358,17 @@ function Step3Welcome({ spiritId }: { spiritId: string }) {
 interface OnboardingWizardProps {
   initialStep: number
   initialSpiritId: string
+  // 帳號是否已具完整基本資料（例如透過新版 /register 建立）；Step 1 完成後據此跳過 Step 2
+  profileAlreadyComplete: boolean
   churches: OnboardingChurch[]
 }
 
-export function OnboardingWizard({ initialStep, initialSpiritId, churches }: OnboardingWizardProps) {
+export function OnboardingWizard({
+  initialStep,
+  initialSpiritId,
+  profileAlreadyComplete,
+  churches,
+}: OnboardingWizardProps) {
   const t = useTranslations()
   const [step, setStep] = useState(initialStep)
   const [spiritId, setSpiritId] = useState(initialSpiritId)
@@ -427,7 +434,7 @@ export function OnboardingWizard({ initialStep, initialSpiritId, churches }: Onb
               <Step1Password
                 onSuccess={(id) => {
                   if (id) setSpiritId(id)
-                  setStep(2)
+                  setStep(profileAlreadyComplete ? 3 : 2)
                 }}
               />
             )}

@@ -32,7 +32,11 @@ import {
 import { registerSchema } from '@/lib/schemas/auth'
 import { registerWithEmail } from '@/app/actions/auth'
 
-type RegisterForm = z.infer<typeof registerSchema>
+// 表單輸入型別（birthYear 經 zod 轉換，輸入與輸出型別不同，比照 onboarding Step 2）
+type RegisterFormInput = z.input<typeof registerSchema>
+type RegisterFormOutput = z.output<typeof registerSchema>
+
+export type RegisterPageChurch = { id: number; name: string }
 
 // Google SVG icon
 function GoogleIcon({ className }: { className?: string }) {
@@ -62,25 +66,63 @@ function GoogleIcon({ className }: { className?: string }) {
   )
 }
 
-export function RegisterForm() {
+export function RegisterForm({ churches }: { churches: RegisterPageChurch[] }) {
   const t = useTranslations()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [successOpen, setSuccessOpen] = useState(false)
+  // 教會選單 value 格式：'' | 'other' | 'church:<id>'（比照 onboarding Step 2）
+  const [churchSelect, setChurchSelect] = useState('')
 
-  const { register, handleSubmit, formState: { errors } } = useForm<RegisterForm>({
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<RegisterFormInput, unknown, RegisterFormOutput>({
     resolver: zodResolver(registerSchema),
   })
 
-  const onEmailSubmit = (data: RegisterForm) => {
+  function handleChurchSelectChange(val: string) {
+    setChurchSelect(val)
+    if (val === 'other') {
+      setValue('churchType', 'other')
+      setValue('churchId', null)
+    } else if (val.startsWith('church:')) {
+      setValue('churchType', 'church')
+      setValue('churchId', parseInt(val.replace('church:', ''), 10))
+      setValue('churchOther', '')
+    } else {
+      // 空值：清掉 churchType 讓必填驗證攔截
+      setValue('churchType', undefined as unknown as 'church')
+      setValue('churchId', null)
+    }
+  }
+
+  const onEmailSubmit = (data: RegisterFormOutput) => {
     startTransition(async () => {
       const formData = new FormData()
       formData.set('email', data.email)
+      formData.set('realName', data.realName.trim())
+      formData.set('phone', data.phone.trim())
+      formData.set('gender', data.gender)
+      formData.set('birthYear', String(data.birthYear))
+      formData.set('churchType', data.churchType)
+      formData.set('churchId', data.churchId ? String(data.churchId) : '')
+      formData.set('churchOther', data.churchOther ?? '')
       const result = await registerWithEmail(formData)
       if (result.success) {
         setSuccessOpen(true)
       } else {
-        const errKey = result.errors?.email?.[0]
+        const errKey =
+          result.errors?.email?.[0] ??
+          result.errors?.realName?.[0] ??
+          result.errors?.phone?.[0] ??
+          result.errors?.gender?.[0] ??
+          result.errors?.birthYear?.[0] ??
+          result.errors?.churchType?.[0] ??
+          result.errors?.churchId?.[0] ??
+          result.errors?.churchOther?.[0]
         toast.error(errKey ? t(errKey) : (result.message ?? t('account.register.failed')))
       }
     })
@@ -92,9 +134,12 @@ export function RegisterForm() {
     })
   }
 
+  const currentYear = new Date().getFullYear()
+  const showOther = churchSelect === 'other'
+
   return (
     <div className="grid gap-6">
-      {/* Email 表單 */}
+      {/* Email + 基本資料表單（姓名等基本資料須與 Email 同一次驗證通過才建立帳號） */}
       <form onSubmit={handleSubmit(onEmailSubmit)} className="grid gap-4">
         <div className="grid gap-1.5">
           <Label htmlFor="email" className="sr-only">Email</Label>
@@ -110,6 +155,92 @@ export function RegisterForm() {
           />
           <FieldError message={errors.email?.message} />
         </div>
+
+        <div className="grid gap-1.5">
+          <Label htmlFor="realName">{t('onboarding.realName')}</Label>
+          <Input
+            id="realName"
+            placeholder={t('onboarding.realNamePlaceholder')}
+            autoComplete="name"
+            disabled={isPending}
+            {...register('realName')}
+          />
+          <FieldError message={errors.realName?.message} />
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label htmlFor="phone">{t('onboarding.phone')}</Label>
+          <Input
+            id="phone"
+            type="tel"
+            placeholder={t('onboarding.phonePlaceholder')}
+            autoComplete="tel"
+            disabled={isPending}
+            {...register('phone')}
+          />
+          <FieldError message={errors.phone?.message} />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-1.5">
+            <Label htmlFor="gender">{t('onboarding.gender')}</Label>
+            <select
+              id="gender"
+              disabled={isPending}
+              defaultValue=""
+              className="h-9 rounded-md border px-3 py-1 text-sm bg-background"
+              {...register('gender')}
+            >
+              <option value="" disabled>{t('onboarding.selectPlaceholder')}</option>
+              <option value="male">{t('onboarding.male')}</option>
+              <option value="female">{t('onboarding.female')}</option>
+            </select>
+            <FieldError message={errors.gender?.message} />
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label htmlFor="birthYear">{t('onboarding.birthYear')}</Label>
+            <Input
+              id="birthYear"
+              type="number"
+              inputMode="numeric"
+              placeholder={t('onboarding.birthYearPlaceholder', { year: currentYear })}
+              min={1900}
+              max={currentYear}
+              disabled={isPending}
+              {...register('birthYear')}
+            />
+            <FieldError message={errors.birthYear?.message} />
+          </div>
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label htmlFor="church">{t('onboarding.church')}</Label>
+          <select
+            id="church"
+            disabled={isPending}
+            value={churchSelect}
+            onChange={(e) => handleChurchSelectChange(e.target.value)}
+            className="h-9 rounded-md border px-3 py-1 text-sm bg-background"
+          >
+            <option value="" disabled>{t('onboarding.selectPlaceholder')}</option>
+            {churches.map((c) => (
+              <option key={c.id} value={`church:${c.id}`}>{c.name}</option>
+            ))}
+            <option value="other">{t('onboarding.churchOther')}</option>
+          </select>
+          {showOther && (
+            <Input
+              placeholder={t('onboarding.churchOtherPlaceholder')}
+              disabled={isPending}
+              {...register('churchOther')}
+            />
+          )}
+          <FieldError message={errors.churchType?.message} />
+          <FieldError message={errors.churchId?.message} />
+          <FieldError message={errors.churchOther?.message} />
+        </div>
+
         <Button disabled={isPending}>
           {isPending ? t('account.register.submitting') : t('account.register.submit')}
         </Button>

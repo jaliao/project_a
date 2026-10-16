@@ -50,18 +50,27 @@ function generateTempPassword(): string {
 }
 
 // ── Email 自主註冊 ────────────────────────────
+// 姓名等基本資料須與 Email 同一次驗證通過才建立帳號，驗證不通過時不建立任何 User 紀錄
 export async function registerWithEmail(
   formData: FormData
 ): Promise<ActionResponse> {
+  const churchIdRaw = formData.get('churchId')
   const parsed = registerSchema.safeParse({
     email: formData.get('email'),
+    realName: formData.get('realName'),
+    phone: formData.get('phone'),
+    gender: formData.get('gender'),
+    birthYear: formData.get('birthYear'),
+    churchType: formData.get('churchType'),
+    churchId: churchIdRaw ? Number(churchIdRaw) : null,
+    churchOther: formData.get('churchOther'),
   })
 
   if (!parsed.success) {
     return { success: false, errors: parsed.error.flatten().fieldErrors }
   }
 
-  const { email } = parsed.data
+  const { email, realName, phone, gender, birthYear, churchType, churchId, churchOther } = parsed.data
 
   const existing = await prisma.user.findUnique({ where: { email } })
   if (existing) {
@@ -78,6 +87,13 @@ export async function registerWithEmail(
       passwordHash,
       isTempPassword: true,
       spiritId,
+      realName,
+      phone,
+      gender,
+      birthYear,
+      churchType,
+      churchId: churchType === 'church' ? (churchId ?? null) : null,
+      churchOther: churchType === 'other' ? (churchOther?.trim() || null) : null,
     },
   })
 

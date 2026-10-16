@@ -34,7 +34,15 @@ export default async function OnboardingPage() {
   // 已完成 onboarding 的用戶直接放行
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { isTempPassword: true, realName: true, phone: true, spiritId: true },
+    select: {
+      isTempPassword: true,
+      realName: true,
+      phone: true,
+      gender: true,
+      birthYear: true,
+      churchType: true,
+      spiritId: true,
+    },
   })
 
   if (!user) redirect('/login')
@@ -46,6 +54,17 @@ export default async function OnboardingPage() {
   // 若密碼已設定但資料未填，從 Step 2 開始
   const initialStep = user.isTempPassword ? 1 : 2
 
+  // 註冊時已填妥完整基本資料（例如透過新版 /register）者，Step 1 完成後直接跳至 Step 3
+  // 注意：gender／churchType 皆為 not-null 欄位且有預設值（'unspecified'／'none'），
+  // 不能只看是否為 null，要排除預設值才代表「真的已填寫」
+  const profileAlreadyComplete = Boolean(
+    user.realName &&
+      user.phone &&
+      user.gender !== 'unspecified' &&
+      user.birthYear &&
+      user.churchType !== 'none'
+  )
+
   // 所屬教會清單供 Step 2 選擇
   const churches = await getActiveChurches()
 
@@ -53,6 +72,7 @@ export default async function OnboardingPage() {
     <OnboardingWizard
       initialStep={initialStep}
       initialSpiritId={user.spiritId ?? ''}
+      profileAlreadyComplete={profileAlreadyComplete}
       churches={churches.map((c) => ({ id: c.id, name: c.name }))}
     />
   )

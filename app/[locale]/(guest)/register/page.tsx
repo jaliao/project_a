@@ -11,6 +11,7 @@ import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
+import { getActiveChurches } from '@/lib/data/churches'
 import { RegisterForm } from './register-form'
 
 export async function generateMetadata({
@@ -30,6 +31,7 @@ export default async function RegisterPage({
 }) {
   const { locale } = await params
   const t = await getTranslations({ locale })
+  const churches = await getActiveChurches()
 
   return (
     <div className="relative min-h-screen lg:grid lg:grid-cols-2">
@@ -105,7 +107,7 @@ export default async function RegisterPage({
               </p>
             </div>
 
-            <RegisterForm />
+            <RegisterForm churches={churches.map((c) => ({ id: c.id, name: c.name }))} />
 
             <p className="px-4 text-center text-xs text-muted-foreground">
               {t('account.termsAgree')}{' '}

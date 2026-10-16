@@ -58,38 +58,46 @@ export const updateProfileSchema = z
     }
   })
 
-// 首次登入（onboarding）Step 2：性別、出生年、所屬教會皆必填
-export const onboardingProfileSchema = z
-  .object({
-    realName: z.string().trim().min(1, 'validation.realNameEnter'),
-    phone: z
-      .string()
-      .trim()
-      .regex(PHONE_REGEX, 'validation.phoneInvalid'),
-    // 性別必填：須為男/女，不接受未指定
-    gender: z.enum(['male', 'female'], { message: 'validation.genderRequired' }),
-    // 出生年必填：合理西元年整數
-    birthYear: z.preprocess(
-      (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
-      z
-        .number({ message: 'validation.birthYearEnter' })
-        .int('validation.birthYearInteger')
-        .min(BIRTH_YEAR_MIN, 'validation.birthYearMin')
-        .max(currentYear(), 'validation.birthYearMax')
-    ),
-    // 所屬教會必填：清單教會或其他，不接受「無」
-    churchType: z.enum(['church', 'other'], { message: 'validation.churchRequired' }),
-    churchId: z.number().int().positive().optional().nullable(),
-    churchOther: z.string().optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.churchType === 'church' && !data.churchId) {
-      ctx.addIssue({ code: 'custom', path: ['churchId'], message: 'validation.churchSelect' })
-    }
-    if (data.churchType === 'other' && !data.churchOther?.trim()) {
-      ctx.addIssue({ code: 'custom', path: ['churchOther'], message: 'validation.churchOtherRequired' })
-    }
-  })
+// 完整基本資料欄位（首次登入 onboarding Step 2、/register 註冊表單共用）：
+// 性別、出生年、所屬教會皆必填
+export const basicProfileShape = {
+  realName: z.string().trim().min(1, 'validation.realNameEnter'),
+  phone: z
+    .string()
+    .trim()
+    .regex(PHONE_REGEX, 'validation.phoneInvalid'),
+  // 性別必填：須為男/女，不接受未指定
+  gender: z.enum(['male', 'female'], { message: 'validation.genderRequired' }),
+  // 出生年必填：合理西元年整數
+  birthYear: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
+    z
+      .number({ message: 'validation.birthYearEnter' })
+      .int('validation.birthYearInteger')
+      .min(BIRTH_YEAR_MIN, 'validation.birthYearMin')
+      .max(currentYear(), 'validation.birthYearMax')
+  ),
+  // 所屬教會必填：清單教會或其他，不接受「無」
+  churchType: z.enum(['church', 'other'], { message: 'validation.churchRequired' }),
+  churchId: z.number().int().positive().optional().nullable(),
+  churchOther: z.string().optional(),
+}
+
+// 所屬教會交叉驗證：church 需 churchId、other 需 churchOther（兩個 schema 共用同一份規則）
+export function applyChurchRefine(
+  data: { churchType: 'church' | 'other'; churchId?: number | null; churchOther?: string },
+  ctx: z.RefinementCtx
+) {
+  if (data.churchType === 'church' && !data.churchId) {
+    ctx.addIssue({ code: 'custom', path: ['churchId'], message: 'validation.churchSelect' })
+  }
+  if (data.churchType === 'other' && !data.churchOther?.trim()) {
+    ctx.addIssue({ code: 'custom', path: ['churchOther'], message: 'validation.churchOtherRequired' })
+  }
+}
+
+// 首次登入（onboarding）Step 2
+export const onboardingProfileSchema = z.object(basicProfileShape).superRefine(applyChurchRefine)
 
 export const commEmailSchema = z.object({
   commEmail: z.string().email('validation.emailInvalid'),

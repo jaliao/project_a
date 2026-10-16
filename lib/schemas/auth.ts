@@ -7,12 +7,18 @@
  */
 
 import { z } from 'zod'
+import { basicProfileShape, applyChurchRefine } from '@/lib/schemas/profile'
 
 // 驗證訊息為 i18n key（validation.* 命名空間），由呈現端 t() 翻譯（見 CLAUDE.md 第 12 點）
 
-export const registerSchema = z.object({
-  email: z.string().email('validation.emailInvalid'),
-})
+// 註冊需與基本資料（姓名/手機/性別/出生年/所屬教會）同一次驗證通過才算成立帳號，
+// 欄位定義與 onboarding Step 2 共用（lib/schemas/profile.ts 的 basicProfileShape）
+export const registerSchema = z
+  .object({
+    email: z.string().email('validation.emailInvalid'),
+    ...basicProfileShape,
+  })
+  .superRefine(applyChurchRefine)
 
 export const loginSchema = z.object({
   email: z.string().email('validation.emailInvalid'),
