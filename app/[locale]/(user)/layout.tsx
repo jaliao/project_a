@@ -43,9 +43,12 @@ export default async function UserLayout({
   // 被暫停會員：即時擋下（不等 token 過期）；經 route 清除 session 後導向暫停提示
   const suspendCheck = await prisma.user.findUnique({
     where: { id: userId },
-    select: { suspendedAt: true },
+    select: { suspendedAt: true, mergedIntoId: true },
   })
   if (suspendCheck?.suspendedAt) redirect('/api/suspended-logout')
+
+  // 已合併帳號（副帳號）：即時擋下，經 route 清除 session 後導向「已併入其他帳號」提示
+  if (suspendCheck?.mergedIntoId) redirect('/api/merged-logout')
 
   // 臨時密碼：強制完成 onboarding wizard
   if (session.user?.isTempPassword) redirect('/onboarding')

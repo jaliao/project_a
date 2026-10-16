@@ -680,6 +680,7 @@
     "myCourses": "我的开课 — 启动事工",
     "messages": "社群 — 启动事工",
     "accountSuspended": "帐号已暂停 — 启动事工",
+    "accountMerged": "帐号已合并 — 启动事工",
     "changePassword": "设定密码 — 启动事工"
   },
   "catalog": {

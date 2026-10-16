@@ -97,9 +97,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (where) {
         const u = await prisma.user.findUnique({
           where,
-          select: { id: true, suspendedAt: true },
+          select: { id: true, suspendedAt: true, mergedIntoId: true },
         })
         if (u?.suspendedAt) return '/account-suspended'
+        if (u?.mergedIntoId) return '/account-merged'
 
         // 記錄登入時間：先把舊的 lastLoginAt 平移至 previousLoginAt，再更新為當下時間。
         // 以原子 SQL 做欄位對欄位賦值，避免同帳號併發登入的競態；

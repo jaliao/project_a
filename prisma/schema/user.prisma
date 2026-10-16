@@ -100,6 +100,17 @@ model User {
   suspendReason     SuspendReason?
   suspendReasonNote String? // 自填補充（other 必填）
 
+  // 帳號合併（本帳號為某次合併的副帳號；null = 未被合併，封鎖登入但不刪除資料列）
+  mergedIntoId   String? @db.Uuid
+  mergedInto     User?   @relation("MemberMerge", fields: [mergedIntoId], references: [id], onDelete: SetNull)
+  mergedAccounts User[]  @relation("MemberMerge")
+
+  mergedAt DateTime?
+
+  mergedById       String? @db.Uuid // 執行合併的管理者
+  mergedBy         User?   @relation("MemberMergeBy", fields: [mergedById], references: [id], onDelete: SetNull)
+  mergedByAccounts User[]  @relation("MemberMergeBy")
+
   // 時間戳記
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt

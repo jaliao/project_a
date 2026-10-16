@@ -32,6 +32,10 @@ export const ADMIN_LOG_ACTIONS = {
     label: '轉移班級',
     trigger: '管理者於會員詳情頁將該老師名下班級轉移給另一位老師時（每個被轉移的班級各一筆）。',
   },
+  member_merge: {
+    label: '合併帳號',
+    trigger: '管理者於會員詳情頁或疑似重複帳號清單完成帳號合併時（含班級/報名/證書等關聯資料搬動）。',
+  },
 } as const
 
 export type AdminLogAction = keyof typeof ADMIN_LOG_ACTIONS

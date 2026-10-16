@@ -29,6 +29,7 @@ import { MemberHomeLink } from '@/components/admin/member-home-link'
 import { MemberEmailForm } from '@/components/admin/member-email-form'
 import { MemberDeleteButton } from '@/components/admin/member-delete-button'
 import { MemberCourseInviteTransfer } from '@/components/admin/member-course-invite-transfer'
+import { MemberMergeDialog } from '@/components/admin/member-merge-dialog'
 import { MemberHierarchyTree } from '@/components/admin/member-hierarchy-tree'
 import { MemberTeacherRoles } from '@/components/admin/member-teacher-roles'
 import { MemberSpecialRoles } from '@/components/admin/member-special-roles'
@@ -359,6 +360,13 @@ export default async function MemberDetailPage({
               roles={member.roles}
               isSelf={session.user.id === member.id}
               actorIsSuperadmin={actorIsSuperadmin}
+            />
+          </div>
+
+          <div className="rounded-lg border p-5 space-y-3">
+            <h2 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">帳號管理</h2>
+            <MemberMergeDialog
+              anchorAccount={{ id: member.id, displayName, spiritId: member.spiritId, email: member.email }}
             />
           </div>
 

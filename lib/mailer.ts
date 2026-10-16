@@ -61,6 +61,24 @@ export async function sendTempPasswordEmail(
   })
 }
 
+// ── 帳號合併通知信（固定文案，見 member_merge） ──
+export async function sendAccountMergedNotification(
+  to: string,
+  primarySpiritId: string
+) {
+  await sendMailSafe({
+    from: FROM_ADDRESS,
+    to,
+    subject: '【啟動事工】您的帳號已與另一帳號合併',
+    html: `
+      <p>您好，</p>
+      <p>系統管理員已將這組帳號併入您的另一組帳號（啟動事工編號：<strong>${primarySpiritId}</strong>）。</p>
+      <p>這組帳號自此無法再登入，請改用 ${primarySpiritId} 該組帳號登入系統。</p>
+      <p>如有疑問，請聯繫管理員。</p>
+    `,
+  })
+}
+
 // ── 通訊 Email 驗證信 ─────────────────────────
 export async function sendCommEmailVerification(
   to: string,

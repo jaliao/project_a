@@ -30,6 +30,7 @@ export const PUBLIC_PAGES: RouteRule[] = [
   { match: 'exact', path: '/recover-account', reason: '找回帳號（灌檔且未登入過會員自助）' },
   { match: 'exact', path: '/onboarding', reason: '首次登入引導（頁面自行 auth 守衛，避免守衛迴圈）' },
   { match: 'exact', path: '/account-suspended', reason: '帳號已暫停獨立頁（免登入可見）' },
+  { match: 'exact', path: '/account-merged', reason: '帳號已合併獨立頁（免登入可見）' },
   { match: 'exact', path: '/terms', reason: '服務條款' },
   { match: 'exact', path: '/privacy', reason: '隱私政策' },
   { match: 'exact', path: '/pwa-install', reason: 'PWA 安裝說明（免登入）' },
@@ -40,6 +41,7 @@ export const PUBLIC_APIS: RouteRule[] = [
   { match: 'prefix', path: '/api/auth', reason: 'NextAuth 端點' },
   { match: 'prefix', path: '/api/ecpay/store-callback', reason: 'ECPay 門市選擇 callback：跨站 POST 不帶 session cookie' },
   { match: 'prefix', path: '/api/suspended-logout', reason: '被暫停會員登出轉址（清 session 後導向 /account-suspended）' },
+  { match: 'prefix', path: '/api/merged-logout', reason: '已合併帳號登出轉址（清 session 後導向 /account-merged）' },
   { match: 'prefix', path: '/api/verify-email', reason: '通訊 Email 驗證連結：點擊時可能未登入' },
 ]
 
