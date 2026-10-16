@@ -30,11 +30,24 @@ export function isUndeliverableEmail(email: string): boolean {
   return email.trim().toLowerCase().endsWith(SYNTHETIC_EMAIL_DOMAIN)
 }
 
-// 寄送守門：合成 seed 信箱略過不寄（記 log、不拋錯，對呼叫端等同寄送成功）
+// 非正式環境收件覆寫：dev/test host 的 .env 可設定，正式環境不可設定（見 mail-skip-synthetic spec）
+const MAIL_OVERRIDE_TO = process.env.MAIL_OVERRIDE_TO?.trim()
+
+// 寄送守門：合成 seed 信箱略過不寄（記 log、不拋錯，對呼叫端等同寄送成功）；
+// 否則若設定了 MAIL_OVERRIDE_TO，一律改寄該信箱並於主旨加註原收件人，避免誤寄真實名冊帳號
 async function sendMailSafe(options: Parameters<typeof transporter.sendMail>[0]) {
   const to = String(options.to ?? '')
   if (isUndeliverableEmail(to)) {
     console.info(`[mailer] 略過合成 seed 信箱，不寄送：${to}`)
+    return
+  }
+  if (MAIL_OVERRIDE_TO) {
+    console.info(`[mailer] 非正式環境收件覆寫：原收件人 ${to} → 改寄 ${MAIL_OVERRIDE_TO}`)
+    await transporter.sendMail({
+      ...options,
+      to: MAIL_OVERRIDE_TO,
+      subject: `[原收件人: ${to}] ${options.subject ?? ''}`,
+    })
     return
   }
   await transporter.sendMail(options)
