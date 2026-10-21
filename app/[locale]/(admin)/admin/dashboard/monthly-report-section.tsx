@@ -109,8 +109,8 @@ function GenerationsExplainDialog() {
             ：該教師本人在啟動靈人最早結業那筆報名所對應課程的建立者。
           </p>
           <p>
-            <strong className="text-foreground">第 1 代</strong>
-            ：教師本人沒有導師、導師就是自己、或導師不在教師名單中，皆計為第 1
+            <strong className="text-foreground">第 0 代</strong>
+            ：教師本人沒有導師、導師就是自己、或導師不在教師名單中，皆計為第 0
             代；其餘教師的代別為「導師的代別 + 1」。
           </p>
           <p>

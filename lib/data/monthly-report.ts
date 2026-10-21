@@ -300,12 +300,12 @@ async function generations(
   const gen = (t: string, seen: Set<string>): number => {
     const cached = memo.get(t)
     if (cached != null) return cached
-    if (seen.has(t)) return 1 // 環路：視為第 1 代
+    if (seen.has(t)) return 0 // 環路：視為第 0 代
     seen.add(t)
     const m = mentorOf.get(t)
     const g =
       !m || m.teacherId === t || !teacherSet.has(m.teacherId)
-        ? 1
+        ? 0
         : Math.min(gen(m.teacherId, seen) + 1, MAX_GEN)
     memo.set(t, g)
     return g
@@ -320,6 +320,15 @@ async function generations(
     .sort((a, b) => a[0] - b[0])
     .map(([generation, count]) => ({ generation, count }))
   return { teacherTotal: teacherSet.size, buckets }
+}
+
+/** 啟動編號＋姓名組字串；任一缺值僅顯示現有的那個，兩者皆缺退回 fallbackId */
+function labelWithName(
+  spiritId: string | null,
+  realName: string | null,
+  fallbackId: string,
+): string {
+  return [spiritId, realName].filter(Boolean).join(' ') || fallbackId
 }
 
 /**
@@ -358,7 +367,7 @@ export async function generationTeacherDetails(
     if (!prevEarliest || at < prevEarliest) earliestByTeacher.set(teacherId, at)
     if (!labelById.has(teacherId)) {
       const by = r.invite.createdBy
-      labelById.set(teacherId, by.spiritId ?? by.realName ?? teacherId)
+      labelById.set(teacherId, labelWithName(by.spiritId, by.realName, teacherId))
     }
 
     const cur = mentorOf.get(r.userId)
@@ -369,12 +378,12 @@ export async function generationTeacherDetails(
   const gen = (t: string, seen: Set<string>): number => {
     const cached = memo.get(t)
     if (cached != null) return cached
-    if (seen.has(t)) return 1
+    if (seen.has(t)) return 0
     seen.add(t)
     const m = mentorOf.get(t)
     const g =
       !m || m.teacherId === t || !teacherSet.has(m.teacherId)
-        ? 1
+        ? 0
         : Math.min(gen(m.teacherId, seen) + 1, MAX_GEN)
     memo.set(t, g)
     return g
@@ -384,7 +393,7 @@ export async function generationTeacherDetails(
   for (const t of teacherIds) gen(t, new Set())
 
   const details: GenerationTeacherDetail[] = teacherIds.map((teacherId) => {
-    const generation = memo.get(teacherId) ?? 1
+    const generation = memo.get(teacherId) ?? 0
     const m = mentorOf.get(teacherId)
     const hasMentor = !!m && m.teacherId !== teacherId && teacherSet.has(m.teacherId)
     return {
