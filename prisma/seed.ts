@@ -17,6 +17,10 @@ import roster from './seed-data/roster.json'
 import prosperitySeed from './seed-data/prosperity-seed.json'
 import graduation from './seed-data/graduation.json'
 
+// 帳號代碼衍生規則需與 lib/spirit-id.ts 的 deriveLoginHandle 一致（spiritId 轉小寫）；
+// seed.ts 自成一套 PrismaClient（見下方 adapter），故此處不跨檔匯入，直接內嵌同規則避免耦合
+const deriveLoginHandle = (spiritId: string) => spiritId.toLowerCase()
+
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
 const prisma = new PrismaClient({ adapter })
 
@@ -98,6 +102,7 @@ async function main() {
       gender: 'unspecified',
       displayNameMode: 'nickname_zh',
       spiritId: ADMIN_SPIRIT_ID,
+      loginHandle: deriveLoginHandle(ADMIN_SPIRIT_ID),
       phone: ADMIN_PHONE,
       commEmail: TEST_COMM_EMAIL,
       isCommVerified: true,
@@ -131,6 +136,7 @@ async function main() {
       gender: 'male',
       displayNameMode: 'nickname_zh',
       spiritId: GORDON.spiritId,
+      loginHandle: deriveLoginHandle(GORDON.spiritId),
       phone: GORDON.phone,
       commEmail: TEST_COMM_EMAIL,
       isCommVerified: true,
@@ -166,6 +172,7 @@ async function main() {
       gender: 'male',
       displayNameMode: 'nickname_zh',
       spiritId: 'PA269999',
+      loginHandle: deriveLoginHandle('PA269999'),
       phone: '0912009999',
       commEmail: TEST_COMM_EMAIL,
       isCommVerified: true,
@@ -209,6 +216,7 @@ async function main() {
         gender: 'unspecified',
         displayNameMode: 'nickname_zh',
         spiritId: s.spiritId,
+        loginHandle: deriveLoginHandle(s.spiritId),
         phone: s.phone,
         commEmail: TEST_COMM_EMAIL,
         isCommVerified: true,
@@ -289,6 +297,7 @@ async function main() {
       realName: p.realName,
       nickname: p.realName,
       spiritId: p.spiritId,
+      loginHandle: deriveLoginHandle(p.spiritId),
       phone: p.phone,
       passwordHash: studentHash,
       roles: mapRosterRoles(p.roles),

@@ -519,6 +519,7 @@ export async function graduateCourse(
           .map((line) => (line.trim() ? `<p>${line}</p>` : '<br>'))
           .join('')
         const to = resolveContactEmail(s)
+        if (!to) continue
         try {
           await sendGraduationEmail(to, subject, html)
         } catch (err) {

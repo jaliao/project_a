@@ -23,7 +23,7 @@ const DISPLAY_SELECT = {
 
 export type RecoverableAccount = {
   id: string
-  email: string
+  email: string | null
 }
 
 // 選擇題：一個選項
@@ -144,7 +144,7 @@ export async function buildRecoveryQuestion(accountId: string): Promise<Recovery
 export type InactiveMember = {
   id: string
   spiritId: string | null
-  email: string
+  email: string | null
   displayName: string
   roles: string[]
   isTempPassword: boolean

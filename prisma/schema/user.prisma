@@ -50,7 +50,7 @@ enum DisplayNameMode {
 // ==========================================
 model User {
   id            String     @id @default(uuid()) @db.Uuid
-  email         String     @unique // 登入帳號，唯一且不可變
+  email         String?    @unique // 登入帳號之一，唯一且不可變；可為 null（例如僅以 LINE 登入、LINE 未提供 email 的會員）
   emailVerified DateTime?
   name          String?
   image         String?
@@ -66,6 +66,11 @@ model User {
   // 密碼管理
   passwordHash   String? // Google-only 用戶為 null
   isTempPassword Boolean @default(false) // 臨時密碼強制變更標記
+
+  // 帳號代碼（cr-feat-261021-004）：email 之外的登入識別鍵，仿 LINE @ID
+  // 第一階段先 nullable，待 backfill 完成後收緊為 NOT NULL + UNIQUE（見 migration 分段計畫）
+  loginHandle     String    @unique // 小寫正規化儲存，既有會員由 spiritId 衍生 backfill
+  handleChangedAt DateTime? // null = 尚未手動改過（backfill／系統衍生不算），用於 30 天改名冷卻判斷
 
   // 通訊 Email（獨立於登入帳號）
   commEmail      String?

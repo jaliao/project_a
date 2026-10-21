@@ -28,7 +28,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
-export function MemberEmailForm({ userId, currentEmail }: { userId: string; currentEmail: string }) {
+export function MemberEmailForm({ userId, currentEmail }: { userId: string; currentEmail: string | null }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [newEmail, setNewEmail] = useState('')
@@ -56,7 +56,7 @@ export function MemberEmailForm({ userId, currentEmail }: { userId: string; curr
     <div className="space-y-3">
       <p className="text-sm">
         <span className="text-muted-foreground">目前帳號：</span>
-        <span className="font-medium break-all">{currentEmail}</span>
+        <span className="font-medium break-all">{currentEmail ?? '（尚未設定，可能僅以 LINE 登入）'}</span>
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <Input
@@ -87,7 +87,7 @@ export function MemberEmailForm({ userId, currentEmail }: { userId: string; curr
               <div className="space-y-2">
                 <p>
                   <span className="text-muted-foreground">目前帳號：</span>
-                  {currentEmail}
+                  {currentEmail ?? '（尚未設定）'}
                 </p>
                 <p>
                   <span className="text-muted-foreground">新帳號：</span>

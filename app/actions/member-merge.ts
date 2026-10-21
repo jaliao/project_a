@@ -61,7 +61,7 @@ export type MergeAccountSummary = {
   id: string
   spiritId: string | null
   displayName: string
-  email: string
+  email: string | null
   roles: UserRole[]
   learningLevel: number
   isUndeliverableEmail: boolean
@@ -81,7 +81,7 @@ function toSummary(u: ProfileRow): MergeAccountSummary {
 }
 
 // 依 isUndeliverableEmail 判斷建議的副帳號 id；雙方皆為/皆非合成信箱時回傳 null（需手動指定）
-function suggestSecondary(a: { id: string; email: string }, b: { id: string; email: string }): string | null {
+function suggestSecondary(a: { id: string; email: string | null }, b: { id: string; email: string | null }): string | null {
   const aSeed = isUndeliverableEmail(a.email)
   const bSeed = isUndeliverableEmail(b.email)
   if (aSeed && !bSeed) return a.id
@@ -410,8 +410,8 @@ export async function mergeMembers(input: MergeMembersInput): Promise<ActionResp
     select: { realName: true, nickname: true },
   })
   const actorName = actor?.realName || actor?.nickname || session.user.email || '管理者'
-  const secondarySnapshot = `${secondary.realName || secondary.nickname || '（未填）'}（${secondary.email}）`
-  const primaryLabel = `${primary.realName || primary.nickname || '（未填）'}（${primary.email}）`
+  const secondarySnapshot = `${secondary.realName || secondary.nickname || '（未填）'}（${secondary.email ?? '無 Email'}）`
+  const primaryLabel = `${primary.realName || primary.nickname || '（未填）'}（${primary.email ?? '無 Email'}）`
 
   const { updates: profileUpdates } = computeProfileFillIns(primary, secondary)
 
@@ -539,9 +539,11 @@ export async function mergeMembers(input: MergeMembersInput): Promise<ActionResp
 
   if (input.notify && !isUndeliverableEmail(secondary.email)) {
     const to = resolveContactEmail(secondary)
-    sendAccountMergedNotification(to, primary.spiritId ?? '').catch((err) => {
-      console.error('[mergeMembers] 合併通知信寄送失敗：', err)
-    })
+    if (to) {
+      sendAccountMergedNotification(to, primary.spiritId ?? '').catch((err) => {
+        console.error('[mergeMembers] 合併通知信寄送失敗：', err)
+      })
+    }
   }
 
   return { success: true, message: `已將副帳號併入主帳號 ${primaryLabel}` }

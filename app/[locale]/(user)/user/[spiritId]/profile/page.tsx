@@ -52,6 +52,7 @@ export default async function ProfilePage({ searchParams }: Props) {
   const loginMethods = [
     hasPassword ? t('profile.loginMethodPassword') : null,
     linkedProviders.includes('google') ? t('profile.loginMethodGoogle') : null,
+    linkedProviders.includes('line') ? t('profile.loginMethodLine') : null,
   ].filter(Boolean)
 
   return (
@@ -98,7 +99,7 @@ export default async function ProfilePage({ searchParams }: Props) {
           gender: user.gender,
           birthYear: user.birthYear,
           displayNameMode: user.displayNameMode,
-          commEmail: user.commEmail ?? user.email,
+          commEmail: user.commEmail ?? user.email ?? '',
           isCommVerified: user.isCommVerified,
           churchType: user.churchType,
           churchId: user.churchId ?? null,

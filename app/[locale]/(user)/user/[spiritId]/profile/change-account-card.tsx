@@ -1,11 +1,11 @@
 /*
  * ----------------------------------------------
- * ChangeAccountCard - 帳號修改卡（登入 Email 變更）
- * 2026-07-14 (Updated: 2026-09-03)
+ * ChangeAccountCard - 帳號修改卡（登入 Email 變更／設定初始密碼）
+ * 2026-07-14 (Updated: 2026-10-21)
  * app/[locale]/(user)/user/[spiritId]/profile/change-account-card.tsx
  *
  * 有密碼者：新 email＋目前密碼＋確認視窗後立即生效；
- * Google-only（無密碼）：顯示「請洽管理員協助修改」說明卡。
+ * 尚未設定密碼者（Google-only／LINE-only）：提供「設定登入密碼」表單（cr-feat-261021-004）。
  * cr-spec-260903-001：字串改以 profile i18n 命名空間取用；action 訊息以 t() 呈現
  * ----------------------------------------------
  */
@@ -14,13 +14,19 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { toast } from 'sonner'
 import { useTranslations } from 'next-intl'
-import { IconAt } from '@tabler/icons-react'
+import { IconAt, IconEye, IconEyeOff } from '@tabler/icons-react'
 import { changeMyAccountEmail } from '@/app/actions/profile'
+import { setInitialPassword } from '@/app/actions/auth'
+import { setInitialPasswordSchema } from '@/lib/schemas/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { FieldError } from '@/components/ui/field-error'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,11 +38,97 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
+type InitialPasswordForm = z.infer<typeof setInitialPasswordSchema>
+
+// 尚未設定密碼（Google-only／LINE-only）：提供自助設定初始密碼表單
+function SetInitialPasswordForm() {
+  const t = useTranslations()
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const [showNew, setShowNew] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+
+  const { register, handleSubmit, formState: { errors } } = useForm<InitialPasswordForm>({
+    resolver: zodResolver(setInitialPasswordSchema),
+  })
+
+  const onSubmit = (data: InitialPasswordForm) => {
+    startTransition(async () => {
+      const formData = new FormData()
+      formData.set('newPassword', data.newPassword)
+      formData.set('confirmPassword', data.confirmPassword)
+      const result = await setInitialPassword(formData)
+      if (result.success) {
+        toast.success(result.message ? t(result.message) : t('profile.toast.passwordUpdated'))
+        router.refresh()
+      } else {
+        const errKey = result.errors?.newPassword?.[0] ?? result.errors?.confirmPassword?.[0]
+        toast.error(errKey ? t(errKey) : (result.message ? t(result.message) : t('profile.toast.formHasErrors')))
+      }
+    })
+  }
+
+  return (
+    <div className="rounded-lg border p-4 space-y-4">
+      <div className="flex items-center gap-2">
+        <IconAt className="h-5 w-5 text-primary" />
+        <h2 className="text-base font-semibold">{t('profile.setPasswordTitle')}</h2>
+      </div>
+      <p className="text-sm text-muted-foreground">
+        {t('profile.setPasswordDesc')}
+      </p>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="initial-newPassword">{t('onboarding.newPassword')}</Label>
+          <div className="relative">
+            <Input
+              id="initial-newPassword"
+              type={showNew ? 'text' : 'password'}
+              placeholder={t('onboarding.newPasswordPlaceholder')}
+              autoComplete="new-password"
+              disabled={isPending}
+              className="pr-10"
+              {...register('newPassword')}
+            />
+            <button type="button" onClick={() => setShowNew(v => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" tabIndex={-1}>
+              {showNew ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
+            </button>
+          </div>
+          <FieldError message={errors.newPassword?.message} />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="initial-confirmPassword">{t('onboarding.confirmPassword')}</Label>
+          <div className="relative">
+            <Input
+              id="initial-confirmPassword"
+              type={showConfirm ? 'text' : 'password'}
+              placeholder={t('onboarding.confirmPlaceholder')}
+              autoComplete="new-password"
+              disabled={isPending}
+              className="pr-10"
+              {...register('confirmPassword')}
+            />
+            <button type="button" onClick={() => setShowConfirm(v => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" tabIndex={-1}>
+              {showConfirm ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
+            </button>
+          </div>
+          <FieldError message={errors.confirmPassword?.message} />
+        </div>
+        <Button type="submit" disabled={isPending}>
+          {isPending ? t('onboarding.settingUp') : t('profile.setPasswordSubmit')}
+        </Button>
+      </form>
+    </div>
+  )
+}
+
 export function ChangeAccountCard({
   currentEmail,
   hasPassword,
 }: {
-  currentEmail: string
+  currentEmail: string | null
   hasPassword: boolean
 }) {
   const t = useTranslations()
@@ -47,19 +139,9 @@ export function ChangeAccountCard({
   const [errors, setErrors] = useState<Record<string, string[]>>({})
   const [confirmOpen, setConfirmOpen] = useState(false)
 
-  // Google-only：不開放自改
+  // 尚未設定密碼（Google-only／LINE-only）：提供自助設定初始密碼
   if (!hasPassword) {
-    return (
-      <div className="rounded-lg border p-4 space-y-2">
-        <div className="flex items-center gap-2">
-          <IconAt className="h-5 w-5 text-primary" />
-          <h2 className="text-base font-semibold">{t('profile.changeAccountTitle')}</h2>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          {t('profile.changeAccountGoogleOnly')}
-        </p>
-      </div>
-    )
+    return <SetInitialPasswordForm />
   }
 
   const handleSubmit = () => {
@@ -88,7 +170,7 @@ export function ChangeAccountCard({
         <h2 className="text-base font-semibold">{t('profile.changeAccountTitle')}</h2>
       </div>
       <p className="text-sm text-muted-foreground">
-        {t('profile.changeAccountDesc')}<span className="font-medium">{currentEmail}</span>
+        {t('profile.changeAccountDesc')}<span className="font-medium">{currentEmail ?? t('profile.changeAccountNoneYet')}</span>
       </p>
       <div className="space-y-1.5">
         <Label htmlFor="account-new-email">{t('profile.changeAccountNewEmail')}</Label>
@@ -126,7 +208,7 @@ export function ChangeAccountCard({
               <div className="space-y-2">
                 <p>
                   <span className="text-muted-foreground">{t('profile.changeAccountConfirmCurrent')}</span>
-                  {currentEmail}
+                  {currentEmail ?? t('profile.changeAccountNoneYet')}
                 </p>
                 <p>
                   <span className="text-muted-foreground">{t('profile.changeAccountConfirmNew')}</span>

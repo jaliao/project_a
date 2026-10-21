@@ -45,9 +45,9 @@ function inviteSnapshot(inviteId: number, title: string): string {
   return `#${inviteId} ${title}`
 }
 
-/** 操作紀錄快照：學員姓名（含 email） */
-function targetSnapshot(realName: string | null, email: string): string {
-  return `${realName ?? '（未填）'}（${email}）`
+/** 操作紀錄快照：學員姓名（含 email，無 email 則標註） */
+function targetSnapshot(realName: string | null, email: string | null): string {
+  return `${realName ?? '（未填）'}（${email ?? '無 Email'}）`
 }
 
 /** 管理者或該課建立者才可管理課程學員 */

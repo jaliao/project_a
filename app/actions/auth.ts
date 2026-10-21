@@ -14,7 +14,7 @@ import { randomBytes } from 'crypto'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
-import { generateSpiritId } from '@/lib/spirit-id'
+import { generateSpiritId, deriveLoginHandle } from '@/lib/spirit-id'
 import {
   sendTempPasswordEmail,
   sendPasswordResetEmail,
@@ -23,6 +23,8 @@ import { resolveContactEmail } from '@/lib/utils/contact-email'
 import {
   registerSchema,
   changePasswordSchema,
+  setInitialPasswordSchema,
+  loginHandleSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
 } from '@/lib/schemas/auth'
@@ -87,6 +89,7 @@ export async function registerWithEmail(
       passwordHash,
       isTempPassword: true,
       spiritId,
+      loginHandle: deriveLoginHandle(spiritId),
       realName,
       phone,
       gender,
@@ -100,9 +103,11 @@ export async function registerWithEmail(
   // 寄送臨時密碼通知信（不阻塞主流程）
   // 新帳號尚無已驗證通訊 Email → 收件地址依規則退回帳號 Email
   const to = resolveContactEmail({ email })
-  sendTempPasswordEmail(to, spiritId, tempPassword).catch((err) => {
-    console.error('[registerWithEmail] 寄信失敗：', err)
-  })
+  if (to) {
+    sendTempPasswordEmail(to, spiritId, tempPassword).catch((err) => {
+      console.error('[registerWithEmail] 寄信失敗：', err)
+    })
+  }
 
   return { success: true, message: '帳號建立成功，請查收通知信取得臨時密碼' }
 }
@@ -189,6 +194,103 @@ export async function changePassword(
   return { success: true, message: 'profile.toast.passwordUpdated' }
 }
 
+// ── 全新 LINE 使用者 onboarding：設定登入密碼（選填）─────
+// cr-feat-261021-004：僅限尚未設定密碼（passwordHash 為 null）的帳號；
+// 已有密碼者請使用 changePassword（本 action 不做「變更」語意，避免略過目前密碼確認）
+export async function setInitialPassword(
+  formData: FormData
+): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, message: 'profile.toast.mustLogin' }
+  }
+
+  const parsed = setInitialPasswordSchema.safeParse({
+    newPassword: formData.get('newPassword'),
+    confirmPassword: formData.get('confirmPassword'),
+  })
+
+  if (!parsed.success) {
+    return { success: false, errors: parsed.error.flatten().fieldErrors }
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } })
+  if (!user) {
+    return { success: false, message: 'profile.toast.mustLogin' }
+  }
+  if (user.passwordHash) {
+    return { success: false, message: 'profile.toast.passwordAlreadySet' }
+  }
+
+  const passwordHash = await bcrypt.hash(parsed.data.newPassword, 12)
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { passwordHash, isTempPassword: false },
+  })
+
+  return { success: true, message: 'profile.toast.passwordUpdated' }
+}
+
+// ── 修改帳號代碼（cr-feat-261021-004）────────────
+// 格式與唯一性檢查 + 30 天改名冷卻（首次手動修改不受限：handleChangedAt 為 null 時視為未改過）
+const HANDLE_COOLDOWN_DAYS = 30
+
+export async function changeLoginHandle(
+  formData: FormData
+): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, message: 'profile.toast.mustLogin' }
+  }
+
+  const parsed = loginHandleSchema.safeParse(formData.get('loginHandle'))
+  if (!parsed.success) {
+    return { success: false, errors: { loginHandle: parsed.error.flatten().formErrors } }
+  }
+  const nextHandle = parsed.data
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { id: true, loginHandle: true, handleChangedAt: true },
+  })
+  if (!user) {
+    return { success: false, message: 'profile.toast.mustLogin' }
+  }
+
+  if (nextHandle === user.loginHandle) {
+    return { success: false, errors: { loginHandle: ['validation.loginHandleSameAsCurrent'] } }
+  }
+
+  if (user.handleChangedAt) {
+    const cooldownEndsAt = new Date(
+      user.handleChangedAt.getTime() + HANDLE_COOLDOWN_DAYS * 24 * 60 * 60 * 1000
+    )
+    if (cooldownEndsAt > new Date()) {
+      const daysLeft = Math.ceil((cooldownEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000))
+      return {
+        success: false,
+        errors: { loginHandle: ['validation.loginHandleCooldown'] },
+        data: { daysLeft },
+      }
+    }
+  }
+
+  const taken = await prisma.user.findFirst({
+    where: { loginHandle: nextHandle, id: { not: user.id } },
+    select: { id: true },
+  })
+  if (taken) {
+    return { success: false, errors: { loginHandle: ['validation.loginHandleTaken'] } }
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { loginHandle: nextHandle, handleChangedAt: new Date() },
+  })
+
+  return { success: true, message: 'profile.toast.loginHandleUpdated', data: { loginHandle: nextHandle } }
+}
+
 // ── Onboarding 基本資料填寫 ───────────────────
 export async function completeOnboardingProfile(
   formData: FormData
@@ -263,10 +365,13 @@ export async function requestPasswordReset(
     })
 
     const resetUrl = `${getAppUrl()}/reset-password?token=${token}`
-    // 收件地址依規則：優先已驗證通訊 Email，否則帳號 Email
-    sendPasswordResetEmail(resolveContactEmail(user), resetUrl).catch((err) => {
-      console.error('[requestPasswordReset] 寄信失敗：', err)
-    })
+    // 收件地址依規則：優先已驗證通訊 Email，否則帳號 Email；兩者皆無則無法寄信，略過
+    const to = resolveContactEmail(user)
+    if (to) {
+      sendPasswordResetEmail(to, resetUrl).catch((err) => {
+        console.error('[requestPasswordReset] 寄信失敗：', err)
+      })
+    }
   }
 
   return {

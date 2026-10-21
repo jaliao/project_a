@@ -13,7 +13,7 @@
 import { randomBytes } from 'crypto'
 import bcrypt from 'bcryptjs'
 import type { Prisma, UserRole } from '@prisma/client'
-import { generateSpiritId } from '@/lib/spirit-id'
+import { generateSpiritId, deriveLoginHandle } from '@/lib/spirit-id'
 
 /** 產生 12 碼英數臨時密碼 */
 export function generateTempPassword(): string {
@@ -51,6 +51,7 @@ export async function createLoginableMember(
       realName,
       nickname: realName,
       spiritId,
+      loginHandle: deriveLoginHandle(spiritId),
       roles,
       passwordHash,
       isTempPassword: true,

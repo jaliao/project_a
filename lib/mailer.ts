@@ -26,7 +26,8 @@ const FROM_ADDRESS = `"啟動事工" <${process.env.SMTP_FROM ?? process.env.SMT
 const SYNTHETIC_EMAIL_DOMAIN = '@seed.iwillshare.org.tw'
 
 // 判定地址是否為不可送達的合成 seed 信箱（供寄送守門與 UI 提示重用）
-export function isUndeliverableEmail(email: string): boolean {
+export function isUndeliverableEmail(email: string | null): boolean {
+  if (!email) return false
   return email.trim().toLowerCase().endsWith(SYNTHETIC_EMAIL_DOMAIN)
 }
 

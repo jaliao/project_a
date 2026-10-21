@@ -21,7 +21,7 @@ export type TeacherPickerCandidate = {
   spiritId: string | null
   displayName: string
   avatarUrl: string | null
-  email: string
+  email: string | null
 }
 
 const CANDIDATE_LIMIT = 20

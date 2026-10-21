@@ -19,7 +19,7 @@ export type DuplicateConfidence = '最高' | '高' | '中'
 export type DuplicateCandidateSide = {
   id: string
   spiritId: string | null
-  email: string
+  email: string | null
   displayName: string
   lastLoginAt: Date | null
   createdAt: Date
@@ -39,7 +39,7 @@ const CONFIDENCE_ORDER: Record<DuplicateConfidence, number> = { 最高: 0, 高: 
 type CandidateUser = {
   id: string
   spiritId: string | null
-  email: string
+  email: string | null
   realName: string | null
   englishName: string | null
   nickname: string | null

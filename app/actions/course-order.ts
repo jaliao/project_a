@@ -86,7 +86,7 @@ export async function applyMaterialOrder(
     buyerNameEn: teacher.englishName || '',
     teacherName: teacher.realName || teacher.name || '',
     churchOrg,
-    email: teacher.commEmail || teacher.email,
+    email: teacher.commEmail || teacher.email || '',
     phone: teacher.phone || '',
     courseDate: invite.courseDate || '無',
     materialVersion: 'traditional' as MaterialVersion,

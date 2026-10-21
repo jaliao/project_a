@@ -36,3 +36,11 @@ export async function generateSpiritId(): Promise<string> {
 
   return `PA${yyStr}${seqStr}`
 }
+
+/**
+ * 由 spiritId 衍生預設帳號代碼（cr-feat-261021-004）
+ * 全站唯一，建帳號時與 spiritId 同一次寫入，避免 loginHandle NOT NULL 約束的空窗期
+ */
+export function deriveLoginHandle(spiritId: string): string {
+  return spiritId.toLowerCase()
+}

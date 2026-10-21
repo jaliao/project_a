@@ -57,6 +57,15 @@ function GoogleIcon({ className }: { className?: string }) {
   )
 }
 
+// LINE SVG icon
+function LineIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className={className} fill="currentColor">
+      <path d="M12 2C6.48 2 2 5.73 2 10.31c0 3.98 3.31 7.32 7.79 7.95-.15.6-.49 2.03-.56 2.35-.09.4.15.4.31.29.13-.08 2.03-1.34 2.85-1.89.52.07 1.06.11 1.61.11 5.52 0 10-3.73 10-8.31C22 5.73 17.52 2 12 2z" />
+    </svg>
+  )
+}
+
 function AuthForm() {
   const t = useTranslations('auth')
   const searchParams = useSearchParams()
@@ -71,12 +80,12 @@ function AuthForm() {
   const onEmailSubmit = (data: LoginForm) => {
     startTransition(async () => {
       const result = await signIn('credentials', {
-        email: data.email,
+        identifier: data.identifier,
         password: data.password,
         redirect: false,
       })
       if (result?.error) {
-        toast.error('Email 或密碼不正確')
+        toast.error('帳號或密碼不正確')
       } else {
         // 強制 full page reload，確保 middleware 能正確攔截（例如 isTempPassword → onboarding）
         window.location.href = callbackUrl
@@ -90,25 +99,31 @@ function AuthForm() {
     })
   }
 
+  const handleLineSignIn = () => {
+    startTransition(async () => {
+      await signIn('line', { callbackUrl })
+    })
+  }
+
   return (
     <div className={cn('grid gap-6')}>
       {/* Email + 密碼表單 */}
       <form onSubmit={handleSubmit(onEmailSubmit)} className="grid gap-4">
         <div className="grid gap-1.5">
-          <Label htmlFor="email" className="sr-only">
-            Email
+          <Label htmlFor="identifier" className="sr-only">
+            Email 或帳號代碼
           </Label>
           <Input
-            id="email"
-            type="email"
-            placeholder="name@example.com"
+            id="identifier"
+            type="text"
+            placeholder="Email 或帳號代碼"
             autoCapitalize="none"
-            autoComplete="email"
+            autoComplete="username"
             autoCorrect="off"
             disabled={isPending}
-            {...register('email')}
+            {...register('identifier')}
           />
-          <FieldError message={errors.email?.message} />
+          <FieldError message={errors.identifier?.message} />
         </div>
         <div className="grid gap-1.5">
           <div className="flex items-center justify-between">
@@ -167,6 +182,17 @@ function AuthForm() {
       >
         <GoogleIcon className="mr-2 h-4 w-4" />
         {t('continueWithGoogle')}
+      </Button>
+
+      {/* LINE 登入（cr-feat-261021-004） */}
+      <Button
+        type="button"
+        disabled={isPending}
+        onClick={handleLineSignIn}
+        style={{ backgroundColor: '#00C300', color: '#fff' }}
+      >
+        <LineIcon className="mr-2 h-4 w-4" />
+        {t('continueWithLine')}
       </Button>
 
       {/* 灌檔且未登入過的會員：找回帳號 */}

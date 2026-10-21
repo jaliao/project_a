@@ -64,11 +64,13 @@ export async function resetMemberPassword(
   })
 
   // 寄送臨時密碼通知信（不阻塞主流程）
-  // 收件地址依規則：優先已驗證通訊 Email，否則帳號 Email
-  const to = resolveContactEmail({ email: user.email!, commEmail: user.commEmail, isCommVerified: user.isCommVerified })
-  sendTempPasswordEmail(to, user.spiritId ?? '', tempPassword).catch((err) => {
-    console.error('[resetMemberPassword] 寄信失敗：', err)
-  })
+  // 收件地址依規則：優先已驗證通訊 Email，否則帳號 Email；兩者皆無（例如僅以 LINE 登入）則無法寄信，略過
+  const to = resolveContactEmail({ email: user.email, commEmail: user.commEmail, isCommVerified: user.isCommVerified })
+  if (to) {
+    sendTempPasswordEmail(to, user.spiritId ?? '', tempPassword).catch((err) => {
+      console.error('[resetMemberPassword] 寄信失敗：', err)
+    })
+  }
 
   return {
     success: true,
@@ -194,12 +196,14 @@ export async function grantTeacherRole(userId: string, role: TeacherRole): Promi
       where: { id: userId },
       data: { roles: { push: role } },
     })
-    // 授予成功 → 寄通知信（已寫入；失敗僅 log，不影響授權）
+    // 授予成功 → 寄通知信（已寫入；失敗僅 log，不影響授權；無可用 Email 則略過寄送）
     const to = resolveContactEmail(user)
-    try {
-      await sendTeacherRoleGrantedEmail(to, BOOK_LABEL_BY_TEACHER_ROLE[role])
-    } catch (err) {
-      console.error(`[grantTeacherRole] 通知信寄送失敗 (${to})：`, err)
+    if (to) {
+      try {
+        await sendTeacherRoleGrantedEmail(to, BOOK_LABEL_BY_TEACHER_ROLE[role])
+      } catch (err) {
+        console.error(`[grantTeacherRole] 通知信寄送失敗 (${to})：`, err)
+      }
     }
   }
 
@@ -350,7 +354,7 @@ export async function deleteMember(userId: string): Promise<ActionResponse> {
     select: { realName: true, name: true },
   })
   const actorName = actor?.realName || actor?.name || session.user.email || '管理者'
-  const targetName = `${user.realName || user.name || '（未填）'}（${user.email}）`
+  const targetName = `${user.realName || user.name || '（未填）'}（${user.email ?? '無 Email'}）`
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -470,8 +474,8 @@ export async function transferCourseInvites(
     select: { realName: true, name: true },
   })
   const actorName = actor?.realName || actor?.name || session.user.email || '管理者'
-  const fromTeacherSnapshot = `${fromUser.realName || fromUser.name || '（未填）'}（${fromUser.email}）`
-  const toTeacherSnapshot = `${toUser.realName || toUser.name || '（未填）'}（${toUser.email}）`
+  const fromTeacherSnapshot = `${fromUser.realName || fromUser.name || '（未填）'}（${fromUser.email ?? '無 Email'}）`
+  const toTeacherSnapshot = `${toUser.realName || toUser.name || '（未填）'}（${toUser.email ?? '無 Email'}）`
 
   await prisma.$transaction(async (tx) => {
     await tx.courseInvite.updateMany({

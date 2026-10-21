@@ -94,7 +94,7 @@ export async function answerRecoveryQuestion(
       return { success: false, message: CONTACT_ADMIN }
     }
     const emailToken = signRecoveryToken({ stage: 'email', accountId: payload.accountId })
-    return { success: true, data: { token: emailToken, email: account.email } }
+    return { success: true, data: { token: emailToken, email: account.email ?? '' } }
   }
 
   // 答錯：累加嘗試次數
@@ -173,9 +173,11 @@ export async function submitRecoveryEmail(
     commEmail: account.commEmail,
     isCommVerified: account.isCommVerified,
   })
-  sendTempPasswordEmail(to, account.spiritId ?? '', tempPassword).catch((err) => {
-    console.error('[submitRecoveryEmail] 寄信失敗：', err)
-  })
+  if (to) {
+    sendTempPasswordEmail(to, account.spiritId ?? '', tempPassword).catch((err) => {
+      console.error('[submitRecoveryEmail] 寄信失敗：', err)
+    })
+  }
 
   return { success: true, message: `臨時密碼已寄至 ${nextEmail}` }
 }

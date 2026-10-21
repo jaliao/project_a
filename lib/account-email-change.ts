@@ -27,7 +27,7 @@ export type EmailChangeCheck =
  */
 export async function validateNewAccountEmail(
   userId: string,
-  currentEmail: string,
+  currentEmail: string | null,
   input: string
 ): Promise<EmailChangeCheck> {
   const parsed = emailSchema.safeParse(input)
@@ -36,7 +36,7 @@ export async function validateNewAccountEmail(
   }
   const next = parsed.data
 
-  if (next === currentEmail.toLowerCase()) {
+  if (currentEmail && next === currentEmail.toLowerCase()) {
     return { ok: false, errors: { email: ['與目前帳號相同'] } }
   }
 
@@ -55,16 +55,18 @@ export async function validateNewAccountEmail(
  */
 export async function applyAccountEmailChange(
   userId: string,
-  oldEmail: string,
+  oldEmail: string | null,
   newEmail: string
 ): Promise<void> {
   await prisma.$transaction(async (tx) => {
     await tx.user.update({ where: { id: userId }, data: { email: newEmail } })
-    // 舊 email 白名單停用（查無列即略過；保留紀錄不刪除）
-    await tx.whitelistedEmail.updateMany({
-      where: { email: oldEmail.toLowerCase() },
-      data: { isActive: false },
-    })
+    // 舊 email 白名單停用（原本沒有 email 則無舊白名單列可停用，略過；查無列亦略過，保留紀錄不刪除）
+    if (oldEmail) {
+      await tx.whitelistedEmail.updateMany({
+        where: { email: oldEmail.toLowerCase() },
+        data: { isActive: false },
+      })
+    }
     await tx.whitelistedEmail.upsert({
       where: { email: newEmail },
       update: { isActive: true },

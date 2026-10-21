@@ -41,7 +41,7 @@ import {
   type MergePreview,
 } from '@/app/actions/member-merge'
 
-type AccountRef = { id: string; displayName: string; spiritId: string | null; email: string }
+type AccountRef = { id: string; displayName: string; spiritId: string | null; email: string | null }
 
 type Props = {
   anchorAccount: AccountRef

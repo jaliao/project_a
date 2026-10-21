@@ -17,7 +17,7 @@
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
-import { generateSpiritId } from '@/lib/spirit-id'
+import { generateSpiritId, deriveLoginHandle } from '@/lib/spirit-id'
 
 type ActionResponse = {
   success: boolean
@@ -87,6 +87,7 @@ export async function createTestCourseSession(): Promise<ActionResponse> {
           name: label,
           realName: label,
           spiritId: spiritIds[i],
+          loginHandle: deriveLoginHandle(spiritIds[i]),
         },
       })
       await tx.inviteEnrollment.create({

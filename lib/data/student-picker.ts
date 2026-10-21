@@ -19,7 +19,7 @@ export type StudentPickerCandidate = {
   spiritId: string | null
   displayName: string
   avatarUrl: string | null
-  email: string
+  email: string | null
   isFriend: boolean
 }
 

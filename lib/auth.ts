@@ -1,25 +1,42 @@
 /*
  * ----------------------------------------------
  * NextAuth 認證設定
- * 2026-03-23
+ * 2026-03-23 (Updated: 2026-10-21)
  * lib/auth.ts
  *
  * 支援：
  * - Google OAuth（現有）
- * - Credentials（Email + 密碼）
- * 首次 Google 登入自動建帳並核發 Spirit ID
+ * - LINE OAuth（cr-feat-261021-004）
+ * - Credentials（Email/帳號代碼 + 密碼）
+ * 首次 Google/LINE 登入自動建帳並核發 Spirit ID；
+ * 建帳號當下即一併衍生 loginHandle（見自訂 adapter.createUser），避免 NOT NULL 約束空窗期
  * JWT 寫入 isTempPassword、spiritId、roles（多重身分）
  * ----------------------------------------------
  */
 
 import NextAuth from 'next-auth'
+import type { Adapter } from 'next-auth/adapters'
 import Google from 'next-auth/providers/google'
+import Line from 'next-auth/providers/line'
 import Credentials from 'next-auth/providers/credentials'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import bcrypt from 'bcryptjs'
 import { resolveAvatarUrl } from '@/lib/utils/avatar'
 import { prisma } from './prisma'
-import { generateSpiritId } from './spirit-id'
+import { generateSpiritId, deriveLoginHandle } from './spirit-id'
+
+// 建帳號（Google／LINE OAuth 首次登入）時，NextAuth adapter 只會帶 OAuth profile 本有的欄位
+// （email／name／image）直接 INSERT；spiritId／loginHandle 需在同一次 create 一併補上，
+// 否則 loginHandle 的 NOT NULL 約束會讓這次 INSERT 直接失敗
+const prismaAdapter = PrismaAdapter(prisma)
+const adapter: Adapter = {
+  ...prismaAdapter,
+  async createUser(data) {
+    const spiritId = await generateSpiritId()
+    const merged = { ...data, spiritId, loginHandle: deriveLoginHandle(spiritId) }
+    return prismaAdapter.createUser!(merged)
+  },
+}
 
 // 對外是否走 HTTPS（透過 Cloudflare Tunnel 對外時為 true）
 // 代理後容器內部為 http，請求協定判斷不可靠，故改以公開 URL 協定為準，
@@ -38,7 +55,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     error: '/login',
   },
 
-  adapter: PrismaAdapter(prisma),
+  adapter,
 
   session: {
     strategy: 'jwt',
@@ -53,18 +70,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       allowDangerousEmailAccountLinking: true,
     }),
 
-    // ── Email + 密碼登入 ─────────────────────
+    // ── LINE OAuth（cr-feat-261021-004）────────
+    // 不設 allowDangerousEmailAccountLinking：LINE 的 email 不保證存在，
+    // 自動以 email 連結既有帳號有帳號接管風險（見 design.md D3）
+    Line({
+      clientId: process.env.LINE_CLIENT_ID!,
+      clientSecret: process.env.LINE_CLIENT_SECRET!,
+    }),
+
+    // ── Email/帳號代碼 + 密碼登入 ───────────────
     Credentials({
       name: 'credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
+        identifier: { label: 'Email 或帳號代碼', type: 'text' },
         password: { label: '密碼', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null
+        if (!credentials?.identifier || !credentials?.password) return null
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
+        const identifier = (credentials.identifier as string).trim().toLowerCase()
+        const user = await prisma.user.findFirst({
+          where: { OR: [{ email: identifier }, { loginHandle: identifier }] },
         })
 
         if (!user || !user.passwordHash) return null
@@ -128,8 +154,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { id: user.id as string },
         })
         if (dbUser) {
-          // Google OAuth：補核 spiritId 與姓名（jwt 為唯一寫入點，避免 race condition）
-          if (account?.provider === 'google') {
+          // Google／LINE OAuth：補核 spiritId 與姓名（jwt 為唯一寫入點，避免 race condition）
+          // 注：新帳號的 spiritId／loginHandle 已在 adapter.createUser 當場寫入，
+          // 這裡的 spiritId 重試邏輯僅為既有資料的防呆（理論上不會再觸發）
+          if (account?.provider === 'google' || account?.provider === 'line') {
             // spiritId：分開處理，帶重試避免計數器與現有資料不同步時的 unique 衝突
             if (!dbUser.spiritId) {
               for (let attempt = 0; attempt < 5; attempt++) {

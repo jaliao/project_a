@@ -20,10 +20,19 @@ export const registerSchema = z
   })
   .superRefine(applyChurchRefine)
 
+// 登入識別可為 Email 或帳號代碼，格式交由後端 Credentials authorize() 查詢判斷，
+// 此處僅要求非空（不強制 email 格式，因為帳號代碼不是 email）
 export const loginSchema = z.object({
-  email: z.string().email('validation.emailInvalid'),
+  identifier: z.string().min(1, 'validation.identifierRequired'),
   password: z.string().min(1, 'validation.passwordRequired'),
 })
+
+// 帳號代碼格式（cr-feat-261021-004）：4–20 字元，首尾英數字，中間可含 . _ -，不可連續或以符號開頭結尾
+export const loginHandleSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(/^[a-z0-9][a-z0-9._-]{2,18}[a-z0-9]$/, 'validation.loginHandleInvalid')
 
 export const changePasswordSchema = z
   .object({
@@ -38,6 +47,17 @@ export const changePasswordSchema = z
   .refine((data) => data.newPassword !== data.currentPassword, {
     message: 'validation.newPasswordSameAsCurrent',
     path: ['newPassword'],
+  })
+
+// 全新 LINE 使用者 onboarding「設定登入密碼（選填）」步驟：僅新增密碼，無目前密碼可比對
+export const setInitialPasswordSchema = z
+  .object({
+    newPassword: z.string().min(8, 'validation.newPasswordMin8'),
+    confirmPassword: z.string().min(1, 'validation.confirmPasswordRequired'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'validation.passwordMismatch',
+    path: ['confirmPassword'],
   })
 
 export const forgotPasswordSchema = z.object({

@@ -327,6 +327,9 @@ function Step2Profile({ churches, onSuccess }: { churches: OnboardingChurch[]; o
 }
 
 // ── Step 3：歡迎畫面 ──────────────────────────
+// 注：「設定登入密碼（選填）」改放在個人資料頁的 ChangeAccountCard（見 change-account-card.tsx）——
+// 全新 Google／LINE 使用者 isTempPassword 恆為 false，不會經過本 onboarding 流程
+// （只有 Credentials 建立的帳號才會被導來這裡），此處不需要處理設定密碼
 function Step3Welcome({ spiritId }: { spiritId: string }) {
   const t = useTranslations()
   const router = useRouter()
@@ -347,6 +350,7 @@ function Step3Welcome({ spiritId }: { spiritId: string }) {
           </div>
         )}
       </div>
+
       <Button onClick={() => router.push('/dashboard')} className="w-full">
         {t('onboarding.startUsing')}
       </Button>
