@@ -13,7 +13,16 @@
 
 'use client'
 
+import { useState } from 'react'
+import { IconDownload, IconInfoCircle } from '@tabler/icons-react'
 import { usePathname, useRouter } from '@/i18n/navigation'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import type { MonthlyReport } from '@/lib/data/monthly-report'
 
 type Props = {
@@ -70,6 +79,46 @@ function ReportCard({
       <p className="text-3xl font-bold">{value}</p>
       {sub && <p className="text-sm text-muted-foreground">{sub}</p>}
     </div>
+  )
+}
+
+function GenerationsExplainDialog() {
+  const [open, setOpen] = useState(false)
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => setOpen(true)}
+      >
+        <IconInfoCircle className="size-4" />
+        說明
+      </Button>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>世代倍增發展追蹤：數據定義說明</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2 text-sm text-muted-foreground">
+          <p>
+            <strong className="text-foreground">教師</strong>
+            ：在啟動靈人課程中，帶領並使至少一人於所選月份底前結業的帳號。
+          </p>
+          <p>
+            <strong className="text-foreground">導師（mentor）</strong>
+            ：該教師本人在啟動靈人最早結業那筆報名所對應課程的建立者。
+          </p>
+          <p>
+            <strong className="text-foreground">第 1 代</strong>
+            ：教師本人沒有導師、導師就是自己、或導師不在教師名單中，皆計為第 1
+            代；其餘教師的代別為「導師的代別 + 1」。
+          </p>
+          <p>
+            以上計算皆以所選月份的月底為界，切換月份時教師名單與各自代別會重新計算。
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -155,9 +204,22 @@ export default function MonthlyReportSection({ report, months }: Props) {
 
       {/* 二、世代倍增 */}
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-muted-foreground">
-          世代倍增發展追蹤（共 {fmtInt(generations.teacherTotal)} 位教師）
-        </h3>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-muted-foreground">
+            世代倍增發展追蹤（共 {fmtInt(generations.teacherTotal)} 位教師）
+          </h3>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" asChild>
+              <a
+                href={`/api/admin/dashboard/generations/export?month=${report.month}`}
+              >
+                <IconDownload className="size-4" />
+                下載 raw data
+              </a>
+            </Button>
+            <GenerationsExplainDialog />
+          </div>
+        </div>
         {generations.buckets.length === 0 ? (
           <div className="rounded-lg border p-6 text-center text-sm text-muted-foreground">
             本月無資料

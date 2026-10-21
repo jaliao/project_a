@@ -41,6 +41,16 @@ export type Book2UnitRow = UnitRow & {
 
 export type GenerationBucket = { generation: number; count: number }
 
+export type GenerationTeacherDetail = {
+  teacherId: string
+  teacherLabel: string
+  generation: number
+  mentorId: string | null
+  mentorLabel: string | null
+  mentorGeneration: number | null
+  earliestGraduatedAt: Date
+}
+
 export type MonthlyReport = {
   month: string // 正規化後的 YYYY-MM
   monthLabel: string // 「2026 年 8 月」
@@ -102,7 +112,7 @@ function monthLabel(ym: string): string {
  * - prevEnd：所選月 1 日 00:00（+08:00）＝「累計至上月底」的排除上界
  * - end：次月 1 日 00:00（+08:00）＝「累計至本月底」的排除上界
  */
-function taipeiMonthBounds(month: string): { prevEnd: Date; end: Date } {
+export function taipeiMonthBounds(month: string): { prevEnd: Date; end: Date } {
   const next = addMonths(month, 1)
   return {
     prevEnd: new Date(`${month}-01T00:00:00+08:00`),
@@ -135,7 +145,7 @@ export async function getAvailableReportMonths(): Promise<
 }
 
 /** 驗證 month 參數；不合法 → 上一個完整月份（不在可選範圍時退回最新可選月） */
-function normalizeMonth(month: string | undefined, available: string[]): string {
+export function normalizeMonth(month: string | undefined, available: string[]): string {
   const set = new Set(available)
   if (month && /^\d{4}-(0[1-9]|1[0-2])$/.test(month) && set.has(month)) return month
   const prev = addMonths(taipeiYearMonth(new Date()), -1)
@@ -310,6 +320,87 @@ async function generations(
     .sort((a, b) => a[0] - b[0])
     .map(([generation, count]) => ({ generation, count }))
   return { teacherTotal: teacherSet.size, buckets }
+}
+
+/**
+ * 「世代倍增」逐教師明細（供下載 raw data 核對彙總用）。
+ * 計算邏輯與 generations() 相同，獨立重算一次（下載非高頻操作，不與渲染路徑共享快取）。
+ */
+export async function generationTeacherDetails(
+  end: Date,
+): Promise<GenerationTeacherDetail[]> {
+  const rows = await prisma.inviteEnrollment.findMany({
+    where: {
+      graduatedAt: { not: null, lt: end },
+      invite: { courseCatalogId: BOOK1_CATALOG_ID },
+    },
+    select: {
+      userId: true,
+      graduatedAt: true,
+      invite: { select: { createdById: true } },
+    },
+  })
+
+  const mentorOf = new Map<string, { teacherId: string; at: Date }>()
+  const teacherSet = new Set<string>()
+  const earliestByTeacher = new Map<string, Date>()
+  for (const r of rows) {
+    const teacherId = r.invite.createdById
+    const at = r.graduatedAt as Date
+    teacherSet.add(teacherId)
+    const prevEarliest = earliestByTeacher.get(teacherId)
+    if (!prevEarliest || at < prevEarliest) earliestByTeacher.set(teacherId, at)
+
+    const cur = mentorOf.get(r.userId)
+    if (!cur || at < cur.at) mentorOf.set(r.userId, { teacherId, at })
+  }
+
+  const memo = new Map<string, number>()
+  const gen = (t: string, seen: Set<string>): number => {
+    const cached = memo.get(t)
+    if (cached != null) return cached
+    if (seen.has(t)) return 1
+    seen.add(t)
+    const m = mentorOf.get(t)
+    const g =
+      !m || m.teacherId === t || !teacherSet.has(m.teacherId)
+        ? 1
+        : Math.min(gen(m.teacherId, seen) + 1, MAX_GEN)
+    memo.set(t, g)
+    return g
+  }
+
+  const teacherIds = [...teacherSet]
+  for (const t of teacherIds) gen(t, new Set())
+
+  const users = await prisma.user.findMany({
+    where: { id: { in: teacherIds } },
+    select: { id: true, spiritId: true, realName: true },
+  })
+  const labelById = new Map(
+    users.map((u) => [u.id, u.spiritId ?? u.realName ?? u.id]),
+  )
+
+  const details: GenerationTeacherDetail[] = teacherIds.map((teacherId) => {
+    const generation = memo.get(teacherId) ?? 1
+    const m = mentorOf.get(teacherId)
+    const hasMentor = !!m && m.teacherId !== teacherId && teacherSet.has(m.teacherId)
+    return {
+      teacherId,
+      teacherLabel: labelById.get(teacherId) ?? teacherId,
+      generation,
+      mentorId: hasMentor ? m!.teacherId : null,
+      mentorLabel: hasMentor ? labelById.get(m!.teacherId) ?? m!.teacherId : null,
+      mentorGeneration: hasMentor ? memo.get(m!.teacherId) ?? null : null,
+      earliestGraduatedAt: earliestByTeacher.get(teacherId) as Date,
+    }
+  })
+
+  details.sort((a, b) => {
+    if (a.generation !== b.generation) return a.generation - b.generation
+    return a.earliestGraduatedAt.getTime() - b.earliestGraduatedAt.getTime()
+  })
+  return details
 }
 
 // ==========================================
