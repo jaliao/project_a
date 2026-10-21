@@ -26,9 +26,11 @@ roles 不含 `admin`/`superadmin` 者 SHALL redirect 至 `/`。
 5. **各年齡會員人數**：以柱狀圖呈現年齡分布——年齡＝當年減 `birthYear`，分組為「20 歲以下、21–30、31–40、41–50、51–60、61–70、71 歲以上」固定七組（含 0 人組距，附 tooltip）；`birthYear` 未填人數 SHALL 於卡片註記顯示、不列入柱狀
 
 **講師分析** SHALL 顯示：
-1. **啟動講師**：roles 含 `teacher_1` 的 User 數
-2. **豐盛講師**：roles 含 `teacher_2` 的 User 數
-3. **得勝講師**：roles 含 `teacher_3` 的 User 數
+1. **啟動講師**：roles 含 `teacher_1` 的 User 數，並於卡片內同時顯示其中「已開課」人數
+2. **豐盛講師**：roles 含 `teacher_2` 的 User 數，並於卡片內同時顯示其中「已開課」人數
+3. **得勝講師**：roles 含 `teacher_3` 的 User 數，並於卡片內同時顯示其中「已開課」人數
+
+「已開課」定義：該講師身分使用者中，至少建立過一筆 `CourseInvite`（`CourseInvite.createdById` 為該使用者），不論該課程目前狀態為招募中／進行中／已結業／已放棄。
 
 **課程分析** SHALL 顯示（四狀態互斥，總和＝課程總數）：
 1. **招募中課程總數**：`startedAt IS NULL AND cancelledAt IS NULL AND completedAt IS NULL` 的 CourseInvite 數（卡片標籤 SHALL 為「招募中課程總數」，不得再使用「開課中」）
@@ -63,6 +65,14 @@ roles 不含 `admin`/`superadmin` 者 SHALL redirect 至 `/`。
 #### Scenario: 講師依身分計數
 - **WHEN** 某使用者 roles 含 `teacher_2` 但不含 `teacher_1`
 - **THEN** 該使用者計入「豐盛講師」、不計入「啟動講師」
+
+#### Scenario: 講師已開課人數計算
+- **WHEN** 某使用者 roles 含 `teacher_1`，且已建立過一筆 `CourseInvite`（不論該課程目前是招募中、進行中、已結業或已放棄）
+- **THEN** 該使用者計入「啟動講師」卡片的「已開課」人數
+
+#### Scenario: 未建立課程的講師不計入已開課人數
+- **WHEN** 某使用者 roles 含 `teacher_3`，但從未建立過任何 `CourseInvite`
+- **THEN** 該使用者計入「得勝講師」總人數，但不計入「已開課」人數
 
 #### Scenario: 已放棄課程計數
 - **WHEN** 某課程 `cancelledAt` 非空（無論其他旗標）
