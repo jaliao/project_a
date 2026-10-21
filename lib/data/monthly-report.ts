@@ -145,7 +145,7 @@ export async function getAvailableReportMonths(): Promise<
 }
 
 /** 驗證 month 參數；不合法 → 上一個完整月份（不在可選範圍時退回最新可選月） */
-export function normalizeMonth(month: string | undefined, available: string[]): string {
+function normalizeMonth(month: string | undefined, available: string[]): string {
   const set = new Set(available)
   if (month && /^\d{4}-(0[1-9]|1[0-2])$/.test(month) && set.has(month)) return month
   const prev = addMonths(taipeiYearMonth(new Date()), -1)
@@ -337,19 +337,29 @@ export async function generationTeacherDetails(
     select: {
       userId: true,
       graduatedAt: true,
-      invite: { select: { createdById: true } },
+      invite: {
+        select: {
+          createdById: true,
+          createdBy: { select: { spiritId: true, realName: true } },
+        },
+      },
     },
   })
 
   const mentorOf = new Map<string, { teacherId: string; at: Date }>()
   const teacherSet = new Set<string>()
   const earliestByTeacher = new Map<string, Date>()
+  const labelById = new Map<string, string>()
   for (const r of rows) {
     const teacherId = r.invite.createdById
     const at = r.graduatedAt as Date
     teacherSet.add(teacherId)
     const prevEarliest = earliestByTeacher.get(teacherId)
     if (!prevEarliest || at < prevEarliest) earliestByTeacher.set(teacherId, at)
+    if (!labelById.has(teacherId)) {
+      const by = r.invite.createdBy
+      labelById.set(teacherId, by.spiritId ?? by.realName ?? teacherId)
+    }
 
     const cur = mentorOf.get(r.userId)
     if (!cur || at < cur.at) mentorOf.set(r.userId, { teacherId, at })
@@ -372,14 +382,6 @@ export async function generationTeacherDetails(
 
   const teacherIds = [...teacherSet]
   for (const t of teacherIds) gen(t, new Set())
-
-  const users = await prisma.user.findMany({
-    where: { id: { in: teacherIds } },
-    select: { id: true, spiritId: true, realName: true },
-  })
-  const labelById = new Map(
-    users.map((u) => [u.id, u.spiritId ?? u.realName ?? u.id]),
-  )
 
   const details: GenerationTeacherDetail[] = teacherIds.map((teacherId) => {
     const generation = memo.get(teacherId) ?? 1

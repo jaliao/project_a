@@ -33,8 +33,17 @@ export function isUndeliverableEmail(email: string): boolean {
 // 非正式環境收件覆寫：dev/test host 的 .env 可設定，正式環境不可設定（見 mail-skip-synthetic spec）
 const MAIL_OVERRIDE_TO = process.env.MAIL_OVERRIDE_TO?.trim()
 
+// 組出可讀的原始收件範圍（to 必有，cc/bcc 存在時才附加），供覆寫時的主旨註記與 log 使用
+function describeRecipients(options: Parameters<typeof transporter.sendMail>[0]): string {
+  const to = String(options.to ?? '')
+  const cc = options.cc ? `; cc: ${String(options.cc)}` : ''
+  const bcc = options.bcc ? `; bcc: ${String(options.bcc)}` : ''
+  return `${to}${cc}${bcc}`
+}
+
 // 寄送守門：合成 seed 信箱略過不寄（記 log、不拋錯，對呼叫端等同寄送成功）；
-// 否則若設定了 MAIL_OVERRIDE_TO，一律改寄該信箱並於主旨加註原收件人，避免誤寄真實名冊帳號
+// 否則若設定了 MAIL_OVERRIDE_TO，一律改寄該信箱（移除 cc/bcc，避免真實位址收到副本）
+// 並於主旨加註原始收件範圍，避免誤寄真實名冊帳號
 async function sendMailSafe(options: Parameters<typeof transporter.sendMail>[0]) {
   const to = String(options.to ?? '')
   if (isUndeliverableEmail(to)) {
@@ -42,11 +51,14 @@ async function sendMailSafe(options: Parameters<typeof transporter.sendMail>[0])
     return
   }
   if (MAIL_OVERRIDE_TO) {
-    console.info(`[mailer] 非正式環境收件覆寫：原收件人 ${to} → 改寄 ${MAIL_OVERRIDE_TO}`)
+    const original = describeRecipients(options)
+    console.info(`[mailer] 非正式環境收件覆寫：原收件人 ${original} → 改寄 ${MAIL_OVERRIDE_TO}`)
     await transporter.sendMail({
       ...options,
       to: MAIL_OVERRIDE_TO,
-      subject: `[原收件人: ${to}] ${options.subject ?? ''}`,
+      cc: undefined,
+      bcc: undefined,
+      subject: `[原收件人: ${original}] ${options.subject ?? ''}`,
     })
     return
   }

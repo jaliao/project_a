@@ -7,11 +7,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import * as XLSX from 'xlsx'
-import { auth } from '@/lib/auth'
-import { canAccessAdmin, ROLE_LABELS } from '@/lib/auth-roles'
+import { ROLE_LABELS } from '@/lib/auth-roles'
 import type { UserRole } from '@prisma/client'
 import { exportMembers } from '@/lib/data/members'
+import { requireAdminSession, xlsxDownloadResponse } from '@/lib/utils/xlsx-export'
 
 // 性別中文化
 function formatGender(gender: string | null | undefined): string {
@@ -41,11 +40,8 @@ function formatDate(date: Date | null | undefined): string {
 }
 
 export async function GET(req: NextRequest) {
-  // 驗證 session + admin role
-  const session = await auth()
-  if (!session?.user || !canAccessAdmin(session.user.roles)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const authResult = await requireAdminSession()
+  if (!authResult.ok) return authResult.response
 
   // 讀取搜尋與篩選條件
   const sp = req.nextUrl.searchParams
@@ -86,20 +82,9 @@ export async function GET(req: NextRequest) {
     已更改臨時密碼: !m.hasPassword ? '不適用' : m.isTempPassword ? '否' : '是',
   }))
 
-  // 生成 xlsx Buffer
-  const ws = XLSX.utils.json_to_sheet(rows)
-  const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, '會員清單')
-  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
-
   // 檔名含日期
   const dateStr = new Date().toISOString().slice(0, 10)
   const filename = `members-${dateStr}.xlsx`
 
-  return new NextResponse(buffer, {
-    headers: {
-      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'Content-Disposition': `attachment; filename="${filename}"`,
-    },
-  })
+  return xlsxDownloadResponse(rows, '會員清單', filename)
 }

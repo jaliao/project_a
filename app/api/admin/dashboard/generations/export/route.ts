@@ -7,15 +7,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import * as XLSX from 'xlsx'
-import { auth } from '@/lib/auth'
-import { canAccessAdmin } from '@/lib/auth-roles'
-import {
-  generationTeacherDetails,
-  getAvailableReportMonths,
-  normalizeMonth,
-  taipeiMonthBounds,
-} from '@/lib/data/monthly-report'
+import { generationTeacherDetails, taipeiMonthBounds } from '@/lib/data/monthly-report'
+import { requireAdminSession, xlsxDownloadResponse } from '@/lib/utils/xlsx-export'
+
+const MONTH_FORMAT = /^\d{4}-(0[1-9]|1[0-2])$/
 
 const DASH = '—'
 const REPORT_TZ = 'Asia/Taipei'
@@ -36,16 +31,13 @@ function formatDateTime(date: Date): string {
 }
 
 export async function GET(req: NextRequest) {
-  const session = await auth()
-  if (!session?.user || !canAccessAdmin(session.user.roles)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const authResult = await requireAdminSession()
+  if (!authResult.ok) return authResult.response
 
-  const available = await getAvailableReportMonths()
-  const month = normalizeMonth(
-    req.nextUrl.searchParams.get('month') ?? undefined,
-    available.map((m) => m.value),
-  )
+  const month = req.nextUrl.searchParams.get('month') ?? ''
+  if (!MONTH_FORMAT.test(month)) {
+    return NextResponse.json({ error: 'Invalid month' }, { status: 400 })
+  }
   const { end } = taipeiMonthBounds(month)
 
   const details = await generationTeacherDetails(end)
@@ -58,18 +50,7 @@ export async function GET(req: NextRequest) {
     最早帶出一人結業時間: formatDateTime(d.earliestGraduatedAt),
   }))
 
-  const ws = XLSX.utils.json_to_sheet(rows)
-  const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, '世代明細')
-  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
-
   const filename = `generations-${month}.xlsx`
 
-  return new NextResponse(buffer, {
-    headers: {
-      'Content-Type':
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'Content-Disposition': `attachment; filename="${filename}"`,
-    },
-  })
+  return xlsxDownloadResponse(rows, '世代明細', filename)
 }

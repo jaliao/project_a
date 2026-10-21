@@ -137,12 +137,13 @@ function unitName(key: number | null, nameByKey: Map<number, string>): string {
 export async function getChurchCourseGrowth(
   catalogId: number,
   year?: string,
+  availableYears?: { value: string; label: string }[],
 ): Promise<ChurchCourseGrowthReport> {
-  const [availableYears, catalog] = await Promise.all([
-    getAvailableGrowthYears(),
+  const [years, catalog] = await Promise.all([
+    availableYears ? Promise.resolve(availableYears) : getAvailableGrowthYears(),
     prisma.courseCatalog.findUnique({ where: { id: catalogId }, select: { label: true } }),
   ])
-  const normalizedYear = normalizeYear(year, availableYears.map((y) => y.value))
+  const normalizedYear = normalizeYear(year, years.map((y) => y.value))
   const yearNum = Number(normalizedYear)
   const bounds = yearBoundaries(yearNum)
   const availableMonths = availableMonthsOf(yearNum)
@@ -199,23 +200,39 @@ export async function getChurchCourseGrowth(
     }
   }
 
-  // 每個邊界（0=去年底基準, 1~availableMonths=各月底）下，各 churchKey 的累計人數
-  const keys = [...new Set([...userEarliest.values()].map((v) => v.key))]
-  const cumByKey = new Map<number | null, number[]>(keys.map((k) => [k, new Array(availableMonths + 1).fill(0)]))
-  const overallCum = new Array(availableMonths + 1).fill(0)
-
-  for (let b = 0; b <= availableMonths; b++) {
-    const cutoff = bounds[b]
-    for (const key of keys) {
-      let count = 0
-      for (const { key: k, at } of userEarliest.values()) {
-        if (k === key && at < cutoff) count++
-      }
-      cumByKey.get(key)![b] = count
+  // 每個邊界（0=去年底基準, 1~availableMonths=各月底）下，各 churchKey 的累計人數。
+  // 做法：依 key 分組並各自排序 joinedAt，再用單調遊標（只增不減）依序推進各邊界，
+  // 避免「每個邊界對每個 key 重新線性掃描全部報名」的 O(邊界數 × key 數 × 報名數)。
+  const timesByKey = new Map<number | null, number[]>()
+  for (const { key, at } of userEarliest.values()) {
+    const arr = timesByKey.get(key) ?? []
+    arr.push(at.getTime())
+    timesByKey.set(key, arr)
+  }
+  const keys = [...timesByKey.keys()]
+  const cumByKey = new Map<number | null, number[]>()
+  for (const key of keys) {
+    const times = timesByKey.get(key)!
+    times.sort((a, b) => a - b)
+    const cum = new Array(availableMonths + 1).fill(0)
+    let idx = 0
+    for (let b = 0; b <= availableMonths; b++) {
+      const cutoff = bounds[b].getTime()
+      while (idx < times.length && times[idx] < cutoff) idx++
+      cum[b] = idx
     }
-    let total = 0
-    for (const key of keys) total += cumByKey.get(key)![b]
-    overallCum[b] = total
+    cumByKey.set(key, cum)
+  }
+
+  const allTimes = [...userEarliest.values()].map((v) => v.at.getTime()).sort((a, b) => a - b)
+  const overallCum = new Array(availableMonths + 1).fill(0)
+  {
+    let idx = 0
+    for (let b = 0; b <= availableMonths; b++) {
+      const cutoff = bounds[b].getTime()
+      while (idx < allTimes.length && allTimes[idx] < cutoff) idx++
+      overallCum[b] = idx
+    }
   }
 
   // 教會名稱

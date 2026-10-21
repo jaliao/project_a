@@ -9,11 +9,9 @@
  * ----------------------------------------------
  */
 
-import { NextResponse } from 'next/server'
-import * as XLSX from 'xlsx'
-import { auth } from '@/lib/auth'
-import { canAccessAdmin, TEACHER_ROLES } from '@/lib/auth-roles'
+import { TEACHER_ROLES } from '@/lib/auth-roles'
 import { exportUnrecoveredSeedMembers } from '@/lib/data/members'
+import { requireAdminSession, xlsxDownloadResponse } from '@/lib/utils/xlsx-export'
 
 // 性別中文化（規則同 app/api/admin/members/export/route.ts）
 function formatGender(gender: string | null | undefined): string {
@@ -32,11 +30,8 @@ function formatChurch(
 }
 
 export async function GET() {
-  // 驗證 session + admin role（middleware 已擋未登入，這裡再確認身分）
-  const session = await auth()
-  if (!session?.user || !canAccessAdmin(session.user.roles)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const authResult = await requireAdminSession()
+  if (!authResult.ok) return authResult.response
 
   const members = await exportUnrecoveredSeedMembers()
 
@@ -55,20 +50,9 @@ export async function GET() {
     }
   })
 
-  // 生成 xlsx Buffer
-  const ws = XLSX.utils.json_to_sheet(rows)
-  const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, '未找回帳號')
-  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
-
   // 檔名含日期
   const dateStr = new Date().toISOString().slice(0, 10)
   const filename = `unrecovered-members-${dateStr}.xlsx`
 
-  return new NextResponse(buffer, {
-    headers: {
-      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'Content-Disposition': `attachment; filename="${filename}"`,
-    },
-  })
+  return xlsxDownloadResponse(rows, '未找回帳號', filename)
 }

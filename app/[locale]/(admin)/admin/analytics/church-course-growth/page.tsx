@@ -42,7 +42,7 @@ export default async function ChurchCourseGrowthPage({
   const catalogId =
     catalogs.find((c) => c.id === requestedCatalogId)?.id ?? catalogs[0]?.id ?? 0
 
-  const report = await getChurchCourseGrowth(catalogId, year)
+  const report = await getChurchCourseGrowth(catalogId, year, years)
 
   return (
     <div className="space-y-6">
