@@ -22,11 +22,26 @@ export const metadata: Metadata = {
   title: '儀錶板 — 啟動事工',
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function StatCard({
+  label,
+  value,
+  activeValue,
+  activeLabel = '已開課',
+}: {
+  label: string
+  value: number
+  activeValue?: number
+  activeLabel?: string
+}) {
   return (
     <div className="rounded-lg border p-5 space-y-1">
       <p className="text-sm text-muted-foreground">{label}</p>
       <p className="text-3xl font-bold">{value.toLocaleString()}</p>
+      {activeValue !== undefined && (
+        <p className="text-xs text-muted-foreground">
+          {activeLabel} {activeValue.toLocaleString()}／{value.toLocaleString()}
+        </p>
+      )}
     </div>
   )
 }
@@ -75,9 +90,21 @@ export default async function AdminDashboardPage({
 
       {/* 講師分析 */}
       <Section title="講師分析">
-        <StatCard label="啟動講師" value={stats.spiritInstructors} />
-        <StatCard label="豐盛講師" value={stats.richInstructors} />
-        <StatCard label="得勝講師" value={stats.victoryInstructors} />
+        <StatCard
+          label="啟動講師"
+          value={stats.spiritInstructors}
+          activeValue={stats.spiritInstructorsActive}
+        />
+        <StatCard
+          label="豐盛講師"
+          value={stats.richInstructors}
+          activeValue={stats.richInstructorsActive}
+        />
+        <StatCard
+          label="得勝講師"
+          value={stats.victoryInstructors}
+          activeValue={stats.victoryInstructorsActive}
+        />
       </Section>
 
       {/* 課程分析 */}
