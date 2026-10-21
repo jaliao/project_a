@@ -25,6 +25,7 @@ import {
   IconSettings,
   IconMessageCircle,
   IconHistory,
+  IconChartLine,
 } from '@tabler/icons-react'
 
 export const dynamic = 'force-dynamic'
@@ -39,6 +40,13 @@ const ADMIN_FEATURES = [
     description: '系統統計與概覽',
     icon: IconLayoutDashboard,
     href: '/admin/dashboard',
+    superadminOnly: false,
+  },
+  {
+    title: '教會冊別成長分析',
+    description: '依年度/月份檢視各教會開課學員成長趨勢',
+    icon: IconChartLine,
+    href: '/admin/analytics/church-course-growth',
     superadminOnly: false,
   },
   {
