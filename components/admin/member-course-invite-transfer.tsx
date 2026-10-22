@@ -77,7 +77,7 @@ export function MemberCourseInviteTransfer({ fromUserId, invites }: Props) {
       success: res.success,
       message: res.message,
       data: res.data
-        ? { candidates: res.data.candidates.map((c) => ({ ...c, isFriend: false })) }
+        ? { candidates: res.data.candidates.map((c) => ({ ...c, isFriend: false, isProxyMember: false })) }
         : undefined,
     }
   }

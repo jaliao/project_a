@@ -18,20 +18,13 @@ import { IconUsers, IconUserMinus } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { AddStudentDialog, RemoveStudentButton } from '@/components/admin/invite-student-cells'
 import type { FriendListItem } from '@/lib/data/friendship'
+import { formatDateTW } from '@/lib/utils/date'
 
 const MATERIAL_COLORS: Record<string, string> = {
   none: 'bg-gray-100 text-gray-600',
   traditional: 'bg-blue-100 text-blue-700',
   simplified: 'bg-green-100 text-green-700',
   english: 'bg-amber-100 text-amber-700',
-}
-
-function formatDate(date: Date): string {
-  const d = new Date(date)
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}/${m}/${day}`
 }
 
 export type ApprovedStudentItem = {
@@ -52,6 +45,7 @@ export function ApprovedStudentsSection({
   capacity,
   students,
   friends,
+  churches,
   excludeUserIds,
 }: {
   inviteId: number
@@ -61,6 +55,7 @@ export function ApprovedStudentsSection({
   capacity: number
   students: ApprovedStudentItem[]
   friends: FriendListItem[]
+  churches: { id: number; name: string }[]
   excludeUserIds: string[]
 }) {
   const t = useTranslations()
@@ -86,6 +81,7 @@ export function ApprovedStudentsSection({
               capacity={capacity}
               isAdmin={isAdmin}
               friends={friends}
+              churches={churches}
               excludeUserIds={excludeUserIds}
               triggerVariant="outline"
               triggerSize="sm"
@@ -123,7 +119,7 @@ export function ApprovedStudentsSection({
                 >
                   {t(`course.material.${s.materialChoice}`)}
                 </span>
-                <span className="text-xs text-muted-foreground">{formatDate(s.joinedAt)}</span>
+                <span className="text-xs text-muted-foreground">{formatDateTW(s.joinedAt)}</span>
               </div>
               {canManage && removeMode && (
                 <div className="flex justify-end">

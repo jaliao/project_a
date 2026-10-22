@@ -43,7 +43,12 @@ function CandidateSideCard({ side }: { side: DuplicateCandidateSide }) {
           <Badge variant="outline" className="text-xs">未啟用</Badge>
         )}
       </div>
-      <div className="font-medium">{side.displayName}</div>
+      <div className="flex items-center gap-1.5">
+        <span className="font-medium">{side.displayName}</span>
+        {side.isProxyMember && (
+          <Badge variant="outline" className="border-amber-300 bg-amber-50 text-xs text-amber-800">未註冊</Badge>
+        )}
+      </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm text-muted-foreground">
         <dt>Email</dt>
         <dd><MaskedValue value={side.email} label="Email" /></dd>

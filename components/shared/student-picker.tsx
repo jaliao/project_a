@@ -32,6 +32,7 @@ export type StudentPickerSelection = {
   displayName: string
   avatarUrl: string | null
   isFriend: boolean
+  isProxyMember: boolean
 }
 
 type PickerItem = StudentPickerSelection
@@ -76,6 +77,7 @@ export function StudentPicker({
           displayName: f.displayName,
           avatarUrl: f.avatarUrl,
           isFriend: true,
+          isProxyMember: f.isProxyMember,
         })),
     [friends, excludeSet]
   )
@@ -132,6 +134,7 @@ export function StudentPicker({
         displayName: c.displayName,
         avatarUrl: c.avatarUrl,
         isFriend: c.isFriend,
+        isProxyMember: c.isProxyMember,
       }))
     : null
 
@@ -184,11 +187,18 @@ function PickerRow({ item, onClick }: { item: PickerItem; onClick: () => void })
     >
       <UserAvatar avatarUrl={item.avatarUrl} displayName={item.displayName} size="sm" />
       <span className="truncate text-sm">{item.displayName}</span>
-      {item.isFriend && (
-        <span className="ml-auto shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
-          好友
-        </span>
-      )}
+      <span className="ml-auto flex shrink-0 items-center gap-1">
+        {item.isProxyMember && (
+          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
+            未註冊
+          </span>
+        )}
+        {item.isFriend && (
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+            好友
+          </span>
+        )}
+      </span>
     </button>
   )
 }

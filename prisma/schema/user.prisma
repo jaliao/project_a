@@ -90,6 +90,9 @@ model User {
   // 學習等級（0=未完成任何課程；1~4=已完成啟動靈人對應等級）
   learningLevel Int @default(0)
 
+  // 代填（未註冊）學員：由管理者／老師代填建立，本人尚未自行完成註冊
+  isProxyMember Boolean @default(false)
+
   // 所屬教會/單位
   churchType  ChurchType @default(none)
   churchId    Int?

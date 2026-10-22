@@ -44,6 +44,7 @@ import { ApprovedStudentsSection } from './approved-students-section'
 import { CourseOperationLog } from './course-operation-log'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { getMyFriends } from '@/lib/data/friendship'
+import { getActiveChurches } from '@/lib/data/churches'
 import { CourseStatusBadge } from '@/components/course-session/course-status-badge'
 import { getCourseStatus } from '@/components/course-session/course-status'
 import { CourseCatalogBadge } from '@/components/course-session/course-catalog-badge'
@@ -171,6 +172,9 @@ export default async function CourseDetailPage({
 
   // 「新增學員」學員選擇元件用：操作者的社群好友清單（僅管理者／該課講師需要）
   const myFriends = canEditInfo && currentUserId ? await getMyFriends(currentUserId) : []
+
+  // 「新增學員」建立代填學員用：教會清單（僅管理者／該課講師需要）
+  const churches = canEditInfo ? await getActiveChurches() : []
 
   return (
     <div className="space-y-6">
@@ -407,6 +411,7 @@ export default async function CourseDetailPage({
         isAdmin={isAdmin === true}
         capacity={classMaxCapacity}
         friends={myFriends}
+        churches={churches.map((c) => ({ id: c.id, name: c.name }))}
         excludeUserIds={[...courseSession.approvedEnrollments, ...courseSession.pendingEnrollments].map(
           (enrollment) => enrollment.user.id
         )}

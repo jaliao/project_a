@@ -88,8 +88,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     completedCourseSessions,
     cancelledCourseSessions,
   ] = await Promise.all([
-    // 學員總數
-    prisma.user.count(),
+    // 學員總數（不含代填／未註冊學員）
+    prisma.user.count({ where: { isProxyMember: false } }),
     // 近期活躍學員數（7 天內登入）
     prisma.user.count({ where: { lastLoginAt: { gte: sevenDaysAgo } } }),
     // 各教會會員數（選清單教會者，依教會分組）

@@ -49,6 +49,7 @@ const PROFILE_SELECT = {
   birthYear: true,
   teacherNo: true,
   mergedIntoId: true,
+  isProxyMember: true,
 } satisfies Parameters<typeof prisma.user.findUnique>[0]['select']
 
 type ProfileRow = NonNullable<Awaited<ReturnType<typeof fetchProfile>>>
@@ -65,6 +66,7 @@ export type MergeAccountSummary = {
   roles: UserRole[]
   learningLevel: number
   isUndeliverableEmail: boolean
+  isProxyMember: boolean
 }
 
 function toSummary(u: ProfileRow): MergeAccountSummary {
@@ -77,15 +79,20 @@ function toSummary(u: ProfileRow): MergeAccountSummary {
     roles: u.roles,
     learningLevel: u.learningLevel,
     isUndeliverableEmail: isUndeliverableEmail(u.email),
+    isProxyMember: u.isProxyMember,
   }
 }
 
-// 依 isUndeliverableEmail 判斷建議的副帳號 id；雙方皆為/皆非合成信箱時回傳 null（需手動指定）
-function suggestSecondary(a: { id: string; email: string | null }, b: { id: string; email: string | null }): string | null {
-  const aSeed = isUndeliverableEmail(a.email)
-  const bSeed = isUndeliverableEmail(b.email)
-  if (aSeed && !bSeed) return a.id
-  if (bSeed && !aSeed) return b.id
+// 依「副帳號建議訊號」（isUndeliverableEmail 合成信箱 或 isProxyMember 代填學員）判斷建議的副帳號 id；
+// 恰好一方命中才給預設值，雙方皆命中或皆未命中時回傳 null（需手動指定）
+function suggestSecondary(
+  a: { id: string; email: string | null; isProxyMember: boolean },
+  b: { id: string; email: string | null; isProxyMember: boolean }
+): string | null {
+  const aFlag = isUndeliverableEmail(a.email) || a.isProxyMember
+  const bFlag = isUndeliverableEmail(b.email) || b.isProxyMember
+  if (aFlag && !bFlag) return a.id
+  if (bFlag && !aFlag) return b.id
   return null
 }
 
@@ -271,8 +278,8 @@ export async function suggestMergeDirection(
   if (!canAccessAdmin(session.user.roles)) return { success: false, message: '無權限' }
 
   const [a, b] = await Promise.all([
-    prisma.user.findUnique({ where: { id: accountAId }, select: { id: true, email: true } }),
-    prisma.user.findUnique({ where: { id: accountBId }, select: { id: true, email: true } }),
+    prisma.user.findUnique({ where: { id: accountAId }, select: { id: true, email: true, isProxyMember: true } }),
+    prisma.user.findUnique({ where: { id: accountBId }, select: { id: true, email: true, isProxyMember: true } }),
   ])
   if (!a || !b) return { success: false, message: '找不到帳號' }
 
@@ -537,7 +544,7 @@ export async function mergeMembers(input: MergeMembersInput): Promise<ActionResp
   revalidatePath(`/admin/members/${secondaryId}`)
   revalidatePath('/admin/members/duplicates')
 
-  if (input.notify && !isUndeliverableEmail(secondary.email)) {
+  if (input.notify && !isUndeliverableEmail(secondary.email) && !secondary.isProxyMember) {
     const to = resolveContactEmail(secondary)
     if (to) {
       sendAccountMergedNotification(to, primary.spiritId ?? '').catch((err) => {

@@ -124,7 +124,16 @@ export default async function AdminMembersPage({
                   return (
                     <tr key={member.id} className={i < result.items.length - 1 ? 'border-b' : ''}>
                       <td className="px-4 py-3 font-mono text-xs">{member.spiritId ?? '—'}</td>
-                      <td className="px-4 py-3 font-medium">{displayName}</td>
+                      <td className="px-4 py-3 font-medium">
+                        <span className="flex items-center gap-1.5">
+                          {displayName}
+                          {member.isProxyMember && (
+                            <Badge variant="outline" className="border-amber-300 bg-amber-50 text-xs text-amber-800">
+                              未註冊
+                            </Badge>
+                          )}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 text-muted-foreground"><MaskedValue value={member.email} label="Email" /></td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-1">

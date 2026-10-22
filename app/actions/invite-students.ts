@@ -24,10 +24,11 @@ import { prisma } from '@/lib/prisma'
 import { auth } from '@/lib/auth'
 import { canAccessAdmin } from '@/lib/auth-roles'
 import { searchStudentCandidates, type StudentPickerCandidate } from '@/lib/data/student-picker'
-import { checkPrerequisites, formatMissingPrerequisites } from '@/lib/data/course-catalog'
+import { checkPrerequisites, formatMissingPrerequisites, getPrerequisites } from '@/lib/data/course-catalog'
 import { resolveMaxCapacity } from '@/lib/data/admin-settings'
 import { getDefaultMaterialChoiceForUser } from '@/lib/data/material-items'
 import { createNotification } from '@/app/actions/notification'
+import { generateSpiritId, deriveLoginHandle } from '@/lib/spirit-id'
 
 type ActionResponse<T = undefined> = {
   success: boolean
@@ -270,6 +271,181 @@ export async function addStudentToInvite(input: {
     return { success: true, message: '已將既有會員加入班級' }
   } catch (err) {
     console.error('[addStudentToInvite] 新增失敗：', err)
+    return { success: false, message: '新增失敗，請稍後再試' }
+  }
+}
+
+const addProxyStudentSchema = z
+  .object({
+    inviteId: z.number().int().positive(),
+    realName: z.string().trim().min(1, '請填寫真實姓名'),
+    gender: z.enum(['male', 'female', 'unspecified']).default('unspecified'),
+    churchType: z.enum(['church', 'other', 'none']).default('none'),
+    churchId: z.number().int().positive().optional().nullable(),
+    churchOther: z.string().trim().optional(),
+    graduated: z.boolean().default(false),
+    graduatedAt: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, '結業日格式不正確')
+      .optional(),
+    materialChoice: z.enum(['none', 'traditional', 'simplified', 'english']).optional(),
+    materialBookName: z.string().trim().optional(),
+  })
+  .refine((v) => !v.graduated || !!v.graduatedAt, {
+    message: '請選擇結業日',
+    path: ['graduatedAt'],
+  })
+  .refine((v) => !v.materialChoice || v.materialChoice === 'none' || !!v.materialBookName, {
+    message: '請填寫教材所屬姓名',
+    path: ['materialBookName'],
+  })
+
+/**
+ * 對班級建立「代填學員」（未註冊）：僅填真實姓名（必填）、性別、所屬教會，
+ * 系統建立一筆 isProxyMember=true 的全新 User（email/passwordHash 皆為 null、無 Account），
+ * 並以該帳號建立對應報名。與既有「選定既有會員」路徑共用人數上限、補登結業、教材選擇規則，
+ * 不豁免先修課程驗證——代填學員必為新生，缺少的先修課程即該課程全部先修清單。
+ * 任一驗證失敗時不建立任何 User，不留下半成品帳號。
+ */
+export async function addProxyStudentToInvite(input: {
+  inviteId: number
+  realName: string
+  gender?: 'male' | 'female' | 'unspecified'
+  churchType?: 'church' | 'other' | 'none'
+  churchId?: number | null
+  churchOther?: string
+  graduated: boolean
+  graduatedAt?: string
+  materialChoice?: 'none' | 'traditional' | 'simplified' | 'english'
+  materialBookName?: string
+}): Promise<ActionResponse> {
+  const session = await auth()
+  if (!session?.user?.id) return { success: false, message: '請先登入' }
+
+  const parsed = addProxyStudentSchema.safeParse(input)
+  if (!parsed.success) {
+    return { success: false, errors: parsed.error.flatten().fieldErrors }
+  }
+  const { inviteId, realName, gender, churchType, churchOther, graduated } = parsed.data
+  const graduatedDate = graduated ? new Date(`${parsed.data.graduatedAt}T00:00:00`) : null
+
+  const invite = await prisma.courseInvite.findUnique({
+    where: { id: inviteId },
+    select: {
+      id: true,
+      title: true,
+      completedAt: true,
+      cancelledAt: true,
+      createdById: true,
+      courseCatalogId: true,
+    },
+  })
+  if (!invite) return { success: false, message: '找不到此班級' }
+  if (!canManageInvite(session.user.roles, session.user.id, invite)) {
+    return { success: false, message: '無權限' }
+  }
+  if (invite.cancelledAt) return { success: false, message: '已取消的班級無法新增學員' }
+
+  // 人數上限：非管理者受 class_max_capacity 限制，管理者不受限
+  const isAdmin = canAccessAdmin(session.user.roles)
+  const { effective } = await resolveMaxCapacity(isAdmin)
+  const approvedCount = await prisma.inviteEnrollment.count({
+    where: { inviteId, status: 'approved' },
+  })
+  if (!isAdmin && approvedCount >= effective) {
+    return { success: false, message: `已達班級人數上限（${effective} 人），如需超過請洽管理者` }
+  }
+
+  // 先修驗證：代填學員為全新建立，沒有任何歷史報名記錄，缺少的先修課程即該課程全部先修清單
+  const missingPrereqs = await getPrerequisites(invite.courseCatalogId)
+  if (missingPrereqs.length > 0) {
+    return {
+      success: false,
+      errors: { realName: [`需先完成${formatMissingPrerequisites(missingPrereqs)}才能加入此班級`] },
+    }
+  }
+
+  const churchIdValue = churchType === 'church' ? (parsed.data.churchId ?? null) : null
+  const churchOtherValue = churchType === 'other' ? (churchOther?.trim() || null) : null
+
+  // 操作管理者快照
+  const actor = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { realName: true, name: true },
+  })
+  const actorName = actor?.realName || actor?.name || session.user.email || '管理者'
+
+  // 代填學員必為新生：教材選擇沿用人工選擇值，否則預設繁體教材
+  const resolvedMaterialChoice = parsed.data.materialChoice ?? 'traditional'
+  const resolvedMaterialBookName =
+    resolvedMaterialChoice === 'none' ? null : parsed.data.materialBookName ?? null
+
+  // Spirit ID 於交易外核發（與既有 OAuth 首次登入建帳邏輯一致），交易內失敗僅耗用序號不留殭屍帳號
+  const spiritId = await generateSpiritId()
+  const loginHandle = deriveLoginHandle(spiritId)
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          spiritId,
+          loginHandle,
+          roles: ['user'],
+          realName,
+          gender: gender ?? 'unspecified',
+          churchType: churchType ?? 'none',
+          churchId: churchIdValue,
+          churchOther: churchOtherValue,
+          isProxyMember: true,
+        },
+      })
+
+      await tx.inviteEnrollment.create({
+        data: {
+          inviteId,
+          userId: newUser.id,
+          status: 'approved',
+          materialChoice: resolvedMaterialChoice,
+          materialBookName: resolvedMaterialBookName,
+          ...(graduatedDate ? { joinedAt: graduatedDate, graduatedAt: graduatedDate } : {}),
+        },
+      })
+
+      // 班級未結業而補登結業 → 一併補班級結業日
+      if (graduatedDate && !invite.completedAt) {
+        await tx.courseInvite.update({
+          where: { id: inviteId },
+          data: { completedAt: graduatedDate },
+        })
+      }
+
+      // 管理操作紀錄（同交易；失敗全部回滾）
+      await tx.adminActionLog.create({
+        data: {
+          action: 'enrollment_add',
+          actorId: session.user.id,
+          targetUserId: newUser.id,
+          inviteId,
+          actorName,
+          targetName: targetSnapshot(realName, null),
+          inviteTitle: inviteSnapshot(invite.id, invite.title),
+          detail: [
+            '建立代填學員（未註冊）',
+            graduatedDate ? `補登結業 ${fmtDate(graduatedDate)}` : null,
+            graduatedDate && !invite.completedAt ? '班級一併標記結業' : null,
+          ]
+            .filter(Boolean)
+            .join('；'),
+        },
+      })
+    })
+
+    revalidatePath('/admin/course-sessions')
+    revalidatePath(`/course/${inviteId}`)
+    revalidatePath('/admin/members')
+    return { success: true, message: '已建立代填學員並加入班級' }
+  } catch (err) {
+    console.error('[addProxyStudentToInvite] 新增失敗：', err)
     return { success: false, message: '新增失敗，請稍後再試' }
   }
 }

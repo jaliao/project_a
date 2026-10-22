@@ -352,7 +352,7 @@ export function MemberMergeDialog({ anchorAccount, initialOtherAccount, triggerL
                 </div>
               )}
 
-              {!preview.secondary.isUndeliverableEmail && (
+              {!preview.secondary.isUndeliverableEmail && !preview.secondary.isProxyMember && (
                 <label className="flex items-center gap-2 text-sm">
                   <Checkbox checked={notify} onCheckedChange={(v) => setNotify(v === true)} />
                   通知副帳號使用者改用新帳號登入

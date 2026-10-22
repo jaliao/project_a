@@ -25,6 +25,7 @@ export type DuplicateCandidateSide = {
   createdAt: Date
   enrollmentCount: number
   graduatedCount: number
+  isProxyMember: boolean
 }
 
 export type DuplicateCandidate = {
@@ -51,11 +52,14 @@ type CandidateUser = {
   gender: Gender
   lastLoginAt: Date | null
   createdAt: Date
+  isProxyMember: boolean
 }
 
 // 信心等級判斷：依序最高 → 高 → 中，一組配對只取最先命中者
 function classify(a: CandidateUser, b: CandidateUser): DuplicateConfidence | null {
-  if (isUndeliverableEmail(a.email) || isUndeliverableEmail(b.email)) return '最高'
+  if (isUndeliverableEmail(a.email) || isUndeliverableEmail(b.email) || a.isProxyMember || b.isProxyMember) {
+    return '最高'
+  }
   if ((a.phone && a.phone === b.phone) || (a.commEmail && a.commEmail === b.commEmail)) return '高'
   if (
     (a.churchId !== null && a.churchId === b.churchId) ||
@@ -88,6 +92,7 @@ export async function findDuplicateCandidates(): Promise<DuplicateCandidate[]> {
       gender: true,
       lastLoginAt: true,
       createdAt: true,
+      isProxyMember: true,
     },
   })
 
@@ -137,6 +142,7 @@ export async function findDuplicateCandidates(): Promise<DuplicateCandidate[]> {
     createdAt: u.createdAt,
     enrollmentCount: enrollmentCount.get(u.id) ?? 0,
     graduatedCount: graduatedCount.get(u.id) ?? 0,
+    isProxyMember: u.isProxyMember,
   })
 
   return pairs

@@ -21,6 +21,7 @@ export type StudentPickerCandidate = {
   avatarUrl: string | null
   email: string | null
   isFriend: boolean
+  isProxyMember: boolean
 }
 
 const CANDIDATE_LIMIT = 20
@@ -61,6 +62,7 @@ export async function searchStudentCandidates(
       englishName: true,
       nickname: true,
       displayNameMode: true,
+      isProxyMember: true,
     },
   })
 
@@ -79,6 +81,7 @@ export async function searchStudentCandidates(
     avatarUrl: resolveAvatarUrl(u),
     email: u.email,
     isFriend: friendIds.has(u.id),
+    isProxyMember: u.isProxyMember,
   }))
 
   // 好友優先排序（穩定排序，組內維持查詢原順序）

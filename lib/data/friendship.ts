@@ -26,6 +26,7 @@ export type FriendListItem = {
   addedAt: Date
   // 前台好友清單搜尋用：姓名相關欄位＋啟動編號組成的小寫字串（子字串比對）
   searchText: string
+  isProxyMember: boolean
 }
 
 // ==========================================
@@ -53,6 +54,7 @@ export async function getMyFriends(userId: string): Promise<FriendListItem[]> {
           churchType: true,
           churchOther: true,
           church: { select: { name: true } },
+          isProxyMember: true,
         },
       },
     },
@@ -64,6 +66,7 @@ export async function getMyFriends(userId: string): Promise<FriendListItem[]> {
     displayName: getMemberDisplayName(r.friend),
     avatarUrl: resolveAvatarUrl(r.friend),
     gender: r.friend.gender,
+    isProxyMember: r.friend.isProxyMember,
     unitLabel:
       r.friend.churchType === 'church'
         ? (r.friend.church?.name ?? null)

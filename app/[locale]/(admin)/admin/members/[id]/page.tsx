@@ -129,6 +129,9 @@ export default async function MemberDetailPage({
           <Link href="/admin/members">← 返回清單</Link>
         </Button>
         <h1 className="text-2xl font-semibold">{displayName}</h1>
+        {member.isProxyMember && (
+          <Badge variant="outline" className="border-amber-300 bg-amber-50 text-xs text-amber-800">未註冊</Badge>
+        )}
         {member.suspendedAt && (
           <Badge variant="destructive" className="text-xs">已暫停</Badge>
         )}

@@ -85,6 +85,7 @@ export async function searchMembers(f: MemberFilters, page = 1) {
       roles: true,
       displayNameMode: true,
       createdAt: true,
+      isProxyMember: true,
     },
   })
 
@@ -112,6 +113,7 @@ export async function getMemberDetail(id: string) {
       birthYear: true,
       displayNameMode: true,
       createdAt: true,
+      isProxyMember: true,
       // 活躍度指標
       lastLoginAt: true,
       previousLoginAt: true,

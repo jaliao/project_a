@@ -19,7 +19,7 @@ roles 不含 `admin`/`superadmin` 者 SHALL redirect 至 `/`。
 儀錶板統計 SHALL 以三個帶標題的區塊呈現：**學員分析**、**講師分析**、**課程分析**。
 
 **學員分析**（包含講師）SHALL 顯示：
-1. **學員總數**：系統中所有 User 總數
+1. **學員總數**：系統中所有 User 總數，不含 `isProxyMember = true` 的代填（未註冊）學員
 2. **各教會的會員總數**：以 **Top 5／Low 5 兩張圓餅圖**呈現（shadcn chart／recharts，client 元件）——Top 5 為人數最多的前五間教會、Low 5 為其餘教會中人數最少的五間（教會總數 ≤ 5 時不顯示 Low 5 圖）；計數方式為 `churchType = church` 依 `churchId` 分組（僅計人數 > 0 的教會）；每張圖 SHALL 具備數值標籤、hover tooltip 與圖例；「其他（自填）」（`churchType = other`）與「未填」（`churchType = none`）人數 SHALL 於 Top 5 卡片註記顯示
 3. **近期活躍學員數（7 天內登入）**：`lastLoginAt` 在當下往前 7 天內的 User 數
 4. **會員性別**：以圓餅圖呈現 `gender` 分布（男／女／未設定三片，含數值標籤、tooltip 與圖例）
@@ -41,6 +41,10 @@ roles 不含 `admin`/`superadmin` 者 SHALL redirect 至 `/`。
 #### Scenario: 三區塊顯示統計
 - **WHEN** 管理者進入儀錶板
 - **THEN** 頁面依「學員分析／講師分析／課程分析」三個區塊分別顯示上述統計，數值為最新計算結果
+
+#### Scenario: 代填學員不計入學員總數
+- **WHEN** 系統中存在一筆或多筆 `isProxyMember = true` 的代填學員
+- **THEN** 「學員分析」區塊的「學員總數」卡片數值不計入這些帳號
 
 #### Scenario: 教會分布 Top 5／Low 5 圓餅圖
 - **WHEN** 有 6 間以上教會有會員、部分會員自填其他、部分未填

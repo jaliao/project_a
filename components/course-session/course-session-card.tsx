@@ -17,6 +17,7 @@ import { getCourseStatus } from '@/components/course-session/course-status'
 import { CourseCatalogBadge } from '@/components/course-session/course-catalog-badge'
 import { Badge } from '@/components/ui/badge'
 import { translateCatalogLabel } from '@/lib/utils/catalog-label'
+import { formatDateTW } from '@/lib/utils/date'
 
 type CourseSessionCardProps = {
   inviteId: number // 課程編號（所有使用處一律顯示 #編號）
@@ -36,13 +37,6 @@ type CourseSessionCardProps = {
   archivedAt?: Date | null
   matchNote?: string | null
   showMatchBadge?: boolean
-}
-
-function formatDate(date: Date): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}/${m}/${d}`
 }
 
 export function CourseSessionCard({
@@ -132,7 +126,7 @@ export function CourseSessionCard({
         {expiredAt && (
           <div className="flex items-center gap-1.5">
             <IconClock className="h-3.5 w-3.5 shrink-0" />
-            <span>{t('deadline', { date: formatDate(expiredAt) })}</span>
+            <span>{t('deadline', { date: formatDateTW(expiredAt) })}</span>
           </div>
         )}
       </div>

@@ -5,7 +5,8 @@
  * components/admin/invite-student-cells.tsx
  *
  * AddStudentDialog：透過「學員選擇元件」StudentPicker 單選既有會員（模糊搜尋／
- * 社群好友直接點選）＋補登結業，僅限既有會員。
+ * 社群好友直接點選）＋補登結業；或切換至「建立代填學員」路徑，為尚未註冊的學員
+ * 僅填真實姓名／性別／所屬教會即可直接加入班級（cr-feat-261022-001）。
  * RemoveStudentButton：已結業報名醒目警示確認後移除。
  * cr-spec-260916-004：移除原「輸入 Email 或啟動編號」文字框，改用 StudentPicker。
  * ----------------------------------------------
@@ -19,6 +20,7 @@ import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { IconUserPlus, IconAlertTriangle } from '@tabler/icons-react'
 import {
+  addProxyStudentToInvite,
   addStudentToInvite,
   getMaterialChoiceDefaultForStudent,
   removeStudentFromInvite,
@@ -56,6 +58,9 @@ type MaterialChoice = 'none' | 'traditional' | 'simplified' | 'english'
 // ==========================================
 // 新增學員 Dialog
 // ==========================================
+type ProxyGender = 'unspecified' | 'male' | 'female'
+type AddStudentMode = 'existing' | 'proxy'
+
 export function AddStudentDialog({
   inviteId,
   inviteCompleted,
@@ -64,6 +69,7 @@ export function AddStudentDialog({
   capacity,
   isAdmin,
   friends,
+  churches,
   excludeUserIds,
   triggerVariant = 'default',
   triggerSize = 'default',
@@ -75,6 +81,7 @@ export function AddStudentDialog({
   capacity: number
   isAdmin: boolean
   friends: FriendListItem[]
+  churches: { id: number; name: string }[]
   excludeUserIds: string[]
   triggerVariant?: 'default' | 'outline'
   triggerSize?: 'default' | 'sm'
@@ -96,7 +103,13 @@ export function AddStudentDialog({
     { value: 'none', label: tm('none'), desc: te('noneDesc') },
   ]
 
+  const [mode, setMode] = useState<AddStudentMode>('existing')
   const [selectedStudent, setSelectedStudent] = useState<StudentPickerSelection | null>(null)
+  const [proxyRealName, setProxyRealName] = useState('')
+  const [proxyGender, setProxyGender] = useState<ProxyGender>('unspecified')
+  // 教會選單 value 格式：'' | 'other' | 'church:<id>'（比照 register-form）
+  const [proxyChurchSelect, setProxyChurchSelect] = useState('')
+  const [proxyChurchOther, setProxyChurchOther] = useState('')
   const [graduated, setGraduated] = useState(false)
   const [graduatedAt, setGraduatedAt] = useState('')
   const [materialChoice, setMaterialChoice] = useState<MaterialChoice>('traditional')
@@ -104,7 +117,12 @@ export function AddStudentDialog({
   const [errors, setErrors] = useState<Record<string, string[]>>({})
 
   const resetForm = () => {
+    setMode('existing')
     setSelectedStudent(null)
+    setProxyRealName('')
+    setProxyGender('unspecified')
+    setProxyChurchSelect('')
+    setProxyChurchOther('')
     setGraduated(false)
     setGraduatedAt('')
     setMaterialChoice('traditional')
@@ -128,20 +146,38 @@ export function AddStudentDialog({
     })
   }
 
+  const canSubmit = mode === 'existing' ? !!selectedStudent : proxyRealName.trim().length > 0
+
   const handleSubmit = () => {
-    if (!selectedStudent) return
+    if (!canSubmit) return
     setErrors({})
     startTransition(async () => {
-      const res = await addStudentToInvite({
-        inviteId,
-        userId: selectedStudent.userId,
-        graduated,
-        graduatedAt: graduated ? graduatedAt : undefined,
-        materialChoice,
-        materialBookName: materialChoice === 'none' ? undefined : materialBookName,
-      })
+      const res =
+        mode === 'existing'
+          ? await addStudentToInvite({
+              inviteId,
+              userId: selectedStudent!.userId,
+              graduated,
+              graduatedAt: graduated ? graduatedAt : undefined,
+              materialChoice,
+              materialBookName: materialChoice === 'none' ? undefined : materialBookName,
+            })
+          : await addProxyStudentToInvite({
+              inviteId,
+              realName: proxyRealName,
+              gender: proxyGender,
+              churchType: proxyChurchSelect === 'other' ? 'other' : proxyChurchSelect.startsWith('church:') ? 'church' : 'none',
+              churchId: proxyChurchSelect.startsWith('church:')
+                ? parseInt(proxyChurchSelect.replace('church:', ''), 10)
+                : null,
+              churchOther: proxyChurchSelect === 'other' ? proxyChurchOther : undefined,
+              graduated,
+              graduatedAt: graduated ? graduatedAt : undefined,
+              materialChoice,
+              materialBookName: materialChoice === 'none' ? undefined : materialBookName,
+            })
       if (res.success) {
-        toast.success(res.message ?? t('toastAdded'))
+        toast.success(res.message ?? (mode === 'existing' ? t('toastAdded') : t('toastAddedProxy')))
         router.refresh()
         handleOpenChange(false)
       } else {
@@ -168,37 +204,115 @@ export function AddStudentDialog({
               {t('capacityWarning', { capacity })}
             </p>
           )}
-          <div className="space-y-1.5">
-            <Label>{t('studentLabel')}</Label>
-            {selectedStudent ? (
-              <div className="flex items-center justify-between gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                <span>
-                  <span className="font-semibold">{selectedStudent.displayName}</span>
-                  {selectedStudent.spiritId && <span className="font-mono">（{selectedStudent.spiritId}）</span>}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="shrink-0"
-                  onClick={() => setSelectedStudent(null)}
-                  disabled={isPending}
-                >
-                  {t('reselect')}
-                </Button>
-              </div>
-            ) : (
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => setPickerOpen(true)}
-                disabled={atCapacity}
-              >
-                <IconUserPlus className="h-4 w-4" />
-                {t('selectStudent')}
-              </Button>
-            )}
-            {errors.userId?.[0] && <p className="text-sm text-destructive">{errors.userId[0]}</p>}
+          {/* 路徑切換：選擇既有會員／建立代填學員 */}
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setMode('existing')}
+              className={cn(
+                'rounded-lg border p-2 text-sm font-medium transition-colors',
+                mode === 'existing' ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
+              )}
+            >
+              {t('modeExisting')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('proxy')}
+              className={cn(
+                'rounded-lg border p-2 text-sm font-medium transition-colors',
+                mode === 'proxy' ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
+              )}
+            >
+              {t('modeProxy')}
+            </button>
           </div>
+          {mode === 'existing' ? (
+            <div className="space-y-1.5">
+              <Label>{t('studentLabel')}</Label>
+              {selectedStudent ? (
+                <div className="flex items-center justify-between gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                  <span>
+                    <span className="font-semibold">{selectedStudent.displayName}</span>
+                    {selectedStudent.spiritId && <span className="font-mono">（{selectedStudent.spiritId}）</span>}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="shrink-0"
+                    onClick={() => setSelectedStudent(null)}
+                    disabled={isPending}
+                  >
+                    {t('reselect')}
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => setPickerOpen(true)}
+                  disabled={atCapacity}
+                >
+                  <IconUserPlus className="h-4 w-4" />
+                  {t('selectStudent')}
+                </Button>
+              )}
+              {errors.userId?.[0] && <p className="text-sm text-destructive">{errors.userId[0]}</p>}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">{t('proxyHint')}</p>
+              <div className="space-y-1.5">
+                <Label htmlFor="proxy-real-name">{t('proxyRealNameLabel')}</Label>
+                <Input
+                  id="proxy-real-name"
+                  placeholder={t('proxyRealNamePlaceholder')}
+                  value={proxyRealName}
+                  onChange={(e) => setProxyRealName(e.target.value)}
+                  disabled={atCapacity}
+                />
+                {errors.realName?.[0] && <p className="text-sm text-destructive">{errors.realName[0]}</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="proxy-gender">{t('proxyGenderLabel')}</Label>
+                <select
+                  id="proxy-gender"
+                  value={proxyGender}
+                  onChange={(e) => setProxyGender(e.target.value as ProxyGender)}
+                  disabled={atCapacity}
+                  className="h-9 w-full rounded-md border px-3 py-1 text-sm bg-background"
+                >
+                  <option value="unspecified">{t('proxyGenderUnspecified')}</option>
+                  <option value="male">{t('proxyGenderMale')}</option>
+                  <option value="female">{t('proxyGenderFemale')}</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="proxy-church">{t('proxyChurchLabel')}</Label>
+                <select
+                  id="proxy-church"
+                  value={proxyChurchSelect}
+                  onChange={(e) => setProxyChurchSelect(e.target.value)}
+                  disabled={atCapacity}
+                  className="h-9 w-full rounded-md border px-3 py-1 text-sm bg-background"
+                >
+                  <option value="">—</option>
+                  {churches.map((c) => (
+                    <option key={c.id} value={`church:${c.id}`}>{c.name}</option>
+                  ))}
+                  <option value="other">{t('proxyChurchOtherPlaceholder')}</option>
+                </select>
+                {proxyChurchSelect === 'other' && (
+                  <Input
+                    placeholder={t('proxyChurchOtherPlaceholder')}
+                    value={proxyChurchOther}
+                    onChange={(e) => setProxyChurchOther(e.target.value)}
+                    disabled={atCapacity}
+                  />
+                )}
+              </div>
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label>{t('materialChoiceLabel')}</Label>
             <div className="grid grid-cols-2 gap-2">
@@ -261,8 +375,8 @@ export function AddStudentDialog({
             <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isPending}>
               {t('cancel')}
             </Button>
-            <Button onClick={handleSubmit} disabled={isPending || atCapacity || !selectedStudent}>
-              {isPending ? t('processing') : t('submit')}
+            <Button onClick={handleSubmit} disabled={isPending || atCapacity || !canSubmit}>
+              {isPending ? t('processing') : mode === 'existing' ? t('submit') : t('proxySubmit')}
             </Button>
           </div>
         </div>
