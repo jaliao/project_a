@@ -169,6 +169,7 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
   }
 
   const isGoogleLinked = linkedProviders.includes('google')
+  const isLineLinked = linkedProviders.includes('line')
   const showOtherInput = selectValue === 'other'
 
   // 顯示名稱即時預覽
@@ -409,10 +410,12 @@ export default function ProfileForm({ user, activeChurches, linkedProviders, spi
             </button>
           )}
         </div>
-        <div className="flex items-center justify-between opacity-60">
+        <div className="flex items-center justify-between">
           <div>
             <p className="font-medium">LINE</p>
-            <p className="text-sm text-muted-foreground">{t('profile.providerUnlinked')}</p>
+            <p className="text-sm text-muted-foreground">
+              {isLineLinked ? t('profile.providerLinked') : t('profile.providerUnlinked')}
+            </p>
           </div>
           <button disabled className="rounded-md border px-4 py-2 text-sm opacity-50">
             {t('profile.comingSoon')}
