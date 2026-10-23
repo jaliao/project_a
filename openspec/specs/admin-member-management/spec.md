@@ -4,7 +4,7 @@
 TBD - normalized for archive compatibility. Update Purpose for admin-member-management.
 ## Requirements
 ### Requirement: 會員清單搜尋
-管理者 SHALL 能在 `/admin/members` 頁面透過搜尋列篩選會員，搜尋條件涵蓋 `realName`、`name`、`nickname`、`email`、`spiritId` 欄位（OR 邏輯、不分大小寫、部分匹配）。搜尋條件 SHALL 透過 URL query string `?q=` 傳遞，以支援書籤與重新整理保留。表格欄位順序 SHALL 為：啟動編號、姓名、Email、身分、操作（不再顯示「加入日期」欄位）。「身分」欄 SHALL 顯示該會員擁有的所有身分。Email 欄 SHALL 依機敏欄位遮蔽規則預設以 `***` 呈現、點擊逐筆切換檢視（見 admin-sensitive-masking），以 Email 為條件之搜尋比對 SHALL 不受遮蔽影響。
+管理者 SHALL 能在 `/admin/members` 頁面透過搜尋列篩選會員，搜尋條件涵蓋 `realName`、`name`、`nickname`、`email`、`spiritId` 欄位（OR 邏輯、不分大小寫、部分匹配）。搜尋條件 SHALL 透過 URL query string `?q=` 傳遞，以支援書籤與重新整理保留。表格欄位順序 SHALL 為：啟動編號、姓名、Email、身分、操作（不再顯示「加入日期」欄位）。「身分」欄 SHALL 透過共用邏輯 `getIdentityTags()` 計算並顯示該會員擁有的所有身分標籤，包含角色身分（講師／管理者／一般會員）與是否為未註冊代填學員（`isProxyMember`）；姓名欄 SHALL NOT 再額外顯示獨立的未註冊徽章。Email 欄 SHALL 依機敏欄位遮蔽規則預設以 `***` 呈現、點擊逐筆切換檢視（見 admin-sensitive-masking），以 Email 為條件之搜尋比對 SHALL 不受遮蔽影響。
 
 #### Scenario: 依姓名搜尋
 - **WHEN** 管理者在搜尋列輸入名字後停頓（debounce）
@@ -34,6 +34,10 @@ TBD - normalized for archive compatibility. Update Purpose for admin-member-mana
 - **WHEN** 某會員同時具備講師與管理者身分
 - **THEN** 該列「身分」欄同時顯示「講師」與「管理者」（以 badge 呈現）
 
+#### Scenario: 身分欄納入未註冊學員狀態
+- **WHEN** 某會員 `isProxyMember` 為 `true`
+- **THEN** 該列「身分」欄包含「未註冊學員」標籤（與其他身分標籤同一樣式），姓名旁不再顯示獨立徽章
+
 #### Scenario: Email 欄預設遮蔽
 - **WHEN** 管理者進入 `/admin/members`
 - **THEN** 每列 Email 欄顯示 `***`，點擊該欄後僅該列切換為明文
@@ -48,10 +52,15 @@ TBD - normalized for archive compatibility. Update Purpose for admin-member-mana
 系統 SHALL 提供 `/admin/members/[id]` 頁面，以四個分頁呈現：**基本資料**、**學習階層**、**講師身分**、**特殊設定**。非管理者存取 SHALL 被重新導向至 `/`。基本資料分頁 SHALL 顯示「電話」（`phone`）欄位；Email 與電話 SHALL 依機敏欄位遮蔽規則預設以 `***` 呈現、點擊切換檢視（見 admin-sensitive-masking）。
 基本資料分頁 SHALL 顯示「年齡」欄位：依 `User.birthYear` 以「當年西元年 − birthYear」計算並以 `NN 歲` 格式顯示；`birthYear` 未填時顯示 `—`。
 基本資料分頁的**學習紀錄**（作為學員之**已核准報名**課程，**含招生中**、進行中、已結業、已取消）與**授課紀錄**（自己建立之**所有**課程，**含招生中**與已取消）SHALL 以共用課程卡片元件 `CourseSessionCard` 之卡片牆呈現（手機單欄、桌機兩欄 grid），每張卡片顯示課程編號、課程標籤、課程狀態、報名人數／預計人數等標準卡片資訊，並 SHALL 連結至對應課程頁 `/course/{inviteId}`；排序 SHALL 為**招生中（未開課）在前**，其後依開課時間新→舊。學員**待審核（pending）**的報名 SHALL NOT 列入學習紀錄。無紀錄時 SHALL 分別顯示「尚無學習紀錄」／「尚無授課紀錄」。
+基本資料分頁「身分」欄位 SHALL 透過共用邏輯 `getIdentityTags()` 計算並顯示，包含角色身分（所有 `roles`）與是否為未註冊代填學員（`isProxyMember`）；頁首姓名旁 SHALL NOT 再額外顯示獨立的未註冊徽章。
 
 #### Scenario: 顯示基本資料分頁
 - **WHEN** 管理者進入 `/admin/members/[id]`
-- **THEN** 基本資料分頁顯示：姓名（`realName`）、暱稱（`nickname`）、年齡（依 `birthYear` 計算）、Email（預設遮蔽）、電話（`phone`，預設遮蔽）、靈人編號（`spiritId`）、身分（所有 `roles`）、加入日期（`createdAt`）、學習紀錄（已核准報名之課程，含招生中）
+- **THEN** 基本資料分頁顯示：姓名（`realName`）、暱稱（`nickname`）、年齡（依 `birthYear` 計算）、Email（預設遮蔽）、電話（`phone`，預設遮蔽）、靈人編號（`spiritId`）、身分（所有 `roles`，含未註冊學員狀態）、加入日期（`createdAt`）、學習紀錄（已核准報名之課程，含招生中）
+
+#### Scenario: 身分欄位納入未註冊學員狀態
+- **WHEN** 管理者開啟一筆 `isProxyMember = true` 帳號的詳情頁
+- **THEN** 基本資料分頁「身分」欄位包含「未註冊學員」標籤（與其他身分標籤同一樣式），頁首姓名旁不再顯示獨立徽章
 
 #### Scenario: 年齡欄位顯示
 - **WHEN** 會員的 `birthYear` 有值（如 1990，當年為 2026）
@@ -408,50 +417,6 @@ TBD - normalized for archive compatibility. Update Purpose for admin-member-mana
 - **WHEN** 不具管理者身分的使用者嘗試呼叫合併相關 Server Action
 - **THEN** 系統拒絕並回傳無權限訊息，不執行任何資料異動
 
-### Requirement: 代填學員標示
-
-會員列表（`/admin/members`）每列與會員詳情頁（`/admin/members/[id]`）頁首 SHALL 於 `isProxyMember = true` 的帳號旁顯示「未註冊」徽章。此徽章純為顯示用途，SHALL NOT 影響既有「身分」篩選、搜尋邏輯或任何授權判定。
-
-#### Scenario: 列表顯示未註冊徽章
-- **WHEN** 管理者於 `/admin/members` 搜尋或篩選出一筆 `isProxyMember = true` 的帳號
-- **THEN** 該列姓名旁顯示「未註冊」徽章
-
-#### Scenario: 詳情頁顯示未註冊徽章
-- **WHEN** 管理者開啟一筆 `isProxyMember = true` 帳號的詳情頁
-- **THEN** 頁首姓名旁顯示「未註冊」徽章
-
-#### Scenario: 一般會員不顯示徽章
-- **WHEN** 管理者檢視 `isProxyMember = false` 的帳號（列表或詳情頁）
-- **THEN** 不顯示「未註冊」徽章
-
-### Requirement: 代填學員邀請 Email 管理
-
-會員詳情頁「特殊設定」分頁 SHALL 在該會員 `isProxyMember = true` 時，新增「邀請 Email」欄位（可編輯）與「補發邀請」按鈕，僅 `canAccessAdmin` 的使用者可使用。編輯 email 或點擊「補發邀請」皆 SHALL 依 `proxy-invite` 能力的規則核發新 token 並重新寄信、使該使用者先前所有未使用的 token 失效。`isProxyMember = false` 的會員 SHALL NOT 顯示此區塊。
-
-#### Scenario: 代填學員顯示邀請 Email 管理區塊
-- **WHEN** 管理者開啟一筆 `isProxyMember = true` 帳號的詳情頁特殊設定分頁
-- **THEN** 顯示「邀請 Email」欄位（可編輯）與「補發邀請」按鈕
-
-#### Scenario: 一般會員不顯示此區塊
-- **WHEN** 管理者開啟一筆 `isProxyMember = false` 帳號的詳情頁特殊設定分頁
-- **THEN** 不顯示「邀請 Email」管理區塊
-
-#### Scenario: 修改邀請 Email 並重新寄信
-- **WHEN** 管理者將邀請 Email 改為一個未被使用的新值並儲存
-- **THEN** 系統更新 `User.email`、作廢該使用者先前未使用的 token、核發新 token 並寄出邀請信
-
-#### Scenario: 點擊補發邀請
-- **WHEN** 管理者對已有邀請 Email 的代填學員點擊「補發邀請」（未修改 email）
-- **THEN** 系統作廢先前未使用的 token、核發新 token 並以目前 email 重新寄信
-
-#### Scenario: 修改為已被使用的 Email
-- **WHEN** 管理者將邀請 Email 改為已被其他帳號使用的值並嘗試儲存
-- **THEN** 系統拒絕並顯示「此 Email 已被使用」，不作廢既有 token、不變更 `User.email`
-
-#### Scenario: 非管理者無法操作
-- **WHEN** 不具 `canAccessAdmin` 的使用者嘗試呼叫邀請 Email 編輯或補發邀請的 Server Action
-- **THEN** 系統拒絕並回傳無權限訊息，不執行任何資料異動
-
 ### Requirement: 合併帳號登入阻擋
 帳號之 `mergedIntoId` 非 null（已被標記為某次合併的副帳號）時，SHALL 無法再登入系統，無論透過 Google OAuth 或密碼登入。
 
@@ -591,4 +556,50 @@ TBD - normalized for archive compatibility. Update Purpose for admin-member-mana
 #### Scenario: 轉移後原班級學員報名與結業紀錄不受影響
 - **WHEN** 某班級已有學員報名記錄（`InviteEnrollment`）或結業紀錄
 - **THEN** 轉移該班級的建立者後，這些學員的報名記錄、結業紀錄維持不變，僅 `CourseInvite.createdById` 改變
+
+### Requirement: 未註冊會員專區分頁（唯讀邀請紀錄）
+
+會員詳情頁 SHALL 新增分頁「未註冊會員專區」，置於 `TabsList` 最前面（「基本資料」之前）。此分頁 SHALL 對所有會員恆顯示唯讀的「代填學員邀請紀錄」列表（見該 Requirement），不因 `isProxyMember` 現值為真或假而改變顯示內容——即使該會員已完成註冊或從未當過代填學員，仍可查閱其歷史紀錄（或空狀態）。此分頁 SHALL NOT 包含任何編輯邀請 Email 或補發邀請的互動元件（該操作已移至該會員的會員首頁，見 `student-profile-page` 的「未註冊學員邀請管理」）。
+
+分頁預設開啟（`Tabs` 的 `defaultValue`）SHALL 維持「基本資料」，不因新增此分頁而改變。
+
+#### Scenario: 分頁置於最前
+- **WHEN** 管理者開啟任一會員詳情頁
+- **THEN** `TabsList` 第一個分頁為「未註冊會員專區」，其後依序為基本資料、學習階層、講師身分、特殊設定
+
+#### Scenario: 分頁內容不依 isProxyMember 切換
+- **WHEN** 管理者分別開啟 `isProxyMember = true` 與 `isProxyMember = false` 兩個帳號的詳情頁
+- **THEN** 兩者的「未註冊會員專區」分頁皆顯示該帳號的邀請紀錄列表（或空狀態），不因 `isProxyMember` 而出現「不適用」之類的替代文案
+
+#### Scenario: 分頁不含編輯元件
+- **WHEN** 管理者開啟任一會員的「未註冊會員專區」分頁
+- **THEN** 分頁僅顯示唯讀歷史列表，不顯示邀請 Email 輸入欄或「補發邀請」按鈕
+
+#### Scenario: 預設開啟分頁不變
+- **WHEN** 管理者開啟任一會員詳情頁
+- **THEN** 頁面預設顯示「基本資料」分頁，不自動跳至「未註冊會員專區」
+
+### Requirement: 代填學員邀請紀錄
+
+「未註冊會員專區」分頁 SHALL 顯示該會員所有 `ProxyInviteToken` 的歷史紀錄列表，依核發時間（`createdAt`）新到舊排序。每筆紀錄 SHALL 顯示：核發時間、對應 email 快照、狀態、過期時間（`expiresAt`）。狀態 SHALL 依下列優先順序判定：`usedAt` 非 null → 「已完成註冊」；否則 `voidedAt` 非 null → 「已作廢」；否則 `expiresAt` 早於目前時間 → 「已過期」；否則 → 「有效」。
+
+#### Scenario: 顯示多筆歷史紀錄
+- **WHEN** 某代填學員被核發過兩筆 `ProxyInviteToken`（第二筆因補發邀請核發）
+- **THEN** 邀請紀錄列表顯示兩筆紀錄：較舊一筆狀態為「已作廢」，最新一筆狀態為「有效」或依其過期狀態顯示
+
+#### Scenario: 顯示已完成註冊狀態
+- **WHEN** 某筆 `ProxyInviteToken` 的 `usedAt` 已被 `completeProxyRegistration` 標記
+- **THEN** 該筆紀錄狀態顯示「已完成註冊」，即使 `voidedAt` 為 null
+
+#### Scenario: 顯示已過期狀態
+- **WHEN** 某筆 `ProxyInviteToken` 的 `expiresAt` 已早於目前時間，且 `usedAt`／`voidedAt` 皆為 null
+- **THEN** 該筆紀錄狀態顯示「已過期」
+
+#### Scenario: 已完成註冊會員仍可查閱歷史
+- **WHEN** 某會員已透過邀請連結完成註冊（`isProxyMember` 現為 `false`）
+- **THEN** 管理者仍可在其「未註冊會員專區」分頁看到完整的歷史紀錄，不因完成註冊而被隱藏或清空
+
+#### Scenario: 從未當過代填學員顯示空狀態
+- **WHEN** 某會員從未被核發過任何 `ProxyInviteToken`
+- **THEN** 邀請紀錄列表顯示「尚無邀請紀錄」提示文字
 

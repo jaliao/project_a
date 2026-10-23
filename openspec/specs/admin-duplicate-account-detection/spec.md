@@ -41,7 +41,7 @@ TBD - created by archiving change cr-feat-261016-002. Update Purpose after archi
 - **THEN** 該配對僅出現一次，標示為「最高」信心等級，不重複列出
 
 ### Requirement: 候選配對呈現內容與機敏欄位遮蔽
-每組候選配對 SHALL 並排顯示兩邊會員的啟動編號（spiritId）、顯示名稱、Email、電話、建立時間、是否未啟用（`lastLoginAt` 是否為 null）、是否為代填學員（`isProxyMember`，以「未註冊」徽章呈現）、報名或結業紀錄筆數，並各提供連到既有會員詳情頁的連結。其中 Email、電話欄位 SHALL 套用既有機敏欄位遮蔽規則（預設遮蔽、點擊切換明文），行為與後台其他會員頁面一致。
+每組候選配對 SHALL 並排顯示兩邊會員的啟動編號（spiritId）、顯示名稱、Email、電話、建立時間、是否未啟用（`lastLoginAt` 是否為 null）、是否為代填學員（`isProxyMember`，透過共用邏輯 `getIdentityTags()` + `IdentityTagBadges` 以「未註冊學員」標籤呈現，樣式與後台其他身分標籤一致）、報名或結業紀錄筆數，並各提供連到既有會員詳情頁的連結。其中 Email、電話欄位 SHALL 套用既有機敏欄位遮蔽規則（預設遮蔽、點擊切換明文），行為與後台其他會員頁面一致。
 
 本頁面本身 SHALL NOT 直接執行任何合併、刪除、編輯或其他寫入操作；每組候選配對 SHALL 額外提供一個「合併這兩筆帳號」連結，點擊後開啟合併精靈對話框並帶入該組兩筆帳號（見 `admin-member-management` 之「合併帳號」需求），實際的預覽查詢與合併動作皆在該對話框內以獨立 Server Action 完成，SHALL NOT 使本頁面的 server component 本身產生任何寫入。
 
@@ -49,9 +49,9 @@ TBD - created by archiving change cr-feat-261016-002. Update Purpose after archi
 - **WHEN** 管理者開啟疑似重複帳號清單
 - **THEN** 每組配對並排顯示兩邊的啟動編號、顯示名稱、遮蔽後的 Email／電話、建立時間、是否未啟用、是否為代填學員、報名或結業紀錄筆數
 
-#### Scenario: 代填學員一側顯示未註冊徽章
+#### Scenario: 代填學員一側顯示未註冊學員標籤
 - **WHEN** 某組候選配對中有一方 `isProxyMember` 為 `true`
-- **THEN** 該側顯示「未註冊」徽章
+- **THEN** 該側顯示「未註冊學員」標籤，樣式與後台其他身分標籤一致（`variant="secondary"`，非專屬警示色）
 
 #### Scenario: 機敏欄位預設遮蔽可切換
 - **WHEN** 管理者點擊候選配對中遮蔽狀態的 Email 或電話欄位
