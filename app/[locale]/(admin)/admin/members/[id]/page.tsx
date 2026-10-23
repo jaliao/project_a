@@ -27,6 +27,7 @@ import { SendMessageButton } from '@/components/conversation/send-message-button
 import { MemberResetButton } from '@/components/admin/member-reset-button'
 import { MemberHomeLink } from '@/components/admin/member-home-link'
 import { MemberEmailForm } from '@/components/admin/member-email-form'
+import { MemberProxyInviteForm } from '@/components/admin/member-proxy-invite-form'
 import { MemberDeleteButton } from '@/components/admin/member-delete-button'
 import { MemberCourseInviteTransfer } from '@/components/admin/member-course-invite-transfer'
 import { MemberMergeDialog } from '@/components/admin/member-merge-dialog'
@@ -354,6 +355,14 @@ export default async function MemberDetailPage({
             <h2 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">帳號修改</h2>
             <MemberEmailForm userId={member.id} currentEmail={member.email} />
           </div>
+
+          {/* 代填學員：邀請 Email 管理 */}
+          {member.isProxyMember && (
+            <div className="rounded-lg border p-5 space-y-3">
+              <h2 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">邀請 Email</h2>
+              <MemberProxyInviteForm userId={member.id} currentEmail={member.email} />
+            </div>
+          )}
 
           {/* 特殊身分授權 */}
           <div className="rounded-lg border p-5 space-y-3">

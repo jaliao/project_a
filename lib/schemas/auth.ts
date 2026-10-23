@@ -74,3 +74,14 @@ export const resetPasswordSchema = z
     message: 'validation.passwordMismatch',
     path: ['confirmPassword'],
   })
+
+export const completeRegistrationSchema = z
+  .object({
+    token: z.string().min(1),
+    newPassword: z.string().min(8, 'validation.newPasswordMin8'),
+    confirmPassword: z.string().min(1, 'validation.confirmPasswordRequired'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'validation.passwordMismatch',
+    path: ['confirmPassword'],
+  })

@@ -27,6 +27,7 @@ import {
   loginHandleSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  completeRegistrationSchema,
 } from '@/lib/schemas/auth'
 import { onboardingProfileSchema } from '@/lib/schemas/profile'
 import { getAppUrl } from '@/lib/utils/app-url'
@@ -34,6 +35,7 @@ import {
   getValidResetToken,
   markTokenUsed,
 } from '@/lib/data/password-reset'
+import { getValidInviteToken } from '@/lib/data/proxy-invite'
 
 type ActionResponse = {
   success: boolean
@@ -420,4 +422,57 @@ export async function resetPassword(
   ])
 
   return { success: true, message: '密碼已成功重設，請重新登入' }
+}
+
+// ── 代填學員完成註冊：設定密碼並解除代填狀態（同一筆 User，不建立新帳號） ──
+export async function completeProxyRegistration(
+  formData: FormData
+): Promise<ActionResponse> {
+  const parsed = completeRegistrationSchema.safeParse({
+    token: formData.get('token'),
+    newPassword: formData.get('newPassword'),
+    confirmPassword: formData.get('confirmPassword'),
+  })
+
+  if (!parsed.success) {
+    return { success: false, errors: parsed.error.flatten().fieldErrors }
+  }
+
+  const { token, newPassword } = parsed.data
+
+  const inviteToken = await getValidInviteToken(token)
+  if (!inviteToken) {
+    return { success: false, message: '邀請連結已失效，請聯繫老師重新發送邀請' }
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: inviteToken.userId } })
+  if (!user || !user.isProxyMember) {
+    return { success: false, message: '邀請連結已失效，請聯繫老師重新發送邀請' }
+  }
+
+  const newHash = await bcrypt.hash(newPassword, 12)
+
+  try {
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash: newHash, isProxyMember: false, email: inviteToken.email },
+      }),
+      prisma.proxyInviteToken.update({
+        where: { id: inviteToken.id },
+        data: { usedAt: new Date() },
+      }),
+    ])
+  } catch (err: unknown) {
+    const isUniqueViolation =
+      typeof err === 'object' && err !== null &&
+      'code' in err && (err as { code: string }).code === 'P2002'
+    if (isUniqueViolation) {
+      return { success: false, message: '此 Email 已被使用，請聯繫老師確認' }
+    }
+    console.error('[completeProxyRegistration] 完成註冊失敗：', err)
+    return { success: false, message: '完成註冊失敗，請稍後再試' }
+  }
+
+  return { success: true, message: '註冊完成，請使用新密碼登入' }
 }

@@ -178,6 +178,9 @@ model User {
   // 上課意願刊登（cr-spec-260914-001）
   learningIntent LearningIntent?
 
+  // 代填學員邀請 Token 關聯
+  proxyInviteTokens ProxyInviteToken[]
+
   @@map("users")
 }
 
@@ -242,6 +245,23 @@ model EmailVerificationToken {
   createdAt DateTime  @default(now())
 
   @@map("email_verification_tokens")
+}
+
+// ==========================================
+// 代填學員邀請 Token（TTL 30 天，一次性使用）
+// ==========================================
+model ProxyInviteToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String    @db.Uuid
+  email     String // 核發當下的 email 快照，供信件內容與過期後比對
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("proxy_invite_tokens")
 }
 
 // ==========================================

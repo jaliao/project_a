@@ -26,6 +26,7 @@ export const PUBLIC_PAGES: RouteRule[] = [
   { match: 'exact', path: '/register', reason: '註冊頁' },
   { match: 'exact', path: '/forgot-password', reason: '忘記密碼' },
   { match: 'exact', path: '/reset-password', reason: '密碼重設（token 帶於 query）' },
+  { match: 'exact', path: '/complete-registration', reason: '代填學員完成註冊（token 帶於 query）' },
   { match: 'exact', path: '/change-password', reason: '變更密碼（頁面自行 auth 守衛）' },
   { match: 'exact', path: '/recover-account', reason: '找回帳號（灌檔且未登入過會員自助）' },
   { match: 'exact', path: '/onboarding', reason: '首次登入引導（頁面自行 auth 守衛，避免守衛迴圈）' },

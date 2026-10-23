@@ -110,6 +110,7 @@ export function AddStudentDialog({
   // 教會選單 value 格式：'' | 'other' | 'church:<id>'（比照 register-form）
   const [proxyChurchSelect, setProxyChurchSelect] = useState('')
   const [proxyChurchOther, setProxyChurchOther] = useState('')
+  const [proxyEmail, setProxyEmail] = useState('')
   const [graduated, setGraduated] = useState(false)
   const [graduatedAt, setGraduatedAt] = useState('')
   const [materialChoice, setMaterialChoice] = useState<MaterialChoice>('traditional')
@@ -123,6 +124,7 @@ export function AddStudentDialog({
     setProxyGender('unspecified')
     setProxyChurchSelect('')
     setProxyChurchOther('')
+    setProxyEmail('')
     setGraduated(false)
     setGraduatedAt('')
     setMaterialChoice('traditional')
@@ -171,6 +173,7 @@ export function AddStudentDialog({
                 ? parseInt(proxyChurchSelect.replace('church:', ''), 10)
                 : null,
               churchOther: proxyChurchSelect === 'other' ? proxyChurchOther : undefined,
+              email: proxyEmail.trim() || undefined,
               graduated,
               graduatedAt: graduated ? graduatedAt : undefined,
               materialChoice,
@@ -310,6 +313,18 @@ export function AddStudentDialog({
                     disabled={atCapacity}
                   />
                 )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="proxy-email">{t('proxyEmailLabel')}</Label>
+                <Input
+                  id="proxy-email"
+                  type="email"
+                  placeholder={t('proxyEmailPlaceholder')}
+                  value={proxyEmail}
+                  onChange={(e) => setProxyEmail(e.target.value)}
+                  disabled={atCapacity}
+                />
+                {errors.email?.[0] && <p className="text-sm text-destructive">{errors.email[0]}</p>}
               </div>
             </div>
           )}

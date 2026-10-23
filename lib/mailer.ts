@@ -156,6 +156,25 @@ export async function sendGraduationEmail(
   })
 }
 
+// ── 代填學員邀請信 ────────────────────────────
+export async function sendProxyInviteEmail(
+  to: string,
+  completeUrl: string
+) {
+  await sendMailSafe({
+    from: FROM_ADDRESS,
+    to,
+    subject: '【啟動事工】邀請您完成帳號註冊',
+    html: `
+      <p>您好，</p>
+      <p>老師已為您登記課程，請點擊以下連結設定密碼以完成帳號註冊（連結 30 天內有效）：</p>
+      <p><a href="${completeUrl}">${completeUrl}</a></p>
+      <p>完成註冊後即可使用此帳號登入系統查看您的課程紀錄。</p>
+      <p>如非您本人，請忽略此信。</p>
+    `,
+  })
+}
+
 // ── 講師身分授權通知信 ────────────────────────
 export async function sendTeacherRoleGrantedEmail(
   to: string,

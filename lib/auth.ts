@@ -191,6 +191,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 data: nameUpdates,
               })
             }
+
+            // 代填學員邀請自動連結（cr-feat-261022-003）：以受邀 email 登入（Google 透過
+            // allowDangerousEmailAccountLinking 自動關聯到此既有帳號）時解除代填狀態，
+            // 獨立判斷、不混入上方 spiritId/姓名重試邏輯，各自失敗不互相影響
+            if (dbUser.isProxyMember) {
+              dbUser = await prisma.user.update({
+                where: { id: dbUser.id },
+                data: { isProxyMember: false },
+              })
+            }
           }
 
           token.id = dbUser.id

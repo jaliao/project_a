@@ -97,6 +97,22 @@
       "confirmPlaceholder": "再次输入新密码",
       "submit": "确认设定新密码",
       "submitting": "更新中..."
+    },
+    "completeRegistration": {
+      "metaTitle": "完成注册 — 启动事工",
+      "title": "完成注册",
+      "subtitle": "请设定您的登入密码以完成注册",
+      "quote": "设定密码，完成您的帐号注册。",
+      "doneTitle": "注册完成",
+      "failed": "完成注册失败，请稍后再试",
+      "invalidTitle": "邀请连结已失效",
+      "invalidDesc": "此邀请连结已失效或已被使用，请联系老师重新发送邀请。",
+      "newPassword": "设定密码",
+      "newPasswordPlaceholder": "至少 8 个字元",
+      "confirmNewPassword": "确认密码",
+      "confirmPlaceholder": "再次输入密码",
+      "submit": "完成注册",
+      "submitting": "处理中..."
     }
   },
   "onboarding": {
@@ -336,7 +352,9 @@
       "toastAdded": "已新增学员",
       "modeExisting": "选择既有会员",
       "modeProxy": "建立代填学员",
-      "proxyHint": "此学员尚未注册帐号，仅先登记基本资料并加入班级；待其完成注册后，可于会员管理页使用「合并帐号」连结到真实帐号。",
+      "proxyHint": "此学员尚未注册帐号，仅先登记基本资料并加入班级；若已知对方 Email 可填写以立即寄出邀请信，待其完成注册将自动连结至此帐号；未填写 Email 者，待其完成注册后可于会员管理页使用「合并帐号」连结到真实帐号。",
+      "proxyEmailLabel": "邀请 Email（选填）",
+      "proxyEmailPlaceholder": "填写后将立即寄出邀请信",
       "proxyRealNameLabel": "真实姓名",
       "proxyRealNamePlaceholder": "请输入真实姓名",
       "proxyGenderLabel": "性别",

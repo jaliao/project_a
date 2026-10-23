@@ -96,6 +96,22 @@
       "confirmPlaceholder": "Re-enter new password",
       "submit": "Confirm new password",
       "submitting": "Updating..."
+    },
+    "completeRegistration": {
+      "metaTitle": "Complete registration — 啟動事工",
+      "title": "Complete registration",
+      "subtitle": "Please set a login password to complete your registration",
+      "quote": "Set a password to complete your account registration.",
+      "doneTitle": "Registration complete",
+      "failed": "Failed to complete registration, please try again later",
+      "invalidTitle": "Invite link invalid",
+      "invalidDesc": "This invite link is invalid or has already been used. Please ask your teacher to resend the invite.",
+      "newPassword": "Set password",
+      "newPasswordPlaceholder": "At least 8 characters",
+      "confirmNewPassword": "Confirm password",
+      "confirmPlaceholder": "Re-enter password",
+      "submit": "Complete registration",
+      "submitting": "Processing..."
     }
   },
   "onboarding": {
@@ -335,7 +351,9 @@
       "toastAdded": "Student added",
       "modeExisting": "Select existing member",
       "modeProxy": "Create proxy student",
-      "proxyHint": "This student hasn't registered an account yet; this only records their basic info and adds them to the class. Once they register, you can link the accounts via \"Merge accounts\" on the member management page.",
+      "proxyHint": "This student hasn't registered an account yet; this only records their basic info and adds them to the class. If you know their email, enter it to send an invite link immediately — once they complete registration it will auto-link to this account. Without an email, you can link the accounts later via \"Merge accounts\" on the member management page.",
+      "proxyEmailLabel": "Invite email (optional)",
+      "proxyEmailPlaceholder": "An invite link will be emailed immediately",
       "proxyRealNameLabel": "Real name",
       "proxyRealNamePlaceholder": "Enter real name",
       "proxyGenderLabel": "Gender",

@@ -29,6 +29,9 @@ import { resolveMaxCapacity } from '@/lib/data/admin-settings'
 import { getDefaultMaterialChoiceForUser } from '@/lib/data/material-items'
 import { createNotification } from '@/app/actions/notification'
 import { generateSpiritId, deriveLoginHandle } from '@/lib/spirit-id'
+import { createInviteToken } from '@/lib/data/proxy-invite'
+import { sendProxyInviteEmail } from '@/lib/mailer'
+import { getAppUrl } from '@/lib/utils/app-url'
 
 type ActionResponse<T = undefined> = {
   success: boolean
@@ -283,6 +286,13 @@ const addProxyStudentSchema = z
     churchType: z.enum(['church', 'other', 'none']).default('none'),
     churchId: z.number().int().positive().optional().nullable(),
     churchOther: z.string().trim().optional(),
+    email: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .email('Email 格式不正確')
+      .optional()
+      .or(z.literal('')),
     graduated: z.boolean().default(false),
     graduatedAt: z
       .string()
@@ -301,11 +311,12 @@ const addProxyStudentSchema = z
   })
 
 /**
- * 對班級建立「代填學員」（未註冊）：僅填真實姓名（必填）、性別、所屬教會，
- * 系統建立一筆 isProxyMember=true 的全新 User（email/passwordHash 皆為 null、無 Account），
+ * 對班級建立「代填學員」（未註冊）：僅填真實姓名（必填）、性別、所屬教會、選填邀請 email，
+ * 系統建立一筆 isProxyMember=true 的全新 User（passwordHash 為 null、無 Account），
  * 並以該帳號建立對應報名。與既有「選定既有會員」路徑共用人數上限、補登結業、教材選擇規則，
  * 不豁免先修課程驗證——代填學員必為新生，缺少的先修課程即該課程全部先修清單。
  * 任一驗證失敗時不建立任何 User，不留下半成品帳號。
+ * 填寫邀請 email 時：唯一性檢查通過後寫入 User.email，建立成功後核發 ProxyInviteToken 並寄送邀請信（見 proxy-invite）。
  */
 export async function addProxyStudentToInvite(input: {
   inviteId: number
@@ -314,6 +325,7 @@ export async function addProxyStudentToInvite(input: {
   churchType?: 'church' | 'other' | 'none'
   churchId?: number | null
   churchOther?: string
+  email?: string
   graduated: boolean
   graduatedAt?: string
   materialChoice?: 'none' | 'traditional' | 'simplified' | 'english'
@@ -327,7 +339,16 @@ export async function addProxyStudentToInvite(input: {
     return { success: false, errors: parsed.error.flatten().fieldErrors }
   }
   const { inviteId, realName, gender, churchType, churchOther, graduated } = parsed.data
+  const email = parsed.data.email || undefined
   const graduatedDate = graduated ? new Date(`${parsed.data.graduatedAt}T00:00:00`) : null
+
+  // 邀請 Email 唯一性檢查（與既有「後台新增會員」一致的錯誤字串）
+  if (email) {
+    const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } })
+    if (existing) {
+      return { success: false, errors: { email: ['此 Email 已被使用'] } }
+    }
+  }
 
   const invite = await prisma.courseInvite.findUnique({
     where: { id: inviteId },
@@ -384,6 +405,8 @@ export async function addProxyStudentToInvite(input: {
   const spiritId = await generateSpiritId()
   const loginHandle = deriveLoginHandle(spiritId)
 
+  let createdUserId: string | undefined
+
   try {
     await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
@@ -396,9 +419,20 @@ export async function addProxyStudentToInvite(input: {
           churchType: churchType ?? 'none',
           churchId: churchIdValue,
           churchOther: churchOtherValue,
+          email,
           isProxyMember: true,
         },
       })
+      createdUserId = newUser.id
+
+      // 填了邀請 email 即加入白名單（比照 createLoginableMember 等既有建帳邏輯）
+      if (email) {
+        await tx.whitelistedEmail.upsert({
+          where: { email },
+          update: { isActive: true },
+          create: { email, isActive: true },
+        })
+      }
 
       await tx.inviteEnrollment.create({
         data: {
@@ -439,6 +473,18 @@ export async function addProxyStudentToInvite(input: {
         },
       })
     })
+
+    // 有填邀請 Email：交易外核發邀請 token 並寄信（fire-and-forget，失敗僅 log 不回滾已建立的帳號）
+    if (email && createdUserId) {
+      createInviteToken(createdUserId, email)
+        .then((inviteToken) => {
+          const completeUrl = `${getAppUrl()}/complete-registration?token=${inviteToken.token}`
+          return sendProxyInviteEmail(email, completeUrl)
+        })
+        .catch((err) => {
+          console.error('[addProxyStudentToInvite] 邀請信核發/寄送失敗：', err)
+        })
+    }
 
     revalidatePath('/admin/course-sessions')
     revalidatePath(`/course/${inviteId}`)

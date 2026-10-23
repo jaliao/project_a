@@ -31,6 +31,7 @@ birthYear     Int?（出生年，西元 4 位數；onboarding 必填、可於個
 displayNameMode DisplayNameMode（nickname | nickname_zh | nickname_en，預設 nickname）
 phone         String?
 address       String?
+isProxyMember Boolean（代填學員標記，預設 false；老師/管理者代填建立、本人尚未自行完成註冊；見 ProxyInviteToken）
 createdAt / updatedAt / lastLoginAt / previousLoginAt
 ```
 > `lastLoginAt`／`previousLoginAt`：每次登入成功於 `signIn` callback 以原子 SQL 平移記錄（舊 `lastLoginAt` → `previousLoginAt`，`lastLoginAt` → NOW()），失敗不阻斷登入。會員詳情頁「活躍度」區與 Excel 匯出據此推導「首次登入／首次補填（`realName && phone`）／臨時密碼狀態（`isTempPassword`，無密碼帳號為不適用）」。
@@ -40,6 +41,18 @@ createdAt / updatedAt / lastLoginAt / previousLoginAt
 email     String（唯一）
 isActive  Boolean（控制登入許可）
 ```
+
+### ProxyInviteToken（代填學員邀請 Token；cr-feat-261022-003）
+```
+id        String（主鍵，cuid）
+token     String（唯一）
+userId    String（關聯 User UUID，onDelete: Cascade）
+email     String（核發當下的 email 快照）
+expiresAt DateTime（核發起 30 天）
+usedAt    DateTime?（一次性使用；補發邀請時先將舊 token 標記已使用作廢）
+createdAt DateTime
+```
+> 建立代填學員時填寫 email、或於會員詳情頁編輯／補發邀請時核發。受邀者於 `/complete-registration?token=xxx` 設定密碼完成註冊，同一筆 `User` 上寫入 `passwordHash`、`isProxyMember` 轉 `false`（不建立新帳號）；改用同信箱 Google 登入亦會由 `jwt` callback 自動解除 `isProxyMember`。
 
 ### Notification
 ```
