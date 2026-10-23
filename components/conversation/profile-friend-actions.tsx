@@ -26,12 +26,12 @@ type Props = {
 
 export function ProfileFriendActions({ targetUserId, initialIsFriend }: Props) {
   const t = useTranslations('studentProfile')
-  const tConversation = useTranslations('conversation')
+  const tCommunity = useTranslations('community')
   const [isFriend, setIsFriend] = useState(initialIsFriend)
   const [submitting, setSubmitting] = useState(false)
 
   if (isFriend) {
-    return <SendMessageButton targetUserId={targetUserId} label={tConversation('cardMessage')} />
+    return <SendMessageButton targetUserId={targetUserId} label={tCommunity('cardMessage')} />
   }
 
   async function handleAddFriend() {
