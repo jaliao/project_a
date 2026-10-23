@@ -262,11 +262,13 @@ prisma-seed: ## 🌱 執行種子資料
 # 	$(DEV_COMPOSE) exec web npx prisma migrate dev   --name $$name
 # 	@echo "✅ Migration 建立完成"
 
-# 廢除
-# prisma-docker-restart: ## 🔄 重啟 Web 容器（應用 Prisma 變更）
-# 	@echo "🔄 重啟 Web 容器..."
-# 	@$(DEV_COMPOSE) restart web
-# 	@echo "✅ 重啟完成"
+# 恢復使用（2026-10-23）：schema-update／schema-quick 皆依賴此步驟套用新生成的 Prisma Client，
+# 曾整段被註解掉但 schema-update 仍把它列為依賴，導致 make 靜默跳過、web 容器沿用舊 Prisma Client
+# （新 model 在執行階段讀不到，報 TypeError 且因呼叫端多為 fire-and-forget 而不易被發現）
+prisma-docker-restart: ## 🔄 重啟 Web 容器（套用 Prisma Client 變更）
+	@echo "🔄 重啟 Web 容器..."
+	@$(DEV_COMPOSE) restart web
+	@echo "✅ 重啟完成"
 
 # 廢除
 # prisma-docker-studio: ## 🎨 在容器內開啟 Prisma Studio
@@ -287,7 +289,7 @@ schema-update: prisma-format prisma-validate prisma-migrate prisma-generate pris
 	@echo "   4. 生成 Prisma Client"
 	@echo "   5. 重啟應用"
 
-schema-quick: prisma-docker-push prisma-docker-generate prisma-docker-restart ## ⚡ 快速更新（開發用，不建立 migration）
+schema-quick: prisma-push prisma-generate prisma-docker-restart ## ⚡ 快速更新（開發用，不建立 migration）
 	@echo "✅ 快速更新完成！"
 	@echo "⚠️  注意：此方法不會建立 migration 檔案"
 
