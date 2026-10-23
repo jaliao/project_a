@@ -22,6 +22,43 @@ TBD - normalized for archive compatibility. Update Purpose for student-profile-p
 - **WHEN** 已登入使用者存取不存在的 Spirit ID
 - **THEN** 系統顯示 404 頁面
 
+### Requirement: 基本資料區塊 — 性別與所屬教會
+
+學員頁面（`/user/{spiritId}`）之基本資料區塊 SHALL 於 Spirit ID 與身分標籤之間，額外顯示**性別**與**所屬教會**兩列資訊，對所有檢視者（本人與他人）皆一致公開顯示：
+
+- **性別**：以圖示＋文字呈現（男／女／未設定）。
+- **所屬教會**：`churchType` 為「教會」時顯示所屬教會名稱；`churchType` 為「其他」時顯示自填文字；兩者皆無值或 `churchType` 為「無」時顯示「未設定」。
+
+#### Scenario: 性別已填寫
+
+- **WHEN** 使用者（含他人檢視）開啟某學員頁面，該學員性別為男或女
+- **THEN** 基本資料區塊顯示對應性別圖示與文字
+
+#### Scenario: 性別未設定
+
+- **WHEN** 該學員性別為 `unspecified`
+- **THEN** 基本資料區塊顯示「未設定」
+
+#### Scenario: 所屬教會為實際教會
+
+- **WHEN** 該學員 `churchType` 為「教會」且已選定教會
+- **THEN** 基本資料區塊顯示該教會名稱
+
+#### Scenario: 所屬教會為自填其他單位
+
+- **WHEN** 該學員 `churchType` 為「其他」且已填寫自訂名稱
+- **THEN** 基本資料區塊顯示該自填文字
+
+#### Scenario: 所屬教會未設定
+
+- **WHEN** 該學員 `churchType` 為「無」，或選了教會/其他但對應資料為空
+- **THEN** 基本資料區塊顯示「未設定」
+
+#### Scenario: 他人視角亦可見
+
+- **WHEN** 任一已登入使用者瀏覽非本人的學員頁面
+- **THEN** 仍可見該學員的性別與所屬教會，顯示內容與本人視角一致
+
 ### Requirement: 基本資料區塊 — 學習進度三卡
 
 學員頁面（`/user/{spiritId}`）之基本資料區塊內 SHALL 固定顯示三張課程進度卡，依課程目錄順序：**啟動靈人、啟動豐盛、啟動得勝**（無論有無學習紀錄皆顯示）。
