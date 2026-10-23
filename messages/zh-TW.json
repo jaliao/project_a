@@ -708,7 +708,8 @@
     "teacher_3": "啟動得勝講師",
     "admin": "管理者",
     "superadmin": "超級管理者",
-    "systemAdmin": "系統管理員"
+    "systemAdmin": "系統管理員",
+    "unregisteredStudent": "未註冊學員"
   },
   "pageMeta": {
     "terms": "服務條款 — 啟動事工",
@@ -1101,6 +1102,14 @@
     "basicInfo": "基本資料",
     "nameLabel": "姓名",
     "spiritIdLabel": "啟動編號",
+    "genderLabel": "性別",
+    "churchLabel": "所屬教會",
+    "churchUnset": "未設定",
+    "gender": {
+      "male": "男",
+      "female": "女",
+      "unspecified": "未設定"
+    },
     "identityTagsLabel": "身分標籤",
     "learningProgressLabel": "學習進度",
     "graduatedAtPrefix": "學業完成：",
@@ -1116,6 +1125,9 @@
     "adminSection": "管理者",
     "adminPanelLink": "管理後台",
     "contactAdminSection": "聯繫管理者",
+    "addFriend": "加好友",
+    "addFriendSuccess": "已加入好友",
+    "addFriendFailed": "加好友失敗，請稍後再試",
     "proxyInvite": {
       "sectionTitle": "未註冊學員邀請管理",
       "emailLabel": "邀請 Email",

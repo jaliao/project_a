@@ -53,3 +53,11 @@
 - `updateProxyInviteEmail`／`resendProxyInvite` 的授權範圍自「僅 `canAccessAdmin`」放寬為「管理者，或該代填學員所屬班級的授課老師」：後者由 `lib/data/proxy-invite.ts isClassTeacherOfMember(teacherId, memberId)` 判定——該會員名下存在至少一筆 `InviteEnrollment`（不限 `status`），其 `CourseInvite.createdById` 為操作者本人。
 - 操作入口自後台會員詳情頁「特殊設定」分頁移至該會員**自己的會員首頁**（`/user/[spiritId]`，新元件 `components/dashboard/proxy-invite-panel.tsx`）：僅當被檢視者 `isProxyMember === true` 且檢視者為管理者或其班級老師時，首頁才會渲染此區塊（置於「基本資料」之後、「課程」之前）；此頁已 i18n 化，新增 `studentProfile.proxyInvite.*` 命名空間。
 - 後台會員詳情頁新增「未註冊會員專區」唯讀分頁（置於最前），僅顯示 `getProxyInviteHistory(userId)` 歷史列表（核發時間、email、狀態、過期時間），對所有會員恆顯示、不隨完成註冊而隱藏，供管理者稽核；不再提供任何編輯元件。
+
+### 學員首頁「加好友／傳訊息」按鈕移至學習進度下方（`cr-feat-261023-003`）
+- 他人視角的「傳訊息」按鈕自基本資料姓名列移除，改於「學習進度」三卡區塊下方顯示；新增 `components/conversation/profile-friend-actions.tsx`（client），依好友狀態切換顯示「加好友」（呼叫既有 `addFriendByUserId`）或「傳訊息」（既有 `SendMessageButton`），加好友成功後即時切換、不整頁刷新。
+- `page.tsx` 於 `!isOwnPage` 時以 `lib/data/friendship.ts isFriend(session.user.id, user.id)` 查詢好友狀態作為 `initialIsFriend` 傳入。
+
+### 學員首頁基本資料新增性別／所屬教會顯示（`cr-feat-261023-004`）
+- 基本資料區塊於 Spirit ID 列與身分標籤列之間新增「性別」（重用 `GenderIcon`）與「所屬教會」兩列，對所有檢視者（本人與他人）一致公開顯示（與使用者確認不需隱私限制）。
+- 所屬教會三態就地於 `page.tsx` 計算（不抽共用 helper）：`churchType === 'church'` 顯示 `church.name`；`churchType === 'other'` 顯示 `churchOther`；否則顯示 `studentProfile.churchUnset`（「未設定」）。

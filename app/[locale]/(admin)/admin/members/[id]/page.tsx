@@ -15,8 +15,8 @@ import {
   isSuperadmin,
   TEACHER_ROLE_BY_CATALOG,
   BOOK_LABEL_BY_TEACHER_ROLE,
-  ROLE_LABELS,
 } from '@/lib/auth-roles'
+import { getIdentityTags } from '@/lib/utils/identity-tags'
 import type { UserRole } from '@prisma/client'
 import { getMemberDetail, getUserDisplayById } from '@/lib/data/members'
 import { getMemberDisplayName } from '@/lib/utils/member-display'
@@ -39,6 +39,7 @@ import { MemberSuspendSection } from '@/components/admin/member-suspend-section'
 import { MaskedValue } from '@/components/admin/masked-value'
 import { CourseSessionCard } from '@/components/course-session/course-session-card'
 import { SupportInquiryCard } from '@/components/admin/support-inquiry-card'
+import { IdentityTagBadges } from '@/components/shared/identity-tag-badges'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -134,9 +135,6 @@ export default async function MemberDetailPage({
           <Link href="/admin/members">← 返回清單</Link>
         </Button>
         <h1 className="text-2xl font-semibold">{displayName}</h1>
-        {member.isProxyMember && (
-          <Badge variant="outline" className="border-amber-300 bg-amber-50 text-xs text-amber-800">未註冊</Badge>
-        )}
         {member.suspendedAt && (
           <Badge variant="destructive" className="text-xs">已暫停</Badge>
         )}
@@ -179,10 +177,8 @@ export default async function MemberDetailPage({
               <div><dt className="text-muted-foreground">授課老師編號</dt><dd className="font-mono text-xs">{member.teacherNo || '—'}</dd></div>
               <div className="col-span-2 sm:col-span-3">
                 <dt className="text-muted-foreground mb-1">身分</dt>
-                <dd className="flex flex-wrap gap-1.5">
-                  {(member.roles as UserRole[]).map((r) => (
-                    <Badge key={r} variant="secondary" className="text-xs">{ROLE_LABELS[r] ?? r}</Badge>
-                  ))}
+                <dd>
+                  <IdentityTagBadges tags={getIdentityTags(member.roles as UserRole[], member.isProxyMember)} />
                 </dd>
               </div>
               <div><dt className="text-muted-foreground">加入日期</dt><dd>{fmtDate(member.createdAt)}</dd></div>

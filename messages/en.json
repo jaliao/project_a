@@ -708,7 +708,8 @@
     "teacher_3": "Activate Victory Instructor",
     "admin": "Administrator",
     "superadmin": "Super Administrator",
-    "systemAdmin": "System Administrator"
+    "systemAdmin": "System Administrator",
+    "unregisteredStudent": "Unregistered Student"
   },
   "pageMeta": {
     "terms": "Terms of Service — Activate Ministry",
@@ -1101,6 +1102,14 @@
     "basicInfo": "Basic Info",
     "nameLabel": "Name",
     "spiritIdLabel": "Spirit ID",
+    "genderLabel": "Gender",
+    "churchLabel": "Church",
+    "churchUnset": "Not set",
+    "gender": {
+      "male": "Male",
+      "female": "Female",
+      "unspecified": "Not set"
+    },
     "identityTagsLabel": "Identity tags",
     "learningProgressLabel": "Learning progress",
     "graduatedAtPrefix": "Graduated: ",
@@ -1116,6 +1125,9 @@
     "adminSection": "Admin",
     "adminPanelLink": "Admin panel",
     "contactAdminSection": "Contact Admin",
+    "addFriend": "Add friend",
+    "addFriendSuccess": "Friend added",
+    "addFriendFailed": "Failed to add friend, please try again later",
     "proxyInvite": {
       "sectionTitle": "Unregistered Student Invite Management",
       "emailLabel": "Invite Email",

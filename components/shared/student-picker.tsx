@@ -17,6 +17,8 @@ import { useMemo, useRef, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { UserAvatar } from '@/components/shared/user-avatar'
+import { getIdentityTags } from '@/lib/utils/identity-tags'
+import { IdentityTagBadges } from '@/components/shared/identity-tag-badges'
 import type { FriendListItem } from '@/lib/data/friendship'
 import type { StudentPickerCandidate } from '@/lib/data/student-picker'
 
@@ -188,11 +190,7 @@ function PickerRow({ item, onClick }: { item: PickerItem; onClick: () => void })
       <UserAvatar avatarUrl={item.avatarUrl} displayName={item.displayName} size="sm" />
       <span className="truncate text-sm">{item.displayName}</span>
       <span className="ml-auto flex shrink-0 items-center gap-1">
-        {item.isProxyMember && (
-          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
-            未註冊
-          </span>
-        )}
+        <IdentityTagBadges tags={getIdentityTags(undefined, item.isProxyMember)} />
         {item.isFriend && (
           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
             好友

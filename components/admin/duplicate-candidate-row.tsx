@@ -18,6 +18,8 @@ import type { DuplicateCandidate, DuplicateCandidateSide, DuplicateConfidence } 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { MaskedValue } from '@/components/admin/masked-value'
+import { getIdentityTags } from '@/lib/utils/identity-tags'
+import { IdentityTagBadges } from '@/components/shared/identity-tag-badges'
 import { MemberHomeLink } from '@/components/admin/member-home-link'
 import { MemberMergeDialog } from '@/components/admin/member-merge-dialog'
 
@@ -45,9 +47,7 @@ function CandidateSideCard({ side }: { side: DuplicateCandidateSide }) {
       </div>
       <div className="flex items-center gap-1.5">
         <span className="font-medium">{side.displayName}</span>
-        {side.isProxyMember && (
-          <Badge variant="outline" className="border-amber-300 bg-amber-50 text-xs text-amber-800">未註冊</Badge>
-        )}
+        <IdentityTagBadges tags={getIdentityTags(undefined, side.isProxyMember)} />
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm text-muted-foreground">
         <dt>Email</dt>

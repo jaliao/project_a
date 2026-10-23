@@ -32,8 +32,9 @@ import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { getIdentityTags } from '@/lib/utils/identity-tags'
 import { resolveAvatarUrl } from '@/lib/utils/avatar'
 import { UserAvatar } from '@/components/shared/user-avatar'
-import { SendMessageButton } from '@/components/conversation/send-message-button'
-import { Badge } from '@/components/ui/badge'
+import { GenderIcon } from '@/components/shared/gender-icon'
+import { ProfileFriendActions } from '@/components/conversation/profile-friend-actions'
+import { IdentityTagBadges } from '@/components/shared/identity-tag-badges'
 import { ProfileBanner } from '@/components/dashboard/profile-banner'
 import { InstallBanner } from '@/components/pwa/install-banner'
 import { GenderPromptDialog } from '@/components/dashboard/gender-prompt-dialog'
@@ -51,6 +52,7 @@ import { getAdminSetting, CLASS_MAX_CAPACITY_KEY, CLASS_MAX_CAPACITY_DEFAULT } f
 import { getMyLearningIntent } from '@/lib/data/learning-intent'
 import { LearningIntentDialog } from '@/components/dashboard/learning-intent-dialog'
 import { isClassTeacherOfMember } from '@/lib/data/proxy-invite'
+import { isFriend } from '@/lib/data/friendship'
 import { ProxyInvitePanel } from '@/components/dashboard/proxy-invite-panel'
 
 type Props = {
@@ -72,7 +74,6 @@ export default async function UserProfilePage({ params }: Props) {
   const session = await auth()
   const t = await getTranslations('studentProfile')
   const tRole = await getTranslations('role')
-  const tConversation = await getTranslations('conversation')
 
   // 查詢使用者基本資料（以 spiritId 查詢，URL 為小寫，DB 存大寫）
   const user = await prisma.user.findUnique({
@@ -90,6 +91,9 @@ export default async function UserProfilePage({ params }: Props) {
       spiritId: true,
       roles: true,
       gender: true,
+      churchType: true,
+      churchOther: true,
+      church: { select: { name: true } },
       avatarKey: true,
       image: true,
       isProxyMember: true,
@@ -154,8 +158,16 @@ export default async function UserProfilePage({ params }: Props) {
 
   const displayName = getMemberDisplayName(user)
 
-  // 計算身分標籤（系統管理員優先，講師標籤依書籍講師身分推導）
-  const identityTags = getIdentityTags(user.roles, tRole)
+  // 計算身分標籤（未註冊學員優先，系統管理員次之，講師標籤依書籍講師身分推導，一般會員為基準標籤）
+  const identityTags = getIdentityTags(user.roles, user.isProxyMember, tRole)
+
+  // 所屬教會三態顯示：教會／其他自填文字／未設定
+  const churchLabel =
+    user.churchType === 'church'
+      ? user.church?.name ?? t('churchUnset')
+      : user.churchType === 'other'
+        ? user.churchOther ?? t('churchUnset')
+        : t('churchUnset')
 
   // 判斷是否為本人頁面
   const isOwnPage = session?.user?.spiritId?.toLowerCase() === id
@@ -173,6 +185,10 @@ export default async function UserProfilePage({ params }: Props) {
 
   // 開課入口：具任一書籍講師身分（或 admin/superadmin）即顯示，與 server action 授權一致
   const canTeach = canTeachAny(session?.user?.roles)
+
+  // 他人視角「加好友／傳訊息」按鈕：是否已與頁主互為好友
+  const isFriendWithUser =
+    !isOwnPage && !!session?.user?.id ? await isFriend(session.user.id, user.id) : false
 
   // 強制轉導停用時才顯示 Banner（啟用時 layout guard 已轉導，無需 Banner）
   const showProfileBanner = process.env.REQUIRE_PROFILE_COMPLETION === 'false'
@@ -209,7 +225,6 @@ export default async function UserProfilePage({ params }: Props) {
             <span className="text-sm text-muted-foreground w-20 shrink-0">{t('nameLabel')}</span>
             <UserAvatar avatarUrl={resolveAvatarUrl(user)} displayName={displayName} size="sm" />
             <span className="text-sm font-medium">{displayName}</span>
-            {!isOwnPage && <SendMessageButton targetUserId={user.id} label={tConversation('cardMessage')} />}
           </div>
 
           {/* Spirit ID */}
@@ -220,18 +235,23 @@ export default async function UserProfilePage({ params }: Props) {
             </div>
           )}
 
+          {/* 性別（公開；CR-FEAT-261023-004） */}
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground w-20 shrink-0">{t('genderLabel')}</span>
+            <GenderIcon gender={user.gender} />
+            <span className="text-sm">{t(`gender.${user.gender}`)}</span>
+          </div>
+
+          {/* 所屬教會（公開；CR-FEAT-261023-004） */}
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground w-20 shrink-0">{t('churchLabel')}</span>
+            <span className="text-sm">{churchLabel}</span>
+          </div>
+
           {/* 身分標籤 */}
           <div className="flex items-start gap-3">
             <span className="text-sm text-muted-foreground w-20 shrink-0 pt-0.5">{t('identityTagsLabel')}</span>
-            {identityTags.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                {identityTags.map((tag) => (
-                  <Badge key={tag} variant="secondary">{tag}</Badge>
-                ))}
-              </div>
-            ) : (
-              <span className="text-sm text-muted-foreground">—</span>
-            )}
+            <IdentityTagBadges tags={identityTags} />
           </div>
 
           {/* 學習進度三卡（公開；已結業顯示學業完成時間） */}
@@ -246,6 +266,13 @@ export default async function UserProfilePage({ params }: Props) {
               isOwnPage={isOwnPage}
             />
           </div>
+
+          {/* 他人視角：加好友／傳訊息操作（CR-FEAT-261023-003） */}
+          {!isOwnPage && (
+            <div className="pt-1">
+              <ProfileFriendActions targetUserId={user.id} initialIsFriend={isFriendWithUser} />
+            </div>
+          )}
         </div>
       </section>
 

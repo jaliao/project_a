@@ -9,7 +9,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Suspense } from 'react'
-import { ROLE_LABELS } from '@/lib/auth-roles'
 import type { Gender, UserRole } from '@prisma/client'
 import { searchMembers, hasAnyMemberFilter, type MemberFilters } from '@/lib/data/members'
 import { getActiveChurches } from '@/lib/data/churches'
@@ -20,7 +19,8 @@ import { MembersFilter } from '@/components/admin/members-filter'
 import { MembersPagination } from '@/components/admin/members-pagination'
 import { CreateMemberDialog } from '@/components/admin/create-member-dialog'
 import { MaskedValue } from '@/components/admin/masked-value'
-import { Badge } from '@/components/ui/badge'
+import { getIdentityTags } from '@/lib/utils/identity-tags'
+import { IdentityTagBadges } from '@/components/shared/identity-tag-badges'
 import { Button } from '@/components/ui/button'
 
 export const dynamic = 'force-dynamic'
@@ -124,25 +124,10 @@ export default async function AdminMembersPage({
                   return (
                     <tr key={member.id} className={i < result.items.length - 1 ? 'border-b' : ''}>
                       <td className="px-4 py-3 font-mono text-xs">{member.spiritId ?? '—'}</td>
-                      <td className="px-4 py-3 font-medium">
-                        <span className="flex items-center gap-1.5">
-                          {displayName}
-                          {member.isProxyMember && (
-                            <Badge variant="outline" className="border-amber-300 bg-amber-50 text-xs text-amber-800">
-                              未註冊
-                            </Badge>
-                          )}
-                        </span>
-                      </td>
+                      <td className="px-4 py-3 font-medium">{displayName}</td>
                       <td className="px-4 py-3 text-muted-foreground"><MaskedValue value={member.email} label="Email" /></td>
                       <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-1">
-                          {(member.roles as UserRole[]).map((r) => (
-                            <Badge key={r} variant="secondary" className="text-xs">
-                              {ROLE_LABELS[r] ?? r}
-                            </Badge>
-                          ))}
-                        </div>
+                        <IdentityTagBadges tags={getIdentityTags(member.roles as UserRole[], member.isProxyMember)} />
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
