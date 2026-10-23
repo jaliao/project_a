@@ -106,7 +106,7 @@
       "doneTitle": "注册完成",
       "failed": "完成注册失败，请稍后再试",
       "invalidTitle": "邀请连结已失效",
-      "invalidDesc": "此邀请连结已失效或已被使用，请联系老师重新发送邀请。",
+      "invalidDesc": "此邀请连结已失效或已被使用，请联系启动事工同工或是授课老师重新发送邀请。",
       "newPassword": "设定密码",
       "newPasswordPlaceholder": "至少 8 个字元",
       "confirmNewPassword": "确认密码",
@@ -1116,6 +1116,14 @@
     "moreCourseSessions": "更多授课资讯",
     "adminSection": "管理者",
     "adminPanelLink": "管理后台",
-    "contactAdminSection": "联系管理者"
+    "contactAdminSection": "联系管理者",
+    "proxyInvite": {
+      "sectionTitle": "未注册学员邀请管理",
+      "emailLabel": "邀请 Email",
+      "emailPlaceholder": "受邀学员的 Email",
+      "saveButton": "储存并寄出邀请",
+      "resendButton": "补发邀请",
+      "helperText": "填写或修改 Email 并储存后，系统会核发新的邀请连结并寄信；「补发邀请」则以目前 Email 重新寄送，先前未使用的连结都会失效。"
+    }
   }
 }

@@ -45,6 +45,11 @@
 
 ### 代填學員邀請與自動連結（`cr-feat-261022-003`）
 - 建立代填學員（`addProxyStudentToInvite`）可選填邀請 email：唯一性檢查通過後寫入 `User.email`＋白名單，交易外核發 `ProxyInviteToken`（30 天、一次性）並 fire-and-forget 寄信（`sendProxyInviteEmail`），失敗僅 log 不回滾已建立的帳號。
-- 補發／改信箱（`app/actions/admin.ts` 的 `updateProxyInviteEmail`／`resendProxyInvite`，admin-only）：改信箱沿用 `account-email-change` 共通的 `validateNewAccountEmail`/`applyAccountEmailChange`；兩者皆先 `invalidatePendingTokens` 作廢該使用者先前未使用的 token，再核發新 token 重新寄信——恆「最新一封才有效」。
-- 完成註冊（`/complete-registration?token=xxx`，免登入，見 `public-route-registry`）：`lib/data/proxy-invite.ts getActiveInviteForToken` 於**伺服器端**先驗證 token 有效且對應 `User.isProxyMember === true`，無效時頁面直接不渲染密碼表單；送出由 `completeProxyRegistration`（`app/actions/auth.ts`）於單一交易內完成 `passwordHash` 寫入＋`isProxyMember → false`＋token `usedAt` 標記，**同一筆 `User`**，不建立新帳號。
+- 補發／改信箱（`app/actions/admin.ts` 的 `updateProxyInviteEmail`／`resendProxyInvite`）：改信箱沿用 `account-email-change` 共通的 `validateNewAccountEmail`/`applyAccountEmailChange`；兩者皆先 `invalidatePendingTokens` 作廢該使用者先前未使用的 token（寫 `voidedAt`，不寫 `usedAt`），再核發新 token 重新寄信——恆「最新一封才有效」。
+- 完成註冊（`/complete-registration?token=xxx`，免登入，見 `public-route-registry`）：`lib/data/proxy-invite.ts getActiveInviteForToken` 於**伺服器端**先驗證 token 有效（`usedAt`／`voidedAt` 皆為 null 且未過期）且對應 `User.isProxyMember === true`，無效時頁面直接不渲染密碼表單；送出由 `completeProxyRegistration`（`app/actions/auth.ts`）於單一交易內完成 `passwordHash` 寫入＋`isProxyMember → false`＋token `usedAt` 標記，**同一筆 `User`**，不建立新帳號。失效文案統一為「請聯繫啟動事工同工或是授課老師重新發送邀請」（`cr-feat-261023-001`）。
 - Google OAuth 自動連結：`lib/auth.ts` 的 `jwt` callback 於既有 Google/LINE 分支內，`dbUser.isProxyMember` 為真時直接更新為 `false`（獨立判斷，不與 spiritId/姓名重試邏輯混用失敗路徑）；因既有 `allowDangerousEmailAccountLinking: true`，受邀 email 的 Google 登入會自動關聯到這筆既有帳號，此行只是解除其代填標記。LINE 與自助註冊（`registerWithEmail`）皆不比對/放寬既有「Email 已被使用即拒絕」規則，不作為認領代填帳號的管道。
+
+### 代填學員邀請管理入口搬至會員首頁（`cr-feat-261023-001`）
+- `updateProxyInviteEmail`／`resendProxyInvite` 的授權範圍自「僅 `canAccessAdmin`」放寬為「管理者，或該代填學員所屬班級的授課老師」：後者由 `lib/data/proxy-invite.ts isClassTeacherOfMember(teacherId, memberId)` 判定——該會員名下存在至少一筆 `InviteEnrollment`（不限 `status`），其 `CourseInvite.createdById` 為操作者本人。
+- 操作入口自後台會員詳情頁「特殊設定」分頁移至該會員**自己的會員首頁**（`/user/[spiritId]`，新元件 `components/dashboard/proxy-invite-panel.tsx`）：僅當被檢視者 `isProxyMember === true` 且檢視者為管理者或其班級老師時，首頁才會渲染此區塊（置於「基本資料」之後、「課程」之前）；此頁已 i18n 化，新增 `studentProfile.proxyInvite.*` 命名空間。
+- 後台會員詳情頁新增「未註冊會員專區」唯讀分頁（置於最前），僅顯示 `getProxyInviteHistory(userId)` 歷史列表（核發時間、email、狀態、過期時間），對所有會員恆顯示、不隨完成註冊而隱藏，供管理者稽核；不再提供任何編輯元件。

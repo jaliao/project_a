@@ -23,11 +23,12 @@ import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { getAdminSetting } from '@/lib/data/admin-settings'
 import { getGraduatedCatalogIds } from '@/lib/data/course-catalog'
 import { getInquiryList } from '@/lib/data/support-inquiry'
+import { getProxyInviteHistory } from '@/lib/data/proxy-invite'
 import { SendMessageButton } from '@/components/conversation/send-message-button'
 import { MemberResetButton } from '@/components/admin/member-reset-button'
 import { MemberHomeLink } from '@/components/admin/member-home-link'
 import { MemberEmailForm } from '@/components/admin/member-email-form'
-import { MemberProxyInviteForm } from '@/components/admin/member-proxy-invite-form'
+import { MemberProxyInviteHistory } from '@/components/admin/member-proxy-invite-history'
 import { MemberDeleteButton } from '@/components/admin/member-delete-button'
 import { MemberCourseInviteTransfer } from '@/components/admin/member-course-invite-transfer'
 import { MemberMergeDialog } from '@/components/admin/member-merge-dialog'
@@ -122,6 +123,9 @@ export default async function MemberDetailPage({
   // 推薦歷程：他人推薦此會員成為講師（teacherRecommended = true）
   const recommendations = member.inviteEnrollments.filter((e) => e.teacherRecommended === true)
 
+  // 未註冊會員專區：唯讀邀請紀錄，對所有會員恆查詢（不依 isProxyMember 切換）
+  const proxyInviteHistory = await getProxyInviteHistory(member.id)
+
   return (
     <div className="space-y-6">
       {/* 頁首 */}
@@ -142,12 +146,21 @@ export default async function MemberDetailPage({
 
       <Tabs defaultValue="info">
         <TabsList>
+          <TabsTrigger value="proxy">未註冊會員專區</TabsTrigger>
           <TabsTrigger value="info">基本資料</TabsTrigger>
           <TabsTrigger value="hierarchy">學習階層</TabsTrigger>
           <TabsTrigger value="teacher">講師身分</TabsTrigger>
           <TabsTrigger value="special">特殊設定</TabsTrigger>
           <TabsTrigger value="inquiries">{ti('memberInquiriesTab')}</TabsTrigger>
         </TabsList>
+
+        {/* ── 未註冊會員專區分頁（唯讀邀請紀錄，不含編輯元件，恆顯示不依 isProxyMember 切換）── */}
+        <TabsContent value="proxy" className="pt-4">
+          <div className="rounded-lg border">
+            <div className="px-4 py-3 border-b bg-muted/40"><h2 className="font-medium text-sm">邀請紀錄</h2></div>
+            <MemberProxyInviteHistory items={proxyInviteHistory} />
+          </div>
+        </TabsContent>
 
         {/* ── 基本資料分頁 ── */}
         <TabsContent value="info" className="space-y-6 pt-4">
@@ -355,14 +368,6 @@ export default async function MemberDetailPage({
             <h2 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">帳號修改</h2>
             <MemberEmailForm userId={member.id} currentEmail={member.email} />
           </div>
-
-          {/* 代填學員：邀請 Email 管理 */}
-          {member.isProxyMember && (
-            <div className="rounded-lg border p-5 space-y-3">
-              <h2 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">邀請 Email</h2>
-              <MemberProxyInviteForm userId={member.id} currentEmail={member.email} />
-            </div>
-          )}
 
           {/* 特殊身分授權 */}
           <div className="rounded-lg border p-5 space-y-3">

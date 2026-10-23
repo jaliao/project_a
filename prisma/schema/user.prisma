@@ -257,6 +257,7 @@ model ProxyInviteToken {
   email     String // 核發當下的 email 快照，供信件內容與過期後比對
   expiresAt DateTime
   usedAt    DateTime?
+  voidedAt  DateTime? // 補發邀請作廢時寫入，與「完成註冊使用」(usedAt) 區分
   createdAt DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

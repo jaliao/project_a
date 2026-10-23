@@ -29,7 +29,7 @@ import { sendTempPasswordEmail, sendTeacherRoleGrantedEmail, sendProxyInviteEmai
 import { resolveContactEmail } from '@/lib/utils/contact-email'
 import { createLoginableMember, generateTempPassword } from '@/lib/member-creation'
 import { validateNewAccountEmail, applyAccountEmailChange } from '@/lib/account-email-change'
-import { invalidatePendingTokens, createInviteToken } from '@/lib/data/proxy-invite'
+import { invalidatePendingTokens, createInviteToken, isClassTeacherOfMember } from '@/lib/data/proxy-invite'
 import { getAppUrl } from '@/lib/utils/app-url'
 import { searchTeacherCandidates, type TeacherPickerCandidate } from '@/lib/data/teacher-picker'
 
@@ -539,6 +539,7 @@ export async function changeMemberEmailAdmin(
 /**
  * 代填學員：編輯邀請 Email 並核發新邀請 token 重新寄信（作廢先前未使用的 token）
  * 僅限 isProxyMember = true 的會員；唯一性檢查與白名單處理沿用 account-email-change 共通規則
+ * 授權範圍：管理者，或該會員所屬班級的授課老師（isClassTeacherOfMember）
  */
 export async function updateProxyInviteEmail(
   userId: string,
@@ -546,14 +547,17 @@ export async function updateProxyInviteEmail(
 ): Promise<ActionResponse> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
-  if (!canAccessAdmin(session.user.roles)) return { success: false, message: '無權限' }
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, isProxyMember: true },
+    select: { id: true, email: true, isProxyMember: true, spiritId: true },
   })
   if (!user) return { success: false, message: '找不到此會員' }
   if (!user.isProxyMember) return { success: false, message: '此會員非代填學員' }
+
+  const authorized =
+    canAccessAdmin(session.user.roles) || (await isClassTeacherOfMember(session.user.id, userId))
+  if (!authorized) return { success: false, message: '無權限' }
 
   const check = await validateNewAccountEmail(user.id, user.email, newEmail)
   if (!check.ok) return { success: false, errors: check.errors }
@@ -568,23 +572,28 @@ export async function updateProxyInviteEmail(
   })
 
   revalidatePath(`/admin/members/${userId}`)
+  if (user.spiritId) revalidatePath(`/user/${user.spiritId.toLowerCase()}`)
   return { success: true, message: `已更新邀請 Email 為 ${check.email} 並重新寄送邀請信` }
 }
 
 /**
  * 代填學員：補發邀請（不改 email）——作廢先前未使用的 token、核發新 token 並以目前 email 重新寄信
+ * 授權範圍：管理者，或該會員所屬班級的授課老師（isClassTeacherOfMember）
  */
 export async function resendProxyInvite(userId: string): Promise<ActionResponse> {
   const session = await auth()
   if (!session?.user?.id) return { success: false, message: '請先登入' }
-  if (!canAccessAdmin(session.user.roles)) return { success: false, message: '無權限' }
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, isProxyMember: true },
+    select: { id: true, email: true, isProxyMember: true, spiritId: true },
   })
   if (!user) return { success: false, message: '找不到此會員' }
   if (!user.isProxyMember) return { success: false, message: '此會員非代填學員' }
+
+  const authorized =
+    canAccessAdmin(session.user.roles) || (await isClassTeacherOfMember(session.user.id, userId))
+  if (!authorized) return { success: false, message: '無權限' }
   if (!user.email) return { success: false, message: '尚未填寫邀請 Email，請先編輯後再補發' }
 
   await invalidatePendingTokens(user.id)
@@ -596,5 +605,6 @@ export async function resendProxyInvite(userId: string): Promise<ActionResponse>
   })
 
   revalidatePath(`/admin/members/${userId}`)
+  if (user.spiritId) revalidatePath(`/user/${user.spiritId.toLowerCase()}`)
   return { success: true, message: '已重新寄送邀請信' }
 }

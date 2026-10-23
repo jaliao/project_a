@@ -16,6 +16,7 @@ export async function getValidInviteToken(token: string) {
     where: {
       token,
       usedAt: null,
+      voidedAt: null,
       expiresAt: { gt: new Date() },
     },
   })
@@ -42,11 +43,12 @@ export async function markInviteTokenUsed(id: string) {
   })
 }
 
-// 作廢該使用者名下所有尚未使用的邀請 token（補發邀請前先呼叫）
+// 作廢該使用者名下所有尚未使用且尚未作廢的邀請 token（補發邀請前先呼叫）
+// 寫入 voidedAt（不寫 usedAt）：usedAt 僅代表受邀者實際完成註冊，與補發作廢是獨立語意
 export async function invalidatePendingTokens(userId: string) {
   await prisma.proxyInviteToken.updateMany({
-    where: { userId, usedAt: null },
-    data: { usedAt: new Date() },
+    where: { userId, usedAt: null, voidedAt: null },
+    data: { voidedAt: new Date() },
   })
 }
 
@@ -56,4 +58,43 @@ export async function createInviteToken(userId: string, email: string) {
   return prisma.proxyInviteToken.create({
     data: { token, userId, email, expiresAt },
   })
+}
+
+export type ProxyInviteStatus = 'completed' | 'voided' | 'expired' | 'active'
+
+export const PROXY_INVITE_STATUS_LABELS: Record<ProxyInviteStatus, string> = {
+  completed: '已完成註冊',
+  voided: '已作廢',
+  expired: '已過期',
+  active: '有效',
+}
+
+// 狀態判定優先序：usedAt → voidedAt → expiresAt → 有效
+export function getProxyInviteStatus(invite: {
+  usedAt: Date | null
+  voidedAt: Date | null
+  expiresAt: Date
+}): ProxyInviteStatus {
+  if (invite.usedAt) return 'completed'
+  if (invite.voidedAt) return 'voided'
+  if (invite.expiresAt < new Date()) return 'expired'
+  return 'active'
+}
+
+// 後台「未註冊會員專區」唯讀歷史列表：依核發時間新到舊排序
+export async function getProxyInviteHistory(userId: string) {
+  return prisma.proxyInviteToken.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+  })
+}
+
+// 判定某老師是否為該會員所屬班級的授課老師：
+// 該會員名下存在至少一筆 InviteEnrollment，其所屬 CourseInvite.createdById 為該老師本人（不限 status）
+export async function isClassTeacherOfMember(teacherId: string, memberId: string): Promise<boolean> {
+  const enrollment = await prisma.inviteEnrollment.findFirst({
+    where: { userId: memberId, invite: { createdById: teacherId } },
+    select: { id: true },
+  })
+  return !!enrollment
 }

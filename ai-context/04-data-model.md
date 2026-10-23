@@ -42,17 +42,18 @@ email     String（唯一）
 isActive  Boolean（控制登入許可）
 ```
 
-### ProxyInviteToken（代填學員邀請 Token；cr-feat-261022-003）
+### ProxyInviteToken（代填學員邀請 Token；cr-feat-261022-003，`cr-feat-261023-001` 新增 `voidedAt`）
 ```
 id        String（主鍵，cuid）
 token     String（唯一）
 userId    String（關聯 User UUID，onDelete: Cascade）
 email     String（核發當下的 email 快照）
 expiresAt DateTime（核發起 30 天）
-usedAt    DateTime?（一次性使用；補發邀請時先將舊 token 標記已使用作廢）
+usedAt    DateTime?（僅受邀者實際完成註冊時寫入）
+voidedAt  DateTime?（補發邀請作廢舊 token 時寫入；與 usedAt 為獨立語意，不可互相替代）
 createdAt DateTime
 ```
-> 建立代填學員時填寫 email、或於會員詳情頁編輯／補發邀請時核發。受邀者於 `/complete-registration?token=xxx` 設定密碼完成註冊，同一筆 `User` 上寫入 `passwordHash`、`isProxyMember` 轉 `false`（不建立新帳號）；改用同信箱 Google 登入亦會由 `jwt` callback 自動解除 `isProxyMember`。
+> 建立代填學員時填寫 email、或於該學員會員首頁（`/user/[spiritId]`）編輯／補發邀請時核發。受邀者於 `/complete-registration?token=xxx` 設定密碼完成註冊，同一筆 `User` 上寫入 `passwordHash`、`isProxyMember` 轉 `false`（不建立新帳號，寫入 `usedAt`）；改用同信箱 Google 登入亦會由 `jwt` callback 自動解除 `isProxyMember`。補發邀請作廢舊 token 寫入 `voidedAt`（不寫 `usedAt`），兩者優先序 `usedAt → voidedAt → expiresAt` 用於後台「未註冊會員專區」歷史列表的狀態判定（已完成註冊／已作廢／已過期／有效）。
 
 ### Notification
 ```

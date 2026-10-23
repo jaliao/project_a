@@ -442,12 +442,12 @@ export async function completeProxyRegistration(
 
   const inviteToken = await getValidInviteToken(token)
   if (!inviteToken) {
-    return { success: false, message: '邀請連結已失效，請聯繫老師重新發送邀請' }
+    return { success: false, message: '邀請連結已失效，請聯繫啟動事工同工或是授課老師重新發送邀請' }
   }
 
   const user = await prisma.user.findUnique({ where: { id: inviteToken.userId } })
   if (!user || !user.isProxyMember) {
-    return { success: false, message: '邀請連結已失效，請聯繫老師重新發送邀請' }
+    return { success: false, message: '邀請連結已失效，請聯繫啟動事工同工或是授課老師重新發送邀請' }
   }
 
   const newHash = await bcrypt.hash(newPassword, 12)

@@ -105,7 +105,7 @@
       "doneTitle": "Registration complete",
       "failed": "Failed to complete registration, please try again later",
       "invalidTitle": "Invite link invalid",
-      "invalidDesc": "This invite link is invalid or has already been used. Please ask your teacher to resend the invite.",
+      "invalidDesc": "This invite link is invalid or has already been used. Please contact the ministry staff or your teacher to resend the invite.",
       "newPassword": "Set password",
       "newPasswordPlaceholder": "At least 8 characters",
       "confirmNewPassword": "Confirm password",
@@ -1115,6 +1115,14 @@
     "moreCourseSessions": "More teaching info",
     "adminSection": "Admin",
     "adminPanelLink": "Admin panel",
-    "contactAdminSection": "Contact Admin"
+    "contactAdminSection": "Contact Admin",
+    "proxyInvite": {
+      "sectionTitle": "Unregistered Student Invite Management",
+      "emailLabel": "Invite Email",
+      "emailPlaceholder": "Invited student's email",
+      "saveButton": "Save and send invite",
+      "resendButton": "Resend invite",
+      "helperText": "Saving a new or changed email issues a new invite link and sends it by email. \"Resend invite\" re-sends to the current email; any previously unused links become invalid."
+    }
   }
 }

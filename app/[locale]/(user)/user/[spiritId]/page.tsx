@@ -50,6 +50,8 @@ import { ContactAdminCards } from '@/components/support-inquiry/contact-admin-ca
 import { getAdminSetting, CLASS_MAX_CAPACITY_KEY, CLASS_MAX_CAPACITY_DEFAULT } from '@/lib/data/admin-settings'
 import { getMyLearningIntent } from '@/lib/data/learning-intent'
 import { LearningIntentDialog } from '@/components/dashboard/learning-intent-dialog'
+import { isClassTeacherOfMember } from '@/lib/data/proxy-invite'
+import { ProxyInvitePanel } from '@/components/dashboard/proxy-invite-panel'
 
 type Props = {
   params: Promise<{ spiritId: string }>
@@ -90,6 +92,7 @@ export default async function UserProfilePage({ params }: Props) {
       gender: true,
       avatarKey: true,
       image: true,
+      isProxyMember: true,
     },
   })
 
@@ -161,6 +164,12 @@ export default async function UserProfilePage({ params }: Props) {
   const effectiveCommEmail = user.commEmail ?? user.email
   const isProfileComplete = !!(user.realName && effectiveCommEmail && user.phone)
   const isAdmin = canAccessAdmin(session?.user?.roles)
+
+  // 未註冊學員邀請管理區塊：僅 isProxyMember 為真、且檢視者為管理者或該會員所屬班級的授課老師時顯示
+  const canManageProxyInvite =
+    user.isProxyMember &&
+    !!session?.user?.id &&
+    (isAdmin || (await isClassTeacherOfMember(session.user.id, user.id)))
 
   // 開課入口：具任一書籍講師身分（或 admin/superadmin）即顯示，與 server action 授權一致
   const canTeach = canTeachAny(session?.user?.roles)
@@ -239,6 +248,9 @@ export default async function UserProfilePage({ params }: Props) {
           </div>
         </div>
       </section>
+
+      {/* 未註冊學員邀請管理（僅 isProxyMember 且檢視者為管理者或該班老師時顯示） */}
+      {canManageProxyInvite && <ProxyInvitePanel userId={user.id} currentEmail={user.email} />}
 
       {/* 課程列表 */}
       <section className="space-y-4 border-t pt-8">

@@ -105,7 +105,7 @@
       "doneTitle": "註冊完成",
       "failed": "完成註冊失敗，請稍後再試",
       "invalidTitle": "邀請連結已失效",
-      "invalidDesc": "此邀請連結已失效或已被使用，請聯繫老師重新發送邀請。",
+      "invalidDesc": "此邀請連結已失效或已被使用，請聯繫啟動事工同工或是授課老師重新發送邀請。",
       "newPassword": "設定密碼",
       "newPasswordPlaceholder": "至少 8 個字元",
       "confirmNewPassword": "確認密碼",
@@ -1115,6 +1115,14 @@
     "moreCourseSessions": "更多授課資訊",
     "adminSection": "管理者",
     "adminPanelLink": "管理後台",
-    "contactAdminSection": "聯繫管理者"
+    "contactAdminSection": "聯繫管理者",
+    "proxyInvite": {
+      "sectionTitle": "未註冊學員邀請管理",
+      "emailLabel": "邀請 Email",
+      "emailPlaceholder": "受邀學員的 Email",
+      "saveButton": "儲存並寄出邀請",
+      "resendButton": "補發邀請",
+      "helperText": "填寫或修改 Email 並儲存後，系統會核發新的邀請連結並寄信；「補發邀請」則以目前 Email 重新寄送，先前未使用的連結都會失效。"
+    }
   }
 }
