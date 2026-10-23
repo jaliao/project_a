@@ -423,6 +423,14 @@ export default async function CourseDetailPage({
           joinedAt: enrollment.joinedAt,
           graduated: enrollment.graduatedAt != null,
           hasShipmentItems: enrollment._count.shipmentItems > 0,
+          gender: enrollment.user.gender,
+          // 所屬教會三態顯示：教會／其他自填文字／未設定（比照 user/[spiritId]/page.tsx）
+          churchLabel:
+            enrollment.user.churchType === 'church'
+              ? enrollment.user.church?.name ?? null
+              : enrollment.user.churchType === 'other'
+                ? enrollment.user.churchOther ?? null
+                : null,
         }))}
       />
 

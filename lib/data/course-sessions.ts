@@ -8,6 +8,7 @@
 
 import { prisma } from '@/lib/prisma'
 import type { DisplayNameMode } from '@/lib/utils/member-display'
+import type { Gender, ChurchType } from '@prisma/client'
 
 // 顯示名稱所需的使用者欄位（系統標準）
 const displayNameUserSelect = {
@@ -226,6 +227,10 @@ type EnrollmentRecord = {
     nickname: string | null
     displayNameMode: DisplayNameMode
     spiritId: string | null
+    gender: Gender
+    churchType: ChurchType
+    churchOther: string | null
+    church: { name: string } | null
   }
   // 教材寄送項目數（課程頁移除學員防呆用）
   _count: { shipmentItems: number }
@@ -355,7 +360,16 @@ export async function getCourseSessionById(
           teacherRecommended: true,
           teacherFeedbackNote: true,
           teacherFeedbackAt: true,
-          user: { select: { ...displayNameUserSelect, spiritId: true } },
+          user: {
+            select: {
+              ...displayNameUserSelect,
+              spiritId: true,
+              gender: true,
+              churchType: true,
+              churchOther: true,
+              church: { select: { name: true } },
+            },
+          },
           _count: { select: { shipmentItems: true } },
         },
         orderBy: { joinedAt: 'asc' },

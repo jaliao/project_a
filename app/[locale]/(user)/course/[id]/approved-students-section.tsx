@@ -13,10 +13,12 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { IconUsers, IconUserMinus } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { AddStudentDialog, RemoveStudentButton } from '@/components/admin/invite-student-cells'
+import { GenderIcon, type Gender } from '@/components/shared/gender-icon'
 import type { FriendListItem } from '@/lib/data/friendship'
 import { formatDateTW } from '@/lib/utils/date'
 
@@ -35,6 +37,8 @@ export type ApprovedStudentItem = {
   joinedAt: Date
   graduated: boolean
   hasShipmentItems: boolean
+  gender: Gender
+  churchLabel: string | null
 }
 
 export function ApprovedStudentsSection({
@@ -104,35 +108,61 @@ export function ApprovedStudentsSection({
       ) : (
         /* 卡片式排版（手機單欄、寬視窗雙欄）；不顯示學員 Email */
         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {students.map((s) => (
-            <li key={s.enrollmentId} className="rounded-lg border p-3 space-y-1.5">
-              <p className="text-sm font-medium">{s.displayName}</p>
-              {/* 移除模式：加顯啟動編號輔助辨識 */}
-              {canManage && removeMode && (
-                <p className="font-mono text-xs text-muted-foreground">{s.spiritId ?? '—'}</p>
-              )}
-              <div className="flex items-center justify-between gap-2">
-                <span
-                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                    MATERIAL_COLORS[s.materialChoice] ?? 'bg-gray-100 text-gray-600'
-                  }`}
-                >
-                  {t(`course.material.${s.materialChoice}`)}
-                </span>
-                <span className="text-xs text-muted-foreground">{formatDateTW(s.joinedAt)}</span>
-              </div>
-              {canManage && removeMode && (
-                <div className="flex justify-end">
-                  <RemoveStudentButton
-                    enrollmentId={s.enrollmentId}
-                    studentName={s.displayName}
-                    graduated={s.graduated}
-                    hasShipmentItems={s.hasShipmentItems}
-                  />
+          {students.map((s) => {
+            // 非移除模式且有啟動編號時，整張卡片可點擊連到會員首頁（新分頁開啟）
+            const clickable = !removeMode && !!s.spiritId
+
+            const cardBody = (
+              <>
+                {s.churchLabel && <p className="text-xs text-muted-foreground">{s.churchLabel}</p>}
+                <p className="text-sm font-medium flex items-center gap-1.5">
+                  {s.displayName}
+                  {s.gender !== 'unspecified' && <GenderIcon gender={s.gender} />}
+                </p>
+                {/* 移除模式：加顯啟動編號輔助辨識 */}
+                {canManage && removeMode && (
+                  <p className="font-mono text-xs text-muted-foreground">{s.spiritId ?? '—'}</p>
+                )}
+                <div className="flex items-center justify-between gap-2">
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                      MATERIAL_COLORS[s.materialChoice] ?? 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {t(`course.material.${s.materialChoice}`)}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{formatDateTW(s.joinedAt)}</span>
                 </div>
-              )}
-            </li>
-          ))}
+              </>
+            )
+
+            return (
+              <li key={s.enrollmentId} className="rounded-lg border p-3 space-y-1.5">
+                {clickable ? (
+                  <Link
+                    href={`/user/${s.spiritId!.toLowerCase()}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="-m-3 block space-y-1.5 rounded-lg p-3 transition-colors hover:bg-muted/50"
+                  >
+                    {cardBody}
+                  </Link>
+                ) : (
+                  cardBody
+                )}
+                {canManage && removeMode && (
+                  <div className="flex justify-end">
+                    <RemoveStudentButton
+                      enrollmentId={s.enrollmentId}
+                      studentName={s.displayName}
+                      graduated={s.graduated}
+                      hasShipmentItems={s.hasShipmentItems}
+                    />
+                  </div>
+                )}
+              </li>
+            )
+          })}
         </ul>
       )}
     </div>
