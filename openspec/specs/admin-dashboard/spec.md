@@ -30,7 +30,7 @@ roles 不含 `admin`/`superadmin` 者 SHALL redirect 至 `/`。
 2. **豐盛講師**：roles 含 `teacher_2` 的 User 數，並於卡片內同時顯示其中「已開課」人數
 3. **得勝講師**：roles 含 `teacher_3` 的 User 數，並於卡片內同時顯示其中「已開課」人數
 
-「已開課」定義：該講師身分使用者中，至少建立過一筆 `CourseInvite`（`CourseInvite.createdById` 為該使用者），不論該課程目前狀態為招募中／進行中／已結業／已放棄。
+「已開課」定義：該講師身分使用者中，至少建立過一筆**對應冊別**的 `CourseInvite`（`CourseInvite.createdById` 為該使用者，且 `courseCatalogId` 對應該講師身分——`teacher_1`→1、`teacher_2`→2、`teacher_3`→3），不論該課程目前狀態為招募中／進行中／已結業／已放棄；建立過其他冊別課程但未建立過對應冊別課程者 SHALL NOT 計入。
 
 **課程分析** SHALL 顯示（四狀態互斥，總和＝課程總數）：
 1. **招募中課程總數**：`startedAt IS NULL AND cancelledAt IS NULL AND completedAt IS NULL` 的 CourseInvite 數（卡片標籤 SHALL 為「招募中課程總數」，不得再使用「開課中」）
@@ -71,12 +71,16 @@ roles 不含 `admin`/`superadmin` 者 SHALL redirect 至 `/`。
 - **THEN** 該使用者計入「豐盛講師」、不計入「啟動講師」
 
 #### Scenario: 講師已開課人數計算
-- **WHEN** 某使用者 roles 含 `teacher_1`，且已建立過一筆 `CourseInvite`（不論該課程目前是招募中、進行中、已結業或已放棄）
+- **WHEN** 某使用者 roles 含 `teacher_1`，且已建立過一筆 `courseCatalogId = 1` 的 `CourseInvite`（不論該課程目前是招募中、進行中、已結業或已放棄）
 - **THEN** 該使用者計入「啟動講師」卡片的「已開課」人數
 
 #### Scenario: 未建立課程的講師不計入已開課人數
 - **WHEN** 某使用者 roles 含 `teacher_3`，但從未建立過任何 `CourseInvite`
 - **THEN** 該使用者計入「得勝講師」總人數，但不計入「已開課」人數
+
+#### Scenario: 建立其他冊別課程不計入已開課人數
+- **WHEN** 某使用者 roles 含 `teacher_1`，但只建立過 `courseCatalogId = 2`（啟動豐盛）或 `courseCatalogId = 3`（啟動得勝）的 `CourseInvite`，從未建立過 `courseCatalogId = 1` 的課程
+- **THEN** 該使用者計入「啟動講師」總人數，但不計入「已開課」人數
 
 #### Scenario: 已放棄課程計數
 - **WHEN** 某課程 `cancelledAt` 非空（無論其他旗標）

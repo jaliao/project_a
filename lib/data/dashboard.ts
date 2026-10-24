@@ -118,17 +118,26 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     prisma.user.count({ where: { roles: { has: 'teacher_2' } } }),
     // 得勝講師（持有 teacher_3 身分）
     prisma.user.count({ where: { roles: { has: 'teacher_3' } } }),
-    // 啟動講師中已開課人數（已建立過至少一筆 CourseInvite）
+    // 啟動講師中已開課人數（已建立過至少一筆「啟動靈人」courseCatalogId=1 的 CourseInvite）
     prisma.user.count({
-      where: { roles: { has: 'teacher_1' }, courseInvites: { some: {} } },
+      where: {
+        roles: { has: 'teacher_1' },
+        courseInvites: { some: { courseCatalogId: 1 } },
+      },
     }),
-    // 豐盛講師中已開課人數
+    // 豐盛講師中已開課人數（限「啟動豐盛」courseCatalogId=2）
     prisma.user.count({
-      where: { roles: { has: 'teacher_2' }, courseInvites: { some: {} } },
+      where: {
+        roles: { has: 'teacher_2' },
+        courseInvites: { some: { courseCatalogId: 2 } },
+      },
     }),
-    // 得勝講師中已開課人數
+    // 得勝講師中已開課人數（限「啟動得勝」courseCatalogId=3）
     prisma.user.count({
-      where: { roles: { has: 'teacher_3' }, courseInvites: { some: {} } },
+      where: {
+        roles: { has: 'teacher_3' },
+        courseInvites: { some: { courseCatalogId: 3 } },
+      },
     }),
     // 招募中課程總數（未開始、未取消、未結業）
     prisma.courseInvite.count({

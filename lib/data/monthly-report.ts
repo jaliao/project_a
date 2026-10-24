@@ -48,7 +48,7 @@ export type GenerationTeacherDetail = {
   mentorId: string | null
   mentorLabel: string | null
   mentorGeneration: number | null
-  earliestGraduatedAt: Date
+  earliestGraduatedAt: Date | null
 }
 
 export type MonthlyReport = {
@@ -270,10 +270,24 @@ async function openedUnitKeys(end: Date): Promise<Set<number | null>> {
 // ==========================================
 // 世代倍增（啟動靈人師生鏈）
 // ==========================================
+
+// 系統根節點固定例外：黃國倫為系統創始人，正式環境本人無任何啟動靈人結業紀錄，
+// 為唯一合法的真根節點，世代計算恆視為合格並落在第 0 代。
+const SYSTEM_ROOT_SPIRIT_ID = 'PA260001'
+
+async function getSystemRootUserId(): Promise<string | null> {
+  const u = await prisma.user.findFirst({
+    where: { spiritId: SYSTEM_ROOT_SPIRIT_ID },
+    select: { id: true },
+  })
+  return u?.id ?? null
+}
+
 async function generations(
   end: Date,
 ): Promise<{ teacherTotal: number; buckets: GenerationBucket[] }> {
-  const rows = await prisma.inviteEnrollment.findMany({
+  // 師生世代鏈：由「已結業」紀錄推導每位學員最早結業那班的建課者（導師）
+  const enrollRows = await prisma.inviteEnrollment.findMany({
     where: {
       graduatedAt: { not: null, lt: end },
       invite: { courseCatalogId: BOOK1_CATALOG_ID },
@@ -285,16 +299,28 @@ async function generations(
     },
   })
 
-  // mentorOf：每位學員取最早結業那筆的建課者；teacherSet：所有帶過人結業者
   const mentorOf = new Map<string, { teacherId: string; at: Date }>()
-  const teacherSet = new Set<string>()
-  for (const r of rows) {
-    teacherSet.add(r.invite.createdById)
+  for (const r of enrollRows) {
     const at = r.graduatedAt as Date
     const cur = mentorOf.get(r.userId)
     if (!cur || at < cur.at)
       mentorOf.set(r.userId, { teacherId: r.invite.createdById, at })
   }
+
+  // 候選教師集合：只要在月底前建立過啟動靈人班即列入候選，不要求班上已有人結業
+  const inviteRows = await prisma.courseInvite.findMany({
+    where: { courseCatalogId: BOOK1_CATALOG_ID, createdAt: { lt: end } },
+    select: { createdById: true },
+    distinct: ['createdById'],
+  })
+  const candidateTeacherSet = new Set(inviteRows.map((r) => r.createdById))
+
+  // 教師集合：候選中收斂為「本人在月底前也已結業」者（mentorOf.has 即代表本人有自己的結業紀錄），
+  // 避免本人結業時間晚於其帶出學生時，在當月快照下被誤判為第 0 代根節點；黃國倫固定例外
+  const systemRootId = await getSystemRootUserId()
+  const teacherSet = new Set(
+    [...candidateTeacherSet].filter((t) => mentorOf.has(t) || t === systemRootId),
+  )
 
   const memo = new Map<string, number>()
   const gen = (t: string, seen: Set<string>): number => {
@@ -338,7 +364,7 @@ function labelWithName(
 export async function generationTeacherDetails(
   end: Date,
 ): Promise<GenerationTeacherDetail[]> {
-  const rows = await prisma.inviteEnrollment.findMany({
+  const enrollRows = await prisma.inviteEnrollment.findMany({
     where: {
       graduatedAt: { not: null, lt: end },
       invite: { courseCatalogId: BOOK1_CATALOG_ID },
@@ -346,33 +372,45 @@ export async function generationTeacherDetails(
     select: {
       userId: true,
       graduatedAt: true,
-      invite: {
-        select: {
-          createdById: true,
-          createdBy: { select: { spiritId: true, realName: true } },
-        },
-      },
+      invite: { select: { createdById: true } },
     },
   })
 
   const mentorOf = new Map<string, { teacherId: string; at: Date }>()
-  const teacherSet = new Set<string>()
   const earliestByTeacher = new Map<string, Date>()
-  const labelById = new Map<string, string>()
-  for (const r of rows) {
+  for (const r of enrollRows) {
     const teacherId = r.invite.createdById
     const at = r.graduatedAt as Date
-    teacherSet.add(teacherId)
     const prevEarliest = earliestByTeacher.get(teacherId)
     if (!prevEarliest || at < prevEarliest) earliestByTeacher.set(teacherId, at)
-    if (!labelById.has(teacherId)) {
-      const by = r.invite.createdBy
-      labelById.set(teacherId, labelWithName(by.spiritId, by.realName, teacherId))
-    }
 
     const cur = mentorOf.get(r.userId)
     if (!cur || at < cur.at) mentorOf.set(r.userId, { teacherId, at })
   }
+
+  // 候選教師集合：只要在月底前建立過啟動靈人班即列入候選，不要求班上已有人結業
+  const inviteRows = await prisma.courseInvite.findMany({
+    where: { courseCatalogId: BOOK1_CATALOG_ID, createdAt: { lt: end } },
+    select: {
+      createdById: true,
+      createdBy: { select: { spiritId: true, realName: true } },
+    },
+    distinct: ['createdById'],
+  })
+  const candidateTeacherSet = new Set(inviteRows.map((r) => r.createdById))
+  const labelById = new Map(
+    inviteRows.map((r) => [
+      r.createdById,
+      labelWithName(r.createdBy.spiritId, r.createdBy.realName, r.createdById),
+    ]),
+  )
+
+  // 教師集合：候選中收斂為「本人在月底前也已結業」者，避免本人結業時間晚於其帶出學生時
+  // 在當月快照下被誤判為第 0 代根節點；黃國倫固定例外
+  const systemRootId = await getSystemRootUserId()
+  const teacherSet = new Set(
+    [...candidateTeacherSet].filter((t) => mentorOf.has(t) || t === systemRootId),
+  )
 
   const memo = new Map<string, number>()
   const gen = (t: string, seen: Set<string>): number => {
@@ -403,13 +441,15 @@ export async function generationTeacherDetails(
       mentorId: hasMentor ? m!.teacherId : null,
       mentorLabel: hasMentor ? labelById.get(m!.teacherId) ?? m!.teacherId : null,
       mentorGeneration: hasMentor ? memo.get(m!.teacherId) ?? null : null,
-      earliestGraduatedAt: earliestByTeacher.get(teacherId) as Date,
+      earliestGraduatedAt: earliestByTeacher.get(teacherId) ?? null,
     }
   })
 
   details.sort((a, b) => {
     if (a.generation !== b.generation) return a.generation - b.generation
-    return a.earliestGraduatedAt.getTime() - b.earliestGraduatedAt.getTime()
+    const at = a.earliestGraduatedAt?.getTime() ?? Infinity
+    const bt = b.earliestGraduatedAt?.getTime() ?? Infinity
+    return at - bt
   })
   return details
 }

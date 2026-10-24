@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
     代別: d.generation,
     導師啟動編號姓名: d.mentorLabel ?? DASH,
     導師代別: d.mentorGeneration ?? DASH,
-    最早帶出一人結業時間: formatDateTime(d.earliestGraduatedAt),
+    最早帶出一人結業時間: d.earliestGraduatedAt ? formatDateTime(d.earliestGraduatedAt) : DASH,
   }))
 
   const filename = `generations-${month}.xlsx`

@@ -101,8 +101,12 @@ function GenerationsExplainDialog() {
         </DialogHeader>
         <div className="space-y-2 text-sm text-muted-foreground">
           <p>
+            <strong className="text-foreground">候選教師</strong>
+            ：在所選月份底前，曾建立至少一個啟動靈人招生班級（CourseInvite）的帳號，不要求班上已有學員結業。
+          </p>
+          <p>
             <strong className="text-foreground">教師</strong>
-            ：在啟動靈人課程中，帶領並使至少一人於所選月份底前結業的帳號。
+            ：候選教師中，本人在所選月份底前也至少有一筆啟動靈人已結業紀錄者才列入；本人尚無結業紀錄者不列入教師名單（避免本人結業時間晚於其帶出學生時，被誤判為第 0 代根節點），黃國倫為系統創始人固定例外，不受此限制。
           </p>
           <p>
             <strong className="text-foreground">導師（mentor）</strong>
@@ -114,7 +118,7 @@ function GenerationsExplainDialog() {
             代；其餘教師的代別為「導師的代別 + 1」。
           </p>
           <p>
-            以上計算皆以所選月份的月底為界，切換月份時教師名單與各自代別會重新計算。
+            以上計算皆以所選月份的月底為界，切換月份時教師名單與各自代別會重新計算；黃國倫為系統創始人固定例外，永遠列入並計為第 0 代。
           </p>
         </div>
       </DialogContent>
