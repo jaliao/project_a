@@ -23,11 +23,14 @@ import {
   hasRole,
   BOOK_LABEL_BY_TEACHER_ROLE,
   TEACHER_ROLE_BY_CATALOG,
+  TEACHER_ROLES,
+  CATALOG_BY_TEACHER_ROLE,
   type TeacherRole,
 } from '@/lib/auth-roles'
 import { sendTempPasswordEmail, sendTeacherRoleGrantedEmail, sendProxyInviteEmail } from '@/lib/mailer'
 import { resolveContactEmail } from '@/lib/utils/contact-email'
 import { createLoginableMember, generateTempPassword } from '@/lib/member-creation'
+import { hasGraduatedBook } from '@/lib/data/teacher-eligibility'
 import { validateNewAccountEmail, applyAccountEmailChange } from '@/lib/account-email-change'
 import { invalidatePendingTokens, createInviteToken, isClassTeacherOfMember } from '@/lib/data/proxy-invite'
 import { getAppUrl } from '@/lib/utils/app-url'
@@ -84,9 +87,8 @@ export async function resetMemberPassword(
 const createMemberSchema = z.object({
   realName: z.string().trim().min(1, '請輸入姓名'),
   email: z.string().trim().toLowerCase().email('Email 格式不正確'),
-  roles: z
-    .array(z.enum(['teacher_1', 'teacher_2', 'teacher_3', 'admin', 'superadmin']))
-    .default([]),
+  // 新增會員時不可直接勾選書籍講師身分（新帳號必然尚無結業紀錄，無法通過授予前提）
+  roles: z.array(z.enum(['admin', 'superadmin'])).default([]),
 })
 
 /**
@@ -167,6 +169,16 @@ export async function updateMemberRoles(
     if (!canAssignRole(session.user.roles, r)) {
       return { success: false, message: '無權限' }
     }
+    // 新增書籍講師身分前須確認本人已結業對應書籍，避免「自己尚未結業就能開班教學生」
+    if (TEACHER_ROLES.includes(r as TeacherRole) && after.has(r) && !before.has(r)) {
+      const catalogId = CATALOG_BY_TEACHER_ROLE[r as TeacherRole]
+      if (!(await hasGraduatedBook(userId, catalogId))) {
+        return {
+          success: false,
+          message: `此會員尚未結業《${BOOK_LABEL_BY_TEACHER_ROLE[r as TeacherRole]}》，無法授予此講師身分`,
+        }
+      }
+    }
   }
 
   await prisma.user.update({
@@ -194,6 +206,15 @@ export async function grantTeacherRole(userId: string, role: TeacherRole): Promi
   if (!user) return { success: false, message: '找不到此會員' }
 
   if (!(user.roles as UserRole[]).includes(role)) {
+    // 授予前須確認本人已結業對應書籍，避免「自己尚未結業就能開班教學生」
+    const catalogId = CATALOG_BY_TEACHER_ROLE[role]
+    if (!(await hasGraduatedBook(userId, catalogId))) {
+      return {
+        success: false,
+        message: `此會員尚未結業《${BOOK_LABEL_BY_TEACHER_ROLE[role]}》，無法授予此講師身分`,
+      }
+    }
+
     await prisma.user.update({
       where: { id: userId },
       data: { roles: { push: role } },

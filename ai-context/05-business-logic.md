@@ -31,6 +31,11 @@
 - 逐書授課資格：`canTeachBook(roles, courseCatalogId)`（持有該書講師身分，admin/superadmin 豁免）；開課精靈 Step 1 與 `createCourseSession`/`createInvite` Server Action 皆以此把關，未具資格回傳「須具備{書名}講師身分才能授課」
 - **管理者代講師新增授課**（`cr-spec-260828-002`）：管理者於**講師的個人頁**（`/user/{spiritId}`，頁主具任一 `teacher_*` 身分時顯示「授課」區塊）可代建立。`createCourseSession` 收選填 `targetTeacherId`：帶入時要求呼叫者 `canAccessAdmin`，且以 `hasRole(target.roles, TEACHER_ROLE_BY_CATALOG[courseCatalogId])`（**不套 admin 豁免**）驗證該老師實際持有該書身分，通過後 `CourseInvite.createdById = targetTeacherId`、「授課已建立」通知寄該老師；精靈 Step 1 對代建立情境不放行 admin 全選（`isAdmin && !onBehalf`）。人數上限仍以呼叫者（管理者）判定放寬。
 
+### 講師身分授予前置檢查（`cr-fix-261024-001`）
+- 新增書籍講師身分（`teacher_1`～`teacher_3`）前，SHALL 以 `hasGraduatedBook(userId, courseCatalogId)`（`lib/data/teacher-eligibility.ts`，查對應 `courseCatalogId` 之 `InviteEnrollment.graduatedAt` 非空）確認本人已結業對應書籍，未通過拒絕並回傳「此會員尚未結業《書名》，無法授予此講師身分」。套用於 `grantTeacherRole`（講師身分分頁卡片授予）與 `updateMemberRoles`（新增講師身分時）兩個 Server Action；移除身分與 `admin`/`superadmin` 的加掛/移除不受此限。
+- 「新增會員」（`createMember`）身分勾選**不提供**書籍講師身分（`createMemberSchema.roles` 僅 `['admin','superadmin']`）——新帳號必然尚無結業紀錄，規則上永遠無法通過此檢查，須待本人結業後再經上述入口授予。
+- 緣由：代數計算（見「世代倍增」章節）以「本人最早一筆已結業紀錄所屬班級建立者」為 mentor，未結業者取得講師身分／開班會導致師徒鏈斷裂、被誤判為根節點（第 0 代）。
+
 ### 新增授課精靈（三步驟）
 1. **Step 1**：卡片式課程選擇（DB 課程列表；顯示先修條件說明）
 2. **Step 2**：基本資料（課程名稱、人數、開課日期、截止日期、備註）

@@ -23,7 +23,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { ASSIGNABLE_ROLES, ROLE_LABELS } from '@/lib/auth-roles'
+import { ASSIGNABLE_ROLES_ON_CREATE, ROLE_LABELS } from '@/lib/auth-roles'
 import { createMember } from '@/app/actions/admin'
 
 export function CreateMemberDialog() {
@@ -131,7 +131,7 @@ export function CreateMemberDialog() {
               <div className="space-y-2">
                 <Label>身分（一般會員為預設基線）</Label>
                 <div className="flex flex-col gap-2">
-                  {ASSIGNABLE_ROLES.map((role) => (
+                  {ASSIGNABLE_ROLES_ON_CREATE.map((role) => (
                     <label key={role} className="flex items-center gap-2 text-sm">
                       <Checkbox
                         checked={roles.includes(role)}
@@ -141,6 +141,9 @@ export function CreateMemberDialog() {
                     </label>
                   ))}
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  新增會員時無法勾選書籍講師身分：講師身分需綁定「本人已結業該書」的紀錄，否則無法判斷其導師（世代傳承鏈會斷掉）。請先建立此會員，待其於課程班級完成結業（新增學員並做一筆畢業紀錄）後，再至「講師身分」分頁或會員身分編輯授予講師身分。
+                </p>
               </div>
             </div>
             <DialogFooter>

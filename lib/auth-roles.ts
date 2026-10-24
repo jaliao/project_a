@@ -57,6 +57,9 @@ export const ASSIGNABLE_ROLES: UserRole[] = [
   'superadmin',
 ]
 
+// 新增會員時可勾選的身分：不含書籍講師身分（新帳號必然尚無結業紀錄，無法通過授予前提）
+export const ASSIGNABLE_ROLES_ON_CREATE: UserRole[] = ['admin', 'superadmin']
+
 export type Roles = readonly string[] | null | undefined
 
 /**
