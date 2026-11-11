@@ -111,6 +111,7 @@ export function AddStudentDialog({
   const [proxyChurchSelect, setProxyChurchSelect] = useState('')
   const [proxyChurchOther, setProxyChurchOther] = useState('')
   const [proxyEmail, setProxyEmail] = useState('')
+  const [proxyHintOpen, setProxyHintOpen] = useState(false)
   const [graduated, setGraduated] = useState(false)
   const [graduatedAt, setGraduatedAt] = useState('')
   const [materialChoice, setMaterialChoice] = useState<MaterialChoice>('traditional')
@@ -125,6 +126,7 @@ export function AddStudentDialog({
     setProxyChurchSelect('')
     setProxyChurchOther('')
     setProxyEmail('')
+    setProxyHintOpen(false)
     setGraduated(false)
     setGraduatedAt('')
     setMaterialChoice('traditional')
@@ -177,7 +179,7 @@ export function AddStudentDialog({
               graduated,
               graduatedAt: graduated ? graduatedAt : undefined,
               materialChoice,
-              materialBookName: materialChoice === 'none' ? undefined : materialBookName,
+              materialBookName: materialChoice === 'none' ? undefined : proxyRealName,
             })
       if (res.success) {
         toast.success(res.message ?? (mode === 'existing' ? t('toastAdded') : t('toastAddedProxy')))
@@ -196,7 +198,7 @@ export function AddStudentDialog({
         <IconUserPlus className="h-4 w-4" />
         {td('addStudentButton')}
       </Button>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('addDialogTitle')}</DialogTitle>
           <DialogDescription>{t('addDialogDesc')}</DialogDescription>
@@ -264,9 +266,8 @@ export function AddStudentDialog({
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">{t('proxyHint')}</p>
               <div className="space-y-1.5">
-                <Label htmlFor="proxy-real-name">{t('proxyRealNameLabel')}</Label>
+                <Label htmlFor="proxy-real-name">{t('proxyRealNameCombinedLabel')}</Label>
                 <Input
                   id="proxy-real-name"
                   placeholder={t('proxyRealNamePlaceholder')}
@@ -276,44 +277,46 @@ export function AddStudentDialog({
                 />
                 {errors.realName?.[0] && <p className="text-sm text-destructive">{errors.realName[0]}</p>}
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="proxy-gender">{t('proxyGenderLabel')}</Label>
-                <select
-                  id="proxy-gender"
-                  value={proxyGender}
-                  onChange={(e) => setProxyGender(e.target.value as ProxyGender)}
-                  disabled={atCapacity}
-                  className="h-9 w-full rounded-md border px-3 py-1 text-sm bg-background"
-                >
-                  <option value="unspecified">{t('proxyGenderUnspecified')}</option>
-                  <option value="male">{t('proxyGenderMale')}</option>
-                  <option value="female">{t('proxyGenderFemale')}</option>
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="proxy-church">{t('proxyChurchLabel')}</Label>
-                <select
-                  id="proxy-church"
-                  value={proxyChurchSelect}
-                  onChange={(e) => setProxyChurchSelect(e.target.value)}
-                  disabled={atCapacity}
-                  className="h-9 w-full rounded-md border px-3 py-1 text-sm bg-background"
-                >
-                  <option value="">—</option>
-                  {churches.map((c) => (
-                    <option key={c.id} value={`church:${c.id}`}>{c.name}</option>
-                  ))}
-                  <option value="other">{t('proxyChurchOtherPlaceholder')}</option>
-                </select>
-                {proxyChurchSelect === 'other' && (
-                  <Input
-                    placeholder={t('proxyChurchOtherPlaceholder')}
-                    value={proxyChurchOther}
-                    onChange={(e) => setProxyChurchOther(e.target.value)}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="proxy-gender">{t('proxyGenderLabel')}</Label>
+                  <select
+                    id="proxy-gender"
+                    value={proxyGender}
+                    onChange={(e) => setProxyGender(e.target.value as ProxyGender)}
                     disabled={atCapacity}
-                  />
-                )}
+                    className="h-9 w-full rounded-md border px-3 py-1 text-sm bg-background"
+                  >
+                    <option value="unspecified">{t('proxyGenderUnspecified')}</option>
+                    <option value="male">{t('proxyGenderMale')}</option>
+                    <option value="female">{t('proxyGenderFemale')}</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="proxy-church">{t('proxyChurchLabel')}</Label>
+                  <select
+                    id="proxy-church"
+                    value={proxyChurchSelect}
+                    onChange={(e) => setProxyChurchSelect(e.target.value)}
+                    disabled={atCapacity}
+                    className="h-9 w-full rounded-md border px-3 py-1 text-sm bg-background"
+                  >
+                    <option value="">—</option>
+                    {churches.map((c) => (
+                      <option key={c.id} value={`church:${c.id}`}>{c.name}</option>
+                    ))}
+                    <option value="other">{t('proxyChurchOtherPlaceholder')}</option>
+                  </select>
+                </div>
               </div>
+              {proxyChurchSelect === 'other' && (
+                <Input
+                  placeholder={t('proxyChurchOtherPlaceholder')}
+                  value={proxyChurchOther}
+                  onChange={(e) => setProxyChurchOther(e.target.value)}
+                  disabled={atCapacity}
+                />
+              )}
               <div className="space-y-1.5">
                 <Label htmlFor="proxy-email">{t('proxyEmailLabel')}</Label>
                 <Input
@@ -329,24 +332,23 @@ export function AddStudentDialog({
             </div>
           )}
           <div className="space-y-1.5">
-            <Label>{t('materialChoiceLabel')}</Label>
-            <div className="grid grid-cols-2 gap-2">
+            <Label htmlFor="material-choice">{t('materialChoiceLabel')}</Label>
+            <select
+              id="material-choice"
+              value={materialChoice}
+              onChange={(e) => setMaterialChoice(e.target.value as MaterialChoice)}
+              className="h-9 w-full rounded-md border px-3 py-1 text-sm bg-background"
+            >
               {MATERIAL_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setMaterialChoice(opt.value)}
-                  className={cn(
-                    'rounded-lg border p-2.5 text-left transition-colors',
-                    materialChoice === opt.value ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
-                  )}
-                >
-                  <p className="text-sm font-medium">{opt.label}</p>
-                  <p className="text-xs text-muted-foreground">{opt.desc}</p>
-                </button>
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
-            </div>
-            {materialChoice !== 'none' && (
+            </select>
+            {MATERIAL_OPTIONS.find((opt) => opt.value === materialChoice) && (
+              <p className="text-xs text-muted-foreground">
+                {MATERIAL_OPTIONS.find((opt) => opt.value === materialChoice)!.desc}
+              </p>
+            )}
+            {mode === 'existing' && materialChoice !== 'none' && (
               <div className="space-y-1.5 pt-1">
                 <Label htmlFor="student-material-book-name">{te('bookNameLabel')}</Label>
                 <Input
@@ -386,13 +388,24 @@ export function AddStudentDialog({
               </div>
             )}
           </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isPending}>
-              {t('cancel')}
-            </Button>
-            <Button onClick={handleSubmit} disabled={isPending || atCapacity || !canSubmit}>
-              {isPending ? t('processing') : mode === 'existing' ? t('submit') : t('proxySubmit')}
-            </Button>
+          <div className={cn('flex items-center gap-2', mode === 'proxy' ? 'justify-between' : 'justify-end')}>
+            {mode === 'proxy' && (
+              <button
+                type="button"
+                onClick={() => setProxyHintOpen(true)}
+                className="text-sm font-medium text-primary underline-offset-2 hover:underline"
+              >
+                {t('proxyHintToggleShow')}
+              </button>
+            )}
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isPending}>
+                {t('cancel')}
+              </Button>
+              <Button onClick={handleSubmit} disabled={isPending || atCapacity || !canSubmit}>
+                {isPending ? t('processing') : mode === 'existing' ? t('submit') : t('proxySubmit')}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
@@ -404,6 +417,14 @@ export function AddStudentDialog({
         onSelect={handleSelectStudent}
         excludeUserIds={excludeUserIds}
       />
+      <Dialog open={proxyHintOpen} onOpenChange={setProxyHintOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('proxyHintToggleShow')}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">{t('proxyHint')}</p>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }
