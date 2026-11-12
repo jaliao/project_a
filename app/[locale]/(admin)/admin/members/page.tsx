@@ -59,6 +59,15 @@ export default async function AdminMembersPage({
   if (filters.church) exportParams.set('church', filters.church)
   const exportQs = exportParams.size ? `?${exportParams.toString()}` : ''
 
+  // 詳情頁返回連結需還原目前篩選/頁碼（CR-FIX-261112-002）
+  const detailQs = new URLSearchParams()
+  if (filters.q) detailQs.set('q', filters.q)
+  if (filters.gender) detailQs.set('gender', filters.gender)
+  if (filters.role) detailQs.set('role', filters.role)
+  if (filters.church) detailQs.set('church', filters.church)
+  if (page > 1) detailQs.set('page', String(page))
+  const detailQsStr = detailQs.size ? `?${detailQs.toString()}` : ''
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -132,7 +141,7 @@ export default async function AdminMembersPage({
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button variant="ghost" size="sm" asChild>
-                            <Link href={`/admin/members/${member.id}`}>查看詳情</Link>
+                            <Link href={`/admin/members/${member.id}${detailQsStr}`}>查看詳情</Link>
                           </Button>
                           <MemberHomeLink spiritId={member.spiritId} />
                           <MemberResetButton userId={member.id} memberName={displayName} />

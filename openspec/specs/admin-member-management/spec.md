@@ -53,6 +53,7 @@ TBD - normalized for archive compatibility. Update Purpose for admin-member-mana
 基本資料分頁 SHALL 顯示「年齡」欄位：依 `User.birthYear` 以「當年西元年 − birthYear」計算並以 `NN 歲` 格式顯示；`birthYear` 未填時顯示 `—`。
 基本資料分頁的**學習紀錄**（作為學員之**已核准報名**課程，**含招生中**、進行中、已結業、已取消）與**授課紀錄**（自己建立之**所有**課程，**含招生中**與已取消）SHALL 以共用課程卡片元件 `CourseSessionCard` 之卡片牆呈現（手機單欄、桌機兩欄 grid），每張卡片顯示課程編號、課程標籤、課程狀態、報名人數／預計人數等標準卡片資訊，並 SHALL 連結至對應課程頁 `/course/{inviteId}`；排序 SHALL 為**招生中（未開課）在前**，其後依開課時間新→舊。學員**待審核（pending）**的報名 SHALL NOT 列入學習紀錄。無紀錄時 SHALL 分別顯示「尚無學習紀錄」／「尚無授課紀錄」。
 基本資料分頁「身分」欄位 SHALL 透過共用邏輯 `getIdentityTags()` 計算並顯示，包含角色身分（所有 `roles`）與是否為未註冊代填學員（`isProxyMember`）；頁首姓名旁 SHALL NOT 再額外顯示獨立的未註冊徽章。
+頁首 SHALL 提供「← 返回會員管理」連結。該連結 SHALL 依目前網址上的 `q`／`gender`／`role`／`church`／`page` 查詢參數（由列表頁「查看詳情」連結帶入，見「會員清單篩選與分頁」Requirement）組回 `/admin/members` 的網址，使管理者返回後維持原本的搜尋/篩選/分頁狀態；詳情頁 SHALL NOT 對這些參數做格式驗證，原樣轉交列表頁處理。無任何查詢參數時（例如由不具列表篩選上下文的入口進入），連結 SHALL 導回無參數的 `/admin/members`。
 
 #### Scenario: 顯示基本資料分頁
 - **WHEN** 管理者進入 `/admin/members/[id]`
@@ -105,6 +106,14 @@ TBD - normalized for archive compatibility. Update Purpose for admin-member-mana
 #### Scenario: 電話未填顯示破折號
 - **WHEN** 會員的 `phone` 為空
 - **THEN** 電話欄位顯示 `—`，無遮蔽互動
+
+#### Scenario: 返回連結文字與帶參數還原搜尋狀態
+- **WHEN** 管理者於 `/admin/members?q=王小明&page=2` 點擊某筆會員「查看詳情」進入 `/admin/members/[id]?q=王小明&page=2`
+- **THEN** 頁首顯示「← 返回會員管理」連結，點擊後導回 `/admin/members?q=王小明&page=2`，列表維持原搜尋字串與頁碼
+
+#### Scenario: 無查詢參數時返回連結導回無參數列表頁
+- **WHEN** 管理者透過不具列表篩選上下文的入口（例如重複帳號比對頁、學習階層樹）進入詳情頁，網址未帶 `q`／`gender`／`role`／`church`／`page`
+- **THEN** 「← 返回會員管理」連結導回無參數的 `/admin/members`
 
 ### Requirement: 條件式會員刪除
 系統 SHALL 僅在環境變數 `ENABLE_MEMBER_DELETE=true` 時於詳情頁顯示刪除按鈕。刪除前 SHALL 顯示 AlertDialog 二次確認，確認後執行 hard delete。刪除操作 SHALL 於同一交易內寫入一筆 `AdminActionLog`（`action = member_delete`，含操作者與被刪除帳號之文字快照），刪除與稽核紀錄寫入 SHALL 視為單一原子操作——任一方失敗即整體回滾。刪除過程中若因外鍵約束（`RESTRICT`）而無法刪除，系統 SHALL 攔截該錯誤並回傳具體的繁體中文失敗原因，不得讓例外未經處理直接中斷 Server Action；無法判斷具體原因時 SHALL 回傳通用但誠實的失敗訊息，不得顯示成功。
@@ -251,6 +260,8 @@ TBD - normalized for archive compatibility. Update Purpose for admin-member-mana
 身分篩選採「包含」語意：選擇某身分時列出 `roles` 含該身分之會員（書籍講師身分對應 `teacher_1`～`teacher_3`）。
 所屬教會篩選：數字值對應 `churchId`；`other` 對應 `churchType=other`；`none` 對應 `churchType=none`。
 
+每列「查看詳情」連結 SHALL 將目前列表頁的 `q`／`gender`／`role`／`church`／`page`（`page` 僅於 > 1 時附加）查詢參數原樣帶至 `/admin/members/[id]`，供詳情頁「返回會員管理」連結還原列表搜尋狀態（見「會員詳情頁」Requirement）。
+
 #### Scenario: 未下任何條件不列清單
 - **WHEN** 管理者進入 `/admin/members` 且未輸入搜尋、未選任何篩選
 - **THEN** 不顯示會員清單，改顯示「請輸入搜尋或選擇篩選條件以顯示會員」提示
@@ -266,6 +277,14 @@ TBD - normalized for archive compatibility. Update Purpose for admin-member-mana
 #### Scenario: 多條件 AND 組合
 - **WHEN** 管理者同時選擇身分「啟動靈人講師」與某一教會
 - **THEN** 清單僅顯示 `roles` 含 `teacher_1` 且屬於該教會的會員
+
+#### Scenario: 查看詳情連結帶出目前篩選參數
+- **WHEN** 管理者於 `/admin/members?gender=female&church=3&page=2` 點擊某筆會員的「查看詳情」
+- **THEN** 導向 `/admin/members/[id]?gender=female&church=3&page=2`
+
+#### Scenario: 第 1 頁不附加 page 參數
+- **WHEN** 管理者於 `/admin/members?q=王小明`（目前為第 1 頁）點擊「查看詳情」
+- **THEN** 導向 `/admin/members/[id]?q=王小明`，不附加 `page=1`
 
 ### Requirement: 會員授課老師編號顯示
 會員詳情頁基本資料區 SHALL 顯示「授課老師編號」（`teacherNo`），無值時顯示「—」。會員 Excel 匯出 SHALL 新增「授課老師編號」欄。

@@ -77,14 +77,26 @@ function tempPasswordLabel(hasPassword: boolean, isTempPassword: boolean): strin
 
 export default async function MemberDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ q?: string; gender?: string; role?: string; church?: string; page?: string }>
 }) {
   // 登入 + admin 守衛由 (admin)/layout.tsx 處理；此處 session 供身分權限判定
   const session = await auth()
   if (!session?.user) notFound()
 
   const { id } = await params
+
+  // 返回連結還原列表頁篩選/頁碼（由列表「查看詳情」連結帶入，見 CR-FIX-261112-002）
+  const sp = await searchParams
+  const backQs = new URLSearchParams()
+  if (sp.q) backQs.set('q', sp.q)
+  if (sp.gender) backQs.set('gender', sp.gender)
+  if (sp.role) backQs.set('role', sp.role)
+  if (sp.church) backQs.set('church', sp.church)
+  if (sp.page) backQs.set('page', sp.page)
+  const backHref = backQs.size ? `/admin/members?${backQs.toString()}` : '/admin/members'
   const [member, depthStr] = await Promise.all([
     getMemberDetail(id),
     getAdminSetting('hierarchy_depth', '3'),
@@ -132,7 +144,7 @@ export default async function MemberDetailPage({
       {/* 頁首 */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/admin/members">← 返回清單</Link>
+          <Link href={backHref}>← 返回會員管理</Link>
         </Button>
         <h1 className="text-2xl font-semibold">{displayName}</h1>
         {member.suspendedAt && (
