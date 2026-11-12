@@ -51,6 +51,12 @@ export type GenerationTeacherDetail = {
   earliestGraduatedAt: Date | null
 }
 
+export type HierarchyRow = {
+  label: string // 一律套用「啟動編號 姓名(暱稱) 講師編號」格式（任一欄位缺值僅省略該欄位）
+  depth: number // 0-based，相對其所屬根節點
+  directChildCount: number // 0 代表葉節點（無下線）
+}
+
 export type MonthlyReport = {
   month: string // 正規化後的 YYYY-MM
   monthLabel: string // 「2026 年 8 月」
@@ -348,13 +354,20 @@ async function generations(
   return { teacherTotal: teacherSet.size, buckets }
 }
 
-/** 啟動編號＋姓名組字串；任一缺值僅顯示現有的那個，兩者皆缺退回 fallbackId */
+/**
+ * 教師節點顯示字串：「{啟動編號} {姓名}({暱稱}) {講師編號}」。
+ * 任一欄位缺值僅省略該欄位，姓名與暱稱皆缺則省略整個姓名段，全部缺值退回 fallbackId。
+ */
 function labelWithName(
   spiritId: string | null,
   realName: string | null,
+  nickname: string | null,
+  teacherNo: string | null,
   fallbackId: string,
 ): string {
-  return [spiritId, realName].filter(Boolean).join(' ') || fallbackId
+  let namePart = realName ?? ''
+  if (nickname) namePart = namePart ? `${namePart}(${nickname})` : nickname
+  return [spiritId, namePart || null, teacherNo].filter(Boolean).join(' ') || fallbackId
 }
 
 /**
@@ -393,7 +406,9 @@ export async function generationTeacherDetails(
     where: { courseCatalogId: BOOK1_CATALOG_ID, createdAt: { lt: end } },
     select: {
       createdById: true,
-      createdBy: { select: { spiritId: true, realName: true } },
+      createdBy: {
+        select: { spiritId: true, realName: true, nickname: true, teacherNo: true },
+      },
     },
     distinct: ['createdById'],
   })
@@ -401,7 +416,13 @@ export async function generationTeacherDetails(
   const labelById = new Map(
     inviteRows.map((r) => [
       r.createdById,
-      labelWithName(r.createdBy.spiritId, r.createdBy.realName, r.createdById),
+      labelWithName(
+        r.createdBy.spiritId,
+        r.createdBy.realName,
+        r.createdBy.nickname,
+        r.createdBy.teacherNo,
+        r.createdById,
+      ),
     ]),
   )
 
@@ -452,6 +473,92 @@ export async function generationTeacherDetails(
     return at - bt
   })
   return details
+}
+
+/**
+ * 「世代倍增」巢狀階層樹（供下載 raw data 使用）。
+ * 涵蓋所有已結業學員，不限於 generationTeacherDetails() 的教師集合：
+ * 反轉 mentorOf 建立「教師→直屬下線」關係後，以深度優先展開為扁平列表；
+ * 每個根節點（有下線、且本人無上線或上線為自己者）各自成一棵樹。
+ */
+export async function generationHierarchyRows(end: Date): Promise<HierarchyRow[]> {
+  const enrollRows = await prisma.inviteEnrollment.findMany({
+    where: {
+      graduatedAt: { not: null, lt: end },
+      invite: { courseCatalogId: BOOK1_CATALOG_ID },
+    },
+    select: {
+      userId: true,
+      graduatedAt: true,
+      invite: { select: { createdById: true } },
+    },
+  })
+
+  const mentorOf = new Map<string, { teacherId: string; at: Date }>()
+  for (const r of enrollRows) {
+    const at = r.graduatedAt as Date
+    const cur = mentorOf.get(r.userId)
+    if (!cur || at < cur.at) mentorOf.set(r.userId, { teacherId: r.invite.createdById, at })
+  }
+
+  // 反轉 mentorOf：教師 → 直屬下線（依各下線自己的最早結業時間升冪排序）
+  const childrenOf = new Map<string, { studentId: string; at: Date }[]>()
+  for (const [studentId, m] of mentorOf) {
+    if (m.teacherId === studentId) continue // 上線為自己，視為無上線（見下方根節點判定）
+    const list = childrenOf.get(m.teacherId) ?? []
+    list.push({ studentId, at: m.at })
+    childrenOf.set(m.teacherId, list)
+  }
+  for (const list of childrenOf.values()) list.sort((a, b) => a.at.getTime() - b.at.getTime())
+
+  // 顯示標籤所需的啟動編號／姓名／暱稱／講師編號
+  const allIds = new Set<string>([...mentorOf.keys(), ...childrenOf.keys()])
+  const users = await prisma.user.findMany({
+    where: { id: { in: [...allIds] } },
+    select: { id: true, spiritId: true, realName: true, nickname: true, teacherNo: true },
+  })
+  const userById = new Map(users.map((u) => [u.id, u]))
+
+  // 所有節點一律套用同一套完整格式（不分是否有下線／是否具教師身分）
+  function label(id: string): string {
+    const u = userById.get(id)
+    return labelWithName(
+      u?.spiritId ?? null,
+      u?.realName ?? null,
+      u?.nickname ?? null,
+      u?.teacherNo ?? null,
+      id,
+    )
+  }
+
+  // 根節點：有下線，且本人無上線（或上線為自己）
+  const roots = [...childrenOf.keys()].filter((id) => {
+    const m = mentorOf.get(id)
+    return !m || m.teacherId === id
+  })
+  roots.sort((a, b) => {
+    const at = childrenOf.get(a)![0].at.getTime()
+    const bt = childrenOf.get(b)![0].at.getTime()
+    return at - bt
+  })
+
+  const rows: HierarchyRow[] = []
+  function visit(id: string, depth: number, seen: Set<string>) {
+    const children = childrenOf.get(id) ?? []
+    const hasChildren = children.length > 0 && depth < MAX_GEN && !seen.has(id)
+    rows.push({
+      label: label(id),
+      depth,
+      directChildCount: hasChildren ? children.length : 0,
+    })
+    if (!hasChildren) return
+    const nextSeen = new Set(seen)
+    nextSeen.add(id)
+    for (const c of children) visit(c.studentId, depth + 1, nextSeen)
+  }
+  for (const rootId of roots) visit(rootId, 0, new Set())
+
+  return rows
 }
 
 // ==========================================

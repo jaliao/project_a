@@ -37,11 +37,22 @@
 - 緣由：代數計算（見「世代倍增」章節）以「本人最早一筆已結業紀錄所屬班級建立者」為 mentor，未結業者取得講師身分／開班會導致師徒鏈斷裂、被誤判為根節點（第 0 代）。
 
 ### 世代倍增教師資格認定（`cr-fix-261024-002`）
-- 月報「世代倍增」（`lib/data/monthly-report.ts` `generations()`／`generationTeacherDetails()`）的**候選教師集合**＝在 cutoff 前曾建立過啟動靈人 `CourseInvite` 者（不要求班上已有人結業）；**教師集合**＝候選中**本人在 cutoff 前也至少有一筆啟動靈人已結業紀錄**（`mentorOf.has(t)` 即代表此條件，複用既有 Map 不另查詢）者才列入；不符合者（如本人結業時間晚於其帶出學生的結業時間，恰好落在某月 cutoff 之後，或本人尚未結業但已開班）**整列不出現**於該月報表與 raw data 匯出，而非被誤判為第 0 代。
+- 月報「世代倍增」（`lib/data/monthly-report.ts` `generations()`／`generationTeacherDetails()`）的**候選教師集合**＝在 cutoff 前曾建立過啟動靈人 `CourseInvite` 者（不要求班上已有人結業）；**教師集合**＝候選中**本人在 cutoff 前也至少有一筆啟動靈人已結業紀錄**（`mentorOf.has(t)` 即代表此條件，複用既有 Map 不另查詢）者才列入；不符合者（如本人結業時間晚於其帶出學生的結業時間，恰好落在某月 cutoff 之後，或本人尚未結業但已開班）**整列不出現**於該月報表的長條圖統計，而非被誤判為第 0 代。
 - **固定例外**：`SYSTEM_ROOT_SPIRIT_ID = 'PA260001'`（黃國倫，系統創始人，正式環境本人無任何啟動靈人結業紀錄）永遠視為合格、固定落在第 0 代，以 `getSystemRootUserId()` 依 spiritId 查一次 `userId` 比對，不寫死 UUID。
 - 月份 cutoff 的「世代隨月份連動」設計本身不受影響（`cr-fix-261024-001` 已討論過改用全量資料的方案並確認不採用）。
 - 候選教師集合原本要求「使至少一人於 cutoff 前結業」，後收斂為「只要開過啟動靈人班即列入候選」——理由：講師分析卡片的「啟動講師」與「世代倍增」教師人數原本口徑差異過大（509 vs 178），前者僅看 `teacher_1` 身分旗標，不需任何開課或結業條件；收斂候選範圍讓兩者更可比，但仍保留「本人也須已結業」的收斂條件以避免根節點誤判。
 - 同一批修改亦修正後台儀錶板「講師分析」卡片的「已開課」人數（`lib/data/dashboard.ts` `getDashboardStats()`）：原本未依冊別篩選（`courseInvites: { some: {} }`，任一冊課程都算），改為依講師身分對應冊別篩選（`teacher_1`→`courseCatalogId=1`、`teacher_2`→2、`teacher_3`→3）。
+- `generationTeacherDetails()` 本身不再供 raw data 下載使用（見下方「世代倍增 raw data 巢狀階層匯出」），僅畫面長條圖統計與 `generations()` 共用其教師集合口徑。
+
+### 世代倍增 raw data 巢狀階層匯出（`cr-feat-261112-002`）
+- 「世代倍增」下載 raw data（`app/api/admin/dashboard/generations/export/route.ts`）改用 `lib/data/monthly-report.ts` 新增的 `generationHierarchyRows()`，由平鋪逐教師明細改為巢狀階層樹狀 Excel。
+- 範圍刻意比畫面長條圖的教師集合更廣：反轉既有 `mentorOf`（學員→其最早結業對應的教師）建立 `childrenOf`（教師→直屬下線），**涵蓋所有已結業學員**，不要求本人也須開課或已結業才能成為樹的節點（只要求「有直屬下線」才會被列為非葉節點）。
+- 根節點＝有直屬下線、且本人無上線（或上線為自己）者；每個根節點各自展開一棵樹，深度優先排列，子節點依各自最早結業時間升冪排序。
+- 節點顯示：**所有節點一律**顯示「啟動編號 姓名(暱稱) 講師編號」（`labelWithName()`，任一欄位缺值僅省略該欄位，不分是否有下線、不分是否具教師身分）；有直屬下線者另＋人數，葉節點不標示人數。深度優先展開沿用既有 `MAX_GEN` 常數防護環路與深度上限。
+- `labelWithName()` 簽章為 `(spiritId, realName, nickname, teacherNo, fallbackId)`，`generationTeacherDetails()` 的 `teacherLabel`／`mentorLabel` 共用同一函式（雖目前無人呼叫該函式，仍保持格式一致以備未來重啟用）。
+- 判斷依據變更歷程（同一輪使用者回饋，依序收斂）：①初版僅依 `directChildCount > 0` 決定是否套用完整格式，葉節點僅顯示姓名；②使用者發現「方光瑋」（具教師身分但該世代鏈中沒有直屬下線）被誤判為一般學員葉節點，改為「有下線 **或** 本人具教師身分」雙條件判斷；③使用者接著發現「周恬伃」（不具教師身分的一般學員葉節點）仍只顯示姓名，確認是雙條件下的正確行為後，決定不再區分任何條件，所有節點一律套用完整格式（最終版本，取代①②）。多數已結業學員皆有 `spiritId`，故此變更後葉節點不再僅顯示姓名，不再完全比照使用者最初提供的截圖樣式——這是使用者明確要求的最終決定。
+- Excel 輸出改用 `lib/utils/xlsx-export.ts` 新增的 `xlsxAoaDownloadResponse()`（`aoa_to_sheet`，依深度分欄），不影響既有 `xlsxDownloadResponse()`（`json_to_sheet`）供其他匯出端點（會員清單、未找回帳號清單）使用。
+- 此匯出與「世代倍增」長條圖統計涵蓋範圍不同，兩者數字不要求逐項可互相核對（刻意的設計取捨，非口徑不一致）。
 
 ### 新增授課精靈（三步驟）
 1. **Step 1**：卡片式課程選擇（DB 課程列表；顯示先修條件說明）

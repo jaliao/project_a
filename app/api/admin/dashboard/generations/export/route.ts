@@ -7,28 +7,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { generationTeacherDetails, taipeiMonthBounds } from '@/lib/data/monthly-report'
-import { requireAdminSession, xlsxDownloadResponse } from '@/lib/utils/xlsx-export'
+import { generationHierarchyRows, taipeiMonthBounds } from '@/lib/data/monthly-report'
+import { requireAdminSession, xlsxAoaDownloadResponse } from '@/lib/utils/xlsx-export'
 
 const MONTH_FORMAT = /^\d{4}-(0[1-9]|1[0-2])$/
-
-const DASH = '—'
-const REPORT_TZ = 'Asia/Taipei'
-
-function formatDateTime(date: Date): string {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: REPORT_TZ,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hourCycle: 'h23',
-  }).formatToParts(date)
-  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? ''
-  return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}:${get('second')}`
-}
 
 export async function GET(req: NextRequest) {
   const authResult = await requireAdminSession()
@@ -40,17 +22,21 @@ export async function GET(req: NextRequest) {
   }
   const { end } = taipeiMonthBounds(month)
 
-  const details = await generationTeacherDetails(end)
+  const rows = await generationHierarchyRows(end)
 
-  const rows = details.map((d) => ({
-    教師啟動編號姓名: d.teacherLabel,
-    代別: d.generation,
-    導師啟動編號姓名: d.mentorLabel ?? DASH,
-    導師代別: d.mentorGeneration ?? DASH,
-    最早帶出一人結業時間: d.earliestGraduatedAt ? formatDateTime(d.earliestGraduatedAt) : DASH,
-  }))
+  const maxDepth = rows.reduce((max, r) => Math.max(max, r.depth), 0)
+  const genCols = Array.from({ length: maxDepth + 1 }, (_, i) => `第${i}代`)
+  const header = [...genCols, '直屬下線人數']
+
+  const aoa: unknown[][] = [header]
+  for (const row of rows) {
+    const line = new Array(header.length).fill('')
+    line[row.depth] = row.label
+    if (row.directChildCount > 0) line[header.length - 1] = row.directChildCount
+    aoa.push(line)
+  }
 
   const filename = `generations-${month}.xlsx`
 
-  return xlsxDownloadResponse(rows, '世代明細', filename)
+  return xlsxAoaDownloadResponse(aoa, '世代階層', filename)
 }

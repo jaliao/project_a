@@ -44,3 +44,23 @@ export function xlsxDownloadResponse(
     },
   })
 }
+
+/** 供「依欄位位置決定內容」的排版（如依深度分欄的巢狀表）使用，直接吃二維陣列 */
+export function xlsxAoaDownloadResponse(
+  aoa: unknown[][],
+  sheetName: string,
+  filename: string,
+): NextResponse {
+  const ws = XLSX.utils.aoa_to_sheet(aoa)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, sheetName)
+  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+
+  return new NextResponse(buffer, {
+    headers: {
+      'Content-Type':
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+    },
+  })
+}
