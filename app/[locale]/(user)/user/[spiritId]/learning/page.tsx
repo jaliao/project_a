@@ -1,10 +1,12 @@
 /*
  * ----------------------------------------------
  * 分段式查經 — 書籍（課程目錄）選擇頁
- * 2026-08-28 (Updated: 2026-08-29)
+ * 2026-08-28 (Updated: 2026-11-16)
  * app/(user)/user/[spiritId]/learning/page.tsx
  * [spiritId] 為 Spirit ID 小寫（例：pa260001）
- * 僅本人可存取；他人存取 redirect 至本人 /learning
+ * 本人：可寫入視角。他人：依 getViewableLearningCatalogIds 判定，
+ * 至少一個課程目錄可見則唯讀顯示（僅列出可見目錄），否則導回本人 /learning。
+ * 未登入 → 導 /login（CR-FEAT-261116-001）
  * ----------------------------------------------
  */
 
@@ -18,8 +20,10 @@ import { prisma } from '@/lib/prisma'
 import { getCatalogOutline, isLessonCompleted } from '@/config/learning-outline'
 import {
   getUnlockedLearningCatalogIds,
+  getViewableLearningCatalogIds,
   getFilledOutlineSlots,
 } from '@/lib/data/learning-study'
+import { getMemberDisplayName } from '@/lib/utils/member-display'
 import {
   LearningCatalogGrid,
   type LearningCatalogCard,
@@ -43,17 +47,25 @@ export default async function LearningPage({ params }: Props) {
   const { spiritId } = await params
   const session = await auth()
 
-  // 僅本人：他人 → 導回本人；未登入 → 導 /login
-  if (session?.user?.spiritId?.toLowerCase() !== spiritId) {
-    const selfId = session?.user?.spiritId?.toLowerCase()
-    redirect(selfId ? `/user/${selfId}/learning` : '/login')
-  }
+  if (!session?.user?.id) redirect('/login')
+
+  const isOwnPage = session.user.spiritId?.toLowerCase() === spiritId
 
   const user = await prisma.user.findUnique({
     where: { spiritId: spiritId.toUpperCase() },
-    select: { id: true },
+    select: { id: true, realName: true, englishName: true, nickname: true, displayNameMode: true },
   })
   if (!user) redirect('/login')
+
+  // 非本人：依可見性判斷唯讀顯示或導回本人頁面
+  let viewableIds: number[] | null = null
+  if (!isOwnPage) {
+    viewableIds = await getViewableLearningCatalogIds(session.user.id, user.id)
+    if (viewableIds.length === 0) {
+      const selfId = session.user.spiritId?.toLowerCase()
+      redirect(selfId ? `/user/${selfId}/learning` : '/login')
+    }
+  }
 
   const t = await getTranslations('learning')
 
@@ -65,13 +77,16 @@ export default async function LearningPage({ params }: Props) {
     getUnlockedLearningCatalogIds(user.id),
   ])
 
+  const visibleCatalogs = viewableIds ? catalogs.filter((c) => viewableIds!.includes(c.id)) : catalogs
+
   const cards: LearningCatalogCard[] = await Promise.all(
-    catalogs.map(async (c): Promise<LearningCatalogCard> => {
+    visibleCatalogs.map(async (c): Promise<LearningCatalogCard> => {
       const outline = getCatalogOutline(c.id)
       const unlocked = unlockedIds.includes(c.id)
-      const canEnter = !!outline && unlocked
+      // viewableIds 已保證是 author 已解鎖目錄的子集，他人視角只需另外確認有大綱
+      const canEnter = !!outline && (isOwnPage ? unlocked : true)
 
-      if (!canEnter) {
+      if (!outline || !canEnter) {
         return {
           id: c.id,
           label: c.label,
@@ -88,6 +103,8 @@ export default async function LearningPage({ params }: Props) {
     })
   )
 
+  const authorName = getMemberDisplayName(user)
+
   return (
     <div className="space-y-6">
       <Link
@@ -100,9 +117,13 @@ export default async function LearningPage({ params }: Props) {
 
       <div className="flex items-center gap-2">
         <IconNotebook className="h-5 w-5 text-primary" />
-        <h1 className="text-2xl font-semibold">{t('pageTitle')}</h1>
+        <h1 className="text-2xl font-semibold">
+          {isOwnPage ? t('pageTitle') : t('pageTitleOther', { name: authorName })}
+        </h1>
       </div>
-      <p className="text-sm text-muted-foreground">{t('chooseCatalog')}</p>
+      <p className="text-sm text-muted-foreground">
+        {isOwnPage ? t('chooseCatalog') : t('chooseCatalogOther', { name: authorName })}
+      </p>
 
       <LearningCatalogGrid spiritId={spiritId} catalogs={cards} />
     </div>

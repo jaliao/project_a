@@ -24,9 +24,16 @@ type Props = {
   lesson: LessonOutline
   /** key = `${lessonKey}::${scriptureKey}` */
   entriesBySlot: Record<string, LearningStudyEntry[]>
+  /** 他人唯讀視角：不渲染建立表單、檢視卡不顯示編輯按鈕 */
+  readOnly?: boolean
 }
 
-export function LessonEntriesPanel({ courseCatalogId, lesson, entriesBySlot }: Props) {
+export function LessonEntriesPanel({
+  courseCatalogId,
+  lesson,
+  entriesBySlot,
+  readOnly = false,
+}: Props) {
   const t = useTranslations('learning')
 
   if (lesson.scriptures.length === 0) {
@@ -46,7 +53,9 @@ export function LessonEntriesPanel({ courseCatalogId, lesson, entriesBySlot }: P
             </CardHeader>
             <CardContent className="px-4">
               {entry ? (
-                <StudyEntryCard entry={entry} />
+                <StudyEntryCard entry={entry} readOnly={readOnly} />
+              ) : readOnly ? (
+                <p className="text-sm text-muted-foreground">{t('readOnlyEmpty')}</p>
               ) : (
                 <StudyEntryForm
                   mode="create"

@@ -9,6 +9,7 @@
 import { prisma } from '@/lib/prisma'
 import type { LearningStudyEntry } from '@prisma/client'
 import { getCatalogOutline, getOutlineCatalogIds, isLessonCompleted } from '@/config/learning-outline'
+import { isFriend } from '@/lib/data/friendship'
 
 /**
  * 取得該使用者「已解鎖」的課程目錄 id。
@@ -28,6 +29,59 @@ export async function getUnlockedLearningCatalogIds(userId: string): Promise<num
     select: { invite: { select: { courseCatalogId: true } } },
   })
   return Array.from(new Set(rows.map((r) => r.invite.courseCatalogId)))
+}
+
+/**
+ * 查看者（viewer）可唯讀查看某學員（author）哪些課程目錄的分段查經筆記。
+ * 三條件任一成立即可見：本人／好友（viewer 已將 author 加好友，可見 author 全部已解鎖目錄）／
+ * 同班（同一次開課 approved 報名有交集，僅該目錄可見）。
+ */
+export async function getViewableLearningCatalogIds(
+  viewerId: string,
+  authorId: string
+): Promise<number[]> {
+  const authorUnlockedIds = await getUnlockedLearningCatalogIds(authorId)
+  if (viewerId === authorId) return authorUnlockedIds
+  if (authorUnlockedIds.length === 0) return []
+
+  if (await isFriend(viewerId, authorId)) return authorUnlockedIds
+
+  const [authorRows, viewerRows] = await Promise.all([
+    prisma.inviteEnrollment.findMany({
+      where: {
+        userId: authorId,
+        status: 'approved',
+        invite: {
+          cancelledAt: null,
+          startedAt: { not: null },
+          courseCatalogId: { in: authorUnlockedIds },
+        },
+      },
+      select: { inviteId: true, invite: { select: { courseCatalogId: true } } },
+    }),
+    prisma.inviteEnrollment.findMany({
+      where: { userId: viewerId, status: 'approved', invite: { cancelledAt: null } },
+      select: { inviteId: true },
+    }),
+  ])
+
+  const viewerInviteIds = new Set(viewerRows.map((r) => r.inviteId))
+  const visibleCatalogIds = new Set<number>()
+  for (const row of authorRows) {
+    if (viewerInviteIds.has(row.inviteId)) visibleCatalogIds.add(row.invite.courseCatalogId)
+  }
+  return Array.from(visibleCatalogIds)
+}
+
+/** 單一課程目錄版本，供「我的學習」子頁路由守衛使用。 */
+export async function canViewLearningCatalog(
+  viewerId: string,
+  authorId: string,
+  courseCatalogId: number
+): Promise<boolean> {
+  if (viewerId === authorId) return true
+  const ids = await getViewableLearningCatalogIds(viewerId, authorId)
+  return ids.includes(courseCatalogId)
 }
 
 /** 大綱位置鍵：`${lessonKey}::${scriptureKey}` */

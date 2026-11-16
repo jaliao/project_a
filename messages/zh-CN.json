@@ -985,7 +985,10 @@
     "lessonPartial": "填写中",
     "lessonTodo": "待填写",
     "lessonNoScripture": "无需填写",
-    "progressCount": "已完成 {done} / 共 {total} 课"
+    "progressCount": "已完成 {done} / 共 {total} 课",
+    "pageTitleOther": "{name} 的分段式查经",
+    "chooseCatalogOther": "唯读查看 {name} 已填写的分段查经笔记。",
+    "readOnlyEmpty": "尚未填写"
   },
   "footer": {
     "description": "启动事工线上系统——课程报名、学习历程与社群连结。",

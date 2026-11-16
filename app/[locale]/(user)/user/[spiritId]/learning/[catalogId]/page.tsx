@@ -1,10 +1,12 @@
 /*
  * ----------------------------------------------
  * 分段式查經 — 單一書籍（課程目錄）的課次垂直可收合清單
- * 2026-08-28 (Updated: 2026-08-29)
+ * 2026-08-28 (Updated: 2026-11-16)
  * app/(user)/user/[spiritId]/learning/[catalogId]/page.tsx
  * [spiritId] 為 Spirit ID 小寫；[catalogId] 為 CourseCatalog.id
- * 僅本人可存取；catalogId 非法或無大綱 → 導回 /learning
+ * 本人：可寫入視角。他人：依 canViewLearningCatalog 判定，
+ * 可見則唯讀顯示，否則導回查看者本人同一 catalogId 的子頁。
+ * catalogId 非法或無大綱 → 導回 /learning（CR-FEAT-261116-001）
  * ----------------------------------------------
  */
 
@@ -19,10 +21,12 @@ import { prisma } from '@/lib/prisma'
 import { getCatalogOutline, getScripture, isLessonCompleted } from '@/config/learning-outline'
 import {
   getUnlockedLearningCatalogIds,
+  canViewLearningCatalog,
   getStudyEntriesForUser,
   getFilledOutlineSlots,
   outlineSlotKey,
 } from '@/lib/data/learning-study'
+import { getMemberDisplayName } from '@/lib/utils/member-display'
 import { LessonAccordion } from '@/components/learning/lesson-accordion'
 import { StudyEntryCard } from '@/components/learning/study-entry-card'
 import { translateCatalogLabel } from '@/lib/utils/catalog-label'
@@ -45,11 +49,9 @@ export default async function LearningCatalogPage({ params }: Props) {
   const { spiritId, catalogId: catalogIdRaw } = await params
   const session = await auth()
 
-  // 僅本人：他人 → 導回本人；未登入 → 導 /login
-  if (session?.user?.spiritId?.toLowerCase() !== spiritId) {
-    const selfId = session?.user?.spiritId?.toLowerCase()
-    redirect(selfId ? `/user/${selfId}/learning/${catalogIdRaw}` : '/login')
-  }
+  if (!session?.user?.id) redirect('/login')
+
+  const isOwnPage = session.user.spiritId?.toLowerCase() === spiritId
 
   // catalogId 需為正整數且設定檔有大綱
   const catalogId = Number(catalogIdRaw)
@@ -58,15 +60,31 @@ export default async function LearningCatalogPage({ params }: Props) {
   if (!outline) redirect(`/user/${spiritId}/learning`)
 
   const [user, catalog] = await Promise.all([
-    prisma.user.findUnique({ where: { spiritId: spiritId.toUpperCase() }, select: { id: true } }),
+    prisma.user.findUnique({
+      where: { spiritId: spiritId.toUpperCase() },
+      select: { id: true, realName: true, englishName: true, nickname: true, displayNameMode: true },
+    }),
     prisma.courseCatalog.findUnique({ where: { id: catalogId }, select: { label: true } }),
   ])
   if (!user) redirect('/login')
   if (!catalog) redirect(`/user/${spiritId}/learning`)
 
+  // 非本人：不可見則導回查看者本人同一 catalogId 的子頁
+  if (!isOwnPage) {
+    const canView = await canViewLearningCatalog(session.user.id, user.id, catalogId)
+    if (!canView) {
+      const selfId = session.user.spiritId?.toLowerCase()
+      redirect(selfId ? `/user/${selfId}/learning/${catalogIdRaw}` : '/login')
+    }
+  }
+
   const t = await getTranslations('learning')
   const tCatalog = await getTranslations('catalog')
   const catalogLabel = translateCatalogLabel(tCatalog, catalog.label)
+  const authorName = getMemberDisplayName(user)
+  const pageHeading = isOwnPage
+    ? `${t('pageTitle')} ${catalogLabel}`
+    : `${t('pageTitleOther', { name: authorName })} ${catalogLabel}`
 
   const unlockedIds = await getUnlockedLearningCatalogIds(user.id)
   const unlocked = unlockedIds.includes(catalogId)
@@ -85,7 +103,7 @@ export default async function LearningCatalogPage({ params }: Props) {
     return (
       <div className="space-y-6">
         {backLink}
-        <h1 className="text-2xl font-semibold">{t('pageTitle')} {catalogLabel}</h1>
+        <h1 className="text-2xl font-semibold">{pageHeading}</h1>
         <div className="flex items-center gap-2 rounded-lg border p-8 text-sm text-muted-foreground">
           <IconLock className="h-4 w-4 shrink-0" />
           {t('catalogLocked')}
@@ -113,13 +131,14 @@ export default async function LearningCatalogPage({ params }: Props) {
 
   const totalCount = outline.lessons.length
   const doneCount = outline.lessons.filter((l) => isLessonCompleted(l, filledSlots)).length
+  const readOnly = !isOwnPage
 
   return (
     <div className="space-y-6">
       {backLink}
 
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold">{t('pageTitle')} {catalogLabel}</h1>
+        <h1 className="text-2xl font-semibold">{pageHeading}</h1>
         <p className="text-sm text-muted-foreground">
           {t('progressCount', { done: doneCount, total: totalCount })}
         </p>
@@ -129,6 +148,7 @@ export default async function LearningCatalogPage({ params }: Props) {
         outline={outline}
         entriesBySlot={entriesBySlot}
         filledSlots={[...filledSlots]}
+        readOnly={readOnly}
       />
 
       {orphanEntries.length > 0 && (
@@ -137,7 +157,7 @@ export default async function LearningCatalogPage({ params }: Props) {
           <p className="text-xs text-muted-foreground">{t('orphanSectionHint')}</p>
           {orphanEntries.map((entry) => (
             <div key={entry.id} className="rounded-lg border bg-card p-4">
-              <StudyEntryCard entry={entry} />
+              <StudyEntryCard entry={entry} readOnly={readOnly} />
             </div>
           ))}
         </section>

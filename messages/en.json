@@ -984,7 +984,10 @@
     "lessonPartial": "In progress",
     "lessonTodo": "To fill in",
     "lessonNoScripture": "No entry needed",
-    "progressCount": "{done} / {total} lessons done"
+    "progressCount": "{done} / {total} lessons done",
+    "pageTitleOther": "{name}'s Sectional Bible Study",
+    "chooseCatalogOther": "Viewing {name}'s segmented Bible study notes (read-only).",
+    "readOnlyEmpty": "Not written yet"
   },
   "footer": {
     "description": "Activate Ministry online platform — course enrollment, learning records, and community.",

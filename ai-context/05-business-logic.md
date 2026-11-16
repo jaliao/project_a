@@ -84,3 +84,11 @@
 ### 學員首頁基本資料新增性別／所屬教會顯示（`cr-feat-261023-004`）
 - 基本資料區塊於 Spirit ID 列與身分標籤列之間新增「性別」（重用 `GenderIcon`）與「所屬教會」兩列，對所有檢視者（本人與他人）一致公開顯示（與使用者確認不需隱私限制）。
 - 所屬教會三態就地於 `page.tsx` 計算（不抽共用 helper）：`churchType === 'church'` 顯示 `church.name`；`churchType === 'other'` 顯示 `churchOther`；否則顯示 `studentProfile.churchUnset`（「未設定」）。
+
+### 分段式查經可見性規則：同班／好友唯讀查看（`cr-feat-261116-001`）
+- 需求：讓同班同學與社群好友能互相唯讀查看彼此的「分段式查經」（`LearningStudyEntry`）筆記，取代原本「僅本人可見」的限制。設計上**不異動 `LearningStudyEntry` 資料表結構**，不新增欄位、不做 backfill，可見範圍改為查詢時動態判斷。
+- `lib/data/learning-study.ts` 新增 `getViewableLearningCatalogIds(viewerId, authorId)`／`canViewLearningCatalog(viewerId, authorId, courseCatalogId)`：三條件任一成立即可見——①本人；②好友（`isFriend(viewerId, authorId)`，複用 `lib/data/friendship.ts` 既有單向好友判斷，符合時 author**已解鎖的全部課程目錄**皆可見）；③同班（author 與 viewer 在同一 `CourseInvite`（`inviteId`）下皆為 `status = approved` 且該開課未取消的報名，僅該課程目錄可見）。
+- 已知取捨：若 author 同一課程目錄有多筆 approved 報名（上過兩梯），因筆記未記錄撰寫當下對應哪一次開課，該目錄對兩梯同學一律皆可見全部筆記，不區分梯次（已與需求方確認可接受，且已以正式資料結構相同的 dev DB 真實資料驗證此行為）。
+- 路由層：`/user/{spiritId}/learning` 與 `/user/{spiritId}/learning/{catalogId}` 非本人存取時，先查可見性——可見則以唯讀模式顯示（不渲染任何新增/編輯表單或按鈕，`LessonAccordion`/`LessonEntriesPanel`/`StudyEntryCard` 皆新增 `readOnly` prop），不可見則維持原有「導回查看者本人對應路由」行為。管理者後台不提供任何檢視入口，維持原有排除。
+- 個人首頁學習進度三卡（`CourseProgressCards`）的 `linkable` 條件從「僅本人」放寬為「本人或該課程目錄在 `viewableCatalogIds` 內」，與上述可見性規則一致；完成度數字本身維持公開不受影響。
+- `createStudyEntry`／`updateStudyEntry` 既有的登入與擁有者驗證**未異動**，本次純屬新增讀取路徑。

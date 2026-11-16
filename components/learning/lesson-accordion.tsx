@@ -31,6 +31,8 @@ type Props = {
   entriesBySlot: Record<string, LearningStudyEntry[]>
   /** 已有至少一筆筆記的經文位置（`${lessonKey}::${scriptureKey}`） */
   filledSlots: string[]
+  /** 他人唯讀視角：不渲染任何建立/編輯入口 */
+  readOnly?: boolean
 }
 
 /** 四態徽章：done/noScripture 綠、partial 琥珀實、todo 琥珀 outline */
@@ -46,7 +48,7 @@ function LessonStateBadge({ state }: { state: LessonFillState }) {
   )
 }
 
-export function LessonAccordion({ outline, entriesBySlot, filledSlots }: Props) {
+export function LessonAccordion({ outline, entriesBySlot, filledSlots, readOnly = false }: Props) {
   const filled = new Set(filledSlots)
   const lessons = [...outline.lessons].sort((a, b) => a.order - b.order)
   const [openKey, setOpenKey] = useState<string | null>(null)
@@ -116,6 +118,7 @@ export function LessonAccordion({ outline, entriesBySlot, filledSlots }: Props) 
                   courseCatalogId={outline.courseCatalogId}
                   lesson={lesson}
                   entriesBySlot={entriesBySlot}
+                  readOnly={readOnly}
                 />
               </div>
             )}

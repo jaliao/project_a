@@ -43,7 +43,7 @@ import { TestCourseSessionButton } from '@/components/course-session/test-course
 import { CourseSessionCard } from '@/components/course-session/course-session-card'
 import { CourseCardGrid } from '@/components/course-session/course-card-grid'
 import { CourseProgressCards } from '@/components/learning/course-progress-cards'
-import { getLearningProgressByCatalog } from '@/lib/data/learning-study'
+import { getLearningProgressByCatalog, getViewableLearningCatalogIds } from '@/lib/data/learning-study'
 import { getMyEnrollments, getMyCourseSessions, getMyCompletionCertificates } from '@/lib/data/course-sessions'
 import { getActiveCourses, getAllCourses } from '@/lib/data/course-catalog'
 import { getMyInquiries } from '@/lib/data/support-inquiry'
@@ -190,6 +190,12 @@ export default async function UserProfilePage({ params }: Props) {
   const isFriendWithUser =
     !isOwnPage && !!session?.user?.id ? await isFriend(session.user.id, user.id) : false
 
+  // 他人視角：查看者對頁主哪些課程目錄可唯讀查看分段式查經筆記（同班／好友；CR-FEAT-261116-001）
+  const viewableCatalogIds =
+    !isOwnPage && !!session?.user?.id
+      ? await getViewableLearningCatalogIds(session.user.id, user.id)
+      : []
+
   // 強制轉導停用時才顯示 Banner（啟用時 layout guard 已轉導，無需 Banner）
   const showProfileBanner = process.env.REQUIRE_PROFILE_COMPLETION === 'false'
 
@@ -264,6 +270,7 @@ export default async function UserProfilePage({ params }: Props) {
               progressByCatalog={progressByCatalog}
               spiritId={id}
               isOwnPage={isOwnPage}
+              viewableCatalogIds={viewableCatalogIds}
             />
           </div>
 

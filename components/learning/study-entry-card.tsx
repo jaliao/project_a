@@ -40,13 +40,19 @@ function Field({ label, value }: { label: string; value: string | null }) {
   )
 }
 
-export function StudyEntryCard({ entry }: { entry: LearningStudyEntry }) {
+export function StudyEntryCard({
+  entry,
+  readOnly = false,
+}: {
+  entry: LearningStudyEntry
+  readOnly?: boolean
+}) {
   const t = useTranslations('learning')
   const [isEditing, setEditing] = useState(false)
 
   const isEdited = new Date(entry.updatedAt).getTime() - new Date(entry.createdAt).getTime() > 1000
 
-  if (isEditing) {
+  if (isEditing && !readOnly) {
     return (
       <StudyEntryForm
         mode="edit"
@@ -72,16 +78,18 @@ export function StudyEntryCard({ entry }: { entry: LearningStudyEntry }) {
           <Field label={t('fieldWordReceived')} value={entry.wordReceived} />
           <Field label={t('fieldApplication')} value={entry.application} />
         </div>
-        <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          className="h-7 w-7 shrink-0"
-          onClick={() => setEditing(true)}
-          aria-label={t('edit')}
-        >
-          <IconPencil className="h-4 w-4" />
-        </Button>
+        {!readOnly && (
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7 shrink-0"
+            onClick={() => setEditing(true)}
+            aria-label={t('edit')}
+          >
+            <IconPencil className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       <p className="text-xs text-muted-foreground">

@@ -27,6 +27,8 @@ interface CourseProgressCardsProps {
   progressByCatalog: Record<number, { done: number; total: number }>
   spiritId: string
   isOwnPage: boolean
+  /** 他人視角：查看者可唯讀查看的課程目錄 id（同班／好友；CR-FEAT-261116-001） */
+  viewableCatalogIds: number[]
 }
 
 /**
@@ -35,7 +37,8 @@ interface CourseProgressCardsProps {
  * - 進行中：已解鎖未結業 → 進行中樣式
  * - 未完成：其餘 → 虛線/灰階
  * 已完成／進行中且該目錄有大綱時，顯示「已完成 X / 共 Y 課」作業完成度（公開）。
- * 本人視角下，已完成／進行中且有大綱的卡片可點進 /user/{spiritId}/learning/{catalogId}。
+ * 已完成／進行中且有大綱的卡片，本人視角一律可點進 /user/{spiritId}/learning/{catalogId}；
+ * 他人視角僅該目錄在 viewableCatalogIds（同班／好友）內才可點（CR-FEAT-261116-001）。
  */
 export async function CourseProgressCards({
   allCourses,
@@ -44,6 +47,7 @@ export async function CourseProgressCards({
   progressByCatalog,
   spiritId,
   isOwnPage,
+  viewableCatalogIds,
 }: CourseProgressCardsProps) {
   const t = await getTranslations('studentProfile')
   const tCatalog = await getTranslations('catalog')
@@ -55,7 +59,10 @@ export async function CourseProgressCards({
         const cert = certByCatalogId.get(course.id)
         const isInProgress = inProgressCatalogIds.includes(course.id)
         const progress = progressByCatalog[course.id]
-        const linkable = isOwnPage && (!!cert || isInProgress) && progress != null
+        const linkable =
+          (isOwnPage || viewableCatalogIds.includes(course.id)) &&
+          (!!cert || isInProgress) &&
+          progress != null
 
         const g = cert?.graduatedAt
         const dateStr = g
