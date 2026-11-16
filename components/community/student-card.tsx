@@ -14,6 +14,7 @@
 import type { ReactNode } from 'react'
 import type { Gender, UserRole } from '@prisma/client'
 import { useTranslations } from 'next-intl'
+import { Link } from '@/i18n/navigation'
 import { UserAvatar } from '@/components/shared/user-avatar'
 import { GenderIcon } from '@/components/shared/gender-icon'
 import { Badge } from '@/components/ui/badge'
@@ -37,14 +38,28 @@ export function StudentCard({ avatarUrl, displayName, gender, spiritId, unitLabe
   return (
     <div className="flex flex-col gap-3 rounded-lg border p-4">
       <div className="flex items-start gap-3">
-        <UserAvatar avatarUrl={avatarUrl} displayName={displayName} />
-        <div className="min-w-0">
-          <div className="flex items-center gap-1">
-            <GenderIcon gender={gender} />
-            <p className="truncate text-sm font-medium">{displayName}</p>
-          </div>
-          {spiritId && <p className="truncate font-mono text-xs text-muted-foreground">{spiritId}</p>}
-        </div>
+        {spiritId ? (
+          <Link href={`/user/${spiritId.toLowerCase()}`} className="flex items-start gap-3">
+            <UserAvatar avatarUrl={avatarUrl} displayName={displayName} />
+            <div className="min-w-0">
+              <div className="flex items-center gap-1">
+                <GenderIcon gender={gender} />
+                <p className="truncate text-sm font-medium hover:underline">{displayName}</p>
+              </div>
+              <p className="truncate font-mono text-xs text-muted-foreground">{spiritId}</p>
+            </div>
+          </Link>
+        ) : (
+          <>
+            <UserAvatar avatarUrl={avatarUrl} displayName={displayName} />
+            <div className="min-w-0">
+              <div className="flex items-center gap-1">
+                <GenderIcon gender={gender} />
+                <p className="truncate text-sm font-medium">{displayName}</p>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       <p className="text-sm text-muted-foreground">{unitLabel ?? '—'}</p>

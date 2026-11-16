@@ -266,6 +266,7 @@ export type CourseSessionDetail = {
     nickname: string | null
     displayNameMode: DisplayNameMode
     phone: string | null
+    spiritId: string | null
   }
   approvedEnrollments: EnrollmentRecord[]
   pendingEnrollments: EnrollmentRecord[]
@@ -347,7 +348,7 @@ export async function getCourseSessionById(
       matchNote: true,
       archivedAt: true,
       archiveReason: true,
-      createdBy: { select: { ...displayNameUserSelect, phone: true } },
+      createdBy: { select: { ...displayNameUserSelect, phone: true, spiritId: true } },
       enrollments: {
         select: {
           id: true,

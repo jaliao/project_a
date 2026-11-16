@@ -33,8 +33,9 @@ export async function getUnlockedLearningCatalogIds(userId: string): Promise<num
 
 /**
  * 查看者（viewer）可唯讀查看某學員（author）哪些課程目錄的分段查經筆記。
- * 三條件任一成立即可見：本人／好友（viewer 已將 author 加好友，可見 author 全部已解鎖目錄）／
- * 同班（同一次開課 approved 報名有交集，僅該目錄可見）。
+ * 四條件任一成立即可見：本人／好友（viewer 已將 author 加好友，可見 author 全部已解鎖目錄）／
+ * 同班（同一次開課 approved 報名有交集，僅該目錄可見）／
+ * 講師（viewer 在 author 擔任講師的開課下 approved 報名，僅該開課對應目錄可見）。
  */
 export async function getViewableLearningCatalogIds(
   viewerId: string,
@@ -46,7 +47,7 @@ export async function getViewableLearningCatalogIds(
 
   if (await isFriend(viewerId, authorId)) return authorUnlockedIds
 
-  const [authorRows, viewerRows] = await Promise.all([
+  const [authorRows, viewerRows, instructorRows] = await Promise.all([
     prisma.inviteEnrollment.findMany({
       where: {
         userId: authorId,
@@ -63,12 +64,27 @@ export async function getViewableLearningCatalogIds(
       where: { userId: viewerId, status: 'approved', invite: { cancelledAt: null } },
       select: { inviteId: true },
     }),
+    prisma.inviteEnrollment.findMany({
+      where: {
+        userId: viewerId,
+        status: 'approved',
+        invite: {
+          cancelledAt: null,
+          createdById: authorId,
+          courseCatalogId: { in: authorUnlockedIds },
+        },
+      },
+      select: { invite: { select: { courseCatalogId: true } } },
+    }),
   ])
 
   const viewerInviteIds = new Set(viewerRows.map((r) => r.inviteId))
   const visibleCatalogIds = new Set<number>()
   for (const row of authorRows) {
     if (viewerInviteIds.has(row.inviteId)) visibleCatalogIds.add(row.invite.courseCatalogId)
+  }
+  for (const row of instructorRows) {
+    visibleCatalogIds.add(row.invite.courseCatalogId)
   }
   return Array.from(visibleCatalogIds)
 }

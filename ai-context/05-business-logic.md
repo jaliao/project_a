@@ -92,3 +92,8 @@
 - 路由層：`/user/{spiritId}/learning` 與 `/user/{spiritId}/learning/{catalogId}` 非本人存取時，先查可見性——可見則以唯讀模式顯示（不渲染任何新增/編輯表單或按鈕，`LessonAccordion`/`LessonEntriesPanel`/`StudyEntryCard` 皆新增 `readOnly` prop），不可見則維持原有「導回查看者本人對應路由」行為。管理者後台不提供任何檢視入口，維持原有排除。
 - 個人首頁學習進度三卡（`CourseProgressCards`）的 `linkable` 條件從「僅本人」放寬為「本人或該課程目錄在 `viewableCatalogIds` 內」，與上述可見性規則一致；完成度數字本身維持公開不受影響。
 - `createStudyEntry`／`updateStudyEntry` 既有的登入與擁有者驗證**未異動**，本次純屬新增讀取路徑。
+
+### 分段式查經可見性規則補充：講師唯讀查看（`cr-feat-261117-001`）
+- 在上述三條件基礎上新增第四條件「講師」：viewer（學生）在某堂課（`CourseInvite`，`createdById = authorId`）有 `status = approved`、該開課未取消的報名，且該開課對應的課程目錄在 author（講師）**已解鎖**的課程目錄集合內，則該課程目錄對 viewer 可見。範圍比照「同班」（僅該堂課對應單一課程目錄，不擴大到講師其他已解鎖目錄）；為**單向**，講師不會因此自動可見學生筆記。
+- 實作：`getViewableLearningCatalogIds` 的 `Promise.all` 新增第三條查詢（與「同班」的兩條查詢並列），比對 `userId = viewerId`、`invite.createdById = authorId`、`invite.courseCatalogId in authorUnlockedIds`。`canViewLearningCatalog` 未改動。
+- 同批異動：課程詳情頁（`/course/[id]`）授課老師姓名、社群會員卡（`StudentCard`，好友／找學員頁籤共用）頭像與姓名，皆改為可點擊連結導向 `/user/{spiritId}`（`spiritId` 為 `null` 時維持純顯示）。課程詳情頁沿用 `member-home-link.tsx` 慣例開新分頁；社群會員卡為站內一般導覽，同分頁開啟。`lib/data/course-sessions.ts` 的 `CourseSessionItem.createdBy` 型別與查詢皆補上 `spiritId`。

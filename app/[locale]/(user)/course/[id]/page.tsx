@@ -311,7 +311,18 @@ export default async function CourseDetailPage({
             <IconUserCheck className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
             <div>
               <p className="text-xs text-muted-foreground">{t('course.detail.teacher')}</p>
-              <p className="font-medium">{teacherName}</p>
+              {courseSession.createdBy.spiritId ? (
+                <Link
+                  href={`/user/${courseSession.createdBy.spiritId.toLowerCase()}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium underline-offset-2 hover:underline"
+                >
+                  {teacherName}
+                </Link>
+              ) : (
+                <p className="font-medium">{teacherName}</p>
+              )}
               {courseSession.createdBy.email && (
                 <p className="text-xs text-muted-foreground">{courseSession.createdBy.email}</p>
               )}
