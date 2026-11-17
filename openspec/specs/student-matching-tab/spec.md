@@ -17,7 +17,7 @@ TBD - created by archiving change cr-spec-260914-001. Update Purpose after archi
 
 ### Requirement: 找學員清單與學員卡片顯示
 
-「找學員」頁籤 SHALL 列出目前有刊登中 `LearningIntent` 的學員（不含當前登入者本人），依刊登時間（`createdAt`）新到舊排序。每位學員以卡片呈現，卡片基本資訊（頭像、顯示名稱＋性別圖示、單位、身分別標籤）SHALL 與社群頁「好友」頁籤的好友卡片共用相同呈現元件與規則；卡片並 SHALL 額外顯示該學員上課意願的內容：所選課程（以標籤列出課程名稱）與所選時間條件（以標籤列出，含「其他」時一併顯示補充說明文字）。
+「找學員」頁籤 SHALL 列出目前有刊登中 `LearningIntent` 的學員（不含當前登入者本人），依刊登時間（`createdAt`）新到舊排序。每位學員以卡片呈現，卡片基本資訊（頭像、顯示名稱＋性別圖示、單位、身分別標籤）SHALL 與社群頁「好友」頁籤的好友卡片共用相同呈現元件與規則——包含頭像與顯示名稱可點擊導向該學員的個人首頁 `/user/{spiritId}`（`spiritId` 為 `null` 時維持純顯示，不產生連結）；卡片並 SHALL 額外顯示該學員上課意願的內容：所選課程（以標籤列出課程名稱）與所選時間條件（以標籤列出，含「其他」時一併顯示補充說明文字）。
 
 #### Scenario: 顯示刊登中學員卡片
 - **WHEN** 會員開啟「找學員」頁籤且有學員刊登中
@@ -34,6 +34,11 @@ TBD - created by archiving change cr-spec-260914-001. Update Purpose after archi
 #### Scenario: 尚無刊登中學員時顯示空狀態
 - **WHEN** 目前沒有任何學員刊登上課意願
 - **THEN** 「找學員」頁籤顯示空狀態提示
+
+#### Scenario: 點擊頭像或顯示名稱導向個人首頁
+
+- **WHEN** 會員在「找學員」頁籤點擊某學員卡片的頭像或顯示名稱，且該學員 `spiritId` 非空
+- **THEN** 導向該學員的個人首頁 `/user/{spiritId}`
 
 ### Requirement: 找學員卡片加好友／傳訊息操作
 

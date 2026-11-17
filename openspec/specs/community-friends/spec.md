@@ -95,7 +95,9 @@ TBD - created by archiving change cr-spec-260901-003. Update Purpose after archi
 - **「刪除」**：點擊 SHALL 先跳出確認對話框，確認後才將該好友自本人好友清單移除（單向、不影響對方清單、不通知對方、不影響既有對話）。
 - **「釘選／取消釘選」**：切換該好友於本人清單的釘選狀態（見「釘選好友」需求）。
 
-好友卡片本身（操作控制以外區域）SHALL NOT 需要可點擊即可完成上述任一操作。
+好友的頭像與顯示名稱 SHALL 為可點擊連結，導向該好友的個人首頁 `/user/{spiritId}`（站內同分頁導覽）；好友 `spiritId` 為 `null` 時，頭像與顯示名稱 SHALL NOT 產生連結，維持純顯示。
+
+好友卡片本身除頭像／顯示名稱（導向個人首頁）與上述三項操作控制外的其餘區域，SHALL NOT 需要可點擊即可完成任一操作。
 
 #### Scenario: 以卡片格狀顯示好友清單
 
@@ -126,6 +128,16 @@ TBD - created by archiving change cr-spec-260901-003. Update Purpose after archi
 
 - **WHEN** 會員的好友清單為空
 - **THEN** 「好友」頁籤顯示空狀態提示，引導點「加好友」
+
+#### Scenario: 點擊頭像或顯示名稱導向個人首頁
+
+- **WHEN** 會員在某張好友卡片點擊頭像或顯示名稱，且該好友 `spiritId` 非空
+- **THEN** 導向該好友的個人首頁 `/user/{spiritId}`
+
+#### Scenario: spiritId 為空時頭像與名稱不可點
+
+- **WHEN** 某好友 `spiritId` 為 `null`
+- **THEN** 該卡片頭像與顯示名稱維持純顯示，不可點擊
 
 #### Scenario: 點「傳訊息」直接開啟最近一次一對一對話
 
