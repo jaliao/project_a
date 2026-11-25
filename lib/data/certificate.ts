@@ -1,7 +1,7 @@
 /*
  * ----------------------------------------------
  * Data Layer - 實體結業證書製作清單
- * 2026-07-01 (Updated: 2026-07-14)
+ * 2026-07-01 (Updated: 2026-11-17)
  * lib/data/certificate.ts
  *
  * 證書單位＝每人每階層一張（userId × courseCatalogId）：
@@ -39,6 +39,7 @@ export type CertificateListItem = {
   gender: Gender
   churchLabel: string | null
   spiritId: string | null
+  nickname: string | null
   graduatedAt: Date
   producedAt: Date | null
   producedByName: string | null
@@ -185,6 +186,7 @@ export async function getCertificateProductionList(opts: {
       gender: c.gender,
       churchLabel: c.churchLabel,
       spiritId: c.spiritId,
+      nickname: c.user.nickname ?? null,
       graduatedAt: c.graduatedAt,
       producedAt: p?.producedAt ?? null,
       producedByName: p?.producedBy ? getMemberDisplayName(p.producedBy) : null,
@@ -214,7 +216,9 @@ export async function getCertificateProductionList(opts: {
         (r.realName ?? '').includes(q) ||
         (r.englishName ?? '').toLowerCase().includes(qLower) ||
         r.displayName.includes(q) ||
-        (r.spiritId ?? '').toLowerCase().includes(qLower)
+        (r.spiritId ?? '').toLowerCase().includes(qLower) ||
+        (r.nickname ?? '').includes(q) ||
+        (r.churchLabel ?? '').toLowerCase().includes(qLower)
     )
   }
 

@@ -1,11 +1,11 @@
 /*
  * ----------------------------------------------
  * 後台實體證書製作管理頁
- * 2026-07-01 (Updated: 2026-07-14)
+ * 2026-07-01 (Updated: 2026-11-25)
  * app/[locale]/(admin)/admin/certificates/page.tsx
  *
  * 卡片式清單：主標題＝真實姓名中英並列（證書製作依據），
- * 附顯示名稱/啟動編號與性別/單位等身分確認資訊。
+ * 附顯示名稱/學員姓名/學員編號/學員暱稱與性別/學員單位等身分確認資訊。
  * ----------------------------------------------
  */
 
@@ -111,18 +111,30 @@ export default async function AdminCertificatesPage({
                     )}
                   </div>
 
-                  {/* 欄位依序：學員、顯示名稱、單位、階層－結業時間（行距一致；中英文姓名已在主標題） */}
+                  {/* 欄位依序：學員、學員姓名、學員編號、學員暱稱、老師、學員單位、階層－結業時間（行距一致；中英文姓名已在主標題） */}
                   <div className="space-y-1.5 text-sm">
                     <p>
                       <span className="text-muted-foreground">學員：</span>
                       <MemberTextTag {...it.member} />
+                    </p>
+                    <p className="break-words">
+                      <span className="text-muted-foreground">學員姓名：</span>
+                      {realNameText || '—'}
+                    </p>
+                    <p>
+                      <span className="text-muted-foreground">學員編號：</span>
+                      {it.spiritId ?? '—'}
+                    </p>
+                    <p>
+                      <span className="text-muted-foreground">學員暱稱：</span>
+                      {it.nickname ?? '—'}
                     </p>
                     <p>
                       <span className="text-muted-foreground">老師：</span>
                       <MemberTextTag {...it.teacher} />
                     </p>
                     <p className="break-words">
-                      <span className="text-muted-foreground">單位：</span>
+                      <span className="text-muted-foreground">學員單位：</span>
                       {it.churchLabel ?? '—'}
                     </p>
                     <p>
