@@ -44,6 +44,7 @@ export const PUBLIC_APIS: RouteRule[] = [
   { match: 'prefix', path: '/api/suspended-logout', reason: '被暫停會員登出轉址（清 session 後導向 /account-suspended）' },
   { match: 'prefix', path: '/api/merged-logout', reason: '已合併帳號登出轉址（清 session 後導向 /account-merged）' },
   { match: 'prefix', path: '/api/verify-email', reason: '通訊 Email 驗證連結：點擊時可能未登入' },
+  { match: 'exact', path: '/api/version', reason: '版本查詢端點：供跨環境版本比對工具 curl 查詢，無敏感資料' },
 ]
 
 // 訪客頁：需登入體驗但未登入也可進，由頁面顯示登入提示卡片

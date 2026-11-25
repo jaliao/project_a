@@ -86,6 +86,22 @@ make prisma-test-deploy       # Deploy migrations
 make prisma-test-seed         # Seed data (optional)
 ```
 
+### Production Deployment (activate.kuaglobal.org / GCP)
+```bash
+# App：先 build/push 映像檔，再 SSH 部署（拉最新映像檔重啟）
+make push                     # Build + tag + push image to Docker Hub
+make tunnel-deploy-prd        # SSH 到 GCP 正式機執行 start.sh 拉 :latest 重啟
+
+# DB migrations（僅當本次有 schema 變更時）：
+make tunnel-prd               # Open Postgres SSH tunnel first (separate terminal)
+make prisma-prd-status        # Check migration status
+make prisma-prd-deploy        # Deploy migrations
+make prisma-prd-seed          # Seed data (optional)
+
+# 部署後驗證：
+curl https://activate.kuaglobal.org/
+```
+
 ## Architecture Overview
 
 ### Directory Structure
@@ -389,6 +405,10 @@ make schema-update    # Verify schema changes
 | `make db-shell` | PostgreSQL CLI |
 | `make prisma-test-deploy` | Deploy migrations to Test/Staging (stg) DB |
 | `make tunnel-deploy-test` | Deploy app to Test/Staging (stg) via SSH |
+| `make tunnel-deploy-prd` | Deploy app to Production (GCP, activate.kuaglobal.org) via SSH |
+| `make tunnel-prd` | Open Production Postgres SSH tunnel |
+| `make prisma-prd-status` | Check Production migration status (需先開 tunnel-prd) |
+| `make prisma-prd-deploy` | Deploy migrations to Production DB (需先開 tunnel-prd) |
 | `make prisma-dev-status` | 檢查 Dev Migration 狀態（建議先跑） |
 | `make prisma-dev-deploy` | 部署 migrations 到本機 dev 容器 |
 | `make prisma-dev-seed` | Seed database (local dev) |
